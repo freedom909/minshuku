@@ -1,0 +1,43 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.4",
+        import: ["@key","@shareable"])
+        
+type Query {
+  payment:Int
+}
+
+type Mutation {
+  ### wallet
+  addFundsToWallet(amount:Float!):addFundsToWalletResponse!
+}
+
+interface User {
+
+  id : ID!
+  name:String!
+}
+
+
+interface MutationResponse {
+  code: Int!
+  success : Boolean!,
+  message : String,
+}
+
+type addFundsToWalletResponse implements MutationResponse{
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+  "Updated wallet amount"
+  amount: Float
+}
+
+type Guest implements User @key(fields:"id"){
+  id:ID!
+  name:String!@shareable
+  funds:Float!
+}
+

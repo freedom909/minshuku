@@ -1,0 +1,17 @@
+{
+  "name": "air",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "launch": "node utils/launch.js",
+    "install-services": "node utils/install.js",
+    "db:reset": "node utils/reset.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "graphql": "^16.8.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+    "development": {
+      "username": "root",
+      "password": "princess",
+      "database": "accounts",
+      "dialect": "mysql",
+      "storage": "./accounts.db"
+    }
+  }

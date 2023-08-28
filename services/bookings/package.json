@@ -1,0 +1,20 @@
+{
+  "name": "bookings",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "db:init": "sequelize-cli db:migrate && sequelize-cli db:seed:all",
+    "db:reset": "sequelize-cli db:migrate:undo:all && npm run db:init",
+    "booking:update": "node -r dotenv/config update_booking_status.js "
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "path": "^0.12.7",
+    "sequelize": "^6.32.1",
+    "sequelize-cli": "^6.6.1",
+    "uuid": "^9.0.0"
+  }
+}

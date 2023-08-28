@@ -1,0 +1,11 @@
+{
+  "development": {
+    "username": "root",
+    "password": "princess",
+    "database": "bookings",
+    "dialect": "mysql",
+    "storage": "./bookings.db"
+  }
+    }
+  
+  
