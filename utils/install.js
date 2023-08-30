@@ -25,10 +25,11 @@ async function installService(command, name, cwd, prefixColor) {
 
 async function main() {
   try {
-    const accounts = installService('npm install', 'accounts', path.resolve(__dirname, '../services/accounts'), 'blue');
-    const listings = installService('npm install', 'listings', path.resolve(__dirname, '../services/listings'), 'magenta');
-    const bookings = installService('npm install', 'bookings', path.resolve(__dirname, '../services/bookings'), 'green');
     const reviews = installService('npm install', 'reviews', path.resolve(__dirname,  '../services/reviews'), 'yellow');
+    const accounts = installService('npm install', 'accounts', path.resolve(__dirname, '../services/accounts'), 'blue');
+   const listings = installService('npm install', 'listings', path.resolve(__dirname, '../services/listings'), 'magenta');
+    const bookings = installService('npm install', 'bookings', path.resolve(__dirname, '../services/bookings'), 'green');
+
 
     await Promise.all([accounts, listings, bookings, reviews]);
 

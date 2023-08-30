@@ -5,15 +5,15 @@ module.exports = {
     await queryInterface.createTable('Listings', {
       id: {
         allowNull: false,
-        autoIncrement: true,
+       
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.STRING
       },
       title: {
         type: Sequelize.STRING
       },
       description: {
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
       },
       costPerNight: {
         type: Sequelize.FLOAT
@@ -34,11 +34,11 @@ module.exports = {
         type: Sequelize.BOOLEAN
       },
       createdAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE
       },
       updatedAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE
       }
     });

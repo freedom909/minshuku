@@ -7,9 +7,9 @@ type Query {
   "All bookings for the given listing, optionally filtered by a BookingStatus"
   bookingsForListing(listingId: ID!, status: BookingStatus) : [Booking]! @shareable
 
-  ## Bookings
-  "Current booking for guest based on current date"
-  currentGuestBooking: Booking
+  ### Bookings
+  # "Current booking for guest based on current date"
+  # currentGuestBooking: Booking
   "Upcoming and current bookings for guest based on current date"
   upcomingGuestBookings: [Booking]!  @shareable
   "Past bookings for guest based on current date"
@@ -60,12 +60,10 @@ type Listing @key(fields: "id") {
   bookings: [Booking]!
 }
 
-"A guest is a type of Airlock user. They book places to stay."
 type Guest @key(fields: "id") {
   id: ID!
 }
 
-"A review consists of a numerical rating and written text. It can be written by a host or a guest."
 type Review @key(fields: "id") {
   id: ID!
 }
@@ -93,9 +91,7 @@ input CreateBookingInput {
 "Minimum details needed for a newly created booking"
 type NewBookingResponse {
   id: ID!
-    "Date the guest checks in"
   checkInDate: String!
-   "Date the guest checks out"
   checkOutDate: String!
 }
 
@@ -110,5 +106,4 @@ type CreateBookingResponse implements MutationResponse {
   "The newly-created booking"
   booking: NewBookingResponse
 }
-
 

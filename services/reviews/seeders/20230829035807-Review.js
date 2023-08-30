@@ -1,5 +1,5 @@
 'use strict';
-
+const reviewsData = require('./reviews.json');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
@@ -12,9 +12,7 @@ module.exports = {
      *   isBetaMember: false
      * }], {});
     */
-    await queryInterface.bulkInsert('Amenities', amenitiesData, {});
-    await queryInterface.bulkInsert('Listings', listingsData, {});
-    await queryInterface.bulkInsert('ListingAmenities', listingAmenitiesData, {});
+    await queryInterface.bulkInsert('Reviews', reviewsData, {});
   },
 
   async down (queryInterface, Sequelize) {
@@ -24,8 +22,6 @@ module.exports = {
      * Example:
      * await queryInterface.bulkDelete('People', null, {});
      */
-    await queryInterface.bulkDelete('Amenities', null, {});
-    await queryInterface.bulkDelete('Listings', null, {});
-    await queryInterface.bulkDelete('ListingAmenities', null, {});
+    await queryInterface.bulkDelete('Reviews', null, {});
   }
 };

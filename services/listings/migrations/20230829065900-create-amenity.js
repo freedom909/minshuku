@@ -5,9 +5,9 @@ module.exports = {
     await queryInterface.createTable('Amenities', {
       id: {
         allowNull: false,
-        autoIncrement: true,
+       
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.STRING
       },
       category: {
         type: Sequelize.STRING
@@ -16,11 +16,11 @@ module.exports = {
         type: Sequelize.STRING
       },
       createdAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE
       },
       updatedAt: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE
       }
     });

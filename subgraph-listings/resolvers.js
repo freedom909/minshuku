@@ -1,7 +1,7 @@
 const { AuthenticationError, ForbiddenError } = require('../utils/errors');
 
 const resolvers = {
-  // TODO: fill in resolvers
+  
   Query: {
     listing: async ({ id }, _, { dataSources }) => {
       const listings = await dataSources.listingsAPI.getListing(id);

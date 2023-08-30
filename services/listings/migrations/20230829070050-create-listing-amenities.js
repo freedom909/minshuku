@@ -3,26 +3,24 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('ListingAmenities', {
-      id: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER
-      },
+      // id: { type: DataTypes.STRING, primaryKey: true, allowNull: false, defaultValue: DataTypes.UUIDV4 },
       ListingId: {
-        type: Sequelize.STRING
+        allowNull: false,
+        type: Sequelize.STRING,
+        references: {
+          model: 'Listings',
+          key: 'id',
+        },
       },
       AmenityId: {
-        type: Sequelize.STRING
-      },
-      createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.STRING,
+        references: {
+          model: 'Amenities',
+          key: 'id',
+        },
       },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE
-      }
+    
     });
   },
   async down(queryInterface, Sequelize) {
