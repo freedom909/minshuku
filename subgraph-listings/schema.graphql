@@ -35,7 +35,6 @@ interface MutationResponse {
   message: String!
 }
 
-
 "Used to create a listing"
 input CreateListingInput {
   "The listing's title"
@@ -69,7 +68,7 @@ input UpdateListingInput {
   "The location type of the listing"
   locationType: LocationType
   "The Listing's amenities "
-  amenities: [ID]
+  amenities: [ID] 
 }
 
 type CreateListingResponse implements MutationResponse{
@@ -96,11 +95,11 @@ type UpdateListingResponse implements MutationResponse {
 }
 
 "A booking is reserved for a certain date range, marked by the checkInDate and checkOutDate fields"
-type ReservedDate @shareable{
+type ReservedDate  {
   "Date the guest checks in"
-  checkInDate: String!
+  checkInDate: String! @shareable
   "Date the guest checks out"
-  checkOutDate: String!
+  checkOutDate: String! @shareable
 }
 
 type GalacticCoordinates @shareable {
@@ -174,11 +173,11 @@ type Listing @key(fields: "id") {
   "The number of current and upcoming bookings for a listing"
   numberOfUpcomingBookings: Int!
   "An array of upcoming reserved dates that the listing has been booked for"
-  currentlyBookedDates: [ReservedDate]!
+  currentlyBookedDates: [ReservedDate]! @shareable
   "Calculated total cost of the listing with the given arguments"
   totalCost(checkInDate: String!, checkOutDate: String!): Float!
   "Where this listing is located in the galaxy"
-  coordinates: GalacticCoordinates 
+  coordinates: GalacticCoordinates @shareable
 } 
 # Shareable
 type Host @key(fields: "id") {

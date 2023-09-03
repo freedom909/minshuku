@@ -1,12 +1,10 @@
 'use strict';
 const { Model } = require('sequelize');
 const { Listing, Amenity } = require('../models');
-
 module.exports = (sequelize, DataTypes) => {
   class ListingAmenities extends Model {}
   ListingAmenities.init(
     {
-      // id: { type: DataTypes.STRING, primaryKey: true, allowNull: false, defaultValue: DataTypes.UUIDV4 },
       ListingId: {
         type: DataTypes.STRING,
         references: {
@@ -30,4 +28,3 @@ module.exports = (sequelize, DataTypes) => {
   );
   return ListingAmenities;
 };
-

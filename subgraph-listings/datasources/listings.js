@@ -16,7 +16,7 @@ class ListingsAPI extends RESTDataSource {
     );
   }
 
-  getFeaturedListings(limit = 1) {
+  getFeaturedListings(limit) {
     return this.get(`featured-listings?limit=${limit}`);
   }
 

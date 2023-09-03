@@ -32,12 +32,12 @@ type addFundsToWalletResponse implements MutationResponse{
   "Human-readable message for the UI"
   message: String!
   "Updated wallet amount"
-  amount: Float
+  amount: Float 
 }
 
 type Guest implements User @key(fields:"id"){
   id:ID!
-  name:String!@shareable
-  funds:Float!
+  name:String! @shareable
+  funds:Float! @shareable
 }
 

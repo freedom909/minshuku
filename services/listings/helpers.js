@@ -25,3 +25,4 @@ const getDifferenceInDays = (checkIn, checkOut) => {
   
   module.exports = { getDifferenceInDays, transformListingWithAmenities };
   
+  

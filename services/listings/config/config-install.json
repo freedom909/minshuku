@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "princess",
+    "password": null,
     "database": "database_development",
     "dialect": "sqlite",
     "storage": "./listings.db"

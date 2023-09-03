@@ -3,9 +3,10 @@ extend schema
         import: ["@key","@shareable"])
         
 type Query {
-  user(id: ID!): User
+   ### User accounts
+  user(id: ID!): User @shareable
   "Currently logged-in user"
-  me: User!
+  me: User! @shareable
 }
 
 "Represents an Airlock user's common properties"
@@ -14,7 +15,7 @@ interface User {
   "The user's first and last name"
   name: String! 
   "The user's profile photo URL"
-  profilePicture: String!
+  profilePicture: String! 
 }
 
 type Host implements User @key(fields: "id") {
@@ -22,9 +23,9 @@ type Host implements User @key(fields: "id") {
   "The user's first and last name"
   name: String! @shareable
   "The user's profile photo URL"
-  profilePicture: String!
+  profilePicture: String! @shareable
   "The host's profile bio description, will be shown in the listing"
-  profileDescription: String!
+  profileDescription: String! @shareable
 }
 
 type Guest implements User @key(fields:"id") {
@@ -32,7 +33,7 @@ type Guest implements User @key(fields:"id") {
   "The user's first and last name"
   name: String! @shareable
   "The user's profile photo URL"
-  profilePicture: String!
+  profilePicture: String! @shareable
 
 }
 interface MutationResponse {
@@ -54,7 +55,7 @@ type UpdateProfileResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String!
   "Updated user"
-  user: User
+  user: User @shareable
 }
 
 "Fields that can be updated"

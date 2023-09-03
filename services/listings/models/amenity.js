@@ -6,24 +6,14 @@ module.exports = (sequelize, DataTypes) => {
 
   Amenity.init(
     {
-      id: { type: DataTypes.STRING, primaryKey: true, allowNull: false, defaultValue: DataTypes.UUIDV4 },
+      id: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       category: DataTypes.STRING,
       name: DataTypes.STRING,
-      createdAt: {
-        type: DataTypes.DATE,
-      
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-     
-      },
     },
     {
       sequelize,
       modelName: 'Amenity',
       timestamps: false,
- 
-    
     }
   );
 

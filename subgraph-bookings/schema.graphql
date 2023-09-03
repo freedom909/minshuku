@@ -37,9 +37,9 @@ type Booking @key(fields: "id") {
   listing: Listing!
   "The guest that reserved the location"
   guest: Guest!
-  checkInDate: String!
+  checkInDate: String! @shareable
   "Check-out date for the reservation"
-  checkOutDate: String!
+  checkOutDate: String! @shareable
   "Total price paid, calculated using the listing's costPerNight and the check-in check-out dates"
   totalPrice: Float!
   "The status of the booking - check BookingStatus type for all possibilities"
@@ -89,7 +89,7 @@ input CreateBookingInput {
 }
 
 "Minimum details needed for a newly created booking"
-type NewBookingResponse {
+type NewBookingResponse @shareable{
   id: ID!
   checkInDate: String!
   checkOutDate: String!

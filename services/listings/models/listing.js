@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Listing.init(
     {
-      id: { type: DataTypes.STRING, primaryKey: true, allowNull: false, defaultValue: DataTypes.UUIDV4 },
+      id: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
       title: DataTypes.STRING,
       description: DataTypes.STRING,
       costPerNight: DataTypes.FLOAT,
@@ -17,13 +17,11 @@ module.exports = (sequelize, DataTypes) => {
       numOfBeds: DataTypes.INTEGER,
       photoThumbnail: DataTypes.STRING,
       isFeatured: DataTypes.BOOLEAN,
-  
     },
     {
       sequelize,
       modelName: 'Listing',
-      timestamps:false 
-    
+      timestamps: false,
     }
   );
   return Listing;

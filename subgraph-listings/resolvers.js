@@ -8,7 +8,8 @@ const resolvers = {
       return listings
     },
     featuredListings: async (_, __, { dataSources }) => {
-      return await dataSources.listingsAPI.getFeaturedListings()
+      const limit=3
+      return await dataSources.listingsAPI.getFeaturedListings(limit)
     },
     hostListings: async (_, __, { dataSources, userId, userRole }) => {
       if (!userId) throw AuthenticationError()

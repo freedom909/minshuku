@@ -13,7 +13,7 @@ class BookingsAPI {
   initializeSequelizeDb() {
     const config = {
       username: "root",
-      password: "",
+      password: "princess",
       database: "database_development",
       dialect: "mysql",
       storage: "./../services/bookings/bookings.db", // path to the bookings database file, relative to where this datasource is initialized,
