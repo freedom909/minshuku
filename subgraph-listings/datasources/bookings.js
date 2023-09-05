@@ -14,9 +14,9 @@ class BookingsAPI {
     const config = {
       username: "root",
       password: "princess",
-      database: "database_development",
+      database: "listings",
       dialect: "mysql",
-      storage: "./../services/bookings/bookings.db", // path to the bookings database file, relative to where this datasource is initialized,
+      // path to the bookings database file, relative to where this datasource is initialized,
       logging: false, // set this to true if you want to see logging output in the terminal console
     };
     const sequelize = new Sequelize(

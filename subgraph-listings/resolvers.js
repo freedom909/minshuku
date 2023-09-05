@@ -14,7 +14,7 @@ const resolvers = {
     hostListings: async (_, __, { dataSources, userId, userRole }) => {
       if (!userId) throw AuthenticationError()
       if (userRole === 'Host') {
-        return dataSources.listingsAPI.getFeaturedListings(userId)
+        return dataSources.listingsAPI.getListingsForUser(userId);
       }
       else { throw new ForbiddenError('You are not authorized to perform this action') }
     },
