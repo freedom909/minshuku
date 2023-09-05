@@ -1,9 +1,0 @@
-{
-  "development": {
-    "username": "root",
-    "password": "princess",
-    "database": "database_development",
-    "dialect": "sqlite",
-    "storage": "./accounts.db"
-  }
-}
