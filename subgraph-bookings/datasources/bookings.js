@@ -13,8 +13,9 @@ class BookingsDb {
     const config = {
       username: 'root',
       password: "princess",
-      dialect: 'sqlite',
-      storage: './../services/bookings/bookings.db', 
+      database: 'bookings',
+      dialect: 'mysql',
+      //storage: './../services/bookings/bookings.db', 
        // path to the bookings database file, relative to where this datasource is initialized,
       logging: false, // set this to true if you want to see logging output in the terminal console
     };
