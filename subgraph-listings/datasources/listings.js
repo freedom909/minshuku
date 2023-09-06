@@ -30,7 +30,7 @@ class ListingsAPI extends RESTDataSource {
 
   getTotalCost({ id, checkInDate, checkOutDate }) {
     return this.get(
-      `listings/${id}/totalCost?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`
+      `listings/${id}/totalCost?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}` 
     );
   }
 

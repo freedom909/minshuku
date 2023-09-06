@@ -20,16 +20,17 @@ const resolvers = {
         throw ForbiddenError('Only hosts have access to listing bookings')
       }
     },
-    currentGuestBooking: async (_,{ listingId },{dataSources,userId,userRole}) => {
-      if(!userId) throw AuthenticationError()
-      let guestBooking;
-    if(userId.isVerified||userRole==='Guest') {
-      const bookings = await dataSources.bookingsAPI.getCurrentlyBookedDateRangesForListing(listingId);
-      if(bookings && bookings.length >0) {
-        guestBooking=bookings[0];
-        }
+    currentGuestBooking: async (_, { listingId }, { dataSources, userId, userRole }) => {
+      if (!userId) throw AuthenticationError();
+      if (userRole === 'Guest') {
+        const bookings = await dataSources.bookingsAPI.getCurrentlyBookedDateRangesForListing(listingId)
+        return bookings
+      }
+      else {
+        throw ForbiddenError('Only guests have access to guest bookings')
       }
     },
+
     guestBookings: async (_, __, { dataSources, userId, userRole }) => {
       if (!userId) throw new AuthenticationError();
       if (userRole === 'Guest') {

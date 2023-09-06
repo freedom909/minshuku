@@ -12,10 +12,10 @@ class BookingsDb {
   initializeSequelizeDb() {
     const config = {
       username: 'root',
-      password: "princess",
+      password: null,
       database: 'bookings',
       dialect: 'sqlite',
-      // storage: './../services/bookings/bookings.db', // path to the bookings database file, relative to where this datasource is initialized,
+      storage: './../services/bookings/bookings.db', // path to the bookings database file, relative to where this datasource is initialized,
       logging: false, // set this to true if you want to see logging output in the terminal console
     };
     const sequelize = new Sequelize(config.database, config.username, config.password, config);
@@ -32,10 +32,6 @@ class BookingsDb {
   getHumanReadableDate(date) {
     return format(date, 'MMM d, yyyy');
   }
-
- 
-
-
 
   async getBookingsForListing(listingId, status) {
     const filterOptions = { listingId };
