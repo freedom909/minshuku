@@ -104,7 +104,7 @@ type ReservedDate  {
 
 type GalacticCoordinates @shareable {
   lattitude: Float!
-  Longitude: Float!
+  longitude: Float!
 }
 
   "What the location provides. An amenity should be tied to a specific category."

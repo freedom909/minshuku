@@ -3,8 +3,8 @@ const { AuthenticationError, ForbiddenError } = require('../utils/errors');
 const resolvers = {
   
   Query: {
-    listing: async ({ id }, _, { dataSources }) => {
-      const listings = await dataSources.listingsAPI.getListing(id);
+    listing: async (_, { id }, { dataSources }) => {
+      const listings = await dataSources.listingsAPI.getListing(id );
       return listings
     },
     featuredListings: async (_, __, { dataSources }) => {
@@ -21,20 +21,36 @@ const resolvers = {
     listingAmenities: async (_, __, { dataSources }) => {
       return dataSources.listingsAPI.getAllAmenities()
     },
-    searchListings: async (parent, { criteria }, { dataSources }) => {
+    searchListings: async (_, { criteria }, { dataSources }) => {
       const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } = criteria;
       const listings = await dataSources.listingsAPI.getListings({
-        numOfBeds, checkInDate, checkOutDate
+        numOfBeds, page, limit, sortBy 
       });
-      if (sortBy) {
-        let sortedlistings = [];
-        for (let i of Object.keys(listings)) {
-          console.log("i", i, "listings[i]", JSON.stringify(listings));
-          sortedlistings = [...sortedlistings, ...sortedlistings(listings[i], sortBy)];
-        };
+      // if (sortBy) {
+      //   let sortedlistings = [];
+      //   for (let i of Object.keys(listings)) {
+      //     console.log("i", i, "listings[i]", JSON.stringify(listings));
+      //     sortedlistings = [...sortedlistings, ...sortedlistings(listings[i], sortBy)];
+      //   };
+      // }
+      // return listings
+      const listingAvailability = await Promise.all(
+        listings.map((listing) =>
+          dataSources.bookingsAPI.isListingAvailable({
+            listingId: listing.id,
+            checkInDate,
+            checkOutDate,
+          })
+        )
+      );
+      //fitler listings data based on availablity
+      const filteredListings = listings.filter((listing, index) => {
+        return listingAvailability[index];
       }
-      return listings
-    },
+      );
+      return filteredListings;
+      },
+    
   },
 
   Mutation: {
@@ -98,14 +114,14 @@ const resolvers = {
     }
   },
   Listing: {
-    __resolverReference: ({ id }, _, { dataSources }) => {
+    __resolverReference: ({ id }, { dataSources }) => {
       return dataSources.listingsAPI.getListing(id)
     },
     host: ({ hostId }) => {
       return { id: hostId }
     },
-    totalCost: async (_, { listingId, checkInDate, checkOutDate }, { dataSources }) => {
-      const { cost } = await dataSources.listingsAPI.calculateTotalCost({ listingId, checkInDate, checkOutDate });
+    totalCost: async ({id}, {checkInDate, checkOutDate }, { dataSources }) => {
+      const { cost } = await dataSources.listingsAPI.getTotalCost({ id, checkInDate, checkOutDate });
       return cost
     },
     amenities: async ({ id }, _, { dataSources }) => {

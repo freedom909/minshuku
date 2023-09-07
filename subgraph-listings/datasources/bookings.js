@@ -14,7 +14,7 @@ class BookingsAPI {
     const config = {
       username: "root",
       password: "princess",
-      database: "listings",
+      database: "bookings",
       dialect: "mysql",
       // path to the bookings database file, relative to where this datasource is initialized,
       logging: false, // set this to true if you want to see logging output in the terminal console

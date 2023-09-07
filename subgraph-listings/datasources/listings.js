@@ -21,7 +21,7 @@ class ListingsAPI extends RESTDataSource {
   }
 
   getListing(listingId) {
-    return this.get(`listing/${listingId}`);
+    return this.get(`listings/${listingId}`);
   }
 
   getAllAmenities() {
