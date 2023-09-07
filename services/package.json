@@ -6,7 +6,7 @@
   "scripts": {
     "db:init": "sequelize-cli db:migrate && sequelize-cli db:seed:all",
     "db:reset": "sequelize-cli db:migrate:undo:all && npm run db:init",
-    "launch": "node utils/launch.js"
+    "launch": "nodemon utils/launch.js"
   },
   "keywords": [],
   "author": "",

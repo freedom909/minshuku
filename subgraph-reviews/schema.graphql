@@ -3,7 +3,7 @@ extend schema
         
 type Mutation {
   "Creates a review for the guest - must be authored by host of past booking"
-  submitGuestReview(review: ReviewInput!, bookingId : ID!) : SubmitGuestReviewResponse!
+  submitGuestReview(guestReview: ReviewInput!, bookingId : ID!) : SubmitGuestReviewResponse!
   # Creates a review for the host - can only be created if user is authorised to do so (i.e. has role 'HOST')
   submitHostAndLocationReviews(
     bookingId: ID!
@@ -18,7 +18,7 @@ type Review @key(fields:"id"){
   id: ID!
   "The numerical rating for the review target, on a scale of 1-5, with 5 being excellent."
   rating: Float!
-  text: String
+  text: String!
   author: User!
 }
 
@@ -67,8 +67,11 @@ interface MutationResponse {
 "A booking is a reservation for a specific listing"
 type Booking @key(fields:"id"){
   id: ID!
+  "The guest's review of the location"
   locationReview: Review
+  "The guest's review about the host"
   hostReview: Review
+  "The host's review about the guest"
   guestReview: Review
 }
 
