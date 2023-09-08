@@ -8,7 +8,7 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon ."
   },
   "nodemonConfig": {
     "ext": "*.js, *.graphql"

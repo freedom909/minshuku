@@ -140,9 +140,9 @@ const resolvers = {
       const numberOfUpComingBooking = await dataSources.bookingsAPI.getBookingsForListing(id, "UPCOMING") || []
       return numberOfUpComingBooking.length
     },
-    coordinates: ({ id }, _, { dataSources }) => {
+    coordinates: (listing, { dataSources }) => {
       //console.log("COORDINATES");
-      return dataSources.locationsAPI.getLocationForListing(id)
+      return dataSources.listingsAPI.getLocationForListing(listing.id)
     },
     AmenityCategory: {
       ACCOMMODATION_DETAILS: "Accommodation Details",

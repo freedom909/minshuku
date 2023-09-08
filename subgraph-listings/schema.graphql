@@ -112,7 +112,7 @@ type GalacticCoordinates @shareable {
     id: ID!,
  "The category for the amenity"
   category: AmenityCategory!
-    name: String!
+    name: String! 
   }
 
   "The category an amenity belongs to."
@@ -177,7 +177,7 @@ type Listing @key(fields: "id") {
   "Calculated total cost of the listing with the given arguments"
   totalCost(checkInDate: String!, checkOutDate: String!): Float!
   "Where this listing is located in the galaxy"
-  coordinates: GalacticCoordinates @shareable
+  coordinates: GalacticCoordinates 
 } 
 # Shareable
 type Host @key(fields: "id") {
