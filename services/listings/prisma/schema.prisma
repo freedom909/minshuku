@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+model Amenity {
+  id       String @id @map("_id") 
+  category String
+  name     String
+  
+}
+
+model Listing {
+  id              String              @id @map("_id") 
+  title           String
+  description     String
+  costPerNight    Float
+  hostId          String
+  locationType    String
+  numOfBeds       Int
+  photoThumbnail  String
+  isFeatured      Boolean?
+}
+
+model ListingAmenities {
+  id        String   @id @map("_id") 
+  ListingId String   @map("ListingId")
+  AmenityId String   @map("AmenityId")
+}
+
+
+

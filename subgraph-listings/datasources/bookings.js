@@ -4,6 +4,7 @@ const { format } = require("date-fns");
 const Sequelize = require("sequelize");
 const Booking = require("../../services/bookings/models/booking");
 
+
 class BookingsAPI {
   constructor() {
     const db = this.initializeSequelizeDb();
@@ -13,10 +14,11 @@ class BookingsAPI {
   initializeSequelizeDb() {
     const config = {
       username: "root",
-      password: "princess",
+      password: null,
       database: "bookings",
-      dialect: "mysql",
-      // path to the bookings database file, relative to where this datasource is initialized,
+      dialect: "sqlite",
+      storage: "./../../services/bookings/bookings.db", 
+      //path to the bookings database file, relative to where this datasource is initialized,
       logging: false, // set this to true if you want to see logging output in the terminal console
     };
     const sequelize = new Sequelize(

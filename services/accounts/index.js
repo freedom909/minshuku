@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const app = express();
+import { PrismaClient} from '@prisma/client';
+const prisma=new PrismaClient()
 const port = process.env.PORT || 4011;
-
-const { User } = require('./sequelize/models');
 
 app.use(express.json());
 
@@ -12,7 +12,9 @@ app.get('/', (req, res) => {
 
 // login
 app.get('/login/:userId', async (req, res) => {
-  const user = await User.findByPk(req.params.userId);
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.userId },
+  });
   if (!user) {
     return res.status(404).send('Could not log in');
   }
@@ -20,34 +22,34 @@ app.get('/login/:userId', async (req, res) => {
 });
 
 app.get('/user/:userId', async (req, res) => {
-  const user = await User.findByPk(req.params.userId);
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.userId },
+  });
   if (!user) {
     return res.status(404).send('Could not find user with ID');
   }
   return res.json(user);
 });
 
-// edit user info
 app.patch('/user/:userId', async (req, res) => {
-  const user = await User.findByPk(req.params.userId);
-
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.userId },
+  });
   if (!user) {
     return res.status(404).send('Could not find user with ID');
   }
+    // properties to update
 
-  // properties to update
+    user.profileDescription = req.body.profileDescription ? req.body.profileDescription : user.profileDescription;
 
-  user.profileDescription = req.body.profileDescription ? req.body.profileDescription : user.profileDescription;
-
-  user.name = req.body.name ? req.body.name : user.name;
-
-  user.profilePicture = req.body.profilePicture ? req.body.profilePicture : user.profilePicture;
-
-  await user.save();
-
-  return res.json(user);
-});
-
+    user.name = req.body.name ? req.body.name : user.name;
+  
+    user.profilePicture = req.body.profilePicture ? req.body.profilePicture : user.profilePicture;
+  
+    await user.save();
+  
+    return res.json(user);
+  });
 app.listen(port, () => {
   console.log(`UserAccountsAPI running at http://localhost:${port}`);
 });

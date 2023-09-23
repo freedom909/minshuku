@@ -1,38 +1,39 @@
-const { Sequelize, sequelize } = require('./models');
+import { PrismaClient } from '@prisma/client';
+const prisma=new PrismaClient();
 
-(async () =>    {
-    const {or,and,Lt,gt}=Sequelize.Op
-    try {
-        const [completedBookings] = await sequelize.models.Booking.update(
-            { status: 'COMPLETED' },
-            {
-              where: {
-                [or]: [{ status: 'UPCOMING' }, { status: 'CURRENT' }],
-                checkOutDate: {
-                  [Lt]: new Date(),
-                },
-              },
-            }
-          );
-          if (completedBookings > 0) {
-            console.log(`Bookings DB: successfully updated booking status of ${completedBookings} rows to COMPLETED`);
-          }
-      
-          // bookings where today's date falls within checkInDate and checkOutDate range should be updated to CURRENT
-          const [currentBookings] = await sequelize.models.Booking.update(
-            { status: 'CURRENT' },
-            {
-              where: {
-                status: 'UPCOMING',
-                checkInDate: { [Lt]: new Date() },
-                checkOutDate: { [gt]: new Date() },
-              },
-            }
-          );
-          if (currentBookings > 0) {
-            console.log(`Bookings DB: successfully updated booking status of ${currentBookings} rows to CURRENT`);
-          }
-    } catch (error) {
-        console.error(error);
+(async () => {
+  try {
+    const completedBookings = await prisma.booking.updateMany({
+      where: {
+        OR: [
+          { status: 'UPCOMING' },
+          { status: 'CURRENT' },
+        ],
+        checkOutDate: {
+          lt: new Date(),
+        },
+      },
+      data: { status: 'COMPLETED' },
+    });
+
+    if (completedBookings.count > 0) {
+      console.log(`Bookings DB: successfully updated booking status of ${completedBookings.count} rows to COMPLETED`);
     }
-})()
+
+    const currentBookings = await prisma.booking.updateMany({
+      where: {
+        status: 'UPCOMING',
+        checkInDate: { lt: new Date() },
+        checkOutDate: { gt: new Date() },
+      },
+      data: { status: 'CURRENT' },
+    });
+
+    if (currentBookings.count > 0) {
+      console.log(`Bookings DB: successfully updated booking status of ${currentBookings.count} rows to CURRENT`);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+})();
+

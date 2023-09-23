@@ -3,21 +3,22 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "nodemon .",
-    "db:init": "sequelize-cli db:migrate && sequelize-cli db:seed:all",
-    "db:reset": "sequelize-cli db:migrate:undo:all && npm run db:init"
+    "seed": "node prisma/seeders/seed.js",
+    "start": "nodemon ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "express": "^4.17.1",
-    "mysql2": "^3.6.0",
+  "devDependencies": {
     "nodemon": "^3.0.1",
-    "path": "^0.12.7",
-    "sequelize": "^6.6.5",
-    "sequelize-cli": "^6.2.0",
-    "sqlite3": "^5.1.6"
+    "prisma": "^5.3.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.3.1",
+    "express": "^4.18.2",
+    "uuidv4": "^6.2.13"
   }
 }
