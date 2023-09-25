@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-
+import {PrismaClient} from "@prisma/client"
 
 class BookingsDb {
   constructor() {
@@ -21,6 +21,18 @@ class BookingsDb {
     return booking;
   }
 
+  async getCurrentGuestBooking(listingId, checkInDate, checkOutDate){
+    const booking = await this.prisma.booking.findMany({
+      where: {
+        listingId,
+        checkInDate: {
+          lt: checkOutDate,
+          gt: checkInDate,
+        },
+      },
+    });
+    return booking;
+  }
   async getBookingsForUser(userId, status) {
     const filterOptions = { guestId: userId };
     if (status) {

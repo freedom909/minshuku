@@ -1,5 +1,5 @@
 import errors from './utils/errors.js';
-const { AuthenticationError,ForbiddenError }=errors 
+const { AuthenticationError, ForbiddenError } = errors
 
 const resolvers = {
   // TODO: fill in resolvers
@@ -21,10 +21,12 @@ const resolvers = {
         throw ForbiddenError('Only hosts have access to listing bookings')
       }
     },
-    currentGuestBooking: async (_, { listingId }, { dataSources, userId, userRole }) => {
+
+    currentGuestBooking: async (_, { listing }, { dataSources, userId, userRole }) => {
+      const {listingId,checkInDate,checkOutDate}=listing
       if (!userId) throw AuthenticationError();
       if (userRole === 'Guest') {
-        const bookings = await dataSources.bookingsAPI.getCurrentlyBookedDateRangesForListing(listingId)
+        const bookings = await dataSources.bookingsAPI.getCurrentGuestBooking(listingId,checkInDate,checkOutDate)
         return bookings
       }
       else {
@@ -104,6 +106,7 @@ const resolvers = {
         }
       },
     },
+
     Booking: {
       listing: ({ listingId }) => {
         return { id: listingId }
@@ -117,6 +120,9 @@ const resolvers = {
       guest: ({ guestId }) => {
         return { id: guestId }
       },
+      __resolveReference:(booking,{dataSources}) => {
+        return dataSources.bookingsAPI.getBooking(booking.id)
+      },
 
       totalPrice: async ({ listingId, checkInDate, checkOutDate }, _, { dataSources }) => {
         const { totalCost } = await dataSources.listingsAPI.getTotalCost({
@@ -128,13 +134,43 @@ const resolvers = {
       }
     },
 
-    Listing: {
+    Guest: {
+      __resolveReference: (user, { dataSources }) => {
+        return dataSources.accountsAPI.getUser(user.id);
+      },
+      funds: async (_, __, { dataSources, userId }) => {
+        const wallet = await dataSources.accountsAPI.getUserWallet(userId)
+        return {
+          funds: wallet.funds
+        }
+      },
+      addFundsToWallet: async (_, { amount }, { dataSources, userId }) => {
+        if (!userId) throw new AuthenticationError()
+        try {
+          const updateWallet = await dataSources.paymentsAPI.addFunds({ userId, amount })
+          return {
+            success: true,
+            message: "Funds added successfully",
+            data: updateWallet.amount
+          }
+        } catch (error) {
+          return {
+            code: 400,
+            success: false,
+            message: "We couldn’t complete your request because your funds are insufficient.",
+          }
+        }
+      },
+      Listing: {
 
-      bookings: async ({ id }, _, { dataSources }) => {
-        return await dataSources.bookingsAPI.getBookingsForListing(id)
+        bookings: async ({ id }, _, { dataSources }) => {
+          return await dataSources.bookingsAPI.getBookingsForListing(id)
+        },
+        __resolveReference:(listing,{dataSources}) => {
+          return dataSources.listingsAPI.getListing(listing.id)
+        }
       }
     }
   }
-
 }
 export default resolvers;

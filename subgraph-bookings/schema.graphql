@@ -6,10 +6,9 @@ type Query {
   ### Bookings
   "All bookings for the given listing, optionally filtered by a BookingStatus"
   bookingsForListing(listingId: ID!, status: BookingStatus) : [Booking]! @shareable
-
-  ### Bookings
-  # "Current booking for guest based on current date"
-  # currentGuestBooking: Booking
+  "All bookings for the given guest, optionally filtered by a BookingStatus"
+  "Current booking for guest based on current date"
+  currentGuestBooking: Booking
   "Upcoming and current bookings for guest based on current date"
   upcomingGuestBookings: [Booking]!  @shareable
   "Past bookings for guest based on current date"
@@ -21,6 +20,18 @@ type Query {
 type Mutation {
   ### Bookings
   createBooking(createBookingInput: CreateBookingInput): CreateBookingResponse! @shareable
+  addFundsToWallet(amount:Float!):AddFundsToWalletResponse! @shareable
+}
+
+type AddFundsToWalletResponse implements MutationResponse{
+   "Similar to HTTP status code, represents the status of the mutation"
+    code: Int! 
+    "Indicates whether the mutation was successful"
+    success: Boolean! 
+    "Human-readable message for the UI"
+    message: String! 
+    "Updated wallet amount"
+    amount: Float @shareable
 }
 
 "The status of a booking"
@@ -98,11 +109,11 @@ type NewBookingResponse @shareable{
 "The response after creating a booking."
 type CreateBookingResponse implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int! @shareable
+  code: Int! 
   "Indicates whether the mutation was successful"
-  success: Boolean! @shareable
+  success: Boolean! 
   "Human-readable message for the UI"
-  message: String! @shareable
+  message: String! 
   "The newly-created booking"
   booking: NewBookingResponse @shareable
 }

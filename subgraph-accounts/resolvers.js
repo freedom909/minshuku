@@ -13,7 +13,7 @@ const resolvers = {
       return user
     },
     me: async (_, __, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError(authErrMessage);
+      if (!userId) throw new AuthenticationError();
       const user = await dataSources.accountsAPI.getUser(userId);
       return user;
     },
@@ -50,6 +50,9 @@ const resolvers = {
   Host: {
     __resolveReference: (user, { dataSources }) => {
       return dataSources.accountsAPI.getUser(user.id)
+    },
+    __coordinates:({id},_,{dataSources}) => {
+      return dataSources.accountsAPI.getGalacticCoordinates(id);
     }
   },
   Guset: {

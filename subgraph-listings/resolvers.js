@@ -1,31 +1,37 @@
-import errors from '../utils/errors.js';
-const {AuthenticationError,ForbiddenError}=errors
+import errors from '../utils/errors.js'
+const { AuthenticationError, ForbiddenError } = errors
 const resolvers = {
-  
   Query: {
     listing: async (_, { id }, { dataSources }) => {
-      const listings = await dataSources.listingsAPI.getListing(id );
+      const listings = await dataSources.listingsAPI.getListing(id)
       return listings
     },
     featuredListings: async (_, __, { dataSources }) => {
-      const limit=3
+      const limit = 3
       return await dataSources.listingsAPI.getFeaturedListings(limit)
     },
     hostListings: async (_, __, { dataSources, userId, userRole }) => {
       if (!userId) throw AuthenticationError()
       if (userRole === 'Host') {
-        return dataSources.listingsAPI.getListingsForUser(userId);
+        return dataSources.listingsAPI.getListingsForUser(userId)
+      } else {
+        throw new ForbiddenError(
+          'You are not authorized to perform this action'
+        )
       }
-      else { throw new ForbiddenError('You are not authorized to perform this action') }
     },
     listingAmenities: async (_, __, { dataSources }) => {
       return dataSources.listingsAPI.getAllAmenities()
     },
     searchListings: async (_, { criteria }, { dataSources }) => {
-      const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } = criteria;
+      const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } =
+        criteria
       const listings = await dataSources.listingsAPI.getListings({
-        numOfBeds, page, limit, sortBy 
-      });
+        numOfBeds,
+        page,
+        limit,
+        sortBy
+      })
       // if (sortBy) {
       //   let sortedlistings = [];
       //   for (let i of Object.keys(listings)) {
@@ -35,30 +41,41 @@ const resolvers = {
       // }
       // return listings
       const listingAvailability = await Promise.all(
-        listings.map((listing) =>
+        listings.map(listing =>
           dataSources.bookingsAPI.isListingAvailable({
             listingId: listing.id,
             checkInDate,
-            checkOutDate,
+            checkOutDate
           })
         )
-      );
+      )
       //fitler listings data based on availablity
       const filteredListings = listings.filter((listing, index) => {
-        return listingAvailability[index];
-      }
-      );
-      return filteredListings;
-      },
-    
+        return listingAvailability[index]
+      })
+      return filteredListings
+    }
   },
 
   Mutation: {
-    createListing: async (_, { listing }, { dataSources, userId, userRole }) => {
+    createListing: async (
+      _,
+      { listing },
+      { dataSources, userId, userRole }
+    ) => {
       if (!userId) throw AuthenticationError()
-      if (userRole === "Guest") {
+      if (userRole === 'Guest') {
         throw Error(`you do not have right to create a listing`)
       }
+      const {
+        title,
+        description,
+        photoThumbnail,
+        numOfBeds,
+        costPerNight,
+        locationType,
+        amenities
+      } = listing
       try {
         const newListing = await dataSources.listingsAPI.createListing({
           title,
@@ -68,49 +85,46 @@ const resolvers = {
           costPerNight,
           hostId: userId,
           locationType,
-          amenities,
-        });
+          amenities
+        })
 
         return {
           code: 200,
           success: true,
-          message: "Listing successfully created!",
-          listing: newListing,
-        };
+          message: 'Listing successfully created!',
+          listing: newListing
+        }
       } catch (err) {
-        console.log(err);
+        console.log(err)
         return {
           code: 400,
           success: false,
-          message: err.message,
+          message: err.message
         }
       }
-
-
     }
-
-
   },
   updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
     //check user role and id
     if (!userId) throw AuthenticationError()
     if (!listingId) throw Error('the listing is not existing')
     try {
-      let updatedListing = await dataSources.listingsAPI.updateListing({ ...listing });
+      let updatedListing = await dataSources.listingsAPI.updateListing({
+        ...listing
+      })
       return {
         code: 201,
         success: true,
         message: 'successfully updated',
         updatedListing
       }
-
+      //       return {code : 503 ,success :false}
     } catch (error) {
       return {
-        code: 400,
+        code: 503,
         success: false,
-        message: "error.message"
+        message: error.message
       }
-
     }
   },
   Listing: {
@@ -120,40 +134,46 @@ const resolvers = {
     host: ({ hostId }) => {
       return { id: hostId }
     },
-    totalCost: async ({id}, {checkInDate, checkOutDate }, { dataSources }) => {
-      const { cost } = await dataSources.listingsAPI.getTotalCost({ id, checkInDate, checkOutDate });
+    totalCost: async (
+      { id },
+      { checkInDate, checkOutDate },
+      { dataSources }
+    ) => {
+      const { cost } = await dataSources.listingsAPI.getTotalCost({
+        id,
+        checkInDate,
+        checkOutDate
+      })
       return cost
     },
     amenities: async ({ id }, _, { dataSources }) => {
-      const amenityList = await dataSources.listingsAPI.getListing(id);
+      const amenityList = await dataSources.listingsAPI.getListing(id)
       return amenityList.amenities
-
     },
     currentlyBookedDates: ({ id }, _, { dataSources }) => {
       return dataSources.bookingsAPI.getCurrentlyBookedDateRangesForListing(id)
     },
     bookings: ({ id }, _, { dataSources }) => {
-      console.log("BOOKINGS", args, "LIMIT", limit);
+      console.log('BOOKINGS', args, 'LIMIT', limit)
       return dataSources.bookingsAPI.getBookingsForListing(id)
     },
     numberOfUpcomingBookings: async ({ id }, _, { dataSources }) => {
-      const numberOfUpComingBooking = await dataSources.bookingsAPI.getBookingsForListing(id, "UPCOMING") || []
+      const numberOfUpComingBooking =
+        (await dataSources.bookingsAPI.getBookingsForListing(id, 'UPCOMING')) ||
+        []
       return numberOfUpComingBooking.length
     },
-    coordinates: ({id}, _,{ dataSources }) => {
-      //console.log("COORDINATES");
-      return dataSources.listingsAPI.getListingCoordinates(id)(listing.id)
+    coordinates: (listing, { dataSources }) => {
+      return dataSources.listingsAPI.getListingCoordinates(listing.id)
     },
     AmenityCategory: {
-      ACCOMMODATION_DETAILS: "Accommodation Details",
-      SPACE_SURVIVAL: "Space survival",
-      OUTDOORS: "Outdoors"
+      ACCOMMODATION_DETAILS: 'Accommodation Details',
+      SPACE_SURVIVAL: 'Space survival',
+      OUTDOORS: 'Outdoors'
     },
-
-
     reviews: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getAllReviewsByListingID(id);
+      return dataSources.reviewsAPI.getAllReviewsByListingID(id)
     }
   }
-};
-export default resolvers;
+}
+export default resolvers

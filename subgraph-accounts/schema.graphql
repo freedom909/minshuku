@@ -1,9 +1,11 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.4",
-        import: ["@key","@shareable"])
-        
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.4"
+    import: ["@key", "@shareable"]
+  )
+
 type Query {
-   ### User accounts
+  ### User accounts
   user(id: ID!): User @shareable
   "Currently logged-in user"
   me: User! @shareable
@@ -13,9 +15,9 @@ type Query {
 interface User {
   id: ID!
   "The user's first and last name"
-  name: String! 
+  name: String!
   "The user's profile photo URL"
-  profilePicture: String! 
+  profilePicture: String!
 }
 
 type Host implements User @key(fields: "id") {
@@ -26,33 +28,34 @@ type Host implements User @key(fields: "id") {
   profilePicture: String! @shareable
   "The host's profile bio description, will be shown in the listing"
   profileDescription: String! @shareable
+  "Where the host is primarily located"
+  coordinates: GalacticCoordinates
 }
 
-type Guest implements User @key(fields:"id") {
+type Guest implements User @key(fields: "id") {
   id: ID!
   "The user's first and last name"
   name: String! @shareable
   "The user's profile photo URL"
   profilePicture: String! @shareable
-
 }
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int! 
+  code: Int!
   "Indicates whether the mutation was successful"
-  success: Boolean! 
+  success: Boolean!
   "Human-readable message for the UI"
-  message: String! 
+  message: String!
 }
 
 "The response after updating a profile"
 type UpdateProfileResponse implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int! 
+  code: Int!
   "Indicates whether the mutation was successful"
-  success: Boolean! 
+  success: Boolean!
   "Human-readable message for the UI"
-  message: String! 
+  message: String!
   "Updated user"
   user: User @shareable
 }
@@ -60,14 +63,21 @@ type UpdateProfileResponse implements MutationResponse {
 "Fields that can be updated"
 input UpdateProfileInput {
   "The user's first and last name"
-  name: String 
+  name: String
   "The user's profile photo URL"
-  profilePicture: String 
+  profilePicture: String
   "The host's profile bio description, will be shown in the listing"
-  profileDescription: String 
+  profileDescription: String
+}
+
+type GalacticCoordinates @shareable {
+  latitude: Float!
+  longitude: Float!
+  nickname: String
 }
 
 type Mutation {
   "Updates the logged-in user's profile information"
-  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
+  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse!
+    @shareable
 }

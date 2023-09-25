@@ -11,6 +11,8 @@ import errors from '../utils/errors.js';
 const {AuthenticationError}=errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
+import BookingsAPI from '../subgraph-listings/datasources/bookings.js';
+import ListingsAPI from '../subgraph-bookings/datasources/listings.js';
 
 async function startApolloServer() {
   const server = new ApolloServer({
@@ -39,12 +41,12 @@ async function startApolloServer() {
           userInfo = { userId: data.id, userRole: data.role };
         }
 
-        const { cache } = server;
-
         return {
           ...userInfo,
           dataSources: {
-            // TODO: add data sources here
+           reviewsApi:new ReviewsAPI(),
+           bookingsApi:new BookingsAPI(),
+           listingsApi:new ListingsAPI()
           },
         };
       },

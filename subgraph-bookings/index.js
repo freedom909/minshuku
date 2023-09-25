@@ -1,27 +1,35 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
-
+import {
+  ApolloServerPluginLandingPageLocalDefault,
+  ApolloServerPluginLandingPageProductionDefault 
+} from '@apollo/server/plugin/landingPage/default';
 import { readFileSync } from 'fs';
 import axios from 'axios';
 import  get  from 'axios';
 import gql from 'graphql-tag';
-
-import errors from '../utils/errors.js';
-const {AuthenticationError} = errors
-
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
 import BookingsAPI from './datasources/bookings.js';
-import ListingsAPI from './datasources/listings.js';
+// import ListingsAPI from './datasources/listings.js';
+import errors from '../utils/errors.js';
 
+const {AuthenticationError} = errors
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+
+let plugins = [];
+if (process.env.NODE_ENV === 'production') {
+  plugins = [ApolloServerPluginLandingPageProductionDefault({ embed: true, graphRef: 'myGraph@prod' })]
+} else {
+  plugins = [ApolloServerPluginLandingPageLocalDefault({ embed: true })]
+}
 
 async function startApolloServer() {
   const server = new ApolloServer({
     schema: buildSubgraphSchema({
       typeDefs,
       resolvers,
-      introspection: true,
+      plugins
     }),
   });
 
@@ -49,7 +57,8 @@ async function startApolloServer() {
           dataSources: {
             // TODO: add data sources here
             bookingsAPI:new BookingsAPI(),
-            listingsAPI:new ListingsAPI()
+            paymentsAPI:new paymentsAPI()
+            // listingsAPI:new ListingsAPI()
           },
         };
       },

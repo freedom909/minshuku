@@ -13,6 +13,7 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
 import BookingsAPI from './datasources/bookings.js';
 import ListingsAPI from './datasources/listings.js';
+import PaymentsAPI from '../subgraph-bookings/datasources/payments.js';
 
 async function startApolloServer() {
   const server = new ApolloServer({
@@ -46,6 +47,7 @@ async function startApolloServer() {
           dataSources: {
             listingsAPI: new ListingsAPI(),
             bookingsAPI: new BookingsAPI(),
+            paymentsAPI:new PaymentsAPI()
           },
         };
       },
