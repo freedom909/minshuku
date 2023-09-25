@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "seed":"node prisma/seeders/seed.js"
+    "seed":"node prisma/seeders/seed.js",
+    "booking:update": "node ../../services/bookings/update_booking_status.js"
   },
   "keywords": [],
   "author": "",

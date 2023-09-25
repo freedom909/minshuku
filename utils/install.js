@@ -1,5 +1,6 @@
-const { exec } = require('child_process');
-const path = require('path');
+import { exec } from 'child_process';
+import { resolve as _resolve,dirname } from 'path';
+import { fileURLToPath } from "url";
 
 async function installService(command, name, cwd, prefixColor) {
   return new Promise((resolve, reject) => {
@@ -22,13 +23,14 @@ async function installService(command, name, cwd, prefixColor) {
     });
   });
 }
-
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const port = process.env.PORT;
 async function main() {
   try {
-    const reviews = installService('npm install', 'reviews', path.resolve(__dirname,  '../services/reviews'), 'yellow');
-    const accounts = installService('npm install', 'accounts', path.resolve(__dirname, '../services/accounts'), 'blue');
-   const listings = installService('npm install', 'listings', path.resolve(__dirname, '../services/listings'), 'magenta');
-    const bookings = installService('npm install', 'bookings', path.resolve(__dirname, '../services/bookings'), 'green');
+    const reviews = installService('npm install', 'reviews', _resolve(__dirname,  '../services/reviews'), 'yellow');
+    const accounts = installService('npm install', 'accounts', _resolve(__dirname, '../services/accounts'), 'blue');
+   const listings = installService('npm install', 'listings', _resolve(__dirname, '../services/listings'), 'magenta');
+    const bookings = installService('npm install', 'bookings', _resolve(__dirname, '../services/bookings'), 'green');
 
 
     await Promise.all([accounts, listings, bookings, reviews]);

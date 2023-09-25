@@ -1,4 +1,4 @@
-const { GraphQLError } = require('graphql');
+import { GraphQLError } from 'graphql';
 
 const AuthenticationError = () => {
   const authErrMessage = '*** you must be logged in ***';
@@ -17,4 +17,4 @@ const ForbiddenError = (errMessage) => {
   });
 };
 
-module.exports = { AuthenticationError, ForbiddenError };
+export default { AuthenticationError, ForbiddenError };

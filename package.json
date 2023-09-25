@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "launch": "node utils/launch.js",
     "install-services": "node utils/install.js",
@@ -19,6 +20,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "graphql": "^16.8.0"
+    "graphql": "^16.8.0",
+    "path": "^0.12.7",
+    "url": "^0.11.3"
   }
 }

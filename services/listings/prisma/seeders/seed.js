@@ -1,8 +1,8 @@
-const { PrismaClient } = require('@prisma/client');
-const {v4:uuidv4}=require('uuid')
-const listings = require('./listings.json');
-const amenities = require('./amenities.json');
-const listingAmenities = require('./listingamenities.json');
+import { PrismaClient } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
+import listings from './listings.json';
+import amenities from './amenities.json';
+import listingAmenities from './listingamenities.json';
 
 const prisma = new PrismaClient();
 

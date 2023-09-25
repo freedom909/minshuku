@@ -1,40 +1,13 @@
 
-const { v4: uuidv4 } = require("uuid");
-const { format } = require("date-fns");
-const Sequelize = require("sequelize");
-const Booking = require("../../services/bookings/models/booking");
-
+import { v4 as uuidv4 } from "uuid";
+import { format } from "date-fns";
+import { PrismaClient } from "@prisma/client";
 
 class BookingsAPI {
   constructor() {
-    const db = this.initializeSequelizeDb();
-    this.db = db;
+    const prisma=new PrismaClient()
   }
 
-  initializeSequelizeDb() {
-    const config = {
-      username: "root",
-      password: null,
-      database: "bookings",
-      dialect: "sqlite",
-      storage: "./../../services/bookings/bookings.db", 
-      //path to the bookings database file, relative to where this datasource is initialized,
-      logging: false, // set this to true if you want to see logging output in the terminal console
-    };
-    const sequelize = new Sequelize(
-      config.database,
-      config.username,
-      config.password,
-      config
-    );
-
-    const db = {};
-    db.Booking = Booking(sequelize, Sequelize.DataTypes);
-    db.sequelize = sequelize;
-    db.Sequelize = Sequelize;
-
-    return db;
-  }
 
   // helper
   getHumanReadableDate(date) {
@@ -42,7 +15,7 @@ class BookingsAPI {
   }
 
   async getBooking(bookingId) {
-    const booking = await this.db.Booking.findByPk(bookingId);
+    const booking = await prisma.booking.findByPk(bookingId);
     return booking;
   }
 
@@ -51,7 +24,7 @@ class BookingsAPI {
     if (status) {
       filterOptions.status = status;
     }
-    const bookings = await this.db.Booking.findAll({
+    const bookings = await prisma.booking.findAll({
       where: { ...filterOptions },
     });
     return bookings.map((b) => b.dataValues);
@@ -62,14 +35,14 @@ class BookingsAPI {
     if (status) {
       filterOptions.status = status;
     }
-    const bookings = await this.db.Booking.findAll({
+    const bookings = await prisma.booking.findMany({
       where: { ...filterOptions },
     });
     return bookings.map((b) => b.dataValues);
   }
 
   async getGuestIdForBooking(bookingId) {
-    const { guestId } = await this.db.Booking.findOne({
+    const { guestId } = await prisma.booking.findOne({
       where: { id: bookingId },
       attributes: ["guestId"],
     });
@@ -78,7 +51,7 @@ class BookingsAPI {
   }
 
   async getListingIdForBooking(bookingId) {
-    const { listingId } = await this.db.Booking.findOne({
+    const { listingId } = await prisma.booking.findOne({
       where: { id: bookingId },
       attributes: ["listingId"],
     });
@@ -88,9 +61,9 @@ class BookingsAPI {
 
   // using the checkInDate and checkOutDate, return true if listing is available and false if not
   async isListingAvailable({ listingId, checkInDate, checkOutDate }) {
-    const { between, or } = this.db.Sequelize.Op;
+  
 
-    const bookings = await this.db.Booking.findAll({
+    const bookings = await prisma.booking.findMany({
       where: {
         listingId: listingId,
         [or]: [
@@ -107,7 +80,7 @@ class BookingsAPI {
   async getCurrentlyBookedDateRangesForListing(listingId) {
     const { between, or } = this.db.Sequelize.Op;
 
-    const bookings = await this.db.Booking.findAll({
+    const bookings = await prisma.booking.findMany({
       where: {
         listingId: listingId,
         [or]: [{ status: "UPCOMING" }, { status: "CURRENT" }],
@@ -155,4 +128,4 @@ class BookingsAPI {
   }
 }
 
-module.exports = BookingsAPI;
+export default BookingsAPI;

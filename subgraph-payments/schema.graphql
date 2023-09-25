@@ -3,12 +3,12 @@ extend schema
         import: ["@key","@shareable"])
         
 type Query {
-  payment:Int
+  payment:Int @shareable
 }
 
 type Mutation {
   ### wallet
-  addFundsToWallet(amount:Float!):addFundsToWalletResponse!
+  addFundsToWallet(amount:Float!):addFundsToWalletResponse! @shareable
 }
 
 interface User {
@@ -16,7 +16,6 @@ interface User {
   id : ID!
   name:String!
 }
-
 
 interface MutationResponse {
   code: Int!
@@ -32,7 +31,7 @@ type addFundsToWalletResponse implements MutationResponse{
   "Human-readable message for the UI"
   message: String!
   "Updated wallet amount"
-  amount: Float 
+  amount: Float  @shareable
 }
 
 type Guest implements User @key(fields:"id"){

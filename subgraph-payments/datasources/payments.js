@@ -1,4 +1,4 @@
-const { RESTDataSource } = require("@apollo/datasource-rest");
+import { RESTDataSource } from "@apollo/datasource-rest";
 
 class PaymentsAPI extends RESTDataSource {
     constructor() {
@@ -16,4 +16,4 @@ subtractFunds({userId,amount}){
     return this.patch(`wallet/${userId}/subtract`,{body:{amount}})
 }
 }
-module.exports=PaymentsAPI;
+export defaultPaymentsAPI;

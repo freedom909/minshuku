@@ -1,6 +1,9 @@
 
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import { resolve as _resolve,dirname } from 'path';
+import { fileURLToPath } from "url";
+
+
 
 async function startService(command, name, cwd, prefixColor) {
   return new Promise((resolve, reject) => {
@@ -24,11 +27,12 @@ async function startService(command, name, cwd, prefixColor) {
   });
 }
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 async function main() {
   try {
-    const accounts = startService('npm start', 'accounts', path.resolve(__dirname, '../services/accounts'), 'blue');
-    const listings = startService('npm start', 'listings', path.resolve(__dirname, '../services/listings'), 'magenta');
-    const bookings = startService('npm run booking:update', 'bookings', path.resolve(__dirname, '../services/bookings'), 'green');
+    const accounts = startService('npm start', 'accounts', _resolve(__dirname, '../services/accounts'), 'blue');
+    const listings = startService('npm start', 'listings', _resolve(__dirname, '../services/listings'), 'magenta');
+    const bookings = startService('npm run booking:update', 'bookings', _resolve(__dirname, '../services/bookings'), 'green');
 
     await Promise.all([accounts, listings, bookings]);
 

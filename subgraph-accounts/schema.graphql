@@ -38,22 +38,21 @@ type Guest implements User @key(fields:"id") {
 }
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! 
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! 
   "Human-readable message for the UI"
-  message: String!
+  message: String! 
 }
-
 
 "The response after updating a profile"
 type UpdateProfileResponse implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! 
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! 
   "Human-readable message for the UI"
-  message: String!
+  message: String! 
   "Updated user"
   user: User @shareable
 }
@@ -63,12 +62,12 @@ input UpdateProfileInput {
   "The user's first and last name"
   name: String 
   "The user's profile photo URL"
-  profilePicture: String
+  profilePicture: String 
   "The host's profile bio description, will be shown in the listing"
-  profileDescription: String
+  profileDescription: String 
 }
 
 type Mutation {
   "Updates the logged-in user's profile information"
-  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse!
+  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
 }

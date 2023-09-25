@@ -1,15 +1,16 @@
-const { ApolloServer } = require('@apollo/server');
-const { startStandaloneServer } = require('@apollo/server/standalone');
-const { buildSubgraphSchema } = require('@apollo/subgraph');
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { buildSubgraphSchema } from '@apollo/subgraph';
 
-const { readFileSync } = require('fs');
-const axios = require('axios');
-const gql = require('graphql-tag');
+import { readFileSync } from 'fs';
+import axios from 'axios';
+import get  from 'axios';
+import gql from 'graphql-tag';
 
-const { AuthenticationError } = require('./utils/errors');
-
+import errors from '../utils/errors.js';
+const {AuthenticationError}=errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-const resolvers = require('./resolvers');
+import resolvers from './resolvers.js';
 
 async function startApolloServer() {
   const server = new ApolloServer({
@@ -30,8 +31,7 @@ async function startApolloServer() {
 
         let userInfo = {};
         if (userId) {
-          const { data } = await axios
-            .get(`http://localhost:4011/login/${userId}`)
+          const { data } = await get(`http://localhost:4011/login/${userId}`)
             .catch((error) => {
               throw AuthenticationError();
             });

@@ -1,7 +1,7 @@
-const { AuthenticationError, ForbiddenError } = require('./utils/errors');
+import errors from '../utils/errors.js';
+const { AuthenticationError, ForbiddenError }=errors
 
-const resolvers = {
-  
+const resolvers = { 
   Query: {
     payment:()=>123456
   },
@@ -43,4 +43,4 @@ Guest:{
 }
 }
 
-module.exports = resolvers;
+export default resolvers;

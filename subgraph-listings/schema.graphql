@@ -12,18 +12,18 @@ type Query {
   "Returns all possible amenities for a listing"
   listingAmenities : [Amenity!]! @shareable
   "Search results for listings that fit the criteria provided"
-  searchListings(criteria: SearchListingsInput!) : [Listing]! @shareable
+  searchListings(criteria: SearchListingsInput!) : [Listing]!@shareable
 }
 
 type Mutation {
   ### Listings
   "Creates a new listing for the currently authenticated host"
-  createListing(listing: CreateListingInput!): CreateListingResponse!
+  createListing(listing: CreateListingInput!): CreateListingResponse! @shareable
   "Updates an existing listing"
   updateListing(
     listingId: ID!
     listing: UpdateListingInput!
-  ): UpdateListingResponse!
+  ): UpdateListingResponse! @shareable
 }
 
 interface MutationResponse {
@@ -73,25 +73,25 @@ input UpdateListingInput {
 
 type CreateListingResponse implements MutationResponse{
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! 
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! 
   "Human-readable message for the UI"
-  message: String!
+  message: String! 
   "The newly created listing"
-  listing: Listing 
+  listing: Listing @shareable
   }
 
 "Response after updating a listing"
 type UpdateListingResponse implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! 
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! 
   "Human-readable message for the UI"
-  message: String!
+  message: String! 
   "The newly updated listing"
-  listing: Listing
+  listing: Listing @shareable
 }
 
 "A booking is reserved for a certain date range, marked by the checkInDate and checkOutDate fields"

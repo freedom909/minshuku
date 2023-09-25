@@ -1,4 +1,4 @@
-const { RESTDataSource } = require('@apollo/datasource-rest');
+import { RESTDataSource } from '@apollo/datasource-rest';
 class AccountsAPI extends RESTDataSource {
     baseURL = 'http://localhost:4011/';
 
@@ -13,4 +13,4 @@ class AccountsAPI extends RESTDataSource {
         return this.get(`user/${userId}`)
     }
 }
-module.exports = AccountsAPI
+export default AccountsAPI

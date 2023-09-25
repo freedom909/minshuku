@@ -1,4 +1,4 @@
-const { RESTDataSource } = require("@apollo/datasource-rest");
+import { RESTDataSource } from "@apollo/datasource-rest";
 
 class ListingsAPI extends RESTDataSource {
   constructor() {
@@ -43,4 +43,4 @@ class ListingsAPI extends RESTDataSource {
   }
 }
 
-module.exports = ListingsAPI;
+export default ListingsAPI;

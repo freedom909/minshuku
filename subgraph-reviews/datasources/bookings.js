@@ -1,7 +1,7 @@
-const { v4: uuidv4 } = require("uuid");
-const { format } = require("date-fns");
-const Sequelize = require("sequelize");
-const Booking = require("../../services/bookings/models/booking");
+import { v4 as uuidv4 } from "uuid";
+import { format } from "date-fns";
+import Sequelize, { DataTypes } from "sequelize";
+import Booking from "../../services/bookings/models/booking";
 require('dotenv').config();
 
 class BookingsAPI{
@@ -27,7 +27,7 @@ initializeSequelizeDb() {
     );
 
     const db = {};
-    db.Booking = Booking(sequelize, Sequelize.DataTypes);
+    db.Booking = Booking(sequelize, DataTypes);
     db.sequelize = sequelize;
     db.Sequelize = Sequelize;
 
@@ -151,4 +151,4 @@ initializeSequelizeDb() {
 }
 
 
-module.exports = BookingsAPI;
+export default BookingsAPI;

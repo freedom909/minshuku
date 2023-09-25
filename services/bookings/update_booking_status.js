@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-const prisma=new PrismaClient();
-
-(async () => {
+const prisma = new PrismaClient();
+const update=(async () => {
   try {
     const completedBookings = await prisma.booking.updateMany({
       where: {
@@ -36,4 +35,6 @@ const prisma=new PrismaClient();
     console.error(e);
   }
 })();
+await prisma.$disconnect();
+
 

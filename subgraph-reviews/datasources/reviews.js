@@ -1,7 +1,7 @@
 // TODO: rename file and add datasource code hereconst { v4: uuidv4 } = require('uuid');
-const { v4: uuidv4 } = require("uuid");
-const Sequelize = require("sequelize");
-const Review = require("../../services/reviews/sequelize/models/review");
+import { v4 as uuidv4 } from "uuid";
+import Sequelize, { DataTypes } from "sequelize";
+import Review from "../../services/reviews/sequelize/models/review";
 
 class ReviewsAPI {
   constructor() {
@@ -26,7 +26,7 @@ class ReviewsAPI {
     );
 
     const db = {};
-    db.Review = Review(sequelize, Sequelize.DataTypes);
+    db.Review = Review(sequelize, DataTypes);
     db.sequelize = sequelize;
     db.Sequelize = Sequelize;
 
@@ -131,4 +131,4 @@ class ReviewsAPI {
   }
 }
 
-module.exports = ReviewsAPI;
+export default ReviewsAPI;

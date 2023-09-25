@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "engines": {
     "npm": ">=6.0.0",
     "node": ">=14.0.0"
   },
   "scripts": {
     "start": "nodemon index.js"
-  },
+  }, 
   "nodemonConfig": {
     "ext": "*.js, *.graphql"
   },
@@ -20,14 +21,13 @@
     "@apollo/datasource-rest": "^6.0.1",
     "@apollo/server": "^4.9.1",
     "@apollo/subgraph": "^2.4.12",
+    "@prisma/client": "^5.3.1",
     "axios": "^1.4.0",
     "date-fns": "^2.30.0",
     "graphql": "^16.8.0",
     "graphql-tag": "^2.12.6",
-    "mysql2": "^3.6.0",
     "path": "^0.12.7",
-    "sequelize": "^6.32.1",
-    "sqlite3": "^5.1.6",
+    "prisma": "^5.3.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

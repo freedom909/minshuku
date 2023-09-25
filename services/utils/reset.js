@@ -1,10 +1,10 @@
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import { resolve } from 'path';
 
-const accounts = spawn('npm', ['run', 'db:reset'], { cwd: path.resolve(__dirname, '../services/accounts') });
-const listings = spawn('npm', ['run', 'db:reset'], { cwd: path.resolve(__dirname, '../services/listings') });
-const bookings = spawn('npm', ['run', 'db:reset'], { cwd: path.resolve(__dirname, '../services/bookings') });
-const reviews = spawn('npm', ['run', 'db:reset'], { cwd: path.resolve(__dirname, '../services/reviews') });
+const accounts = spawn('npm', ['run', 'db:reset'], { cwd: resolve(__dirname, '../services/accounts') });
+const listings = spawn('npm', ['run', 'db:reset'], { cwd: resolve(__dirname, '../services/listings') });
+const bookings = spawn('npm', ['run', 'db:reset'], { cwd: resolve(__dirname, '../services/bookings') });
+const reviews = spawn('npm', ['run', 'db:reset'], { cwd: resolve(__dirname, '../services/reviews') });
 
 accounts.stdout.on('data', (data) => {
   console.log(`accounts stdout:\n${data}`);

@@ -1,6 +1,7 @@
-const { AuthenticationError, ForbiddenError } = require('./utils/errors')
-const { dataSources } = require('./datasources/accounts')
-
+import errors from '../utils/errors.js'
+const { AuthenticationError, ForbiddenError } =errors
+import d from './datasources/accounts.js'
+const { dataSources } =d
 const resolvers = {
   // TODO: fill in resolvers
   Query: {
@@ -58,4 +59,4 @@ const resolvers = {
   }
 }
 
-module.exports = resolvers;
+export default resolvers;

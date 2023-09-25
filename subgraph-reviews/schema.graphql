@@ -3,13 +3,13 @@ extend schema
         
 type Mutation {
   "Creates a review for the guest - must be authored by host of past booking"
-  submitGuestReview(guestReview: ReviewInput!, bookingId : ID!) : SubmitGuestReviewResponse!
+  submitGuestReview(guestReview: ReviewInput!, bookingId : ID!) : SubmitGuestReviewResponse! @shareable
   # Creates a review for the host - can only be created if user is authorised to do so (i.e. has role 'HOST')
   submitHostAndLocationReviews(
     bookingId: ID!
-    hostReview: ReviewInput!
-    locationReview: ReviewInput!
-  ): SubmitHostAndLocationReviewsResponse!
+    hostReview: ReviewInput! 
+    locationReview: ReviewInput! 
+  ): SubmitHostAndLocationReviewsResponse! @shareable
 }
 
 ### Reviews
@@ -17,9 +17,9 @@ type Mutation {
 type Review @key(fields:"id"){
   id: ID!
   "The numerical rating for the review target, on a scale of 1-5, with 5 being excellent."
-  rating: Float!
-  text: String!
-  author: User!
+  rating: Float! @shareable
+  text: String! @shareable
+  author: User! @shareable
 }
 
 "ReviewInput is the bare minimum needed to submit a review, not tied to any target."
@@ -37,9 +37,9 @@ type SubmitHostAndLocationReviewsResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String!
   "Newly created review about the host"
-  hostReview: Review
+  hostReview: Review @shareable
   "Newly created review about the location"
-  locationReview: Review
+  locationReview: Review @shareable
 }
 
 "The response after submitting reviews for a guest."
@@ -51,7 +51,7 @@ type SubmitGuestReviewResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String!
   "Newly created review about the guest"
-  guestReview: Review
+  guestReview: Review @shareable
 }
 
 interface MutationResponse {
@@ -68,18 +68,18 @@ interface MutationResponse {
 type Booking @key(fields:"id"){
   id: ID!
   "The guest's review of the location"
-  locationReview: Review
+  locationReview: Review @shareable
   "The guest's review about the host"
-  hostReview: Review
+  hostReview: Review @shareable
   "The host's review about the guest"
-  guestReview: Review
+  guestReview: Review @shareable
 }
 
 type Listing @key(fields: "id") {
   id: ID!
   reviews: [Review]! @shareable
   "The overall calculated rating for a listing"
-  overallRating: Float
+  overallRating: Float @shareable
 }
 
 #### User accounts
@@ -94,7 +94,7 @@ type Host implements User @key(fields: "id") {
   id: ID!
   name: String! @shareable
   "The overall calculated rating for the host"
-  overallRating: Float
+  overallRating: Float @shareable
 }
 
 "A guest is a type of Airlock user. They book places to stay."
