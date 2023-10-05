@@ -1,8 +1,9 @@
+
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import listings from './listings.json';
-import amenities from './amenities.json';
-import listingAmenities from './listingamenities.json';
+import listings from './listings.json' assert {type:"json"};
+import amenities from './amenities.json'assert { type: 'json' };
+import listingAmenities from './listingamenities.json'assert { type: 'json' };
 
 const prisma = new PrismaClient();
 

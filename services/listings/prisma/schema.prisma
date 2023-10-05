@@ -9,11 +9,11 @@ datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
+
 model Amenity {
   id       String @id @map("_id") 
   category String
   name     String
-  
 }
 
 model Listing {
@@ -26,6 +26,8 @@ model Listing {
   numOfBeds       Int
   photoThumbnail  String
   isFeatured      Boolean?
+  galacticCoordinateId  String?  @unique
+  galacticCoordinate    GalacticCoordinates? @relation(fields: [galacticCoordinateId], references: [id])
 }
 
 model ListingAmenities {
@@ -34,5 +36,10 @@ model ListingAmenities {
   AmenityId String   @map("AmenityId")
 }
 
-
+model GalacticCoordinates {
+  id        String   @id @map("_id") 
+  latitude  Float?
+  longitude Float?
+  listing   Listing? 
+}
 

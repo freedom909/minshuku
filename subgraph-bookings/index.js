@@ -11,7 +11,8 @@ import  get  from 'axios';
 import gql from 'graphql-tag';
 import resolvers from './resolvers.js';
 import BookingsAPI from './datasources/bookings.js';
-// import ListingsAPI from './datasources/listings.js';
+import ListingsAPI from './datasources/listings.js';
+
 import errors from '../utils/errors.js';
 
 const {AuthenticationError} = errors
@@ -57,8 +58,8 @@ async function startApolloServer() {
           dataSources: {
             // TODO: add data sources here
             bookingsAPI:new BookingsAPI(),
-            paymentsAPI:new paymentsAPI()
-            // listingsAPI:new ListingsAPI()
+            
+            listingsAPI:new ListingsAPI()
           },
         };
       },

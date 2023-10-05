@@ -1,0 +1,17 @@
+[
+    {
+        "latitude": 12.34, 
+        "longitude": 56.78
+       
+    },
+    {
+        "latitude": 90.12, 
+        "longitude": 34.56
+       
+    },
+    {
+        "latitude": 9.12, 
+        "longitude": 3.56
+     
+    }
+]

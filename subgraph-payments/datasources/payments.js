@@ -16,4 +16,4 @@ subtractFunds({userId,amount}){
     return this.patch(`wallet/${userId}/subtract`,{body:{amount}})
 }
 }
-export defaultPaymentsAPI;
+export default PaymentsAPI;
