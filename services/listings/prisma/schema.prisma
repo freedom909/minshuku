@@ -38,8 +38,8 @@ model ListingAmenities {
 
 model GalacticCoordinates {
   id        String   @id @map("_id") 
-  latitude  Float?
-  longitude Float?
+  latitude  Float
+  longitude Float
   listing   Listing? 
 }
 

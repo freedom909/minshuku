@@ -72,8 +72,7 @@ input UpdateProfileInput {
 
 type GalacticCoordinates @shareable {
   latitude: Float!
-  longitude: Float!
-  nickname: String
+  longitude: Float! 
 }
 
 type Mutation {

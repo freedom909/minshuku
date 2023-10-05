@@ -1,11 +1,14 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
+
 import { PrismaClient } from "@prisma/client";
 
+
 class BookingsAPI {
+ 
   constructor() {
-    const prisma=new PrismaClient()
+    this.prisma=new PrismaClient()
   }
 
 
@@ -15,7 +18,11 @@ class BookingsAPI {
   }
 
   async getBooking(bookingId) {
-    const booking = await prisma.booking.findByPk(bookingId);
+    const booking = await this.prisma.booking.findUnique({
+      where:{
+        id: bookingId
+      }
+    });
     return booking;
   }
 
@@ -24,7 +31,7 @@ class BookingsAPI {
     if (status) {
       filterOptions.status = status;
     }
-    const bookings = await prisma.booking.findAll({
+    const bookings = await this.prisma.booking.findMany({
       where: { ...filterOptions },
     });
     return bookings.map((b) => b.dataValues);
@@ -35,14 +42,14 @@ class BookingsAPI {
     if (status) {
       filterOptions.status = status;
     }
-    const bookings = await prisma.booking.findMany({
+    const bookings = await this.prisma.booking.findMany({
       where: { ...filterOptions },
     });
     return bookings.map((b) => b.dataValues);
   }
 
   async getGuestIdForBooking(bookingId) {
-    const { guestId } = await prisma.booking.findOne({
+    const { guestId } = await this.prisma.booking.findOne({
       where: { id: bookingId },
       attributes: ["guestId"],
     });
@@ -51,7 +58,7 @@ class BookingsAPI {
   }
 
   async getListingIdForBooking(bookingId) {
-    const { listingId } = await prisma.booking.findOne({
+    const { listingId } = await this.prisma.booking.findOne({
       where: { id: bookingId },
       attributes: ["listingId"],
     });
@@ -63,7 +70,7 @@ class BookingsAPI {
   async isListingAvailable({ listingId, checkInDate, checkOutDate }) {
   
 
-    const bookings = await prisma.booking.findMany({
+    const bookings = await this.prisma.booking.findMany({
       where: {
         listingId: listingId,
         [or]: [
@@ -80,7 +87,7 @@ class BookingsAPI {
   async getCurrentlyBookedDateRangesForListing(listingId) {
     const { between, or } = this.db.Sequelize.Op;
 
-    const bookings = await prisma.booking.findMany({
+    const bookings = await this.prisma.booking.findMany({
       where: {
         listingId: listingId,
         [or]: [{ status: "UPCOMING" }, { status: "CURRENT" }],

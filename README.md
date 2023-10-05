@@ -12,15 +12,16 @@ The course will walk you through step by step how to turn this monolithic graph 
 
 To get started:
 
-In a terminal window, navigate to the `monolith` directory.
+In a terminal window, navigate to the `air0` directory.
 
 1. Run `npm install`.
-1. Run `npm start`.
+1. Run `npm run launch`.
 
-This will start the GraphQL API server on [http://localhost:4000](http://localhost:4000)
+This will start the GraphQL API server on [http://localhost:4010](http://localhost:4010) and 4011
 
-Next, let's run some local services.
+Next, let's run some subgraph such as subgraph-accounts.
 
+If you need more, please read  [accompanying Odyssey course](https://www.apollographql.com/tutorials/voyage-part2/monolith-graph-setup).
 1. In a new terminal window, still in the `monolith` directory, run `npm run launch`. This will run 4 local services, which you can learn about in the [accompanying Odyssey course](https://www.apollographql.com/tutorials/voyage-part2/monolith-graph-setup).
 
 ### Resetting the database

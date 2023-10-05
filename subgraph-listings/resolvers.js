@@ -163,17 +163,15 @@ const resolvers = {
         []
       return numberOfUpComingBooking.length
     },
-    coordinates: (listing, { dataSources }) => {
-      return dataSources.listingsAPI.getListingCoordinates(listing.id)
+    coordinates: ({id}, _,{ dataSources }) => {
+      return dataSources.listingsAPI.getListingCoordinates(id)
     },
     AmenityCategory: {
       ACCOMMODATION_DETAILS: 'Accommodation Details',
       SPACE_SURVIVAL: 'Space survival',
       OUTDOORS: 'Outdoors'
     },
-    reviews: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getAllReviewsByListingID(id)
-    }
+   
   }
 }
 export default resolvers
