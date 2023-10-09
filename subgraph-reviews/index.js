@@ -11,8 +11,9 @@ import errors from '../utils/errors.js';
 const {AuthenticationError}=errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
-import BookingsAPI from '../subgraph-listings/datasources/bookings.js';
-import ListingsAPI from '../subgraph-bookings/datasources/listings.js';
+import BookingsAPI from './datasources/bookings.js';
+import ListingsAPI from './datasources/listings.js'
+import ReviewsAPI from './datasources/reviews.js'
 
 async function startApolloServer() {
   const server = new ApolloServer({

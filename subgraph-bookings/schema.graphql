@@ -6,12 +6,12 @@ type Query {
   ### Bookings
   "All bookings for the given listing, optionally filtered by a BookingStatus"
   bookingsForListing(listingId: ID!, status: BookingStatus) : [Booking]! @shareable
-  "All bookings for the given guest, optionally filtered by a BookingStatus"
+  # "All bookings for the given guest, optionally filtered by a BookingStatus"
   "Current booking for guest based on current date"
   currentGuestBooking: Booking
   "Upcoming and current bookings for guest based on current date"
   upcomingGuestBookings: [Booking]!  @shareable
-  "Past bookings for guest based on current date"
+   "Past bookings for guest based on current date"
   pastGuestBookings: [Booking]!  @shareable
   "A list of bookings for the guest - must be authenticated as guest"
   guestBookings: [Booking]! @shareable

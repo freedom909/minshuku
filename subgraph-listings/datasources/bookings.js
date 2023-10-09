@@ -1,17 +1,12 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
-
-import { PrismaClient } from "@prisma/client";
-
-
+import { PrismaClient } from '../node_modules/generated/client/edge'
+//  import {PrismaClient} from '@prisma/client';
 class BookingsAPI {
- 
   constructor() {
     this.prisma=new PrismaClient()
   }
-
-
   // helper
   getHumanReadableDate(date) {
     return format(date, "MMM d, yyyy");
@@ -85,22 +80,20 @@ class BookingsAPI {
 
   // returns an array of dates that are booked for the listing (upcoming and current)
   async getCurrentlyBookedDateRangesForListing(listingId) {
-    const { between, or } = this.db.Sequelize.Op;
-
     const bookings = await this.prisma.booking.findMany({
       where: {
         listingId: listingId,
-        [or]: [{ status: "UPCOMING" }, { status: "CURRENT" }],
+        OR: [{ status: "UPCOMING" }, { status: "CURRENT" }],
       },
-      attributes: ["checkInDate", "checkOutDate"],
+      select: {
+        checkInDate: true,
+        checkOutDate: true,
+      },
     });
-
-    const bookingsWithDates = bookings.map((b) => ({
-      checkInDate: b.checkInDate,
-      checkOutDate: b.checkOutDate,
-    }));
-    return bookingsWithDates;
+  
+    return bookings;
   }
+  
 
   async createBooking({
     listingId,
@@ -134,5 +127,6 @@ class BookingsAPI {
     }
   }
 }
-
+new BookingsAPI()
+console.log(new BookingsAPI());
 export default BookingsAPI;

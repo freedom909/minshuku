@@ -46,5 +46,6 @@ class ListingsAPI extends RESTDataSource {
     return this.patch(`listings/${listingId}`, { body: { listing } });
   }
 }
-
+new ListingsAPI()
+console.log(new ListingsAPI());
 export default ListingsAPI;

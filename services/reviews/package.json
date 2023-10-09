@@ -5,14 +5,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "seed":"node prisma/seeders/seed.js"
+    "seed": "node prisma/seeders/seed.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.3.1",
+    "@prisma/client": "^5.4.1",
     "path": "^0.12.7",
-    "prisma": "^5.3.1"
+    "prisma": "^5.4.1"
   }
 }

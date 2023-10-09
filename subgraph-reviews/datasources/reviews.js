@@ -1,113 +1,73 @@
-// TODO: rename file and add datasource code hereconst { v4: uuidv4 } = require('uuid');
-import { v4 as uuidv4 } from "uuid";
-import Sequelize, { DataTypes } from "sequelize";
-import Review from "../../services/reviews/sequelize/models/review";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient()
+
 
 class ReviewsAPI {
   constructor() {
-    const db = this.initializeSequelizeDb();
-    this.db = db;
+    this.prisma = prisma;
   }
-
-  initializeSequelizeDb() {
-    const config = {
-      username: "root",
-      password: null,
-      database: "database_development",
-      dialect: "sqlite",
-      storage: "./../services/reviews/reviews.db", // path to the reviews database file, relative to where this datasource is initialized
-      logging: false, // set this to true if you want to see logging output in the terminal console
-    };
-    const sequelize = new Sequelize(
-      config.database,
-      config.username,
-      config.password,
-      config
-    );
-
-    const db = {};
-    db.Review = Review(sequelize, DataTypes);
-    db.sequelize = sequelize;
-    db.Sequelize = Sequelize;
-
-    return db;
-  }
-
-
 
   async getReviewsByUser(userId) {
-    return this.db.Review.findAll({ where: { authorId: userId } });
+    return this.prisma.review.findMany({ where: { authorId: userId } });
   }
 
   async getOverallRatingForListing(listingId) {
-    const overallRating = await this.db.Review.findOne({
+    const overallRating = await this.prisma.review.aggregate({
       where: { targetType: "LISTING", targetId: listingId },
-      attributes: [
-        [
-          this.db.sequelize.fn("AVG", this.db.sequelize.col("rating")),
-          "avg_rating",
-        ],
-      ],
+      _avg: { rating: true },
     });
 
-    return overallRating.getDataValue("avg_rating");
+    return overallRating._avg.rating;
   }
 
   async getOverallRatingForHost(hostId) {
-    const overallRating = await this.db.Review.findOne({
+    const overallRating = await this.prisma.review.aggregate({
       where: { targetType: "HOST", targetId: hostId },
-      attributes: [
-        [
-          this.db.sequelize.fn("AVG", this.db.sequelize.col("rating")),
-          "avg_rating",
-        ],
-      ],
+      _avg: { rating: true },
     });
 
-    return overallRating.getDataValue("avg_rating");
+    return overallRating._avg.rating;
   }
 
   async getReviewsForListing(listingId) {
-    const reviews = await this.db.Review.findAll({
+    return this.prisma.review.findMany({
       where: { targetType: "LISTING", targetId: listingId },
     });
-    return reviews;
   }
 
   async getReviewForBooking(targetType, bookingId) {
-    // booking review submitted by guest about a host or a listing
-    const review = await this.db.Review.findOne({
+    return this.prisma.review.findUnique({
       where: { targetType, bookingId },
     });
-    return review;
   }
 
   async createReviewForGuest({ bookingId, guestId, authorId, text, rating }) {
-    const review = await this.db.Review.create({
-      id: uuidv4(),
-      bookingId,
-      targetId: guestId,
-      targetType: "GUEST",
-      authorId,
-      rating,
-      text,
+    return this.prisma.review.create({
+      data: {
+        id: uuidv4(),
+        bookingId,
+        targetId: guestId,
+        targetType: "GUEST",
+        authorId,
+        rating,
+        text,
+      },
     });
-
-    return review;
   }
 
   async createReviewForHost({ bookingId, hostId, authorId, text, rating }) {
-    const review = await this.db.Review.create({
-      id: uuidv4(),
-      bookingId,
-      targetId: hostId,
-      targetType: "HOST",
-      authorId,
-      text,
-      rating,
+    return this.prisma.review.create({
+      data: {
+        id: uuidv4(),
+        bookingId,
+        targetId: hostId,
+        targetType: "HOST",
+        authorId,
+        text,
+        rating,
+      },
     });
-
-    return review;
   }
 
   async createReviewForListing({
@@ -117,17 +77,17 @@ class ReviewsAPI {
     text,
     rating,
   }) {
-    const review = await this.db.Review.create({
-      id: uuidv4(),
-      bookingId,
-      targetId: listingId,
-      targetType: "LISTING",
-      authorId,
-      text,
-      rating,
+    return this.prisma.review.create({
+      data: {
+        id: uuidv4(),
+        bookingId,
+        targetId: listingId,
+        targetType: "LISTING",
+        authorId,
+        text,
+        rating,
+      },
     });
-
-    return review;
   }
 }
 

@@ -22,17 +22,17 @@ const resolvers = {
       }
     },
 
-    currentGuestBooking: async (_, { listing }, { dataSources, userId, userRole }) => {
-      const {listingId,checkInDate,checkOutDate}=listing
-      if (!userId) throw AuthenticationError();
-      if (userRole === 'Guest') {
-        const bookings = await dataSources.bookingsAPI.getCurrentGuestBooking(listingId,checkInDate,checkOutDate)
-        return bookings
-      }
-      else {
-        throw ForbiddenError('Only guests have access to guest bookings')
-      }
-    },
+    // currentGuestBooking: async (_, { listing }, { dataSources, userId, userRole }) => {
+    //   const {listingId,checkInDate,checkOutDate}=listing
+    //   if (!userId) throw AuthenticationError();
+    //   if (userRole === 'Guest') {
+    //     const bookings = await dataSources.bookingsAPI.getCurrentGuestBooking(listingId,checkInDate,checkOutDate)
+    //     return bookings
+    //   }
+    //   else {
+    //     throw ForbiddenError('Only guests have access to guest bookings')
+    //   }
+    // },
 
     guestBookings: async (_, __, { dataSources, userId, userRole }) => {
       if (!userId) throw new AuthenticationError();

@@ -1,121 +1,95 @@
+import { PrismaClient } from '@prisma/client'
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
-import Sequelize, { DataTypes } from "sequelize";
-import Booking from "../../services/bookings/models/booking";
-require('dotenv').config();
 
-class BookingsAPI{
-    constructor(){
-        const db=this.initializeSequelizeDb()
-        this.db=db
-}
-initializeSequelizeDb() {
-    const config = {
-      database: process.env.DB_NAME,
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-     
-      dialect: "mysql",
-   // logging : false //turn off the logs for development purposes only!
-      logging: false, // set this to true if you want to see logging output in the terminal console
-    };
-    const sequelize = new Sequelize(
-      config.database,
-      config.username,
-      config.password,
-      config
-    );
+const prisma = new PrismaClient();
 
-    const db = {};
-    db.Booking = Booking(sequelize, DataTypes);
-    db.sequelize = sequelize;
-    db.Sequelize = Sequelize;
-
-    return db;
-  }
+class BookingsAPI {
  // helper
  getHumanReadableDate(date) {
     return format(date, "MMM d, yyyy");
   }
 
   async getBooking(bookingId) {
-    const booking = await this.db.Booking.findByPk(bookingId);
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+    });
     return booking;
   }
-
   async getBookingsForUser(userId, status) {
     const filterOptions = { guestId: userId };
     if (status) {
       filterOptions.status = status;
     }
-    const bookings = await this.db.Booking.findAll({
+    const bookings = await prisma.booking.findMany({
       where: { ...filterOptions },
     });
-    return bookings.map((b) => b.dataValues);
+    return bookings
   }
   async getBookingsForListing(listingId, status) {
     const filterOptions = { listingId };
     if (status) {
       filterOptions.status = status;
     }
-    const bookings = await this.db.Booking.findAll({
+    const bookings = await prisma.booking.findAll({
       where: { ...filterOptions },
     });
-    return bookings.map((b) => b.dataValues);
+    return bookings
   }
 
   async getGuestIdForBooking(bookingId) {
-    const { guestId } = await this.db.Booking.findOne({
+    const { guestId } = await prisma.booking.findUnique({
       where: { id: bookingId },
-      attributes: ["guestId"],
+      select: { guestId: true },
     });
 
     return guestId;
   }
 
   async getListingIdForBooking(bookingId) {
-    const { listingId } = await this.db.Booking.findOne({
+    const { listingId } = await prisma.booking.findUnique({
       where: { id: bookingId },
-      attributes: ["listingId"],
+      select: { listingId: true },
     });
 
     return listingId;
   }
     // using the checkInDate and checkOutDate, return true if listing is available and false if not
     async isListingAvailable({ listingId, checkInDate, checkOutDate }) {
-        const { between, or } = this.db.Sequelize.Op;
+        const { between, or } =  prisma;
     
-        const bookings = await this.db.Booking.findAll({
+        const bookings = await prisma.booking.findMany({
           where: {
             listingId: listingId,
-            [or]: [
-              { checkInDate: { [between]: [checkInDate, checkOutDate] } },
-              { checkOutDate: { [between]: [checkInDate, checkOutDate] } },
-            ],
+            OR: [{ status: "UPCOMING" }, { status: "CURRENT" }]
           },
+          select: { checkInDate: true, checkOutDate: true },
         });
-    
-        return bookings.length === 0;
+        return bookings.map((b) => ({
+          checkInDate: b.checkInDate,
+          checkOutDate: b.checkOutDate,
+        }));
       }
+    
 
        // returns an array of dates that are booked for the listing (upcoming and current)
   async getCurrentlyBookedDateRangesForListing(listingId) {
-    const { between, or } = this.db.Sequelize.Op;
+    const { between, or } =  prisma;
 
-    const bookings = await this.db.Booking.findAll({
+    const bookings = await prisma.booking.findMany({
       where: {
         listingId: listingId,
-        [or]: [{ status: "UPCOMING" }, { status: "CURRENT" }],
+        OR: [{ status: "UPCOMING" }, { status: "CURRENT" }],
       },
-      attributes: ["checkInDate", "checkOutDate"],
+      select: { checkInDate: true, checkOutDate: true },
     });
 
-    const bookingsWithDates = bookings.map((b) => ({
+    return bookings.map((b) => ({
       checkInDate: b.checkInDate,
       checkOutDate: b.checkOutDate,
     }));
-    return bookingsWithDates;
   }
+
 
   async createBooking({
     listingId,
@@ -127,7 +101,7 @@ initializeSequelizeDb() {
     if (
       await this.isListingAvailable({ listingId, checkInDate, checkOutDate })
     ) {
-      const booking = await this.db.Booking.create({
+      const booking = await prisma.booking.create({
         id: uuidv4(),
         listingId,
         checkInDate,
@@ -149,6 +123,7 @@ initializeSequelizeDb() {
     }
   }
 }
-
+new BookingsAPI()
+console.log(new BookingsAPI());
 
 export default BookingsAPI;

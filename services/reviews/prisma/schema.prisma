@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output = "../../../subgraph-reviews/node_modules/generated/client"
 }
 
 datasource db {
