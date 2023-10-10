@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "postinstall": "npx prisma generate"
+
   },
   "nodemonConfig": {
     "ext": "*.js, *.graphql"
@@ -17,9 +19,14 @@
     "@apollo/datasource-rest": "^6.0.1",
     "@apollo/server": "^4.9.1",
     "@apollo/subgraph": "^2.4.12",
+    "@prisma/client": "^5.4.2",
     "axios": "^1.4.0",
+    "express": "^4.18.2",
     "graphql": "^16.8.0",
-    "graphql-tag": "^2.12.6"
+    "graphql-tag": "^2.12.6",
+    "mongodb": "^6.1.0",
+    "path": "^0.12.7",
+    "prisma": "^5.4.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
