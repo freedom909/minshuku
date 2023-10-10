@@ -2,13 +2,23 @@
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import {PrismaClient} from "@prisma/client"
-
 class BookingsDb {
   constructor() {
     this.prisma = new PrismaClient();
   }
 
-  // helper
+//   async getBookings() {
+//     return await this.prisma.booking.findMany();
+//   }
+// }
+//   // // Create an instance of bookingsAPI
+//   const bookingsDb=new BookingsDb()
+  
+//   // // Call the getReviews method
+//   bookingsDb.getBookings().then((bookings) => console.log(bookings))
+
+
+  helper
   getHumanReadableDate(date) {
     return format(date, 'MMM d, yyyy');
   }

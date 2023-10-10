@@ -58,7 +58,6 @@ async function startApolloServer() {
           dataSources: {
             // TODO: add data sources here
             bookingsAPI:new BookingsAPI(),
-            
             listingsAPI:new ListingsAPI()
           },
         };
