@@ -11,7 +11,7 @@ type Query {
   currentGuestBooking: Booking
   "Upcoming and current bookings for guest based on current date"
   upcomingGuestBookings: [Booking]!  @shareable
-   "Past bookings for guest based on current date"
+  "Past bookings for guest based on current date"
   pastGuestBookings: [Booking]!  @shareable
   "A list of bookings for the guest - must be authenticated as guest"
   guestBookings: [Booking]! @shareable

@@ -12,7 +12,7 @@ The course will walk you through step by step how to turn this monolithic graph 
 
 To get started:
 
-In a terminal window, navigate to the `air0` directory.
+In a terminal window, navigate to the `airLock` directory.
 
 1. Run `npm install`.
 1. Run `npm run launch`.

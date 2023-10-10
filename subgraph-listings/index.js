@@ -1,7 +1,6 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
-
 import { readFileSync } from 'fs';
 import axios from 'axios';
 import  get  from 'axios';
@@ -47,7 +46,6 @@ async function startApolloServer() {
           dataSources: {
             listingsAPI: new ListingsAPI(),
             bookingsAPI: new BookingsAPI(),
-            
           },
         };
       },

@@ -11,15 +11,14 @@ import errors from '../utils/errors.js';
 const {AuthenticationError}=errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
-import BookingsAPI from './datasources/bookings.js';
-import ListingsAPI from './datasources/listings.js'
-import ReviewsAPI from './datasources/reviews.js'
-
+import BookingsAPI from '../subgraph-listings/datasources/bookings.js';
+import ListingsAPI from '../subgraph-bookings/datasources/listings.js';
+import ReviewsAPI from '../subgraph-reviews/datasources/reviews.js';
 async function startApolloServer() {
   const server = new ApolloServer({
     schema: buildSubgraphSchema({
       typeDefs,
-      resolvers,
+      resolvers,      
     }),
   });
 
@@ -31,7 +30,6 @@ async function startApolloServer() {
       context: async ({ req }) => {
         const token = req.headers.authorization || '';
         const userId = token.split(' ')[1]; // get the user name after 'Bearer '
-
         let userInfo = {};
         if (userId) {
           const { data } = await get(`http://localhost:4011/login/${userId}`)
@@ -45,9 +43,9 @@ async function startApolloServer() {
         return {
           ...userInfo,
           dataSources: {
-           reviewsApi:new ReviewsAPI(),
-           bookingsApi:new BookingsAPI(),
-           listingsApi:new ListingsAPI()
+           reviewsAPI:new ReviewsAPI(),
+           bookingsAPI:new BookingsAPI(),
+           listingsAPI:new ListingsAPI()
           },
         };
       },

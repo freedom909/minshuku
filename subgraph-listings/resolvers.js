@@ -110,14 +110,13 @@ const resolvers = {
     if (!listingId) throw Error('the listing is not existing')
     try {
       let updatedListing = await dataSources.listingsAPI.updateListing({
-        listingId,
-        listing,
+        ...listing
       })
       return {
         code: 201,
         success: true,
         message: 'successfully updated',
-        listing: updatedListing
+        updatedListing
       }
       //       return {code : 503 ,success :false}
     } catch (error) {

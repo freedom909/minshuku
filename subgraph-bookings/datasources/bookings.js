@@ -16,24 +16,23 @@ class BookingsDb {
   async getBooking(bookingId) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
-      
     });
     //    console.log('getBooking', booking);
     return booking;
   }
 
-  // async getCurrentGuestBooking(listingId, checkInDate, checkOutDate){
-  //   const booking = await this.prisma.booking.findMany({
-  //     where: {
-  //       listingId,
-  //       checkInDate: {
-  //         lt: checkOutDate,
-  //         gt: checkInDate,
-  //       },
-  //     },
-  //   });
-  //   return booking;
-  // }
+  async getCurrentGuestBooking(listingId, checkInDate, checkOutDate){
+    const booking = await this.prisma.booking.findMany({
+      where: {
+        listingId,
+        checkInDate: {
+          lt: checkOutDate,
+          gt: checkInDate,
+        },
+      },
+    });
+    return booking;
+  }
   async getBookingsForUser(userId, status) {
     const filterOptions = { guestId: userId };
     if (status) {
@@ -125,6 +124,5 @@ class BookingsDb {
     
   }
 }
-// new BookingsDb()
-// console.log(new BookingsDb());
+
 export default BookingsDb;

@@ -1,8 +1,8 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
-import { PrismaClient } from '../node_modules/generated/client/edge'
-//  import {PrismaClient} from '@prisma/client';
+// import { PrismaClient } from './generated/client'
+import { PrismaClient } from '@prisma/client'
 class BookingsAPI {
   constructor() {
     this.prisma=new PrismaClient()
@@ -93,7 +93,23 @@ class BookingsAPI {
   
     return bookings;
   }
+//     const upcomingAndCurrentBookings = [];
+//   let startDate = new Date();
+//   while (startDate < endDate) {
+  //     const dateRange = {};
+  // 	    dateRange[Op.and]=[{status:"UPCOMING"},{checkInDate:<startDate},{checkOutDate>:endDate
+  //}];
+  //   const result=await BookingModel().countDocuments(dateRange);
+  // console.log("result",result,"startDate",startDate,'endDate',endDate);
+  // 	if (!result){
+  // 		upcomingAndCurrentBookings.push(startDate);
+  // 	}
+  // 	startDate.setDate(startDate.getDate() + 1);
+  // }
+  // return upcomingAndCurrentBookings;
   
+
+ 
 
   async createBooking({
     listingId,
@@ -127,6 +143,5 @@ class BookingsAPI {
     }
   }
 }
-new BookingsAPI()
-console.log(new BookingsAPI());
+
 export default BookingsAPI;

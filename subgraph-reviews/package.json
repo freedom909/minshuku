@@ -9,7 +9,8 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "postinstall": "npx prisma generate --schema=\"..\\services\\reviews\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\bookings\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\listings\\prisma\\schema.prisma\""
   },
   "nodemonConfig": {
     "ext": "*.js, *.graphql"
@@ -27,6 +28,7 @@
     "dotenv": "^16.3.1",
     "graphql": "^16.8.0",
     "graphql-tag": "^2.12.6",
+    "prisma": "^5.4.1",
     "sequelize": "^6.32.1",
     "uuid": "^9.0.0"
   },
