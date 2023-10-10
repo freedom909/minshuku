@@ -14,7 +14,7 @@ To get started:
 
 In a terminal window, navigate to the `airLock` directory.
 
-1. Run `npm install`.
+1. Run `npm run install-services`.
 1. Run `npm run launch`.
 
 This will start the GraphQL API server on [http://localhost:4010](http://localhost:4010) and 4011
