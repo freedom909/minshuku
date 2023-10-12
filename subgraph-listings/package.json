@@ -9,8 +9,10 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "start": "nodemon ."
+    "start": "nodemon .",
+    "postinstall": "npx prisma generate --schema=\"..\\services\\bookings\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\listings\\prisma\\schema.prisma\""
   },
+
   "nodemonConfig": {
     "ext": "*.js, *.graphql"
   },

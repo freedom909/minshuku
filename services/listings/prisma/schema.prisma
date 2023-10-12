@@ -3,22 +3,21 @@
 
 generator client {
   provider = "prisma-client-js"
-   output = "../../../subgraph-listings/node_modules/.prisma/client"
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Amenity {
-  id       String @id @map("_id") 
+  id       String @id
   category String
   name     String
 }
 
 model Listing {
-  id              String              @id @map("_id") 
+  id              String              @id 
   title           String
   description     String
   costPerNight    Float
@@ -27,20 +26,20 @@ model Listing {
   numOfBeds       Int
   photoThumbnail  String
   isFeatured      Boolean?
-  galacticCoordinateId  String?  @unique
-  galacticCoordinate    GalacticCoordinates? @relation(fields: [galacticCoordinateId], references: [id])
+  // galacticCoordinateId  String?  @unique
+  // galacticCoordinate    GalacticCoordinates? @relation(fields: [galacticCoordinateId], references: [id])
 }
 
 model ListingAmenities {
-  id        String   @id @map("_id") 
+  id        String   @id 
   ListingId String   @map("ListingId")
   AmenityId String   @map("AmenityId")
 }
 
-model GalacticCoordinates {
-  id        String   @id @map("_id") 
-  latitude  Float
-  longitude Float
-  listing   Listing? 
-}
+// model GalacticCoordinates {
+//   id        String   @id 
+//   latitude  Float
+//   longitude Float
+//   listing   Listing? 
+// }
 

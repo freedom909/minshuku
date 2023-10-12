@@ -67,9 +67,9 @@ app.get("/user/:userId/listings", async (req, res) => {
 
 // get listing info for a specific listing
 app.get("/listings/:listingId", async (req, res) => {
-  const listingInstance = await prisma.listing.findOne({
+  const listingInstance = await prisma.listing.findUnique({
     where: { id: req.params.listingId },
-    include: Amenity,
+    include: prisma.Amenity,
   });
   const listingToReturn = transformListingWithAmenities(listingInstance);
 
@@ -78,7 +78,7 @@ app.get("/listings/:listingId", async (req, res) => {
 
 // get listing info for a specific listing
 app.get("/listings/:listingId/totalCost", async (req, res) => {
-  const { costPerNight } = await prisma.listing.findOne({
+  const { costPerNight } = await prisma.listing.findUnique({
     where: { id: req.params.listingId },
     attributes: ["costPerNight"],
   });
@@ -127,7 +127,7 @@ app.post("/listings", async (req, res) => {
 
   await listing.setAmenities(amenitiesData);
 
-  let updatedListing = await prisma.listing.findOne({
+  let updatedListing = await prisma.listing.findUnique({
     include: Amenity,
     where: { id },
   });
@@ -138,7 +138,7 @@ app.post("/listings", async (req, res) => {
 
 // edit a listing
 app.patch("/listings/:listingId", async (req, res) => {
-  let listing = await prisma.listing.findOne({
+  let listing = await prisma.listing.findUnique({
     include: Amenity,
     where: { id: req.params.listingId },
   });
@@ -149,7 +149,7 @@ app.patch("/listings/:listingId", async (req, res) => {
   await listing.update({ ...newListing });
   await listing.setAmenities(newAmenities);
 
-  let updatedListing = await prisma.listing.findOne({
+  let updatedListing = await prisma.listing.findUnique({
     include: Amenity,
     where: { id: req.params.listingId },
   });

@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model booking  {
-  id String  @id @map("_id") 
+  id String  @id 
   guestId String   
   checkInDate DateTime
   checkOutDate DateTime
