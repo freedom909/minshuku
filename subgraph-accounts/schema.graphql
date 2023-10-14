@@ -1,7 +1,8 @@
 extend schema
   @link(
-    url: "https://specs.apollo.dev/federation/v2.4"
+    url: "https://specs.apollo.dev/federation/v2.5"
     import: ["@key", "@shareable"]
+                     
   )
 
 type Query {
@@ -71,7 +72,9 @@ input UpdateProfileInput {
 }
 
 type GalacticCoordinates @shareable {
+  "The user's latitude"
   latitude: Float!
+  "The user's longitude"
   longitude: Float! 
 }
 

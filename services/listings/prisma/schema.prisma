@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
+  output = "../../../subgraph-listings/node_modules/generated/client"
 }
 
 datasource db {
@@ -14,6 +12,7 @@ model Amenity {
   id       String @id
   category String
   name     String
+  listing  ListingAmenities[]
 }
 
 model Listing {
@@ -26,14 +25,17 @@ model Listing {
   numOfBeds       Int
   photoThumbnail  String
   isFeatured      Boolean?
-  // galacticCoordinateId  String?  @unique
+  amenities       ListingAmenities[]
+// galacticCoordinateId  String?  @unique
   // galacticCoordinate    GalacticCoordinates? @relation(fields: [galacticCoordinateId], references: [id])
 }
 
 model ListingAmenities {
   id        String   @id 
-  ListingId String   @map("ListingId")
-  AmenityId String   @map("AmenityId")
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  listingId String
+  amenity   Amenity  @relation(fields: [amenityId], references: [id])
+  amenityId String
 }
 
 // model GalacticCoordinates {
@@ -42,4 +44,3 @@ model ListingAmenities {
 //   longitude Float
 //   listing   Listing? 
 // }
-

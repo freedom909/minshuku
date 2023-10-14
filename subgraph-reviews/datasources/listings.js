@@ -1,6 +1,4 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { PrismaClient } from '../subgraph-listings/node_modules/.prisma/client/edge'
-const prisma = new PrismaClient()
 
 class ListingsAPI extends RESTDataSource {
   constructor() {

@@ -12,7 +12,6 @@
     "start": "nodemon .",
     "postinstall": "npx prisma generate --schema=\"..\\services\\bookings\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\listings\\prisma\\schema.prisma\""
   },
-
   "nodemonConfig": {
     "ext": "*.js, *.graphql"
   },
@@ -23,12 +22,13 @@
     "@apollo/datasource-rest": "^6.0.1",
     "@apollo/server": "^4.9.1",
     "@apollo/subgraph": "^2.4.12",
-    "@prisma/client": "^5.4.1",
+    "@prisma/client": "^5.4.2",
     "axios": "^1.4.0",
     "date-fns": "^2.30.0",
     "graphql": "^16.8.0",
     "graphql-tag": "^2.12.6",
     "mysql2": "^3.6.0",
+    "postinstall": "^0.8.0",
     "prisma": "^5.4.2",
     "sequelize": "^6.32.1"
   },

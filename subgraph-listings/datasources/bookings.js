@@ -1,12 +1,13 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
-// import { PrismaClient } from './generated/client'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from 'file:///C:/Users/takayama/Desktop/air0/subgraph-listings/node_modules/generated/client/index.js'
+// import { PrismaClient } from '@prisma/client'
 class BookingsAPI {
   constructor() {
     this.prisma=new PrismaClient()
   }
+  
   // helper
   getHumanReadableDate(date) {
     return format(date, "MMM d, yyyy");
@@ -108,9 +109,6 @@ class BookingsAPI {
   // }
   // return upcomingAndCurrentBookings;
   
-
- 
-
   async createBooking({
     listingId,
     checkInDate,

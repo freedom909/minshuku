@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "nodemon index.js",
-    "postinstall": "npx prisma generate --schema=\"..\\services\\reviews\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\bookings\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\listings\\prisma\\schema.prisma\""
+    "postinstall": "npx prisma generate --schema=\"..\\services\\reviews\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\bookings\\prisma\\schema.prisma\""
   },
   "nodemonConfig": {
     "ext": "*.js, *.graphql"

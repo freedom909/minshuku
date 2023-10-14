@@ -7,9 +7,9 @@ import listingAmenitiesData from "./listingamenities.json" assert { type: "json"
 const prisma = new PrismaClient();
 
 async function main() {
-  for (let listing of listingsData) {
+  for (let l of listingsData) {
     const listing = await prisma.listing.create({
-      data: listing,
+      data: l,
     });
 
     console.log(`Created listing with id: ${listing.id}`);
@@ -26,8 +26,12 @@ async function main() {
     await prisma.listingAmenities.create({
       data: {
         id: uuidv4(),
-        AmenityId: listingAmenity.AmenityId,
-        ListingId: listingAmenity.ListingId,
+        listing: {
+          connect: { id: listingAmenity.ListingId },
+        },
+        amenity: {
+          connect: { id: listingAmenity.AmenityId },
+        },
       },
     });
     console.log("created");

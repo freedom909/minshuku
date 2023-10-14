@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
+
 (async () => {
   try {
     // Update bookings with checkOutDate before today's date to status COMPLETED

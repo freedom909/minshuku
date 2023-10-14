@@ -1,5 +1,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
+
 class ListingsAPI extends RESTDataSource {
   constructor() {
     super();
@@ -35,16 +36,27 @@ class ListingsAPI extends RESTDataSource {
   }
 
   getListingCoordinates(id) {
-    return this.get(`listing/${id}/coordinates`);
+    return this.get(`listings/${id}/coordinates`);
   }
 
   createListing(listing) {
-    return this.post(`listings`, { body: { listing } });
+    return this.post(`listings`, { body: { listing } })
+      .then(newListing => {
+        console.log(newListing)
+        return newListing;
+      }).catch(
+        error => {
+          console.log(error);
+          throw error
+        }
+      )
+
   }
 
   updateListing({ listingId, listing }) {
     return this.patch(`listings/${listingId}`, { body: { listing } });
   }
 }
+
 
 export default ListingsAPI;

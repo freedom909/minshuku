@@ -21,7 +21,9 @@ const resolvers = {
       }
     },
     listingAmenities: async (_, __, { dataSources }) => {
-      return dataSources.listingsAPI.getAllAmenities()
+      const amenities=await dataSources.listingsAPI.getAllAmenities()
+      console.log("fetched amenities:",amenities);
+      return amenities
     },
     searchListings: async (_, { criteria }, { dataSources }) => {
       const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } =
@@ -148,6 +150,7 @@ const resolvers = {
     },
     amenities: async ({ id }, _, { dataSources }) => {
       const amenityList = await dataSources.listingsAPI.getListing(id)
+      console.log('Fetched amenityList for listing id', id, ':', amenityList);
       return amenityList.amenities
     },
     currentlyBookedDates: ({ id }, _, { dataSources }) => {
@@ -174,4 +177,5 @@ const resolvers = {
    
   }
 }
+
 export default resolvers

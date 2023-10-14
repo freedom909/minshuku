@@ -19,7 +19,7 @@ class ReviewsAPI {
 // reviewsAPI.getReviews().then(reviews => console.log(reviews));
 
   async getReviewsByUser(userId) {
-    return this.prisma.Review.findAll({ where: { authorId: userId } });
+    return this.prisma.Review.findMany({ where: { authorId: userId } });
   }
 
 

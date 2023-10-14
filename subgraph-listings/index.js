@@ -3,11 +3,10 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { readFileSync } from 'fs';
 import axios from 'axios';
-import  get  from 'axios';
 import gql from 'graphql-tag';
 
 import errors from '../utils/errors.js';
-const { AuthenticationError } =errors
+const { AuthenticationError } = errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
 import BookingsAPI from './datasources/bookings.js';
@@ -33,7 +32,8 @@ async function startApolloServer() {
 
         let userInfo = {};
         if (userId) {
-          const { data } = await get(`http://localhost:4011/login/${userId}`)
+          const { data } = await axios
+          .get(`http://localhost:4011/login/${userId}`)
             .catch((error) => {
               throw AuthenticationError();
             });

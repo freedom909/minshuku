@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.4",
+  @link(url: "https://specs.apollo.dev/federation/v2.5",
         import: ["@key","@shareable"])
         
 type Query {
@@ -105,7 +105,6 @@ type ReservedDate  {
 type GalacticCoordinates @shareable {
   latitude: Float!
   longitude: Float!
-
 }
 
   "What the location provides. An amenity should be tied to a specific category."
