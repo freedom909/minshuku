@@ -149,10 +149,28 @@ const resolvers = {
       return cost
     },
     amenities: async ({ id }, _, { dataSources }) => {
-      const amenityList = await dataSources.listingsAPI.getListing(id)
+      const amenityList = await dataSources.listingsAPI.getListing(id);
       console.log('Fetched amenityList for listing id', id, ':', amenityList);
-      return amenityList.amenities
+      
+      if (!amenityList) {
+        return []; // Return an empty array if amenityList is null or undefined
+      }
+      
+      // Check if amenityList is an array
+      if (Array.isArray(amenityList)) {
+        // If it's an array, find the listing with the matching id
+        const listing = amenityList.find((listing) => listing.id === id);
+        if (!listing) {
+          return []; // Return an empty array if listing is not found
+        }
+        return listing.amenities;
+      }
+      
+      // If amenityList is not an array, return the amenities directly
+      return amenityList.amenities;
     },
+    
+
     currentlyBookedDates: ({ id }, _, { dataSources }) => {
       return dataSources.bookingsAPI.getCurrentlyBookedDateRangesForListing(id)
     },

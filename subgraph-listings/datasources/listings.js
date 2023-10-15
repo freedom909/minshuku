@@ -1,62 +1,74 @@
-import { RESTDataSource } from "@apollo/datasource-rest";
-
+import { RESTDataSource } from '@apollo/datasource-rest'
 
 class ListingsAPI extends RESTDataSource {
-  constructor() {
-    super();
-    this.baseURL = "http://localhost:4010/";
+  constructor () {
+    super()
+    this.baseURL = 'http://localhost:4010/'
   }
 
-  getListingsForUser(userId) {
-    return this.get(`user/${userId}/listings`);
+  getListingsForUser (userId) {
+    return this.get(`user/${userId}/listings`)
   }
 
-  getListings({ numOfBeds, page, limit, sortBy }) {
+  getListings ({ numOfBeds, page, limit, sortBy }) {
     return this.get(
       `listings?numOfBeds=${numOfBeds}&page=${page}&limit=${limit}&sortBy=${sortBy}`
-    );
+    )
   }
 
-  getFeaturedListings(limit) {
-    return this.get(`featured-listings?limit=${limit}`);
+  getFeaturedListings (limit) {
+    return this.get(`featured-listings?limit=${limit}`)
   }
 
-  getListing(listingId) {
-    return this.get(`listings/${listingId}`);
+  async getListing (listingId) {
+    try {
+      const listingData = await this.get(`listings/${listingId}`)
+      console.log({ listingData })
+      return listingData
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
   }
 
-  getAllAmenities() {
-    return this.get(`listing/amenities`);
+
+  getAllAmenities () {
+    return this.get(`listing/amenities`)
   }
 
-  getTotalCost({ id, checkInDate, checkOutDate }) {
+  getTotalCost ({ id, checkInDate, checkOutDate }) {
     return this.get(
-      `listings/${id}/totalCost?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}` 
-    );
+      `listings/${id}/totalCost?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`
+    )
   }
 
-  getListingCoordinates(id) {
-    return this.get(`listings/${id}/coordinates`);
+  getListingCoordinates (id) {
+    return this.get(`listings/${id}/coordinates`)
   }
 
-  createListing(listing) {
+  createListing (listing) {
     return this.post(`listings`, { body: { listing } })
       .then(newListing => {
         console.log(newListing)
-        return newListing;
-      }).catch(
-        error => {
-          console.log(error);
-          throw error
-        }
-      )
-
+        return newListing
+      })
+      .catch(error => {
+        console.log(error)
+        throw error
+      })
   }
 
-  updateListing({ listingId, listing }) {
-    return this.patch(`listings/${listingId}`, { body: { listing } });
+  updateListing ({ listingId, listing }) {
+    return this.patch(`listings/${listingId}`, { body: { listing } })
   }
 }
 
+export default ListingsAPI
 
-export default ListingsAPI;
+const listingsAPI = new ListingsAPI();
+listingsAPI.getListing('amenities').then(listingData => {
+  console.log(listingData);
+}).catch(error => {
+  console.error(error);
+});
+

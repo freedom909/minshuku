@@ -11,16 +11,28 @@ const getDifferenceInDays = (checkIn, checkOut) => {
 };
 
 const transformListingWithAmenities = (listingInstance) => {
-  // Amenities and ListingAmenities need to be converted to just `amenities`
-  const listing = listingInstance.toJSON();
+  // Check if listingInstance is an instance of a class or a valid object
+  if (typeof listingInstance !== 'object' || listingInstance === null) {
+    throw new Error('listingInstance must be a valid object');
+  }
+  
+  // Convert listingInstance to JSON if it has a toJSON method
+  const listing = typeof listingInstance.toJSON === 'function'
+    ? listingInstance.toJSON()
+    : listingInstance;
+  
+  // Extract Amenities property and return other listing properties
   const { Amenities, ...listingPropertiesToReturn } = listing;
-
-  const amenities = Amenities.map((a) => {
-    const { ListingAmenities, ...amenitiesToReturn } = a;
-    return amenitiesToReturn;
-  });
-
-  return { ...listingPropertiesToReturn, amenities };
+  
+  // Extract ListingAmenities property from each amenity and return other amenity properties
+  if (Amenities) {
+    const amenities = Amenities.map((a) => {
+      const { ListingAmenities, ...amenitiesToReturn } = a;
+      return amenitiesToReturn;
+    });
+    // Return the transformed listing and amenities
+  return { ...listingPropertiesToReturn, amenities }; 
+  }                                       
 };
 
 export default { getDifferenceInDays, transformListingWithAmenities };
