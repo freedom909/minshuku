@@ -22,7 +22,7 @@ class ListingsAPI extends RESTDataSource {
 
   async getListing (listingId) {
     try {
-      const listingData = await this.get(`listings/${listingId}`)
+      const listingData = await this.get(`listing/${listingId}`)
       console.log({ listingData })
       return listingData
     } catch (error) {
@@ -46,16 +46,15 @@ class ListingsAPI extends RESTDataSource {
     return this.get(`listings/${id}/coordinates`)
   }
 
-  createListing (listing) {
-    return this.post(`listings`, { body: { listing } })
-      .then(newListing => {
-        console.log(newListing)
-        return newListing
-      })
-      .catch(error => {
-        console.log(error)
-        throw error
-      })
+  async createListing (listing) {
+    try {
+      const newListing = await this.post(`listings`, { body: { listing } })
+      console.log(newListing)
+      return newListing
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
   }
 
   updateListing ({ listingId, listing }) {
@@ -63,12 +62,14 @@ class ListingsAPI extends RESTDataSource {
   }
 }
 
-export default ListingsAPI
-
 const listingsAPI = new ListingsAPI();
-listingsAPI.getListing('amenities').then(listingData => {
-  console.log(listingData);
+listingsAPI.getAllAmenities().then(amenitiesData => {
+  console.log(amenitiesData);
 }).catch(error => {
   console.error(error);
 });
+
+export default ListingsAPI
+
+
 

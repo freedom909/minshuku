@@ -59,7 +59,7 @@ app.get("/user/:userId/listings", async (req, res) => {
   const listings = await prisma.listing.findMany({
     where: { hostId: req.params.userId },
   });
-  console.log(listings);
+  // console.log(listings);
   return res.json(listings);
 });
 
@@ -108,9 +108,12 @@ app.get("/listings/:listingId/totalCost", async (req, res) => {
 // get all possible listing amenities
 app.get("/listing/amenities", async (req, res) => {
   const amenities = await prisma.amenity.findMany();
-  const transAmenities=transformListingWithAmenities(amenities)
-  
-  return res.json(transAmenities);
+ const transAmenities=transformListingWithAmenities(amenities)
+  if (!amenities) {
+    return res.status(400).send("Could not find any amenities");
+    }
+  console.log(transAmenities);
+  return res.json(amenities);
 });
 
 // create a listing
