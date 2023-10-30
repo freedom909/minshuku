@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.5", import: ["@key","@shareable"])
+  @link(url: "https://specs.apollo.dev/federation/v2.4", import: ["@key","@shareable"])
         
 type Mutation {
   "Creates a review for the guest - must be authored by host of past booking"

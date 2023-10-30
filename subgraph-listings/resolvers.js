@@ -1,3 +1,4 @@
+import af from 'date-fns/locale/af/index.js';
 import errors from '../utils/errors.js'
 const { AuthenticationError, ForbiddenError } = errors
 const resolvers = {
@@ -20,11 +21,7 @@ const resolvers = {
         )
       }
     },
-    listingAmenities: async (_, __, { dataSources }) => {
-      const amenities=await dataSources.listingsAPI.getAllAmenities()
-      console.log("fetched amenities:",amenities);
-      return amenities
-    },
+    // listingAmenities: () => transAmenities,
     searchListings: async (_, { criteria }, { dataSources }) => {
       const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } =
         criteria
@@ -148,27 +145,54 @@ const resolvers = {
       })
       return cost
     },
+
     amenities: async ({ id }, _, { dataSources }) => {
-      const amenityList = await dataSources.listingsAPI.getListing(id);
-      console.log('Fetched amenityList for listing id', id, ':', amenityList);
-      
-      if (!amenityList) {
-        return []; // Return an empty array if amenityList is null or undefined
+      const list = await dataSources.listingsAPI.getListing(id);
+      // console.log('Fetched listing for id', id, ':', list);
+    
+      if (!list) {
+        return []; // Return an empty array if list is null or undefined
       }
+      return list.amenities;
+      // // Transform amenities to use enum values
+      // const transformedAmenities = list.amenities.map(amenity => {
+      //   // Check if amenity is an object
+      //   if (typeof amenity === 'object') {
+      //     // If it is, return the object
+      //     return amenity;
+      //   }
+      //   const categoryEnumValue = amenity.category?.replace(' ', '_').toUpperCase();
+      //   const nameEnumValue = amenity.name?.replace(' ', '_').toUpperCase();
+      //   const amenityEnumValue = `${categoryEnumValue}_${nameEnumValue}`;
+       
+      //   return {
+      //     id: amenity.id,
+      //     category: categoryEnumValue,
+      //     name: nameEnumValue,
+      //     amenity: amenityEnumValue
+      //   }
       
-      // Check if amenityList is an array
-      if (Array.isArray(amenityList)) {
-        // If it's an array, find the listing with the matching id
-        const listing = amenityList.find((listing) => listing.id === id);
-        if (!listing) {
-          return []; // Return an empty array if listing is not found
-        }
-        return listing.amenities;
-      }
-      
-      // If amenityList is not an array, return the amenities directly
-      return amenityList.amenities;
+      // });
+     
+      // return transformedAmenities;
     },
+    
+  
+      // // Check if amenityList is an array
+      // if (Array.isArray(amenityList)) {
+      //   // If it's an array, find the listing with the matching id
+      //   const listing = amenityList.find((listing) => listing.id === id);
+      //   if (!listing) {
+      //     return []; // Return an empty array if listing is not found
+      //   }
+
+      //     console.log({transformedAmenities});
+      //   return transformedAmenities;
+      // }
+      
+      //If amenityList is not an array, return the amenities directly
+    //   return amenityList.amenities;
+    // },
     
 
     currentlyBookedDates: ({ id }, _, { dataSources }) => {
@@ -188,10 +212,11 @@ const resolvers = {
       return dataSources.listingsAPI.getListingCoordinates(id)
     },
     AmenityCategory: {
-      ACCOMMODATION_DETAILS: 'Accommodation Details',
-      SPACE_SURVIVAL: 'Space survival',
-      OUTDOORS: 'Outdoors'
+      ACCOMMODATION_DETAILS: 'ACCOMMODATION_DETAILS',
+      SPACE_SURVIVAL: 'SPACE_SURVIVAL',
+      OUTDOORS: 'OUTDOORS'
     },
+    
    
   }
 }

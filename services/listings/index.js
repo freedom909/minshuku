@@ -63,23 +63,87 @@ app.get("/user/:userId/listings", async (req, res) => {
   return res.json(listings);
 });
 
+//defined a globe variable
+let transAmenities=[]
+// get all possible listing amenities,this route should be before of "/listing/listingId"
+
+
+
+
+app.get("/listing/amenities", async (req, res) => {
+  const amenitiesList=await prisma.amenity.findMany()
+  // console.log({amenitiesList});
+  const amenities = amenitiesList.map(amenity => ({
+    ...amenity,
+    category: amenity.category.replace(/ /g, '_').toUpperCase()
+  }));
+  // console.log(amenities);
+  const transAmenities = transformListingWithAmenities(amenities); // Update the global variable
+
+  if (!transAmenities) {
+    return res.status(400).send("Could not find any amenities");
+  }
+
+// console.log(transAmenities);
+  return res.json(transAmenities);
+});
+
+
+app.get("/listing/:listingId", async (req, res) => {
+  const listingInstance = await prisma.listing.findUnique({
+    where: { id: req.params.listingId },
+    include: { amenities: true },
+  });
+
+  if (!listingInstance) {
+    return res.status(404).send("Listing not found");
+  }
+
+  if (typeof listingInstance !== 'object' || listingInstance === null) {
+    return res.status(500).send("Server error: Invalid listing data");
+  }
+
+  // Pass only the amenities array to the transformListingWithAmenities function
+  const transformedAmenities=transformListingWithAmenities(listingInstance.amenities)
+   // Add the transformed amenities back to the listing object
+
+  const listingToReturn = {...listingInstance,amenities:transformedAmenities}
+
+  return res.json(listingToReturn);
+});
+
 // get listing info for a specific listing
 app.get("/listings/:listingId", async (req, res) => {
   const listingInstance = await prisma.listing.findUnique({
     where: { id: req.params.listingId },
     include: { amenities: true },
   });
-  console.log(listingInstance);
+  // console.log(listingInstance);
   if (!listingInstance) {
     return res.status(404).send("Listing not found");
   }
 
+  
   const listingToReturn = transformListingWithAmenities(JSON.parse(JSON.stringify(listingInstance)));
 
   return res.json(listingToReturn);
 });
 
+app.get("/listing/:listingId", async (req, res) => {
+  const listingInstance = await prisma.listing.findUnique({
+    where: { id: req.params.listingId },
+    include: { amenities: true },
+  });
+  // console.log(listingInstance);
+  if (!listingInstance) {
+    return res.status(404).send("Listing not found");
+  }
 
+  
+  const listingToReturn = transformListingWithAmenities(JSON.parse(JSON.stringify(listingInstance)));
+
+  return res.json(listingToReturn);
+});
 // get listing info for a specific listing
 app.get("/listings/:listingId/totalCost", async (req, res) => {
   const listingInstance = await prisma.listing.findUnique({
@@ -105,16 +169,7 @@ app.get("/listings/:listingId/totalCost", async (req, res) => {
   return res.json({ totalCost: listingInstance.costPerNight * diffInDays });
 });
 
-// get all possible listing amenities
-app.get("/listing/amenities", async (req, res) => {
-  const amenities = await prisma.amenity.findMany();
- const transAmenities=transformListingWithAmenities(amenities)
-  if (!amenities) {
-    return res.status(400).send("Could not find any amenities");
-    }
-  console.log(transAmenities);
-  return res.json(amenities);
-});
+
 
 // create a listing
 app.post("/listings", async (req, res) => {

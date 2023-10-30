@@ -1,6 +1,8 @@
 import { RESTDataSource } from '@apollo/datasource-rest'
 
-class ListingsAPI extends RESTDataSource {
+import axios from 'axios'
+
+class ListingsAPI extends RESTDataSource { 
   constructor () {
     super()
     this.baseURL = 'http://localhost:4010/'
@@ -20,20 +22,48 @@ class ListingsAPI extends RESTDataSource {
     return this.get(`featured-listings?limit=${limit}`)
   }
 
-  async getListing (listingId) {
+  async getListing({listingId}) {
     try {
-      const listingData = await this.get(`listing/${listingId}`)
-      console.log({ listingData })
-      return listingData
+      const listingData = await this.get(`listing/${listingId}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      // console.log(listingData);
+      return listingData;
     } catch (error) {
-      console.error(error)
-      throw error
+      console.error(error);
+      throw error;
     }
   }
+  
+// async getAllListingTypes () {
+//     const types = await this.get(`listing-types`)
+//     return types
+//     // Import the axios library
 
+//     }
 
-  getAllAmenities () {
-    return this.get(`listing/amenities`)
+    async getListings ({ numOfBeds, page, limit, sortBy }) {
+      return await this.get(
+        `listings?numOfBeds=${numOfBeds}&page=${page}&limit=${limit}&sortBy=${sortBy}`
+      )
+    }
+
+// Placeholder for the get function
+// async  get(url, options) {
+//   try {
+//     const response = await axios.get(url, options);
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// } 
+
+async getAllAmenities () {
+    const amenities=await this.get(`listing/amenities`)
+    return amenities
   }
 
   getTotalCost ({ id, checkInDate, checkOutDate }) {
@@ -49,10 +79,10 @@ class ListingsAPI extends RESTDataSource {
   async createListing (listing) {
     try {
       const newListing = await this.post(`listings`, { body: { listing } })
-      console.log(newListing)
+      // console.log(newListing)
       return newListing
     } catch (error) {
-      console.log(error)
+      // console.log(error)
       throw error
     }
   }
@@ -63,11 +93,19 @@ class ListingsAPI extends RESTDataSource {
 }
 
 const listingsAPI = new ListingsAPI();
-listingsAPI.getAllAmenities().then(amenitiesData => {
-  console.log(amenitiesData);
+ 
+listingsAPI.getAllAmenities().then(response => {
+ console.log(response.json);
 }).catch(error => {
   console.error(error);
 });
+
+// listingsAPI.getListing(listingId).then(listing => {
+//   console.log(listing[0]);
+// }).catch(error => {
+//  console.error(error);
+// });
+
 
 export default ListingsAPI
 

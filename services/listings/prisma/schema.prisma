@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output = "../../../subgraph-listings/node_modules/generated/client"
+  output = "../../../subgraph-listings/node_modules/.prisma/client"
 }
 
 datasource db {
