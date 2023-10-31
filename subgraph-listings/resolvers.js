@@ -21,7 +21,9 @@ const resolvers = {
         )
       }
     },
-    // listingAmenities: () => transAmenities,
+    listingAmenities: (_, __, { dataSources }) => {
+      return dataSources.listingsAPI.getAllAmenities();
+    },
     searchListings: async (_, { criteria }, { dataSources }) => {
       const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } =
         criteria

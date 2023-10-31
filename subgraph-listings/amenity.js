@@ -36,3 +36,10 @@
 //       throw error;
 //     }
 //   }
+import ListingsAPI from '../../services/datasources/listings';
+
+const listingsAPI = new ListingsAPI();
+listingsAPI.getAllAmenities().then((amenitiesData) => {
+  window.amenitiesData = amenitiesData;
+  console.log(amenitiesData);
+})

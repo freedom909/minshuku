@@ -22,21 +22,21 @@ class ListingsAPI extends RESTDataSource {
     return this.get(`featured-listings?limit=${limit}`)
   }
 
-  async getListing({listingId}) {
-    try {
-      const listingData = await this.get(`listing/${listingId}`, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+  // async getListing({listingId}) {
+  //   try {
+  //     const listingData = await this.get(`listing/${listingId}`, {
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       }
+  //     });
   
-      // console.log(listingData);
-      return listingData;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  }
+  //     // console.log(listingData);
+  //     return listingData;
+  //   } catch (error) {
+  //     console.error(error);
+  //     throw error;
+  //   }
+  // }
   
 // async getAllListingTypes () {
 //     const types = await this.get(`listing-types`)
@@ -92,22 +92,10 @@ async getAllAmenities () {
   }
 }
 
-const listingsAPI = new ListingsAPI();
- 
-listingsAPI.getAllAmenities().then(response => {
- console.log(response.json);
-}).catch(error => {
-  console.error(error);
-});
-
-// listingsAPI.getListing(listingId).then(listing => {
-//   console.log(listing[0]);
-// }).catch(error => {
-//  console.error(error);
-// });
 
 
 export default ListingsAPI
+
 
 
 

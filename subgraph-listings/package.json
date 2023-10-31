@@ -26,12 +26,10 @@
     "axios": "^1.6.0",
     "date-fns": "^2.30.0",
     "graphql": "^16.8.0",
-    "graphql-request": "^6.1.0",
     "graphql-tag": "^2.12.6",
     "mysql2": "^3.6.0",
     "postinstall": "^0.8.0",
-    "prisma": "^5.4.2",
-    "sequelize": "^6.32.1"
+    "prisma": "^5.4.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

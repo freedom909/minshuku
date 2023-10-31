@@ -112,39 +112,9 @@ app.get("/listing/:listingId", async (req, res) => {
   return res.json(listingToReturn);
 });
 
-// get listing info for a specific listing
-app.get("/listings/:listingId", async (req, res) => {
-  const listingInstance = await prisma.listing.findUnique({
-    where: { id: req.params.listingId },
-    include: { amenities: true },
-  });
-  // console.log(listingInstance);
-  if (!listingInstance) {
-    return res.status(404).send("Listing not found");
-  }
 
-  
-  const listingToReturn = transformListingWithAmenities(JSON.parse(JSON.stringify(listingInstance)));
 
-  return res.json(listingToReturn);
-});
 
-app.get("/listing/:listingId", async (req, res) => {
-  const listingInstance = await prisma.listing.findUnique({
-    where: { id: req.params.listingId },
-    include: { amenities: true },
-  });
-  // console.log(listingInstance);
-  if (!listingInstance) {
-    return res.status(404).send("Listing not found");
-  }
-
-  
-  const listingToReturn = transformListingWithAmenities(JSON.parse(JSON.stringify(listingInstance)));
-
-  return res.json(listingToReturn);
-});
-// get listing info for a specific listing
 app.get("/listings/:listingId/totalCost", async (req, res) => {
   const listingInstance = await prisma.listing.findUnique({
     where: { id: req.params.listingId },
