@@ -22,21 +22,23 @@ class ListingsAPI extends RESTDataSource {
     return this.get(`featured-listings?limit=${limit}`)
   }
 
-  // async getListing({listingId}) {
-  //   try {
-  //     const listingData = await this.get(`listing/${listingId}`, {
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       }
-  //     });
+  async getListing({listingId}) {
+    
+      const listingData = await this.get(`listing/${listingId}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  if (listingData) {
+   console.log(listingData);
+    return listingData;
+  }
+      
+   
   
-  //     // console.log(listingData);
-  //     return listingData;
-  //   } catch (error) {
-  //     console.error(error);
-  //     throw error;
-  //   }
-  // }
+      throw error;
+   
+  }
   
 // async getAllListingTypes () {
 //     const types = await this.get(`listing-types`)

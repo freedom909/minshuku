@@ -67,9 +67,6 @@ app.get("/user/:userId/listings", async (req, res) => {
 let transAmenities=[]
 // get all possible listing amenities,this route should be before of "/listing/listingId"
 
-
-
-
 app.get("/listing/amenities", async (req, res) => {
   const amenitiesList=await prisma.amenity.findMany()
   // console.log({amenitiesList});
@@ -155,9 +152,6 @@ app.post("/listings", async (req, res) => {
 const listingData = req.body.listing;
 const amenitiesData = req.body.listing.amenities;
 const id = uuidv4();
-
-
-
  const listing = await prisma.listing.create({
   data: {
     id,
@@ -167,7 +161,6 @@ const id = uuidv4();
     }
   }
 });
-
 
 let updatedListing = await prisma.listing.findUnique({
    include:{amenities:true},
