@@ -33,19 +33,9 @@ class ListingsAPI extends RESTDataSource {
    console.log(listingData);
     return listingData;
   }
-      
-   
-  
       throw error;
    
   }
-  
-// async getAllListingTypes () {
-//     const types = await this.get(`listing-types`)
-//     return types
-//     // Import the axios library
-
-//     }
 
     async getListings ({ numOfBeds, page, limit, sortBy }) {
       return await this.get(
@@ -53,15 +43,7 @@ class ListingsAPI extends RESTDataSource {
       )
     }
 
-// Placeholder for the get function
-// async  get(url, options) {
-//   try {
-//     const response = await axios.get(url, options);
-//     return response.data;
-//   } catch (error) {
-//     throw error;
-//   }
-// } 
+
 
 async getAllAmenities () {
     const amenities=await this.get(`listing/amenities`)
@@ -93,9 +75,6 @@ async getAllAmenities () {
     return this.patch(`listings/${listingId}`, { body: { listing } })
   }
 }
-
-
-
 export default ListingsAPI
 
 

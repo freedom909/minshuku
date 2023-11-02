@@ -148,51 +148,60 @@ const resolvers = {
       return cost
     },
 
-    amenities: async ({ id }, _, { dataSources }) => {
+    amenities:async ({ id }, _, { dataSources }) => {
       const list = await dataSources.listingsAPI.getListing(id);
-      // console.log('Fetched listing for id', id, ':', list);
-    
+   
       if (!list) {
-        return []; // Return an empty array if list is null or undefined
+          return new Error('Listing not found');
       }
-      return list.amenities;
-      // // Transform amenities to use enum values
-      // const transformedAmenities = list.amenities.map(amenity => {
-      //   // Check if amenity is an object
-      //   if (typeof amenity === 'object') {
-      //     // If it is, return the object
-      //     return amenity;
+  
+     // Transform amenities to use enum values
+      const transformedAmenities = list.amenities.map(amenity => {
+          // Check if amenity is an object
+          if (typeof amenity === 'object') {
+              // If it is, return the object
+              return amenity;
+          }
+            // Check if amenityList is an array
+      // if (Array.isArray(amenity)) {
+      //   // If it's an array, find the listing with the matching id
+      //   const amenityList = amenity.find (item => item.id === amenity.id);
+      //   return amenityList;
       //   }
-      //   const categoryEnumValue = amenity.category?.replace(' ', '_').toUpperCase();
-      //   const nameEnumValue = amenity.name?.replace(' ', '_').toUpperCase();
-      //   const amenityEnumValue = `${categoryEnumValue}_${nameEnumValue}`;
-       
-      //   return {
-      //     id: amenity.id,
-      //     category: categoryEnumValue,
-      //     name: nameEnumValue,
-      //     amenity: amenityEnumValue
-      //   }
-      
-      // });
+        // Return the result of the above function
+        return amenityList.amenities;
+      })
      
-      // return transformedAmenities;
+      //     const categoryEnumValue = amenity.category?.replace(' ', '_').toUpperCase();
+      //     const nameEnumValue = amenity.name?.replace(' ', '_').toUpperCase();
+      //     const amenityEnumValue = `${categoryEnumValue}_${nameEnumValue}`;
+  
+      //     return {
+      //         id: amenity.id,
+      //         category: categoryEnumValue,
+      //         name: nameEnumValue,
+      //         amenity: amenityEnumValue
+      //     }
+      // });
+      return transformedAmenities;
     },
+  
+ 
     
   
-      // // Check if amenityList is an array
-      // if (Array.isArray(amenityList)) {
-      //   // If it's an array, find the listing with the matching id
-      //   const listing = amenityList.find((listing) => listing.id === id);
-      //   if (!listing) {
-      //     return []; // Return an empty array if listing is not found
-      //   }
+    //   // Check if amenityList is an array
+    //   if (Array.isArray(amenity)) {
+    //     // If it's an array, find the listing with the matching id
+    //     const listing = amenityList.find((listing) => listing.id === id);
+    //     if (!listing) {
+    //       return []; // Return an empty array if listing is not found
+    //     }
 
-      //     console.log({transformedAmenities});
-      //   return transformedAmenities;
-      // }
+    //       console.log({transformedAmenities});
+    //     return transformedAmenities;
+    //   }
       
-      //If amenityList is not an array, return the amenities directly
+    //   //If amenityList is not an array, return the amenities directly
     //   return amenityList.amenities;
     // },
     
