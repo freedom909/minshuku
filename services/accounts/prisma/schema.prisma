@@ -12,11 +12,22 @@ datasource db {
 
 model User {
   id      String   @id @map("_id") 
-  name    String   @unique
-  role    String    
+  email   String   @unique
+  name    String   
+  role    ROLE  @default(UNKNOWN)
+  password String
+  token String?
+  refresh_token String?
   profilePicture String
   profileDescription String
+  nickname String? @unique
 }
 
+enum ROLE {
+  UNKNOWN
+  ADMIN
+  GUEST
+  HOST
+}
 
 

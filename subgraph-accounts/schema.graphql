@@ -2,8 +2,7 @@ extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.4"
     import: ["@key", "@shareable"]
-                     
-  )
+)
 
 type Query {
   ### User accounts
@@ -11,6 +10,15 @@ type Query {
   "Currently logged-in user"
   me: User! @shareable
 }
+
+
+type AuthPayload {
+  "The user's JWT"
+  token: String!
+  "The user's ID"
+  userId: ID!
+}
+
 
 "Represents an Airlock user's common properties"
 interface User {
@@ -31,6 +39,19 @@ type Host implements User @key(fields: "id") {
   profileDescription: String! @shareable
   "Where the host is primarily located"
   coordinates: GalacticCoordinates
+     "The email address of the user (must be unique)."
+  email: String!
+    "the password of the user"
+  password: String! 
+   "The user's chosen nickname (must be unique)."
+  nickname: String!
+  role:HOST
+}
+enum Role {
+  UNKNOWN
+  ADMIN
+  GUEST
+  HOST
 }
 
 type Guest implements User @key(fields: "id") {
@@ -39,6 +60,13 @@ type Guest implements User @key(fields: "id") {
   name: String! @shareable
   "The user's profile photo URL"
   profilePicture: String! @shareable
+     "The email address of the user (must be unique)."
+  email: String!
+    "the password of the user"
+  password: String! 
+   "The user's chosen nickname (must be unique)."
+  nickname: String!
+  role:GUEST
 }
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
@@ -82,4 +110,26 @@ type Mutation {
   "Updates the logged-in user's profile information"
   updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse!
     @shareable
+   "Authenticates an existing user."
+    signIn(password: String!, username: String!): AuthPayload!
+    "Logs an authenticated user out."
+    logout: Boolean!
+    "Creates a new user."
+    signUp(input: SignUpInput!): AuthPayload!
 }
+
+ input SignUpInput {
+    "The email address of the user (must be unique)."
+    email: String! @unique(path: "users")
+    "The full name of the user."
+    name: String!
+    """
+    The user's chosen password.
+
+    It must be a minimum of 8 characters in length and contain 1 lowercase
+    letter, 1 uppercase letter, 1 number, and 1 special character.
+    """
+    password: String!
+    "The user's chosen username (must be unique)."
+    nickname: String! @unique(path: "users")
+  }

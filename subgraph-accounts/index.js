@@ -1,12 +1,13 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
+import { applyMiddleware } from 'graphql-middleware';
 
 import { readFileSync } from 'fs';
 import axios from 'axios'
 import  get  from 'axios';
 import gql from 'graphql-tag';
-
+import permissions from './permissions.js';
 import errors from '../utils/errors.js'
 const { AuthenticationError } =errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -14,11 +15,12 @@ import resolvers from './resolvers.js';
 import AccountsAPI from './datasources/accounts.js';
 
 async function startApolloServer() {
+
   const server = new ApolloServer({
     schema: buildSubgraphSchema({
       typeDefs,
       resolvers,
-      introspect:true
+      
     }),
   });
 
@@ -35,7 +37,8 @@ async function startApolloServer() {
         if (userId) {
           const { data } = await get(`http://localhost:4011/login/${userId}`)
             .catch((error) => {
-              throw AuthenticationError();
+              // handleInvalidToken(); // Handle error gracefully
+              return { dataSources: { accountsAPI: new AccountsAPI() } }; 
             });
 
           userInfo = { userId: data.id, userRole: data.role };

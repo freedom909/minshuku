@@ -169,24 +169,23 @@ const resolvers = {
       //   return amenityList;
       //   }
         // Return the result of the above function
-        return amenityList.amenities;
-      })
+      //   return amenityList.amenities;
+      // })
      
-      //     const categoryEnumValue = amenity.category?.replace(' ', '_').toUpperCase();
-      //     const nameEnumValue = amenity.name?.replace(' ', '_').toUpperCase();
-      //     const amenityEnumValue = `${categoryEnumValue}_${nameEnumValue}`;
+          const categoryEnumValue = amenity.category?.replace(' ', '_').toUpperCase();
+          const nameEnumValue = amenity.name?.replace(' ', '_').toUpperCase();
+          const amenityEnumValue = `${categoryEnumValue}_${nameEnumValue}`;
   
-      //     return {
-      //         id: amenity.id,
-      //         category: categoryEnumValue,
-      //         name: nameEnumValue,
-      //         amenity: amenityEnumValue
-      //     }
-      // });
+          return {
+              id: amenity.id,
+              category: categoryEnumValue,
+              name: nameEnumValue,
+              amenity: amenityEnumValue
+          }
+      });
       return transformedAmenities;
-    },
-  
- 
+    
+  },
     
   
     //   // Check if amenityList is an array
