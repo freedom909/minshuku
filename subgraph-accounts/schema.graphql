@@ -44,8 +44,8 @@ type Host implements User @key(fields: "id") {
     "the password of the user"
   password: String! 
    "The user's chosen nickname (must be unique)."
-  nickname: String!
-  role:HOST
+  nickname: String 
+  role:Role
 }
 enum Role {
   UNKNOWN
@@ -61,12 +61,12 @@ type Guest implements User @key(fields: "id") {
   "The user's profile photo URL"
   profilePicture: String! @shareable
      "The email address of the user (must be unique)."
-  email: String!
+  email: String! 
     "the password of the user"
   password: String! 
    "The user's chosen nickname (must be unique)."
-  nickname: String!
-  role:GUEST
+  nickname: String! 
+  role:Role
 }
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
@@ -99,7 +99,7 @@ input UpdateProfileInput {
   profileDescription: String
 }
 
-type GalacticCoordinates @shareable {
+type GalacticCoordinates @key(fields: "latitude longitude")  {
   "The user's latitude"
   latitude: Float!
   "The user's longitude"
@@ -114,13 +114,15 @@ type Mutation {
     signIn(password: String!, username: String!): AuthPayload!
     "Logs an authenticated user out."
     logout: Boolean!
-    "Creates a new user."
-    signUp(input: SignUpInput!): AuthPayload!
+    "Creates a new Guest user."
+    signUpGuest(input: SignUpInput!): AuthPayload!
+     "Creates a new Host user."
+    signUpHost(input: SignUpInput!): AuthPayload!
 }
 
  input SignUpInput {
     "The email address of the user (must be unique)."
-    email: String! @unique(path: "users")
+    email: String! 
     "The full name of the user."
     name: String!
     """
@@ -131,5 +133,7 @@ type Mutation {
     """
     password: String!
     "The user's chosen username (must be unique)."
-    nickname: String! @unique(path: "users")
+    nickname: String 
+    "The user's inviteCode"
+    inviteCode: String
   }

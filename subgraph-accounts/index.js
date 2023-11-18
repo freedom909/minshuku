@@ -20,7 +20,10 @@ async function startApolloServer() {
     schema: buildSubgraphSchema({
       typeDefs,
       resolvers,
-      
+      context:((req) => {
+        const user=req.user || null
+        return {user}
+      })
     }),
   });
 

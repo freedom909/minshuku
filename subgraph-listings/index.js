@@ -38,7 +38,7 @@ async function startApolloServer() {
               throw AuthenticationError();
             });
 
-          userInfo = { userId: data.id, userRole: data.role };
+          userInfo = { userId: data.id, userRole: 'GUEST' };
         }
 
         return {

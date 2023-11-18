@@ -1,7 +1,7 @@
+import { validate } from 'graphql';
 import errors from '../utils/errors.js'
 const { AuthenticationError, ForbiddenError } = errors
-import d from './datasources/accounts.js'
-const { dataSources } = d
+import { validateInviteCode } from './helpers/validateInvitecode.js';
 const resolvers = {
   // TODO: fill in resolvers
   Query: {
@@ -17,6 +17,7 @@ const resolvers = {
       const user = await dataSources.accountsAPI.getUser(userId);
       return user;
     },
+   
   },
 
   Mutation: {
@@ -41,18 +42,29 @@ const resolvers = {
         };
       }
     },
-    signIn(_, { email, password }, { dataSources }) {
-      return dataSources.accountsAPI.login({ email, password })
-    }, logout(_, __, context) {
-      return true
+    
+    async signUpGuest(_, { email, password, username, nickname }, { dataSources }) {
+      return dataSources.accountsAPI.registerUser(email, password, username, nickname);
     },
-    signUp(_, { SignUpInput }, { dataSources }) {
-      return dataSources.accountsAPI.register({SignUpInput})
-    },
+    async signUpHost(_, { email, password, username, nickname, inviteCode }, { dataSources }) {
+      const isValidInviteCode = await validateInviteCode(inviteCode);
+    
+      if (!inviteCode || !isValidInviteCode) {
+        return dataSources.accountsAPI.registerUser(email, password, username, nickname,  "GUEST");
+      }
+      return dataSources.accountsAPI.registerHost(email, password, username, nickname, inviteCode);
+    }
   },
   User: {
     __resolveType(user) {
-      return user.role
+      if (user.role === "HOST") {
+        return "HOST"
+      } else if (
+        user.role === "GUEST") {
+        return "GUEST"
+      }
+      // Handle other cases or return null if necessary
+      return null;
     }
   },
   Host: {
@@ -63,7 +75,8 @@ const resolvers = {
       return dataSources.accountsAPI.getGalacticCoordinates(id);
     }
   },
-  Guset: {
+ 
+  Guest: {
     __resolveReference: (user, { dataSources }) => {
       return dataSources.accountsAPI.getUser(user.id)
     }

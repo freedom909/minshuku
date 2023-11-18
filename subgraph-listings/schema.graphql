@@ -102,7 +102,7 @@ type ReservedDate  {
   checkOutDate: String! @shareable
 }
 
-type GalacticCoordinates @shareable {
+type GalacticCoordinates @key(fields: "latitude longitude") {
   latitude: Float!
   longitude: Float!
 }
