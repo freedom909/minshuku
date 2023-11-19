@@ -37,14 +37,15 @@ type Host implements User @key(fields: "id") {
   profilePicture: String! @shareable
   "The host's profile bio description, will be shown in the listing"
   profileDescription: String! @shareable
-  "Where the host is primarily located"
-  coordinates: GalacticCoordinates
+  # "Where the host is primarily located"
+  # coordinates: GalacticCoordinates
      "The email address of the user (must be unique)."
   email: String!
     "the password of the user"
   password: String! 
    "The user's chosen nickname (must be unique)."
   nickname: String 
+  "the role of the user"
   role:Role
 }
 enum Role {
@@ -55,6 +56,7 @@ enum Role {
 }
 
 type Guest implements User @key(fields: "id") {
+   "The unique ID associated with the account."
   id: ID!
   "The user's first and last name"
   name: String! @shareable
@@ -66,6 +68,7 @@ type Guest implements User @key(fields: "id") {
   password: String! 
    "The user's chosen nickname (must be unique)."
   nickname: String! 
+  "the role of the user"
   role:Role
 }
 interface MutationResponse {
@@ -99,12 +102,12 @@ input UpdateProfileInput {
   profileDescription: String
 }
 
-type GalacticCoordinates @key(fields: "latitude longitude")  {
-  "The user's latitude"
-  latitude: Float!
-  "The user's longitude"
-  longitude: Float! 
-}
+# type GalacticCoordinates @shareable {
+#   "The user's latitude"
+#   latitude: Float!
+#   "The user's longitude"
+#   longitude: Float! 
+# }
 
 type Mutation {
   "Updates the logged-in user's profile information"

@@ -102,10 +102,10 @@ type ReservedDate  {
   checkOutDate: String! @shareable
 }
 
-type GalacticCoordinates @key(fields: "latitude longitude") {
-  latitude: Float!
-  longitude: Float!
-}
+# type GalacticCoordinates @shareable {
+#   latitude: Float!
+#   longitude: Float!
+# }
 
   "What the location provides. An amenity should be tied to a specific category."
  type Amenity @key(fields: "id") {
@@ -176,8 +176,8 @@ type Listing @key(fields: "id") {
   currentlyBookedDates: [ReservedDate]! @shareable
   "Calculated total cost of the listing with the given arguments"
   totalCost(checkInDate: String!, checkOutDate: String!): Float!
-  "Where this listing is located in the galaxy"
-  coordinates: GalacticCoordinates 
+  # "Where this listing is located in the galaxy"
+  # coordinates: GalacticCoordinates 
 } 
 # Shareable
 type Host @key(fields: "id") {

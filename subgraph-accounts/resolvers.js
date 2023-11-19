@@ -42,6 +42,10 @@ const resolvers = {
       }
     },
     
+    logout(_, __, context, info) {
+      return true;
+      },
+
     async signIn(_,{email,password},{dataSources}){
       if (email && password) {
         return dataSources.accountsAPI.login(email,password);
@@ -76,10 +80,10 @@ const resolvers = {
     __resolveReference: (user, { dataSources }) => {
       return dataSources.accountsAPI.getUser(user.id)
     },
-    __coordinates: ({ id }, _, { dataSources }) => {
-      return dataSources.accountsAPI.getGalacticCoordinates(id);
-    }
-  },
+    // __coordinates: ({ id }, _, { dataSources }) => {
+    //   return dataSources.accountsAPI.getGalacticCoordinates(id);
+    // }
+   },
  
   Guest: {
     __resolveReference: (user, { dataSources }) => {
