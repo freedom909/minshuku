@@ -6,7 +6,7 @@ import {hashPassword,checkPassword} from '../helpers/passwords.js'
 class AccountsAPI extends RESTDataSource {
     baseURL = 'http://localhost:4011/';
 
-    async loginGuest({ email, password }) {
+    async login( email, password ) {
         const user = await this.getUserByEmail(email)
         if (!user) {
             throw new GraphQLError("User with that email does not exist");
@@ -26,7 +26,8 @@ class AccountsAPI extends RESTDataSource {
             subject: user.id.toString(),
             expiresIn: "1d"
         });
-        return { token, userRole:'GUEST' };
+        console.log(token);
+        return { token, userRole:user.role };
     }
 
     async registerUser(email, password, username, nickname, role = GUEST) {
@@ -136,18 +137,28 @@ class AccountsAPI extends RESTDataSource {
       }
     }
     
-    async getUserByEmailOrNickname({email,nickname}){
-      return this.get(`user/${email}||${nickname}`)
-    }    
+async getUserByEmail(email){
+  let result=await this.get('/user?filter[where][email]='+email+'&include=role')
+  console.log(result);
+  return result.data[0]
+}
+
+async getUserByEmailOrNickname({ email, nickname }) {
+  const url = `/user/${email || nickname}`;
+  console.log(url);
+  const result = await this.get(url);
+  return result.data[0];
+}
 
     updateUser({ userId, userInfo }) {
-        return this.patch(`user/${userId}`, { body: { ...userInfo } })
+        return this.patch(`users/${userId}`, { body: { ...userInfo } })
     }
     getUser(userId) {
         return this.get(`user/${userId}`)
     }
     getGalacticCoordinates(userId) {
-        return this.get(`user/${userId}/coordinates`);
+        return this.get(`users/${userId}/coordinates`);
     }
 }
+
 export default AccountsAPI

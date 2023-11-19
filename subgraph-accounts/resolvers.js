@@ -17,7 +17,6 @@ const resolvers = {
       const user = await dataSources.accountsAPI.getUser(userId);
       return user;
     },
-   
   },
 
   Mutation: {
@@ -43,14 +42,20 @@ const resolvers = {
       }
     },
     
-    async signUpGuest(_, { email, password, username, nickname }, { dataSources }) {
+    async signIn(_,{email,password},{dataSources}){
+      if (email && password) {
+        return dataSources.accountsAPI.login(email,password);
+      }
+    },
+
+    async signUpGuest(_, { email, password, username, nickname,role="GUEST" }, { dataSources }) {
       return dataSources.accountsAPI.registerUser(email, password, username, nickname);
     },
     async signUpHost(_, { email, password, username, nickname, inviteCode }, { dataSources }) {
       const isValidInviteCode = await validateInviteCode(inviteCode);
     
       if (!inviteCode || !isValidInviteCode) {
-        return dataSources.accountsAPI.registerUser(email, password, username, nickname,  "GUEST");
+        return dataSources.accountsAPI.registerUser(email, password, username, nickname, "GUEST");
       }
       return dataSources.accountsAPI.registerHost(email, password, username, nickname, inviteCode);
     }

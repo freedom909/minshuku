@@ -111,7 +111,7 @@ type Mutation {
   updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse!
     @shareable
    "Authenticates an existing user."
-    signIn(password: String!, username: String!): AuthPayload!
+    signIn(email: String!, password: String!): AuthPayload!
     "Logs an authenticated user out."
     logout: Boolean!
     "Creates a new Guest user."
@@ -136,4 +136,6 @@ type Mutation {
     nickname: String 
     "The user's inviteCode"
     inviteCode: String
+    "The user's role"
+    role: Role
   }

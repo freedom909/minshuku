@@ -2,7 +2,6 @@ import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { applyMiddleware } from 'graphql-middleware';
-
 import { readFileSync } from 'fs';
 import axios from 'axios'
 import  get  from 'axios';
@@ -34,6 +33,7 @@ async function startApolloServer() {
     const { url } = await startStandaloneServer(server, {
       context: async ({ req }) => {
         const token = req.headers.authorization || '';
+       
         const userId = token.split(' ')[1]; // get the user name after 'Bearer '
 
         let userInfo = {};
