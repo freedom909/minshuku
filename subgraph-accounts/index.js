@@ -3,10 +3,9 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { applyMiddleware } from 'graphql-middleware';
 import { readFileSync } from 'fs';
-import axios from 'axios'
-import  get  from 'axios';
+import axios from 'axios';
 import gql from 'graphql-tag';
-import permissions from './permissions.js';
+
 import errors from '../utils/errors.js'
 const { AuthenticationError } =errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -19,10 +18,6 @@ async function startApolloServer() {
     schema: buildSubgraphSchema({
       typeDefs,
       resolvers,
-      context:((req) => {
-        const user=req.user || null
-        return {user}
-      })
     }),
   });
 
@@ -38,14 +33,14 @@ async function startApolloServer() {
 
         let userInfo = {};
         if (userId) {
-          const { data } = await get(`http://localhost:4011/login/${userId}`)
-            .catch((error) => {
-              // handleInvalidToken(); // Handle error gracefully
-              return { dataSources: { accountsAPI: new AccountsAPI() } }; 
-            });
-
+          const { data } = await axios
+          .get(`http://localhost:4011/login/${userId}`)
+          .catch((error) => {
+             throw  AuthenticationError("you can not login with userId")
+          });
+    
           userInfo = { userId: data.id, userRole: data.role };
-        }
+        } 
 
         const { cache } = server;
 
