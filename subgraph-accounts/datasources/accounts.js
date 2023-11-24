@@ -5,8 +5,9 @@ import { hashPassword, checkPassword } from '../helpers/passwords.js'
 
 class AccountsAPI extends RESTDataSource {
   baseURL = 'http://localhost:4011/';
-
+  
   async login({ email, password }) {
+    const message = "Username or password is incorrect";
     let user;
     try {
       user = await this.getUserByEmail(email)
@@ -43,9 +44,9 @@ class AccountsAPI extends RESTDataSource {
     return { token, userRole: user.role };
   }
 
-  async registerUser(email, password, username, nickname, role = GUEST) {
-    const existingUser = await this.getUserByEmailOrNickname(email, nickname);
-
+  async registerUser(email, password, name, nickname, role) {
+    // const existingUser = await this.getUserByEmailOrNickname({ email, nickname });
+    const existingUser = await this.getUserByEmail({ email});
     if (existingUser) {
       if (existingUser.email === email) {
         throw new ApolloServerErrorCode.BAD_USER_INPUT('Email is already in use');
@@ -67,36 +68,37 @@ class AccountsAPI extends RESTDataSource {
     const passwordHash = await hashPassword(password);
     const newUser = {
       email,
+      name,
       password: passwordHash,
-      username,
-      role,
+      nickname,
+      role
     };
+console.log(newUser);
+try {
+  const { data, error } = await this.post(`/user`, newUser);
+  if (error) {
+    throw new GraphQLError('message', {
+      extensions: {
+        code: 'SERVER_ERROR',
+        description: 'Something went wrong on our end',
+      },
+    });
+  }
 
-    try {
-      const { data, error } = await this.post(`/users`, newUser);
-      if (error) {
-        throw new GraphQLError('message', {
-          extensions: {
-            code: 'SERVER_ERROR',
-            description: 'Something went wrong on our end',
-          },
-        });
-      }
+  const payload = { id: data.id };
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: '1d', // expiration time
+  });
 
-      const payload = { id: data.id };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: '1d', // expiration time
-      });
-
-      return { token };
-    } catch (e) {
-      throw new GraphQLError('message', {
-        extensions: {
-          code: 'BAD_EMAIL',
-          description: 'The email is already in use',
-        },
-      });
-    }
+  return { token };
+} catch (e) {
+  throw new GraphQLError('message', {
+    extensions: {
+      code: 'BAD_EMAIL',
+      description: 'The email is already in use',
+    },
+  });
+}
   }
 
   async registerHost(email, password, nickname, name, inviteCode) {
@@ -151,7 +153,8 @@ class AccountsAPI extends RESTDataSource {
     }
   }
 
-  async getUserByEmail(email) {
+async getUserByEmail({email}) {
+  const email = email.toLowerCase();
     const url = `/user/${email}`;
     console.log(url);
     const result = await this.get(url);
@@ -164,9 +167,6 @@ class AccountsAPI extends RESTDataSource {
     const result = await this.get(url);
     console.log(result);
     return result.data[0];
-
-
-
   }
 
   async getUserByEmailOrNickname({ email, nickname }) {

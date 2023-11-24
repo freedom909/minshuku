@@ -31,6 +31,40 @@ app.get('/user/:userId', async (req, res) => {
   return res.json(user);
 });
 
+app.post('/user/', async (req, res) => {
+  try {
+    const {email} = req.body;
+    const user = await prisma.user.findUnique({
+      where: { email: email},
+    });
+    if (!user) {
+      return res.status(404).send('Could not find user with this email');
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+   return res.status(500).json("server error")
+  }
+});
+
+app.post('/user', async (req, res) => {
+  const {email,nickname} = req.body;
+  let user;
+  if (email) {
+    user = await prisma.user.findUnique({
+      where: { email },
+    });
+  }else  if (nickname) {
+    user=await prisma.user.findUnique({
+      where: { nickname },
+    })
+  }
+ 
+  if (!user) {
+    return res.status(404).send('Could not find user with this email or nickname');
+  }
+  return res.json(user);
+});
+
 app.patch('/user/:userId', async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.params.userId },

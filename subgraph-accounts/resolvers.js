@@ -2,6 +2,8 @@ import { validate } from 'graphql';
 import errors from '../utils/errors.js'
 const { AuthenticationError, ForbiddenError } = errors
 import { validateInviteCode } from './helpers/validateInvitecode.js';
+
+
 const resolvers = {
   // TODO: fill in resolvers
   Query: {
@@ -52,14 +54,15 @@ const resolvers = {
       }
     },
 
-    async signUpGuest(_, { email, password, username, nickname,role="GUEST" }, { dataSources }) {
-      return dataSources.accountsAPI.registerUser(email, password, username, nickname);
+    async signUpGuest(_, { input }, { dataSources }) {
+      const { email, password, username, nickname, role } = input;
+      return dataSources.accountsAPI.registerUser(email, password, username, nickname,role);
     },
     async signUpHost(_, { email, password, username, nickname, inviteCode }, { dataSources }) {
       const isValidInviteCode = await validateInviteCode(inviteCode);
     
       if (!inviteCode || !isValidInviteCode) {
-        return dataSources.accountsAPI.registerUser(email, password, username, nickname, "GUEST");
+        return dataSources.accountsAPI.registerUser(email, password, username, nickname, GUEST);
       }
       return dataSources.accountsAPI.registerHost(email, password, username, nickname, inviteCode);
     }
