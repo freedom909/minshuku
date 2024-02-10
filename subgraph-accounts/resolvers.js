@@ -55,16 +55,16 @@ const resolvers = {
     },
 
     async signUpGuest(_, { input }, { dataSources }) {
-      const { email, password, username, nickname, role } = input;
-      return dataSources.accountsAPI.registerUser(email, password, username, nickname,role);
+      const { email, password, name, nickname, role="GUEST" } = input;
+      return dataSources.accountsAPI.registerUser(email, password, name, nickname,role="GUEST");
     },
-    async signUpHost(_, { email, password, username, nickname, inviteCode }, { dataSources }) {
+    async signUpHost(_, { email, password, name, nickname,role="HOST", inviteCode }, { dataSources }) {
       const isValidInviteCode = await validateInviteCode(inviteCode);
     
       if (!inviteCode || !isValidInviteCode) {
-        return dataSources.accountsAPI.registerUser(email, password, username, nickname, GUEST);
+        return dataSources.accountsAPI.registerUser(email,  name, password,nickname, role="GUEST");
       }
-      return dataSources.accountsAPI.registerHost(email, password, username, nickname, inviteCode);
+      return dataSources.accountsAPI.registerHost(email,  name,password, nickname, role="HOST");
     }
   },
   User: {
