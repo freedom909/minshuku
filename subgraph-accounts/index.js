@@ -1,4 +1,5 @@
 import { ApolloServer } from '@apollo/server'
+import UniqueDirective from "./UniqueDirective.js";
 import { startStandaloneServer } from '@apollo/server/standalone'
 import { buildSubgraphSchema } from '@apollo/subgraph'
 import { applyMiddleware } from 'graphql-middleware'
@@ -50,7 +51,14 @@ async function startApolloServer () {
   const server = new ApolloServer({
     schema: buildSubgraphSchema({
       typeDefs,
-      resolvers
+      resolvers,
+      schemaDirectives: {
+        unique: UniqueDirective
+      }
+    }),
+    // Other ApolloServer configurations...
+    dataSources: () => ({
+      accountsAPI: new AccountsAPI()
     })
   })
 
@@ -78,9 +86,6 @@ async function startApolloServer () {
 
         return {
           ...userInfo,
-          dataSources: {
-            accountsAPI: new AccountsAPI({ cache })
-          }
         }
       },
       listen: {

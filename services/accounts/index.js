@@ -31,18 +31,37 @@ app.get('/user/:userId', async (req, res) => {
   return res.json(user);
 });
 
-app.post('/user/', async (req, res) => {
+app.post('/user/register', async (req, res) => {
   try {
-    const {email} = req.body;
+    const { email, password, nickname, role, profilePicture } = req.body;
+    
     const user = await prisma.user.findUnique({
-      where: { email: email},
+      where: { email: email },
     });
-    if (!user) {
-      return res.status(404).send('Could not find user with this email');
+    if (user) {
+      return res.status(404).send('This email is already in use');
     }
-    return res.status(200).json(user);
+
+    let newUser;
+    if (role === "GUEST" || role === "HOST") {
+      newUser = await prisma.user.create({
+        data: {
+          email: email,
+          nickname: nickname,
+          profileDescription: req.body.profileDescription,
+          name: req.body.name,
+          profilePicture: req.body.profilePicture,
+          role: role,
+          password: password,
+        },
+      });
+    } else {
+      return res.status(400).send('Invalid user role');
+    }
+
+    return res.status(200).json(newUser);
   } catch (error) {
-   return res.status(500).json("server error")
+    return res.status(500).json("Server error");
   }
 });
 
@@ -55,7 +74,7 @@ app.post('/user', async (req, res) => {
     });
   }else  if (nickname) {
     user=await prisma.user.findUnique({
-      where: { nickname },
+      where: { nickname }
     })
   }
  
