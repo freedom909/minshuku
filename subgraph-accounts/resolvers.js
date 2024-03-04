@@ -1,7 +1,12 @@
-import { validate } from 'graphql';
+
 import errors from '../utils/errors.js'
-const { AuthenticationError, ForbiddenError } = errors
+import { ApolloServerErrorCode } from '@apollo/server/errors';
+import { GraphQLError,validate } from 'graphql';
+const { AuthenticationError, ForbiddenError} = errors
 import { validateInviteCode } from './helpers/validateInvitecode.js';
+import { hashPassword, verifyPassword } from "./helpers/passwords.js";
+import validator from "validator";
+
 
 
 const resolvers = {
@@ -54,8 +59,8 @@ const resolvers = {
       }
     },
 
-    async signUpUser(_, { input }, { dataSources }) {
-      const { email, password, name, nickname, role, inviteCode, profilePicture } = input;
+    async signUp(_, { input }, { dataSources }) {
+      const { email, password, name, nickname, role, inviteCode, profilePicture } = input
     
       if (role === "HOST") {
         const isValidInviteCode = await validateInviteCode(inviteCode);

@@ -1,5 +1,5 @@
 import { RESTDataSource } from '@apollo/datasource-rest'
-import validator from "validator";
+
 import { OAuth2Client } from 'google-auth-library';
 import { GraphQLError, graphql } from 'graphql'
 import fetch from 'node-fetch';
@@ -9,13 +9,14 @@ import pkgj from 'jsonwebtoken'
 const { sign, verify, decode } = pkgj
 import { V2 as paseto } from 'paseto';
 import nodemailer from 'nodemailer'
+
 class AccountsAPI extends RESTDataSource {
   baseURL = 'http://localhost:4011/'
 
+
   async login (email, password ) {
-    if (!(password && email)) {
-      throw new GraphQLError('email and password must not be null')
-    }
+
+
     const message = 'Username or password is incorrect'
     let user
     try {
@@ -26,7 +27,7 @@ class AccountsAPI extends RESTDataSource {
         throw new GraphQLError(message, {
           extensions: {
             code: 'BAD_EMAIL_OR_PASSWORD',
-            description: 'Username or password is incorrect'
+            description: message
           }
         })
       }
@@ -51,7 +52,7 @@ class AccountsAPI extends RESTDataSource {
     return { token }
   }
 
-  async registerUser ( email, password, name, nickname, role = 'GUEST' ) {
+  async registerUser ( email, password, name, nickname, role = 'GUEST', profilePicture) {
     // const existingUser = await this.getUserByEmailOrNickname({ email, nickname });
     const existingUser = await this.getUserByEmailOrNickname({
       email,
@@ -64,7 +65,7 @@ class AccountsAPI extends RESTDataSource {
         )
       } else if (existingUser.nickname === nickname) {
         throw new ApolloServerErrorCode.BAD_USER_INPUT(
-          'Username is already in use'
+          'nickname is already in use'
         )
       }
     }
@@ -131,7 +132,7 @@ class AccountsAPI extends RESTDataSource {
         service: 'gmail',
         auth: {
           user: process.env.EMAIL_FROM,
-          pass: process.env.EMAIL_PASSWORD
+          password: process.env.EMAIL_PASSWORD
         }
       })
       transporter.sendMail(emailData, function (error, info) {
@@ -153,7 +154,7 @@ class AccountsAPI extends RESTDataSource {
     }
   }
   
-  async registerHost (email, password, nickname, name, inviteCode) {
+  async registerHost (email, password, nickname, name, inviteCode, profilePicture) {
     validateInviteCode(_, inviteCode)
       // Validate password strength
       if (!validator.isStrongPassword(password)) {
@@ -185,6 +186,7 @@ class AccountsAPI extends RESTDataSource {
       email,
       password: passwordHash,
       nickname,
+      profilePicture,
       role: 'HOST'
     }
     try {
