@@ -1,9 +1,12 @@
 import express from 'express';
-import validator,{isEmail } from "validator";
+const app = express()
+
+import pkg from 'validator';
+const {isEmail } = pkg;
 import jwt from 'jsonwebtoken';
-const app = express.Router();
 import { PrismaClient} from '@prisma/client';
 const prisma=new PrismaClient()
+
 const port = process.env.PORT || 4011;
 
 app.use(express.json());
