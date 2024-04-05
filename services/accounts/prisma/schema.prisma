@@ -14,17 +14,16 @@ model User {
   id      String   @id @map("_id") 
   email   String   @unique
   name    String   
-  role    ROLE  @default(UNKNOWN)
+  role    ROLE  @default(GUEST)
   password String
   token String?
   refresh_token String?
-  profilePicture String
-  profileDescription String
-  nickname String? @unique
+  profilePicture String?
+  profileDescription String?
+  nickname String @unique
 }
 
 enum ROLE {
-  UNKNOWN
   ADMIN
   GUEST
   HOST

@@ -1,0 +1,91 @@
+version: '3.9'
+services:
+  accounts-service: 
+    build: ./services/accounts
+    ports:
+      - "4002:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - accounts-db
+
+  bookings-service:
+    build: ./services/bookings
+    ports:
+      - "4003:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - bookings-db
+
+  reviews-service:
+    build: ./services/reviews
+    ports:
+      - "4005:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - reviews-db
+
+  listings-service:
+    build: ./services/listings
+    ports:
+      - "4004:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - listings-db
+
+  accounts-db:
+    image: mongo:latest
+    container_name: accounts-db
+    restart: always
+    ports:
+      - "4002:27017"
+    volumes:
+      - accounts-db-data:/data/db
+
+  bookings-db:
+    image: postgres:latest
+    container_name: bookings-db
+    restart: always
+    ports:
+      - "4003:5432"
+    volumes:
+      - bookings-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrePassword
+      - POSTGRES_DB=bookings
+
+  listings-db:
+    image: postgres:latest
+    container_name: listings-db
+    restart: always
+    ports:
+      - "4004:5432"
+    volumes:
+      - listings-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrePassword
+      - POSTGRES_DB=listings
+
+  reviews-db:
+    image: postgres:latest
+    container_name: reviews-db
+    restart: always
+    ports:
+      - "4005:5432"
+    volumes:
+      - reviews-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrePassword
+      - POSTGRES_DB=reviews
+
+volumes:
+  accounts-db-data:
+  bookings-db-data:
+  listings-db-data:
+  reviews-db-data:

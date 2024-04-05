@@ -5,11 +5,12 @@ import { applyMiddleware } from 'graphql-middleware'
 import { readFileSync } from 'fs'
 import axios from 'axios'
 import gql from 'graphql-tag'
-import paseto from 'paseto'
+import paseto from 'paseto';
+const { V2 } = paseto;
 
 import express from 'express'
 import cors from 'cors'
-
+// import authRouter from './auth.route.js'
 import { getToken, handleInvalidToken } from './helpers/tokens.js'
 import errors from '../utils/errors.js'
 const { AuthenticationError } = errors
@@ -22,20 +23,19 @@ const httpClient = axios.create({
 })
 const app = express()
 app.use(express.json())
-// Use express-jwt as a middleware
+// app.use('/api',authRouter)
+// Use paseto as a middleware  
 app.use(async (req, res, next) => {
   const token = req.headers['authorization']
   if (token) {
-    const payload = await getToken(token)
-    if (payload) {
-      req.user = payload
-      next()
-    } else {
-      next(new AuthenticationError('Invalid token'))
-    }
-  } else {
-    next(new AuthenticationError('No token provided'))
+  try {
+    const payload=await V2.verify(token,process.env.PASETO_SECRET)
+    req.user = payload //attach the payload to the request object
+  } catch (error) {
+    console.error('Invalid token:',err.message)
   }
+  }
+  next();
 })
 
 if (process.env.NODE_ENV === 'development') {
@@ -45,17 +45,6 @@ if (process.env.NODE_ENV === 'development') {
     })
   )
 }
-
-app.post('/user', async (req, res) => {
-  const { email, nickname } = req.body
-  if (!email && !nickname) {
-    return res.status(400).send({ error: 'Email or nickname are required' })
-  }
-  const url = `/user`
-  const body = { email, nickname }
-  const result = await httpClient.post(url, body)
-  return result.data[0]
-})
 
 async function startApolloServer () {
   const server = new ApolloServer({

@@ -37,10 +37,12 @@ class BookingsAPI {
     if (status) {
       filterOptions.status = status;
     }
-    const bookings = await this.prisma.booking.findMany({
-      where: { ...filterOptions },
-    });
-    return bookings.map((b) => b.dataValues);
+      const bookings = await this.prisma.booking.findMany({
+        where: { ...filterOptions },
+      });
+      return bookings.map((b) => b.dataValues);
+   
+  
   }
 
   async getGuestIdForBooking(bookingId) {
