@@ -69,7 +69,7 @@ type Guest implements User @key(fields: "id") {
    "The user's chosen nickname (must be unique)."
   nickname: String! 
   "the role of the user"
-  role:Role
+  role:Role @default(Role.UNKNOWN)
 }
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"

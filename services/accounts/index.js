@@ -1,5 +1,7 @@
 import express from 'express';
-const app = express();
+import validator,{isEmail } from "validator";
+import jwt from 'jsonwebtoken';
+const app = express.Router();
 import { PrismaClient} from '@prisma/client';
 const prisma=new PrismaClient()
 const port = process.env.PORT || 4011;
@@ -11,14 +13,18 @@ app.get('/', (req, res) => {
 });
 
 // login
-app.get('/login/:userId', async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.params.userId },
-  });
-  if (!user) {
-    return res.status(404).send('Could not log in');
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!(password && email)) {
+    res.status(401).json({message:'email and password must not be null'})
   }
-  return res.json(user);
+  if (!isEmail(email)) {
+    res.status(401).json({message:'email must be a valid email'})
+  }
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+      expiresIn: '1d'
+    });
+    res.json({ token });
 });
 
 app.get('/user/:userId', async (req, res) => {
@@ -31,18 +37,51 @@ app.get('/user/:userId', async (req, res) => {
   return res.json(user);
 });
 
-app.post('/user/', async (req, res) => {
+//this code needs to be changed
+app.get('/user/:userId/listings', async (req, res) => {
+const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+  algorithm: "HS256",
+  subject: user.id.toString(),
+  expiresIn: "1d"
+  });
+  return { token, user: user };
+}
+)
+app.post('/user/register', async (req, res) => {
   try {
-    const {email} = req.body;
-    const user = await prisma.user.findUnique({
-      where: { email: email},
-    });
-    if (!user) {
-      return res.status(404).send('Could not find user with this email');
+    const { email, passwordHash, nickname, role, profilePicture,profileDescription } = req.body;
+    if (!(password && email && nickname)) {
+      res.status(401).json({message:'email, password and nickname must not be null'})
     }
-    return res.status(200).json(user);
+    if (!isEmail(email)) {
+      res.status(401).json({message:'email must be a valid email'})
+    }
+    const user = await prisma.user.findUnique({
+      where: { email: email ,nickname: nickname }     
+    });
+    if (user) {
+      return res.status(404).send('This email or nickname is already in use');
+    }
+    let newUser;
+    if (role === "GUEST" || role === "HOST") {
+      newUser = await prisma.user.create({
+        data: {
+          email: email,
+          nickname: nickname,
+          profileDescription: profileDescription,
+          name: req.body.name,
+          profilePicture: profilePicture,
+          role: role,
+          password: passwordHash,
+        },
+      });
+    } else {
+      return res.status(400).send('Invalid user role');
+    }
+
+    return res.status(200).json(newUser);
   } catch (error) {
-   return res.status(500).json("server error")
+    return res.status(500).json("Server error");
   }
 });
 
@@ -55,7 +94,7 @@ app.post('/user', async (req, res) => {
     });
   }else  if (nickname) {
     user=await prisma.user.findUnique({
-      where: { nickname },
+      where: { nickname }
     })
   }
  

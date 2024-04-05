@@ -1,7 +1,12 @@
-import { validate } from 'graphql';
+
 import errors from '../utils/errors.js'
-const { AuthenticationError, ForbiddenError } = errors
+import { ApolloServerErrorCode } from '@apollo/server/errors';
+import { GraphQLError,validate } from 'graphql';
+const { AuthenticationError, ForbiddenError} = errors
 import { validateInviteCode } from './helpers/validateInvitecode.js';
+import { hashPassword, verifyPassword } from "./helpers/passwords.js";
+import validator from "validator";
+
 
 
 const resolvers = {
@@ -54,18 +59,21 @@ const resolvers = {
       }
     },
 
-    async signUpGuest(_, { input }, { dataSources }) {
-      const { email, password, name, nickname, role="GUEST" } = input;
-      return dataSources.accountsAPI.registerUser(email, password, name, nickname,role="GUEST");
-    },
-    async signUpHost(_, { email, password, name, nickname,role="HOST", inviteCode }, { dataSources }) {
-      const isValidInviteCode = await validateInviteCode(inviteCode);
+    async signUp(_, { input }, { dataSources }) {
+      const { email, password, name, nickname, role, inviteCode, profilePicture } = input
     
-      if (!inviteCode || !isValidInviteCode) {
-        return dataSources.accountsAPI.registerUser(email,  name, password,nickname, role="GUEST");
+      if (role === "HOST") {
+        const isValidInviteCode = await validateInviteCode(inviteCode);
+        if (!inviteCode || !isValidInviteCode) {
+          return dataSources.accountsAPI.registerUser(email, name, password, nickname, "GUEST", profilePicture);
+        }
+        return dataSources.accountsAPI.registerHost(email, name, password, nickname, "HOST", profilePicture);
+      } else {
+        return dataSources.accountsAPI.registerUser(email, name, password, nickname, "GUEST", profilePicture);
       }
-      return dataSources.accountsAPI.registerHost(email,  name,password, nickname, role="HOST");
     }
+    
+    
   },
   User: {
     __resolveType(user) {
