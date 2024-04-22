@@ -19,8 +19,9 @@ import {
   Text
 } from '@chakra-ui/react';
 import {IoCheckmark, IoChevronDown, IoChevronUp} from 'react-icons/io5';
-
+import { AuthStatus } from './AuthStatus';
 import {Link} from 'react-router-dom';
+import './Login.css';
 
 export default function Login() {
   const [value, setValue] = useState();
@@ -152,54 +153,20 @@ export default function Login() {
           <Spacer mt={16} />
           <Accordion allowToggle width="500px">
             <AccordionItem borderTop={0} borderBottom={0}>
-              {({isExpanded}) => (
+              {({ isExpanded }) => (
                 <>
-                  <AccordionButton
-                    _hover={{bgColor: 'white'}}
-                    color="indigo.dark"
-                  >
-                    <Flex flex="1" alignItems="center" justifyContent="center">
-                      <Button variant="link" mr={2}>
-                        More login options
-                      </Button>
-                      {isExpanded ? <IoChevronUp /> : <IoChevronDown />}
-                    </Flex>
-                  </AccordionButton>
-                  <AccordionPanel py={4}>
-                    <Text fontSize="md" color="gray.600" mb={2}>
-                      Want to test out other accounts? Choose a user from the
-                      list!
-                    </Text>
-                    <Select
-                      onChange={handleChange}
-                      placeholder="Select a user"
-                      value={value}
-                    >
-                      {users.map((userId, index) => (
-                        <option key={index + 3} value={`user-${index + 3}`}>
-                          {userId}
-                        </option>
-                      ))}
-                    </Select>
-                    <Button
-                      as={Link}
-                      to="/"
-                      onClick={e => {
-                        value ? login() : e.preventDefault();
-                      }}
-                      isDisabled={!value}
-                      mt={4}
-                      isFullWidth
-                    >
-                      Log in
-                    </Button>
-                  </AccordionPanel>
+                  <Container maxW="container.md">
+                    <Stack spacing={6} alignItems="center">
+                      <AuthStatus /> 
+                    </Stack>
+                  </Container>
                 </>
               )}
             </AccordionItem>
           </Accordion>
         </Stack>
       </Container>
+
     </>
   );
 }

@@ -34,7 +34,7 @@ export default function App() {
           <Search />
         </Route>
         <Route path="/login">
-          <Login />
+          <Login />   
         </Route>
         <Route exact path="/listings">
           <Listings />

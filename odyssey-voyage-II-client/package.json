@@ -9,6 +9,7 @@
   "dependencies": {
     "@apollo/client": "^3.4.16",
     "@apollo/space-kit": "^9.11.0",
+    "@auth0/auth0-react": "^2.2.4",
     "@chakra-ui/react": "^1.6.8",
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",

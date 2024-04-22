@@ -37,13 +37,20 @@ services:
       - listings-db
 
   accounts-db:
-    image: mongo:latest
+    image: postgres:latest
+    ports:
+      - "5432:5432"
     container_name: accounts-db
     restart: always
-    ports:
-      - "4002:27017"
     volumes:
-      - accounts-db-data:/data/db
+      - accounts-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_USER: postgresuser
+      POSTGRES_DB: postgresdb
+      PGDATA: /var/lib/postgresql/data/pgdata
+      PGHOST: accounts-db
+      PGUSER: postgresuser
 
   bookings-db:
     image: postgres:latest
@@ -83,6 +90,29 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgrePassword
       - POSTGRES_DB=reviews
+
+  graphql-engine:
+    image: hasura/graphql-engine:latest
+    ports:
+      - "4011:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - "postgres"
+    restart: always
+    volumes:
+      - ./hasura/migrations:/hasura-migrations
+      - ./hasura/metadata:/hasura-metadata
+    environment:
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
+      ## enable the console served by server
+      HASURA_GRAPHQL_ENABLE_CONSOLE: true # set to "false" to disable console
+      ## enable debugging mode. It is recommended to disable this in production
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ## uncomment next line to set an admin secret
+      HASURA_GRAPHQL_ADMIN_SECRET: goodhacker
+      HASURA_GRAPHQL_JWT_SECRET: '{"jwk_url":"https://dev-9saus9he.jp.auth0.com/.well-known/jwks.json","secret":"goodhacker"}'
 
 volumes:
   accounts-db-data:
