@@ -50,7 +50,7 @@ const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
   return { token, user: user };
 }
 )
-app.post('/user/register', async (req, res) => {
+app.post('/register', async (req, res) => {
   try {
     const { email, passwordHash, nickname, role, profilePicture,profileDescription } = req.body;
     if (!(password && email && nickname)) {

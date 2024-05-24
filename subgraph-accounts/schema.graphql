@@ -1,16 +1,15 @@
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.4"
-    import: ["@key", "@shareable"]
+    import: ["@key", "@shareable", "@override"]
 )
 
 type Query {
-  ### User accounts
+  "User accounts"
   user(id: ID!): User @shareable
   "Currently logged-in user"
   me: User! @shareable
 }
-
 
 type AuthPayload {
   "The user's JWT"
@@ -19,14 +18,13 @@ type AuthPayload {
   userId: ID!
 }
 
-
 "Represents an Airlock user's common properties"
 interface User {
   id: ID!
   "The user's first and last name"
   name: String!
   "The user's profile photo URL"
-  profilePicture: String!
+ profilePicture: String!
 }
 
 type Host implements User @key(fields: "id") {
@@ -36,41 +34,40 @@ type Host implements User @key(fields: "id") {
   "The user's profile photo URL"
   profilePicture: String! @shareable
   "The host's profile bio description, will be shown in the listing"
-  profileDescription: String! @shareable
-  # "Where the host is primarily located"
-  # coordinates: GalacticCoordinates
-     "The email address of the user (must be unique)."
+  profileDescription: String @shareable
+  "The email address of the user (must be unique)."
   email: String!
-    "the password of the user"
-  password: String! 
-   "The user's chosen nickname (must be unique)."
-  nickname: String 
-  "the role of the user"
-  role:Role
+  "The password of the user"
+  password: String!
+  "The user's chosen nickname (must be unique)."
+  nickname: String
+  "The role of the user"
+  role: Role
 }
+
 enum Role {
-  UNKNOWN
   ADMIN
   GUEST
   HOST
 }
 
 type Guest implements User @key(fields: "id") {
-   "The unique ID associated with the account."
+  "The unique ID associated with the account."
   id: ID!
   "The user's first and last name"
   name: String! @shareable
   "The user's profile photo URL"
   profilePicture: String! @shareable
-     "The email address of the user (must be unique)."
-  email: String! 
-    "the password of the user"
-  password: String! 
-   "The user's chosen nickname (must be unique)."
-  nickname: String! 
-  "the role of the user"
-  role:Role @default(Role.UNKNOWN)
+  "The email address of the user (must be unique)."
+  email: String!
+  "The password of the user"
+  password: String!
+  "The user's chosen nickname (must be unique)."
+  nickname: String!
+  "The role of the user"
+  role: Role 
 }
+
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
   code: Int!
@@ -102,43 +99,45 @@ input UpdateProfileInput {
   profileDescription: String
 }
 
-# type GalacticCoordinates @shareable {
-#   "The user's latitude"
-#   latitude: Float!
-#   "The user's longitude"
-#   longitude: Float! 
-# }
-
 type Mutation {
   "Updates the logged-in user's profile information"
   updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse!
-    @shareable
-   "Authenticates an existing user."
-    signIn(email: String!, password: String!): AuthPayload!
-    "Logs an authenticated user out."
-    logout: Boolean!
-    "Creates a new Guest user."
-    signUpGuest(input: SignUpInput!): AuthPayload!
-     "Creates a new Host user."
-    signUpHost(input: SignUpInput!): AuthPayload!
+  @shareable
+  "Authenticates an existing user."
+  signIn(email: String!, password: String!): AuthPayload!
+  "Logs an authenticated user out."
+  logout: Boolean!
+  "Creates a new Guest user."
+  signUp(input: SignUpInput!): AuthPayload!
 }
 
- input SignUpInput {
-    "The email address of the user (must be unique)."
-    email: String! 
-    "The full name of the user."
-    name: String!
-    """
-    The user's chosen password.
+input SignUpInput {
+  "The email address of the user (must be unique)."
+  email: String!
+  "The full name of the user."
+  name: String!
+  """
+  The user's chosen password.
 
-    It must be a minimum of 8 characters in length and contain 1 lowercase
-    letter, 1 uppercase letter, 1 number, and 1 special character.
-    """
-    password: String!
-    "The user's chosen username (must be unique)."
-    nickname: String 
-    "The user's inviteCode"
-    inviteCode: String
-    "The user's role"
-    role: Role
-  }
+  It must be a minimum of 8 characters in length and contain 1 lowercase
+  letter, 1 uppercase letter, 1 number, and 1 special character.
+  """
+  password: String!
+  "The user's chosen username (must be unique)."
+  nickname: String
+  "The user's inviteCode"
+  inviteCode: String
+  "The user's role"
+  role: Role
+}
+
+input SignInInput {
+  "The email address of the user (must be unique)."
+  email: String!
+  """
+  The user's chosen password.
+  It must be a minimum of 8 characters in length and contain 1 lowercase
+  letter, 1 uppercase letter, 1 number, and 1 special character.
+  """
+  password: String!
+}

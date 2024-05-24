@@ -21,7 +21,8 @@ import {
 import {IoCheckmark, IoChevronDown, IoChevronUp} from 'react-icons/io5';
 import { AuthStatus } from './AuthStatus';
 import {Link} from 'react-router-dom';
-import './Login.css';
+import Profile from './profile';
+
 
 export default function Login() {
   const [value, setValue] = useState();
@@ -158,6 +159,7 @@ export default function Login() {
                   <Container maxW="container.md">
                     <Stack spacing={6} alignItems="center">
                       <AuthStatus /> 
+                      <Profile />
                     </Stack>
                   </Container>
                 </>

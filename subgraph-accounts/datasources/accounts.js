@@ -429,10 +429,7 @@ async googleLogin(req,res){
       next()
     }
   }
-
   //retrieve Id of user
-
-
   async getUserByEmail ( email ) {
     const url = `/user`
     const body = { email }

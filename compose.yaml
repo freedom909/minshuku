@@ -3,38 +3,38 @@ services:
   accounts-service: 
     build: ./services/accounts
     ports:
-      - "4002:3000"
+      - "4002:5432"
     environment:
       - NODE_ENV=development
     depends_on:
       - accounts-db
 
-  bookings-service:
-    build: ./services/bookings
-    ports:
-      - "4003:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - bookings-db
+  # bookings-service:
+  #   build: ./services/bookings
+  #   ports:
+  #     - "4003:3000"
+  #   environment:
+  #     - NODE_ENV=development
+  #   depends_on:
+  #     - bookings-db
 
-  reviews-service:
-    build: ./services/reviews
-    ports:
-      - "4005:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - reviews-db
+  # reviews-service:
+  #   build: ./services/reviews
+  #   ports:
+  #     - "4005:3000"
+  #   environment:
+  #     - NODE_ENV=development
+  #   depends_on:
+  #     - reviews-db
 
-  listings-service:
-    build: ./services/listings
-    ports:
-      - "4004:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - listings-db
+  # listings-service:
+  #   build: ./services/listings
+  #   ports:
+  #     - "4004:3000"
+  #   environment:
+  #     - NODE_ENV=development
+  #   depends_on:
+  #     - listings-db
 
   accounts-db:
     image: postgres:latest
@@ -52,53 +52,54 @@ services:
       PGHOST: accounts-db
       PGUSER: postgresuser
 
-  bookings-db:
-    image: postgres:latest
-    container_name: bookings-db
-    restart: always
-    ports:
-      - "4003:5432"
-    volumes:
-      - bookings-db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgrePassword
-      - POSTGRES_DB=bookings
+  # bookings-db:
+  #   image: postgres:latest
+  #   container_name: bookings-db
+  #   restart: always
+  #   ports:
+  #     - "4003:5432"
+  #   volumes:
+  #     - bookings-db-data:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgrePassword
+  #     - POSTGRES_DB=bookings
 
-  listings-db:
-    image: postgres:latest
-    container_name: listings-db
-    restart: always
-    ports:
-      - "4004:5432"
-    volumes:
-      - listings-db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgrePassword
-      - POSTGRES_DB=listings
+  # listings-db:
+  #   image: postgres:latest
+  #   container_name: listings-db
+  #   restart: always
+  #   ports:
+  #     - "4004:5432"
+  #   volumes:
+  #     - listings-db-data:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgrePassword
+  #     - POSTGRES_DB=listings
 
-  reviews-db:
-    image: postgres:latest
-    container_name: reviews-db
-    restart: always
-    ports:
-      - "4005:5432"
-    volumes:
-      - reviews-db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgrePassword
-      - POSTGRES_DB=reviews
+  # reviews-db:
+  #   image: postgres:latest
+  #   container_name: reviews-db
+  #   restart: always
+  #   ports:
+  #     - "4005:5432"
+  #   volumes:
+  #     - reviews-db-data:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgrePassword
+  #     - POSTGRES_DB=reviews
 
   graphql-engine:
-    image: hasura/graphql-engine:latest
+    image:
+      hasura/graphql-engine:latest
     ports:
       - "4011:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      - "postgres"
+      - "accounts-db"
     restart: always
     volumes:
       - ./hasura/migrations:/hasura-migrations

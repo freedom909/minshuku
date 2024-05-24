@@ -1,8 +1,8 @@
 import { ApolloServer } from '@apollo/server'
-import UniqueDirective from "./UniqueDirective.js";
+
 import { startStandaloneServer } from '@apollo/server/standalone'
 import { buildSubgraphSchema } from '@apollo/subgraph'
-import { applyMiddleware } from 'graphql-middleware'
+
 import { readFileSync } from 'fs'
 import axios from 'axios'
 import gql from 'graphql-tag'
@@ -29,12 +29,12 @@ app.use(express.json())
 app.use(async (req, res, next) => {
   const token = req.headers['authorization']
   if (token) {
-  try {
-    const payload=await V2.verify(token,process.env.PASETO_SECRET)
-    req.user = payload //attach the payload to the request object
-  } catch (error) {
-    console.error('Invalid token:',err.message)
-  }
+    try {
+      const payload = await V2.verify(token, process.env.PASETO_SECRET)
+      req.user = payload //attach the payload to the request object
+    } catch (error) {
+      console.error('Invalid token:', err.message)
+    }
   }
   next();
 })
@@ -47,14 +47,11 @@ if (process.env.NODE_ENV === 'development') {
   )
 }
 
-async function startApolloServer () {
+async function startApolloServer() {
   const server = new ApolloServer({
     schema: buildSubgraphSchema({
       typeDefs,
-      resolvers,
-      schemaDirectives: {
-        unique: UniqueDirective
-      }
+      resolvers
     }),
     // Other ApolloServer configurations...
     dataSources: () => ({
@@ -62,7 +59,7 @@ async function startApolloServer () {
     })
   })
 
-  const port = 4002
+  const port = 4011
   const subgraphName = 'accounts'
 
   try {
