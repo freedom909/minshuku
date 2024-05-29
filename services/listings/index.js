@@ -5,7 +5,7 @@ const app = express();
 const port = 4010 || process.env.PORT;
 import help from "./helpers.js";
 const { getDifferenceInDays, transformListingWithAmenities } =help
-import { PrismaClient} from "@prisma/client";
+import { PrismaClient } from '../../subgraph-listings/node_modules/.prisma/client/index.js'
 const prisma = new PrismaClient()
 app.use(json());
 

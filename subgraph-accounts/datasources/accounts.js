@@ -12,11 +12,15 @@ import nodemailer from 'nodemailer'
 
 class AccountsAPI extends RESTDataSource {
   baseURL = 'http://localhost:4011/'
-
+  async createAccount(email, password) {
+    return this.auth0.createUser({
+      connection: "Username-Password-Authentication",
+      email,
+      password
+    });
+  }
 
   async login (email, password ) {
-
-
     const message = 'Username or password is incorrect'
     let user
     try {
@@ -51,9 +55,8 @@ class AccountsAPI extends RESTDataSource {
     console.log(token)
     return { token }
   }
-
-  async registerUser ( email, password, name, nickname, role = 'GUEST', profilePicture) {
-    // const existingUser = await this.getUserByEmailOrNickname({ email, nickname });
+  
+  async registerGuest ( email, password, name, nickname, role = 'GUEST', picture) {
     const existingUser = await this.getUserByEmailOrNickname({
       email,
       nickname
@@ -86,16 +89,16 @@ class AccountsAPI extends RESTDataSource {
       name,
       password: passwordHash,
       nickname,
-      role
+      role:'GUEST',
+      picture
     }
     console.log(newUser)
     try {
       const { data, error } = await this.post(`/user`, newUser)
       if (error) {
-        throw new GraphQLError('message', {
+        throw new GraphQLError('Something went wrong on our end', {
           extensions: {
             code: 'SERVER_ERROR',
-            description: 'Something went wrong on our end'
           }
         })
       }
@@ -114,6 +117,7 @@ class AccountsAPI extends RESTDataSource {
           expiresIn: '5m'
         }
       )
+console.log(token)
 
       const emailData = {
         from: process.env.EMAIL_FROM,
@@ -125,7 +129,7 @@ class AccountsAPI extends RESTDataSource {
         <hr />
         <p>This email may containe sensetive information</p>
         <p>${process.env.CLIENT_URL}</p>
-        `
+ `
       }
 
       let transporter = nodemailer.createTransport({
@@ -154,7 +158,7 @@ class AccountsAPI extends RESTDataSource {
     }
   }
   
-  async registerHost (email, password, nickname, name, inviteCode, profilePicture) {
+  async registerHost (email, password, nickname, name, inviteCode, picture) {
     validateInviteCode(_, inviteCode)
       // Validate password strength
       if (!validator.isStrongPassword(password)) {
@@ -186,11 +190,11 @@ class AccountsAPI extends RESTDataSource {
       email,
       password: passwordHash,
       nickname,
-      profilePicture,
+      picture,
       role: 'HOST'
     }
     try {
-      const { data, error } = await this.post(`/users`, newUser)
+      const { data, error } = await this.post(`/user`, newUser)
 
       const payload = { id: data.id }
       const token = jwt.sign(
@@ -383,6 +387,7 @@ async googleLogin(req,res){
       name,
       password:token,
       picture
+   
     } 
     )
   }}
@@ -446,7 +451,7 @@ async googleLogin(req,res){
     return result.data[0]
   }
         
-  async getUserByEmailOrNickname (email, nickname ) {
+  async getUserByEmailOrNickname ({email, nickname} ) {
     const url = `/user`
     const body = { email,nickname }
     const result = await this.post(url, body)

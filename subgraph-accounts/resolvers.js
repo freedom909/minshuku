@@ -3,13 +3,30 @@ import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
 const { AuthenticationError, ForbiddenError } = errors;
 import { validateInviteCode } from './helpers/validateInvitecode.js';
+import DateTimeType from '../shared/src/scalars/DateTimeType.js';
 
 const resolvers = {
+  DateTime:DateTimeType,
+  Account: {
+    __resolveReference(reference, { dataSources, user }) {
+      if (user?.sub) {
+        return dataSources.accountsAPI.getAccountById(reference.id);
+      }
+      throw new AuthenticationError("Not authorized!");
+    },
+    id(account) {
+      return account.user_id;
+    },
+    createdAt(account) {
+      return account.created_at;
+    }
+  },
+
   Query: {
     user: async (_, { id }, { dataSources }) => {
       const user = await dataSources.accountsAPI.getUser(id);
       if (!user) {
-        throw new Error('No user found');
+        GraphQLError(message, {extension:{code:'No user found'}});
       }
       return user;
     },
@@ -18,6 +35,18 @@ const resolvers = {
       const user = await dataSources.accountsAPI.getUser(userId);
       return user;
     },
+    account(root, { id }, { dataSources }) {
+      return dataSources.accountsAPI.getAccountById(id);
+    },
+    accounts(root, args, { dataSources }) {
+      return dataSources.accountsAPI.getAccounts();
+    },
+    viewer(root, args, { dataSources, user }) {
+      if (user?.sub) {
+        return dataSources.accountsAPI.getAccountById(user.sub);
+      }
+      return null;
+    }
   },
 
   Mutation: {
@@ -49,7 +78,7 @@ const resolvers = {
         context.session.destroy(
           (err) => {
             if (err) {
-              throw new Error('Failed to terminate the session');
+              throw new GraphQLError(message,{extension:{code:'Failed to terminate the session'}});
             }
           },
         );
@@ -61,21 +90,42 @@ const resolvers = {
       if (email && password) {
         return dataSources.accountsAPI.login(email, password);
       }
-      throw new Error('Email and password must be provided');
+      throw new GraphQLError(message,{extension:{code:'Email and password must be provided'}});
     },
 
     signUp: async (_, { signUpInput }, { dataSources }) => {
-      const { email, password, name, nickname, role, inviteCode, profilePicture } = signUpInput;
+      const { email, password, name, nickname, role, inviteCode, picture } = signUpInput;
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
         if (!inviteCode || !isValidInviteCode) {
-          return dataSources.accountsAPI.registerUser(email, name, password, nickname, 'GUEST', profilePicture);
+          return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
         }
-        return dataSources.accountsAPI.registerHost(email, name, password, nickname, 'HOST', profilePicture);
+        return dataSources.accountsAPI.registerHost(email, name, password, nickname, 'HOST', picture);
       } else {
-        return dataSources.accountsAPI.registerUser(email, name, password, nickname, 'GUEST', profilePicture);
+        return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
       }
     },
+    createAccount(root, { input: { email, password } }, { dataSources }) {
+      return dataSources.accountsAPI.createAccount(email, password);
+    },
+    deleteAccount(root, { id }, { dataSources }) {
+      return dataSources.accountsAPI.deleteAccount(id);
+    },
+    updateAccountEmail(root, { input: { id, email } }, { dataSources }) {
+      return dataSources.accountsAPI.updateAccountEmail(id, email);
+    },
+    updateAccountPassword(
+      root,
+      { input: { id, newPassword, password } },
+      { dataSources }
+    ) {
+      return dataSources.accountsAPI.updateAccountPassword(
+        id,
+        newPassword,
+        password
+      );
+    }
+  
   },
 
   User: {
@@ -103,6 +153,11 @@ const resolvers = {
   Guest: {
     __resolveReference: (user, { dataSources }) => {
       return dataSources.accountsAPI.getUser(user.id)
+    }
+  },
+  Account:{
+    __resolveReference(reference){
+      return accounts.find(account => account.id ===reference.id)
     }
   }
 }

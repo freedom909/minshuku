@@ -52,7 +52,7 @@ const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
 )
 app.post('/register', async (req, res) => {
   try {
-    const { email, passwordHash, nickname, role, profilePicture,profileDescription } = req.body;
+    const { email, passwordHash, nickname, role, picture,description } = req.body;
     if (!(password && email && nickname)) {
       res.status(401).json({message:'email, password and nickname must not be null'})
     }
@@ -71,9 +71,9 @@ app.post('/register', async (req, res) => {
         data: {
           email: email,
           nickname: nickname,
-          profileDescription: profileDescription,
+          description: description,
           name: req.body.name,
-          profilePicture: profilePicture,
+          picture: picture,
           role: role,
           password: passwordHash,
         },
@@ -120,7 +120,7 @@ app.patch('/user/:userId', async (req, res) => {
 
     user.name = req.body.name ? req.body.name : user.name;
   
-    user.profilePicture = req.body.profilePicture ? req.body.profilePicture : user.profilePicture;
+    user.picture = req.body.picture ? req.body.picture : user.picture;
   
     await user.save();
   

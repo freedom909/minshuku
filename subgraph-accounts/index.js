@@ -1,17 +1,15 @@
 import { ApolloServer } from '@apollo/server'
-
 import { startStandaloneServer } from '@apollo/server/standalone'
 import { buildSubgraphSchema } from '@apollo/subgraph'
-
 import { readFileSync } from 'fs'
 import axios from 'axios'
 import gql from 'graphql-tag'
 import paseto from 'paseto';
 const { V2 } = paseto;
-
 import express from 'express'
 import cors from 'cors'
 // import authRouter from './auth.route.js'
+import authDirectives from '../shared/src/directives/authDirectives.js'
 import { getToken, handleInvalidToken } from './helpers/tokens.js'
 import errors from '../utils/errors.js'
 const { AuthenticationError } = errors
@@ -56,7 +54,10 @@ async function startApolloServer() {
     // Other ApolloServer configurations...
     dataSources: () => ({
       accountsAPI: new AccountsAPI()
-    })
+    }),
+    // schemaDirectives: {
+    //   unique: authDirectives
+    //   }
   })
 
   const port = 4011
