@@ -27,14 +27,14 @@ services:
   #   depends_on:
   #     - reviews-db
 
-  # listings-service:
-  #   build: ./services/listings
-  #   ports:
-  #     - "4004:3000"
-  #   environment:
-  #     - NODE_ENV=development
-  #   depends_on:
-  #     - listings-db
+  listings-service:
+    build: ./services/listings
+    ports:
+      - "4004:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - listings-db
 
   accounts-db:
     image: postgres:latest

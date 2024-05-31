@@ -1,5 +1,5 @@
 import { Sequelize }  from '@sequelize/core';
-import sequelize from './sequelize.js';
+import database from './sequelize.js';
 import Amenity from './amenity.js';
 import Listing from './listing.js';
 import ListingAmenities from './listingamenities.js';
@@ -10,7 +10,7 @@ Amenity.belongsToMany(Listing, { through: ListingAmenities, foreignKey: 'amenity
 
 
 const db = {
-  sequelize,
+  database,
   Sequelize,
   Amenity,
   Listing,

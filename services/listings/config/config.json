@@ -2,22 +2,19 @@
   "development": {
     "user": "root",
     "password": "princess",
-    "database": "listings",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "database": "goodJob",
+    "host": "127.0.0.1"    
   },
   "test": {
     "username": "root",
     "password": "princess",
     "database": "listings_test",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "host": "127.0.0.1"
   },
   "production": {
     "username": "root",
     "password": "princess",
     "database": "listings_production",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "host": "127.0.0.1"
   }
 }
