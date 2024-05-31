@@ -2,7 +2,7 @@
   "development": {
     "user": "root",
     "password": "princess",
-    "database": "goodJob",
+    "database": "listings",
     "host": "127.0.0.1"    
   },
   "test": {

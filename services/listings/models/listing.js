@@ -1,24 +1,47 @@
-import { DataTypes } from '@sequelize/core';
-import database from './sequelize.js';
+import { Model, DataTypes } from '@sequelize/core';
+import sequelize from './sequelize.js';
 
-const sequelize= database.sequelize;
 
-const Listing = sequelize.define('Listing', {
+class Listing extends Model {}
+
+
+Listing.init({
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.STRING,
     primaryKey: true,
   },
-  costPerNight: DataTypes.FLOAT,
   title: DataTypes.STRING,
-  locationType: DataTypes.STRING,
   description: DataTypes.TEXT,
+  costPerNight: DataTypes.FLOAT,
+  hostId: DataTypes.STRING,
+  locationType: DataTypes.STRING,
   numOfBeds: DataTypes.INTEGER,
   photoThumbnail: DataTypes.STRING,
-  hostId: DataTypes.UUID,
   isFeatured: DataTypes.BOOLEAN,
-  latitude: DataTypes.FLOAT, // Added latitude field
-  longitude: DataTypes.FLOAT, // Added longitude field
+  latitude: {
+    type: DataTypes.FLOAT,
+    allowNull: true, // Initially allow null values
+  },
+  longitude: {
+    type: DataTypes.FLOAT, 
+    allowNull: true, // Initially allow null values
+  },
+  
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+}, 
+
+{
+  sequelize,
+  modelName: 'Listing',
+  timestamps: true,
+  
 });
 
 export default Listing;
