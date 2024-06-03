@@ -1,122 +1,34 @@
-version: '3.9'
 services:
-  accounts-service: 
-    build: ./services/accounts
+  listings-db:
+    image: mysql:8.0.33
+    container_name: listings-db
+    restart: always
+    volumes:
+      - listings-db-data:/var/lib/mysql
     ports:
-      - "4002:5432"
+      - "3306:3306"
     environment:
-      - NODE_ENV=development
-    depends_on:
-      - accounts-db
-
-  # bookings-service:
-  #   build: ./services/bookings
-  #   ports:
-  #     - "4003:3000"
-  #   environment:
-  #     - NODE_ENV=development
-  #   depends_on:
-  #     - bookings-db
-
-  # reviews-service:
-  #   build: ./services/reviews
-  #   ports:
-  #     - "4005:3000"
-  #   environment:
-  #     - NODE_ENV=development
-  #   depends_on:
-  #     - reviews-db
+      MYSQL_ROOT_PASSWORD: princess
+      MYSQL_DATABASE: listings
+    networks:
+      - airlock_backend
 
   listings-service:
-    build: ./services/listings
+    build: .
     ports:
-      - "4004:3000"
+      - "4010:4010"
     environment:
-      - NODE_ENV=development
-    depends_on:
-      - listings-db
+      DB_HOST: host.docker.internal
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: princess
+      DB_NAME: listings
+    networks:
+      - airlock_backend
 
-  accounts-db:
-    image: postgres:latest
-    ports:
-      - "5432:5432"
-    container_name: accounts-db
-    restart: always
-    volumes:
-      - accounts-db-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_USER: postgresuser
-      POSTGRES_DB: postgresdb
-      PGDATA: /var/lib/postgresql/data/pgdata
-      PGHOST: accounts-db
-      PGUSER: postgresuser
-
-  # bookings-db:
-  #   image: postgres:latest
-  #   container_name: bookings-db
-  #   restart: always
-  #   ports:
-  #     - "4003:5432"
-  #   volumes:
-  #     - bookings-db-data:/var/lib/postgresql/data
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=postgrePassword
-  #     - POSTGRES_DB=bookings
-
-  # listings-db:
-  #   image: postgres:latest
-  #   container_name: listings-db
-  #   restart: always
-  #   ports:
-  #     - "4004:5432"
-  #   volumes:
-  #     - listings-db-data:/var/lib/postgresql/data
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=postgrePassword
-  #     - POSTGRES_DB=listings
-
-  # reviews-db:
-  #   image: postgres:latest
-  #   container_name: reviews-db
-  #   restart: always
-  #   ports:
-  #     - "4005:5432"
-  #   volumes:
-  #     - reviews-db-data:/var/lib/postgresql/data
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=postgrePassword
-  #     - POSTGRES_DB=reviews
-
-  graphql-engine:
-    image:
-      hasura/graphql-engine:latest
-    ports:
-      - "4011:8080"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - "accounts-db"
-    restart: always
-    volumes:
-      - ./hasura/migrations:/hasura-migrations
-      - ./hasura/metadata:/hasura-metadata
-    environment:
-      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/postgres
-      ## enable the console served by server
-      HASURA_GRAPHQL_ENABLE_CONSOLE: true # set to "false" to disable console
-      ## enable debugging mode. It is recommended to disable this in production
-      HASURA_GRAPHQL_DEV_MODE: "true"
-      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
-      ## uncomment next line to set an admin secret
-      HASURA_GRAPHQL_ADMIN_SECRET: goodhacker
-      HASURA_GRAPHQL_JWT_SECRET: '{"jwk_url":"https://dev-9saus9he.jp.auth0.com/.well-known/jwks.json","secret":"goodhacker"}'
+networks:
+  airlock_backend:
+    driver: bridge
 
 volumes:
-  accounts-db-data:
-  bookings-db-data:
   listings-db-data:
-  reviews-db-data:

@@ -1,4 +1,4 @@
-// import sequelize from './sequelize.js';
+import sequelize from './sequelize.js';
 import Amenity from './amenity.js';
 import Listing from './listing.js';
 import ListingAmenities from './listingamenities.js';
@@ -9,7 +9,7 @@ Listing.belongsToMany(Amenity, { through: ListingAmenities, foreignKey: 'listing
 Amenity.belongsToMany(Listing, { through: ListingAmenities, foreignKey: 'amenityId', otherKey: 'listingId',as:'listings' });
 
 const db = {
- 
+  sequelize,
   Amenity,
   Listing,
   ListingAmenities,
