@@ -111,6 +111,9 @@ const resolvers = {
       listing: ({ listingId }) => {
         return { id: listingId }
       },
+      listing: ({ booking }) => {
+        return { id: booking.listingId }
+      },
       checkInDate: ({ checkInDate }, _, { dataSources }) => {
         return dataSources.bookingsAPI.getHumanReadableDate(checkInDate)
       },
@@ -131,12 +134,18 @@ const resolvers = {
           checkOutDate
         })
         return totalCost
-      }
+      },
+      reviews: async (booking)=> {
+        return await dataSources.reviewsDb.getReviewsForBooking(booking.id)
+      },
     },
 
     Guest: {
       __resolveReference: (user, { dataSources }) => {
         return dataSources.accountsAPI.getUser(user.id);
+      },
+      bookings: async (guest) => {
+        return await dataSources.bookingsAPI.getBookingsForUser(guest.id)
       },
       funds: async (_, __, { dataSources, userId }) => {
         const wallet = await dataSources.accountsAPI.getUserWallet(userId)

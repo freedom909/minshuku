@@ -1,11 +1,10 @@
 import express from 'express';
-const app = express()
+const app = express();
 
-import pkg from 'validator';
-const {isEmail } = pkg;
+import { default as validator } from 'validator';
 import jwt from 'jsonwebtoken';
-import { PrismaClient} from '@prisma/client';
-const prisma=new PrismaClient()
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 const port = process.env.PORT || 4011;
 
@@ -19,15 +18,15 @@ app.get('/', (req, res) => {
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!(password && email)) {
-    res.status(401).json({message:'email and password must not be null'})
+    return res.status(401).json({ message: 'email and password must not be null' });
   }
-  if (!isEmail(email)) {
-    res.status(401).json({message:'email must be a valid email'})
+  if (!validator.isEmail(email)) {
+    return res.status(401).json({ message: 'email must be a valid email' });
   }
-    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-      expiresIn: '1d'
-    });
-    res.json({ token });
+  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+    expiresIn: '1d'
+  });
+  res.json({ token });
 });
 
 app.get('/user/:userId', async (req, res) => {
@@ -40,27 +39,50 @@ app.get('/user/:userId', async (req, res) => {
   return res.json(user);
 });
 
-//this code needs to be changed
+// This code needs to be changed
 app.get('/user/:userId/listings', async (req, res) => {
-const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-  algorithm: "HS256",
-  subject: user.id.toString(),
-  expiresIn: "1d"
+  const userId = req.params.userId;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
   });
-  return { token, user: user };
-}
-)
+  if (!user) {
+    return res.status(404).send('Could not find user with ID');
+  }
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    algorithm: "HS256",
+    subject: user.id.toString(),
+    expiresIn: "1d"
+  });
+  return res.json({ token, user });
+});
+
 app.post('/register', async (req, res) => {
   try {
-    const { email, passwordHash, nickname, role, picture,description } = req.body;
+    const { email, password, nickname, role, picture, description } = req.body;
     if (!(password && email && nickname)) {
-      res.status(401).json({message:'email, password and nickname must not be null'})
+      return res.status(401).json({ message: 'email, password and nickname must not be null' });
     }
-    if (!isEmail(email)) {
-      res.status(401).json({message:'email must be a valid email'})
+    if (!validator.isEmail(email)) {
+      return res.status(401).json({ message: 'email must be a valid email' });
     }
+    if (password.length < 8) {
+      return res.status(401).json({ message: 'password must be at least 8 characters' });
+    }
+    if (!validator.isStrongPassword(password)) {
+      return res.status(401).json({ message: 'The password must be at least 8 characters long and contain a mix of uppercase letters, lowercase letters, numbers, and symbols' });
+    }
+    if (nickname.length < 3) {
+      return res.status(401).json({ message: 'nickname must be at least 3 characters' });
+    }
+    if (!validator.isAlphanumeric(nickname)) {
+      return res.status(401).json({ message: 'nickname must be alphanumeric' });
+    }
+    if (!validator.isURL(picture)) {
+      return res.status(401).json({ message: 'picture must be a valid URL' });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { email: email ,nickname: nickname }     
+      where: { email: email, nickname: nickname }
     });
     if (user) {
       return res.status(404).send('This email or nickname is already in use');
@@ -75,7 +97,7 @@ app.post('/register', async (req, res) => {
           name: req.body.name,
           picture: picture,
           role: role,
-          password: passwordHash,
+          password: password,
         },
       });
     } else {
@@ -89,18 +111,18 @@ app.post('/register', async (req, res) => {
 });
 
 app.post('/user', async (req, res) => {
-  const {email,nickname} = req.body;
+  const { email, nickname } = req.body;
   let user;
   if (email) {
     user = await prisma.user.findUnique({
       where: { email },
     });
-  }else  if (nickname) {
-    user=await prisma.user.findUnique({
+  } else if (nickname) {
+    user = await prisma.user.findUnique({
       where: { nickname }
-    })
+    });
   }
- 
+
   if (!user) {
     return res.status(404).send('Could not find user with this email or nickname');
   }
@@ -114,18 +136,24 @@ app.patch('/user/:userId', async (req, res) => {
   if (!user) {
     return res.status(404).send('Could not find user with ID');
   }
-    // properties to update
 
-    user.profileDescription = req.body.profileDescription ? req.body.profileDescription : user.profileDescription;
+  // properties to update
+  user.profileDescription = req.body.profileDescription || user.profileDescription;
+  user.name = req.body.name || user.name;
+  user.picture = req.body.picture || user.picture;
 
-    user.name = req.body.name ? req.body.name : user.name;
-  
-    user.picture = req.body.picture ? req.body.picture : user.picture;
-  
-    await user.save();
-  
-    return res.json(user);
+  await prisma.user.update({
+    where: { id: req.params.userId },
+    data: {
+      profileDescription: user.profileDescription,
+      name: user.name,
+      picture: user.picture,
+    }
   });
+
+  return res.json(user);
+});
+
 app.listen(port, () => {
   console.log(`UserAccountsAPI running at http://localhost:${port}`);
 });

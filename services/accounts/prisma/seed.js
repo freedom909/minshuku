@@ -7,8 +7,7 @@ const prisma = new PrismaClient()
 async function main() {
   console.log(`Start seeding ...`)
   
-
-  const existingNicknames = new Set();
+const existingNicknames = new Set();
   for (const u of userData) {
     if (u.nickname) {
       if (existingNicknames.has(u.nickname)) {

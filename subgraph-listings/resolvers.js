@@ -128,6 +128,11 @@ const resolvers = {
       }
     }
   },
+  Host:{
+    listings: async (host) => {
+      return dataSources.listingsAPI.getListingsForUser(host.id)
+  },
+},
   Listing: {
     __resolverReference: ({ id }, { dataSources }) => {
       return dataSources.listingsAPI.getListing(id)
@@ -226,8 +231,6 @@ const resolvers = {
       SPACE_SURVIVAL: 'SPACE_SURVIVAL',
       OUTDOORS: 'OUTDOORS'
     },
-    
-   
   }
 }
 

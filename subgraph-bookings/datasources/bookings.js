@@ -1,25 +1,29 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import {PrismaClient} from "@prisma/client"
+import { PrismaClient } from "@prisma/client"
 class BookingsDb {
   constructor() {
     this.prisma = new PrismaClient();
   }
 
-//   async getBookings() {
-//     return await this.prisma.booking.findMany();
-//   }
-// }
-//   // // Create an instance of bookingsAPI
-//   const bookingsDb=new BookingsDb()
-  
-//   // // Call the getReviews method
-//   bookingsDb.getBookings().then((bookings) => console.log(bookings))
+  //   async getBookings() {
+  //     return await this.prisma.booking.findMany();
+  //   }
+  // }
+  //   // // Create an instance of bookingsAPI
+  //   const bookingsDb=new BookingsDb()
 
+  //   // // Call the getReviews method
+  //   bookingsDb.getBookings().then((bookings) => console.log(bookings))
 
-  helper
-  getHumanReadableDate(date) {
+  async getBookingsForUser(guest) {
+    const bookings = await this.prisma.booking.findMany({
+      where: { guestId: guest.id },
+    })
+    return bookings;
+  }
+  async getHumanReadableDate(date) {
     return format(date, 'MMM d, yyyy');
   }
 
@@ -31,7 +35,7 @@ class BookingsDb {
     return booking;
   }
 
-  async getCurrentGuestBooking(listingId, checkInDate, checkOutDate){
+  async getCurrentGuestBooking(listingId, checkInDate, checkOutDate) {
     const booking = await this.prisma.booking.findMany({
       where: {
         listingId,
@@ -59,6 +63,15 @@ class BookingsDb {
     }
     const bookings = await this.prisma.booking.findMany({ where: filterOptions });
     return bookings;
+  }
+
+  async getReviewsForBooking(bookingId, status) {
+    const filterOptions = { bookingId };
+    if (status) {
+      filterOptions.status = status;
+    }
+    const reviews = await this.prisma.review.findMany({ where: filterOptions });
+    return reviews;
   }
 
   async getGuestIdForBooking(bookingId) {
@@ -111,7 +124,7 @@ class BookingsDb {
   async createBooking({ listingId, checkInDate, checkOutDate, totalCost, guestId }) {
     if (await this.isListingAvailable({ listingId, checkInDate, checkOutDate })) {
       const booking = await this.prisma.booking.create({
-        data:{
+        data: {
           id: uuidv4(),
           listingId,
           checkInDate,
@@ -129,9 +142,7 @@ class BookingsDb {
       };
     } else {
       throw new Error("We couldn't complete your request ")
-}
-
-    
+    }
   }
 }
 

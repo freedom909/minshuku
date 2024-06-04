@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   listings-db:
     image: mysql:8.0.33
@@ -8,27 +10,48 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: princess
+      MYSQL_PASSWORD: princess
       MYSQL_DATABASE: listings
     networks:
-      - airlock_backend
+      - backend
+      
+  accounts-service: 
+    build: ./services/accounts
+    ports:
+      - "4011:4011"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - accounts-db
+
+  accounts-db:
+    image: mongo:latest
+    container_name: accounts-db
+    restart: always
+    volumes:
+      - accounts-db-data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - backend
 
   listings-service:
-    build: .
+    build: ./services/listings
     ports:
       - "4010:4010"
     environment:
-      DB_HOST: host.docker.internal
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: princess
-      DB_NAME: listings
+      NODE_ENV: development
+      MYSQL_HOST: listings-db
+      MYSQL_PASSWORD: princess
+      MYSQL_DB: listings
+    depends_on:
+      - listings-db
     networks:
-      - airlock_backend
+      - backend
 
 networks:
-  airlock_backend:
-    driver: bridge
+  backend:
 
 volumes:
   listings-db-data:
+  accounts-db-data:

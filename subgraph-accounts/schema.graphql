@@ -8,7 +8,7 @@ extend schema
 scalar DateTime
 # OBJECTS
 
-type Query {
+extend type Query {
   "User accounts"
   user(id: ID!): User @shareable
   "Currently logged-in user"
@@ -43,7 +43,13 @@ interface User {
   "The user's first and last name"
   name: String!
   "The user's profile photo URL"
- picture: String!
+  picture: String!
+  "The email address of the user (must be unique)."
+  email: String!
+  "The nickname of the user"
+  nickname: String!
+  "The listings of the user"
+  listing: [Listing]
 }
 
 type Host implements User @key(fields: "id") {

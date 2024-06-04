@@ -20,17 +20,17 @@ import dotenv from 'dotenv';
 import { MySqlDialect } from '@sequelize/mysql';
 // Ensure environment variables are loaded
 dotenv.config();
-const dbPort = parseInt(process.env.DB_PORT, 10);
-console.log(`DB_HOST: ${process.env.DB_HOST}`);
+const dbPort = parseInt(process.env.MYSQL_PORT, 10);
+console.log(`DB_HOST: ${process.env.MYSQL_HOST}`);
 console.log(`DB_PORT: ${dbPort}`); // This should log 3307 as a number
-console.log(`DB_USER: ${process.env.DB_USER}`);
-console.log(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
-console.log(`DB_NAME: ${process.env.DB_NAME}`);
+console.log(`DB_USER: ${process.env.MYSQL_USER}`);
+console.log(`DB_PASSWORD: ${process.env.MYSQL_PASSWORD}`);
+console.log(`DB_NAME: ${process.env.MYSQL_HOST}`);
 const options = {
-  user: process.env.DB_USER,
-  password:  process.env.DB_PASSWORD,
+  user: process.env.MYSQL_USER,
+  password:  process.env.MYSQL_PASSWORD,
   database: process.env.DB_NAME,
-  host: process.env.DB_HOST,
+  host: process.env.MYSQL_DB,
   port: dbPort,
   dialect:MySqlDialect,
   logging: console.log, // Enable logging for debugging
