@@ -1,35 +1,44 @@
 import express from 'express';
-const app = express();
-
+import { shield, rule, and, or } from 'graphql-shield'
 import { default as validator } from 'validator';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
+import auth from './auth.js';
+import permissions from './permissions.js';
+import { applyMiddleware } from 'graphql-middleware';
+
 const prisma = new PrismaClient();
-
+const app = express();
 const port = process.env.PORT || 4011;
-
 app.use(express.json());
-
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+
 // login
-app.post('/login', async (req, res) => {
+app.post('/login', async (req, res, next) => {
   const { email, password } = req.body;
   if (!(password && email)) {
-    return res.status(401).json({ message: 'email and password must not be null' });
+    return res.status(401).json({ message: 'Email and password must not be null' });
   }
   if (!validator.isEmail(email)) {
-    return res.status(401).json({ message: 'email must be a valid email' });
+    return res.status(401).json({ message: 'Email must be a valid email' });
   }
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-    expiresIn: '1d'
+  if (password.length < 8) {
+    return res.status(401).json({ message: 'Password must be at least 8 characters' });
+  }
+  const user = await prisma.user.findUnique({
+    where: { email },
   });
-  res.json({ token });
+  if (!user) {
+    return res.status(401).json({ message: 'Invalid email' });
+  }
+  next();
 });
 
-app.get('/user/:userId', async (req, res) => {
+app.get('/user/:userId', auth.authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.params.userId },
   });
@@ -39,23 +48,34 @@ app.get('/user/:userId', async (req, res) => {
   return res.json(user);
 });
 
-// This code needs to be changed
-app.get('/user/:userId/listings', async (req, res) => {
-  const userId = req.params.userId;
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+// Get listings by user ID
+app.get('/user/:userId/listings', auth.authenticate, auth.authorize(permissions.listingsWithPermission), async (req, res) => {
+  const listings = await prisma.listing.findMany({
+    where: { hostId: req.user.id }
   });
-  if (!user) {
-    return res.status(404).send('Could not find user with ID');
-  }
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    algorithm: "HS256",
-    subject: user.id.toString(),
-    expiresIn: "1d"
-  });
-  return res.json({ token, user });
+  return res.json(listings);
 });
 
+// Create a listing
+app.post('/user/:userId/listings', auth.authenticate, auth.authorize(permissions.listingsWithPermission), async (req, res) => {
+  const { title, description, price, location } = req.body;
+  const listing = await prisma.listing.create({
+    data: {
+      title,
+      description,
+      price,
+      location: {
+        create: location
+      },
+      host: {
+        connect: {
+          id: req.user.id
+        }
+      }
+    }
+  });
+  return res.json(listing);
+});
 app.post('/register', async (req, res) => {
   try {
     const { email, password, nickname, role, picture, description } = req.body;
@@ -74,19 +94,17 @@ app.post('/register', async (req, res) => {
     if (nickname.length < 3) {
       return res.status(401).json({ message: 'nickname must be at least 3 characters' });
     }
-    if (!validator.isAlphanumeric(nickname)) {
-      return res.status(401).json({ message: 'nickname must be alphanumeric' });
-    }
     if (!validator.isURL(picture)) {
       return res.status(401).json({ message: 'picture must be a valid URL' });
     }
 
-    const user = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email: email, nickname: nickname }
     });
-    if (user) {
+    if (existingUser) {
       return res.status(404).send('This email or nickname is already in use');
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
     let newUser;
     if (role === "GUEST" || role === "HOST") {
       newUser = await prisma.user.create({
@@ -97,9 +115,10 @@ app.post('/register', async (req, res) => {
           name: req.body.name,
           picture: picture,
           role: role,
-          password: password,
+          password: hashedPassword,
         },
       });
+
     } else {
       return res.status(400).send('Invalid user role');
     }
@@ -110,50 +129,24 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.post('/user', async (req, res) => {
-  const { email, nickname } = req.body;
-  let user;
-  if (email) {
-    user = await prisma.user.findUnique({
-      where: { email },
-    });
-  } else if (nickname) {
-    user = await prisma.user.findUnique({
-      where: { nickname }
-    });
+
+app.patch('/user/:userId', auth.authenticate, async (req, res) => {
+  try {
+    const {description,name,picture} = req.body
+    const updateUser = await prisma.user.update({
+      where: { id: req.params.userId },
+      data: {
+       description: description,
+        name: name,
+        picture: picture,
+      }
+    })
+  } catch (error) {
+    return res.status(500).json({message:"internal server error"})
   }
-
-  if (!user) {
-    return res.status(404).send('Could not find user with this email or nickname');
-  }
-  return res.json(user);
-});
-
-app.patch('/user/:userId', async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.params.userId },
-  });
-  if (!user) {
-    return res.status(404).send('Could not find user with ID');
-  }
-
-  // properties to update
-  user.profileDescription = req.body.profileDescription || user.profileDescription;
-  user.name = req.body.name || user.name;
-  user.picture = req.body.picture || user.picture;
-
-  await prisma.user.update({
-    where: { id: req.params.userId },
-    data: {
-      profileDescription: user.profileDescription,
-      name: user.name,
-      picture: user.picture,
-    }
-  });
-
-  return res.json(user);
 });
 
 app.listen(port, () => {
   console.log(`UserAccountsAPI running at http://localhost:${port}`);
-});
+})
+

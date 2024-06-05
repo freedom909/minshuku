@@ -1,6 +1,7 @@
 import { ApolloServer } from '@apollo/server'
 import { startStandaloneServer } from '@apollo/server/standalone'
 import { buildSubgraphSchema } from '@apollo/subgraph'
+import makeExecutableSchema  from '@graphql-tools/schema'
 import { readFileSync } from 'fs'
 import axios from 'axios'
 import gql from 'graphql-tag'
@@ -9,13 +10,15 @@ const { V2 } = paseto;
 import express from 'express'
 import cors from 'cors'
 // import authRouter from './auth.route.js'
-import authDirectives from '../shared/src/directives/authDirectives.js'
+// import authDirectives from '../shared/src/directives/authDirectives.js'
 import { getToken, handleInvalidToken } from './helpers/tokens.js'
 import errors from '../utils/errors.js'
 const { AuthenticationError } = errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }))
 import resolvers from './resolvers.js'
 import AccountsAPI from './datasources/accounts.js'
+import { applyMiddleware } from 'graphql-middleware'
+import { permissions } from './permissions';
 
 const httpClient = axios.create({
   baseURL: 'http://localhost:4011'
@@ -45,19 +48,25 @@ if (process.env.NODE_ENV === 'development') {
   )
 }
 
+const schema= makeExecutableSchema({
+  typeDefs,
+  resolvers
+})
+const schemaWithMiddleware = applyMiddleware(schema, permissions);
 async function startApolloServer() {
   const server = new ApolloServer({
-    schema: buildSubgraphSchema({
-      typeDefs,
-      resolvers
-    }),
+    schema: schemaWithMiddleware,
     // Other ApolloServer configurations...
     dataSources: () => ({
       accountsAPI: new AccountsAPI()
     }),
-    // schemaDirectives: {
-    //   unique: authDirectives
-    //   }
+    context:({req})=>{
+        user: req.user
+        return {
+          user,
+          prisma
+      }
+    }
   })
 
   const port = 4011
@@ -67,7 +76,6 @@ async function startApolloServer() {
     const { url } = await startStandaloneServer(server, {
       context: async ({ req }) => {
         const token = req.headers.authorization || ''
-
         const userId = token.split(' ')[1] // get the user name after 'Bearer '
 
         let userInfo = {}

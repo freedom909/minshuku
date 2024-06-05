@@ -46,9 +46,14 @@ const resolvers = {
         return dataSources.accountsAPI.getAccountById(user.sub);
       }
       return null;
-    }
+    },
+    bookings: async (_, __, { ctx }) => {
+      const { user} = ctx 
+      if (!user) throw new AuthenticationError('You must be logged in to view bookings');
+      const bookings = await dataSources.bookingsAPI.getBookingsForUser(user);
+      return bookings;
   },
-
+  },
   Mutation: {
     updateProfile: async (_, { updateProfileInput }, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError();

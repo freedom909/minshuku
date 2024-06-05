@@ -14,7 +14,11 @@
     },
     "dependencies": {
         "@prisma/client": "^5.12.1",
+        "bcrypt": "^5.1.1",
+        "crypt": "^0.0.2",
         "express": "^4.19.2",
+        "graphql-middleware": "^6.1.35",
+        "graphql-shield": "^7.6.5",
         "jsonwebtoken": "^9.0.2",
         "mongodb": "^6.5.0",
         "nodemon": "^3.1.0",

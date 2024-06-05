@@ -1,34 +1,30 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
-}
-
-datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
-  relationMode = "prisma"
-}
-
 model User {
-    id      String   @id @map("_id") 
-  email   String   @unique
-  name    String   
-  role    ROLE  @default(GUEST)
-  password String
-  token String?
+  id           String    @id @map("_id")
+  email        String    @unique
+  name         String   
+  role         ROLE      @default(GUEST)
+  password     String
+  token        String?
   refresh_token String?
-  profilePicture String
-  profileDescription String
-  nickname String? @unique
+  picture      String
+  description  String
+  nickname     String?   @unique
+  listings     Listing[] // A user can have many listings
 }
+
 enum ROLE {
   ADMIN
   GUEST
   HOST
+}
+
+model Listing {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  price       Float
+  location    Location  @relation(fields: [locationId], references: [id])
+  locationId  Int
+  host        User      @relation(fields: [hostId], references: [id])
+  hostId      String
 }

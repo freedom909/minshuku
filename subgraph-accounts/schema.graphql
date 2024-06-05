@@ -1,7 +1,7 @@
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.4"
-    import: ["@key", "@shareable", "@override"]
+    import: ["@key", "@shareable", "@override","@provides"]
 )
 
 # SCALARS
@@ -19,6 +19,7 @@ extend type Query {
   # accounts: [Account] @private
   "Retrieves the account of the currently logged-in user."
   viewer: Account
+  bookings: [Booking] @private
 }
 
 type Account @key(fields: "id") {
@@ -42,6 +43,14 @@ interface User {
   id: ID!
   "The user's first and last name"
   name: String!
+  "The user's role"
+  role: ROLE!
+  "the user's password"
+  password: String!
+  "The user's token"
+  token: String
+  "the user's refreshed token"
+  refresh_token: String
   "The user's profile photo URL"
   picture: String!
   "The email address of the user (must be unique)."
@@ -59,7 +68,7 @@ type Host implements User @key(fields: "id") {
   "The user's profile photo URL"
   picture: String! @shareable
   "The host's profile bio description, will be shown in the listing"
-  profileDescription: String @shareable
+  description: String @shareable
   "The email address of the user (must be unique)."
   email: String!
   "The password of the user"
@@ -68,6 +77,8 @@ type Host implements User @key(fields: "id") {
   nickname: String
   "The role of the user"
   role: Role
+  "the listings of the user"
+  listing: [Listing]!
 }
 
 enum Role {
@@ -91,7 +102,11 @@ type Guest implements User @key(fields: "id") {
   nickname: String!
   "The role of the user"
   role: Role 
+  "The bookings of the user"  
+  bookings: [Booking]
 }
+ 
+
 
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
@@ -209,3 +224,34 @@ input SignInInput {
   """
   password: String!
 }
+
+type Booking @key(fields: "id") {
+  id: ID!
+  "The unique ID associated with the account."
+  guestId: ID!
+  "The date and time the booking was created."
+  createdAt: DateTime!
+  "The date and time the booking was cancelled."
+  cancelledAt: DateTime
+  "The date and time the booking was confirmed."
+  confirmedAt: DateTime
+  "The date and time the booking was cancelled."
+}
+
+type Listing @key(fields: "id") {
+ "The unique ID associated with the account."
+  id: ID!
+ "The title of the listings associated with the account."
+  title: String!
+  'The list of the description'
+  description: String!
+  "the price of the listings associated with the account."
+  price: Float!
+  "the price of the listings"
+  location: Location!
+  "the host of User"
+  host: User!
+}
+
+  
+
