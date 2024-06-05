@@ -3,7 +3,7 @@ import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
 const { AuthenticationError, ForbiddenError } = errors;
 import { validateInviteCode } from './helpers/validateInvitecode.js';
-import DateTimeType from '../shared/src/scalars/DateTimeType.js';
+import DateTimeType from '../../shared/src/scalars/DateTimeType.js';
 
 const resolvers = {
   DateTime: DateTimeType,

@@ -1,13 +1,12 @@
 import errors from '../utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
-const { AuthenticationError, ForbiddenError } = errors;
-import { validateInviteCode } from './helpers/validateInvitecode.js';
-import DateTimeType from '../shared/src/scalars/DateTimeType.js';
+import { AuthenticationError, ForbiddenError }from '../../utils/errors.js';
+import { validateInviteCode } from '../helpers';
+import DateTimeType from '../../shared/src/scalars/DateTimeType.js';
 
 const resolvers = {
   DateTime: DateTimeType,
-
   Account: {
     __resolveReference(reference, { dataSources, user }) {
       if (user?.sub) {
@@ -20,41 +19,37 @@ const resolvers = {
     },
     createdAt(account) {
       return account.created_at;
-    },
-    email(account) {
-      return account.email;
     }
   },
 
   Query: {
     user: async (_, { id }, { dataSources }) => {
-      const user = await dataSources.accountsAPI.getUser(id);
+      const user = await dataSources.accountsAPI.getUserById(id);
       if (!user) {
-        throw new GraphQLError('No user found', { extensions: { code: 'NO_USER_FOUND' } });
+        throw new GraphQLError("No user found", { extensions: { code: 'NO_USER_FOUND' } });
       }
       return user;
     },
     me: async (_, __, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError();
-      const user = await dataSources.accountsAPI.getUser(userId);
+      const user = await dataSources.accountsAPI.getUserById(userId);
       return user;
     },
-    account: async (_, { id }, { dataSources }) => {
+    account(_, { id }, { dataSources }) {
       return dataSources.accountsAPI.getAccountById(id);
     },
-    accounts: async (_, __, { dataSources }) => {
+    accounts(_, __, { dataSources }) {
       return dataSources.accountsAPI.getAccounts();
     },
-    viewer: async (_, __, { dataSources, user }) => {
+    viewer(_, __, { dataSources, user }) {
       if (user?.sub) {
         return dataSources.accountsAPI.getAccountById(user.sub);
       }
       return null;
     },
-    bookings: async (_, __, { ctx, dataSources }) => {
-      const { user } = ctx;
+    bookings: async (_, __, { dataSources, user }) => {
       if (!user) throw new AuthenticationError('You must be logged in to view bookings');
-      const bookings = await dataSources.bookingsAPI.getBookingsForUser(user);
+      const bookings = await dataSources.accountsAPI.getBookingsForUser(user);
       return bookings;
     },
   },
@@ -63,10 +58,7 @@ const resolvers = {
     updateProfile: async (_, { updateProfileInput }, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError();
       try {
-        const updatedUser = await dataSources.accountsAPI.updateUser({
-          userId,
-          userInfo: updateProfileInput,
-        });
+        const updatedUser = await dataSources.accountsAPI.updateUser(userId, updateProfileInput);
         return {
           code: 200,
           success: true,
@@ -84,9 +76,9 @@ const resolvers = {
 
     logout: (_, __, context) => {
       if (context.session) {
-        context.session.destroy(err => {
+        context.session.destroy((err) => {
           if (err) {
-            throw new GraphQLError('Failed to terminate the session', { extensions: { code: 'FAILED_TO_TERMINATE_SESSION' } });
+            throw new GraphQLError("Failed to terminate the session", { extensions: { code: 'SESSION_TERMINATION_FAILED' } });
           }
         });
       }
@@ -97,7 +89,7 @@ const resolvers = {
       if (email && password) {
         return dataSources.accountsAPI.login(email, password);
       }
-      throw new GraphQLError('Email and password must be provided', { extensions: { code: 'EMAIL_PASSWORD_REQUIRED' } });
+      throw new GraphQLError("Email and password must be provided", { extensions: { code: 'BAD_USER_INPUT' } });
     },
 
     signUp: async (_, { signUpInput }, { dataSources }) => {
@@ -105,24 +97,27 @@ const resolvers = {
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
         if (!inviteCode || !isValidInviteCode) {
-          return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
+          return dataSources.accountsAPI.registerGuest(email, password, name, nickname, 'GUEST', picture);
         }
-        return dataSources.accountsAPI.registerHost(email, name, password, nickname, 'HOST', picture);
+        return dataSources.accountsAPI.registerHost(email, password, nickname, name, inviteCode, picture);
       } else {
-        return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
+        return dataSources.accountsAPI.registerGuest(email, password, name, nickname, 'GUEST', picture);
       }
     },
 
-    createAccount: async (_, { input: { email, password } }, { dataSources }) => {
+    createAccount(root, { input: { email, password } }, { dataSources }) {
       return dataSources.accountsAPI.createAccount(email, password);
     },
-    deleteAccount: async (_, { id }, { dataSources }) => {
+
+    deleteAccount(root, { id }, { dataSources }) {
       return dataSources.accountsAPI.deleteAccount(id);
     },
-    updateAccountEmail: async (_, { input: { id, email } }, { dataSources }) => {
+
+    updateAccountEmail(root, { input: { id, email } }, { dataSources }) {
       return dataSources.accountsAPI.updateAccountEmail(id, email);
     },
-    updateAccountPassword: async (_, { input: { id, newPassword, password } }, { dataSources }) => {
+
+    updateAccountPassword(root, { input: { id, newPassword, password } }, { dataSources }) {
       return dataSources.accountsAPI.updateAccountPassword(id, newPassword, password);
     }
   },
@@ -140,13 +135,13 @@ const resolvers = {
 
   Host: {
     __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
-    }
+      return dataSources.accountsAPI.getUserById(user.id);
+    },
   },
 
   Guest: {
     __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
+      return dataSources.accountsAPI.getUserById(user.id);
     }
   }
 };

@@ -4,36 +4,6 @@ import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
-const authenticate = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ message: 'You must be logged in to access this route' });
-  }
-  try {
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await prisma.user.findUnique({ where: { id: decodedToken.userId } });
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    next();
-  } catch (e) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-};
-
-const authorize = (permission) => async (req, res, next) => {
-  try {
-    const allowed = await permission(req, res);
-    if (allowed) {
-      next();
-    } else {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
 // Rule to check if the user is authenticated
 const isAuthenticated = rule()(async (parent, args, ctx, info) => {
   return ctx.user !== null;
@@ -57,4 +27,31 @@ const isHost = rule()(async (parent, args, ctx, info) => {
   return user && user.role === 'HOST';
 });
 
-export default {authenticate,authorize,isAuthenticated,isAdmin, isOwner, isHost}
+// Rule to
+const isHostOfBooking = rule()(async (parent, args, ctx, info) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: args.id },
+    include: { listing: true }
+  });
+  return booking && booking.listing.hostId === ctx.user.id;
+});
+
+// Rule to check if the user is a host for the listing
+const isHostOfListing = rule()(async (parent, args, ctx, info) => {
+  const listing = await prisma.listing.findUnique({
+    where: { id: args.id }
+  });
+  return listing && listing.hostId === ctx.user.id;
+});
+
+// Permissions
+const permissions = shield({
+  Query: {
+    bookingsWithPermission: or(isAdmin, isOwner, isHostOfBooking),
+    listingsWithPermission: or(isHostOfListing, isAdmin)
+  },
+}, {
+  fallbackRule: isAuthenticated,
+});
+
+export  { permissions };
