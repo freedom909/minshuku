@@ -1,37 +1,34 @@
 // services/accounts/index.js
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
-import { makeExecutableSchema } from '@graphql-tools/schema';
+import pkg from '../../infrastructure/permissions.js';
+const { permissions } = pkg;
+import pkga from '../../infrastructure/auth.js';
+const {authenticate} = pkga;
+
+import { buildSubgraphSchema } from '@apollo/subgraph';
 import { readFileSync } from 'fs';
+import gql from 'graphql-tag';
 import express from 'express';
 import cors from 'cors';
 import { applyMiddleware } from 'graphql-middleware';
-import { permissions } from '../../infrastructure/permissions.js'; // Adjust the import path as necessary
-import {authenticate} from '../../infrastructure/auth.js'
-
-import gql from 'graphql-tag';
 import resolvers from './resolvers.js';
 import AccountsAPI from './datasources/accounts.js';
+
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const app = express();
 app.use(express.json());
 
-app.use(authenticate);
-
 if (process.env.NODE_ENV === 'development') {
   app.use(
     cors({
-      origin: ['https://studio.apollographql.com', 'http://localhost:4011'],
+      origin: ['https://studio.apollographql.com', 'http://localhost:4011']
     })
   );
 }
 
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
-});
+const schema = buildSubgraphSchema({ typeDefs, resolvers });
 const schemaWithMiddleware = applyMiddleware(schema, permissions);
 
 async function startApolloServer() {

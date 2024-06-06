@@ -1,25 +1,12 @@
-extend schema
-  @link(
-    url: "https://specs.apollo.dev/federation/v2.4"
-    import: ["@key", "@shareable", "@override", "@provides"]
-)
+directive @link(
+  url: "https://specs.apollo.dev/federation/v2.6", 
+  import: ["@key", "@shareable", "@override", "@provides", "@external", "@requires"]
+) on SCHEMA
 
 # SCALARS
 scalar DateTime
 
 # OBJECTS
-
-extend type Query {
-  "User accounts"
-  user(id: ID!): User @shareable
-  "Currently logged-in user"
-  me: User! @shareable
-  "Retrieves the account of the currently logged-in user."
-  viewer: Account
-  bookings: [Booking] @private
-  account(id: ID!): Account @shareable
-  accounts: [Account] @shareable
-}
 
 type Account @key(fields: "id") {
   "The unique ID associated with the account."
@@ -148,25 +135,6 @@ input UpdateProfileInput {
   description: String
 }
 
-type Mutation {
-  "Updates the logged-in user's profile information"
-  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
-  "Authenticates an existing user."
-  signIn(email: String!, password: String!): AuthPayload!
-  "Logs an authenticated user out."
-  logout: Boolean!
-  "Creates a new Guest user."
-  signUp(input: SignUpInput!): AuthPayload!
-  "Creates a new account."
-  createAccount(input: CreateAccountInput!): Account!
-  "Deletes an account."
-  deleteAccount(id: ID!): Boolean!
-  "Updates an account's email."
-  updateAccountEmail(input: UpdateAccountEmailInput!): Account!
-  "Updates an account's password."
-  updateAccountPassword(input: UpdateAccountPasswordInput!): Account!
-}
-
 """
 Provides data to create a new account.
 """
@@ -189,7 +157,7 @@ input SignUpInput {
   """
   password: String!
   "The user's chosen nickname (must be unique)."
-  nickname: String
+  nickname: String!
   "The user's inviteCode"
   inviteCode: String
   "The user's role"
@@ -214,7 +182,7 @@ type Booking @key(fields: "id") {
   "The unique ID associated with the account."
   guestId: ID!
   "The date and time the booking was created."
-  createdAt: DateTime!
+  createdAt: DateTime
   "The date and time the booking was cancelled."
   cancelledAt: DateTime
   "The date and time the booking was confirmed."
@@ -232,4 +200,79 @@ type Listing @key(fields: "id") {
   price: Float!
   "The host of the listing."
   host: User!
+  "The location of the listing."
+  location: Location!
+  "The latitude of the listing."
+  latitude: Float!
+  "The longitude of the listing."
+  longitude: Float!
+}
+
+type Location @key(fields: "id") {
+  "The unique ID associated with the location"
+  id: Int! @shareable
+  "The name of the address"
+  name: String! @shareable
+  "The address of the location"
+  address: String! @shareable
+  "The city of the location"
+  city: String! @shareable
+  "The state of the location"
+  state: String! @shareable
+  "The zip code of the location"
+  zip: String! @shareable
+  "The listings of the location"
+  listings: [Listing] @shareable
+}
+
+interface Node {
+  "The node's ID"
+  id: ID!
+}
+
+type _Service {
+  sdl: String
+}
+
+scalar _Any
+
+union _Entity = Listing | User
+
+extend type Query {
+  _service: _Service!
+  getUser(id: String!): User
+  listListings: [Listing]
+  "User accounts"
+  user(id: ID!): User @shareable
+  "Currently logged-in user"
+  me: User! @shareable
+  "Retrieves the account of the currently logged-in user."
+  viewer: Account
+  "The booking of the currently user"
+  bookings: [Booking] @private
+  "Retrieves the account of the currently logged-in user."
+  account(id: ID!): Account @shareable
+  "Retrieves the accounts of the currently logged-in user."
+  accounts: [Account] @shareable
+}
+
+extend type Mutation {
+  createUser(name: String!, email: String!, password: String!): User
+  createListing(title: String!, description: String!, price: Float, locationId: Int, hostId: String): Listing
+  "Updates the logged-in user's profile information"
+  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
+  "Authenticates an existing user."
+  signIn(email: String!, password: String!): AuthPayload!
+  "Logs an authenticated user out."
+  logout: Boolean!
+  "Creates a new Guest user."
+  signUp(input: SignUpInput!): AuthPayload!
+  "Creates a new account."
+  createAccount(input: CreateAccountInput!): Account!
+  "Deletes an account."
+  deleteAccount(id: ID!): Boolean!
+  "Updates an account's email."
+  updateAccountEmail(input: UpdateAccountEmailInput!): Account!
+  "Updates an account's password."
+  updateAccountPassword(input: UpdateAccountPasswordInput!): Account!
 }
