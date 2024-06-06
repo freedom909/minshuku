@@ -56,4 +56,4 @@ const isHost = rule()(async (parent, args, ctx, info) => {
   return user && user.role === 'HOST';
 });
 
-export { authenticate, authorize, isAuthenticated, isAdmin, isOwner, isHost };
+export default { authenticate, authorize, isAuthenticated, isAdmin, isOwner, isHost };
