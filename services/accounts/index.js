@@ -5,7 +5,7 @@ import pkg from '../../infrastructure/permissions.js';
 const { permissions } = pkg;
 import pkga from '../../infrastructure/auth.js';
 const {authenticate} = pkga;
-
+import router from './app.js';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { readFileSync } from 'fs';
 import gql from 'graphql-tag';
@@ -19,7 +19,7 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const app = express();
 app.use(express.json());
-
+app.use(router);
 if (process.env.NODE_ENV === 'development') {
   app.use(
     cors({

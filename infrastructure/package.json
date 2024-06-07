@@ -2,6 +2,7 @@
   "name": "infrastructure",
   "version": "1.0.0",
   "main": "auth.js",
+  "type": "module",
   "scripts": {
     "migrate": "npx migrate-mongoose up"
   },
