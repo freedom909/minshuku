@@ -1,6 +1,6 @@
 import { ApolloServer } from '@apollo/server'
 import { startStandaloneServer } from '@apollo/server/standalone'
-import { makeExecutableSchema } from '@graphql-tools/schema'
+import { buildSubgraphSchema } from '@apollo/subgraph'
 import { readFileSync } from 'fs'
 import axios from 'axios'
 import gql from 'graphql-tag'
@@ -8,30 +8,30 @@ import paseto from 'paseto';
 const { V2 } = paseto;
 import express from 'express'
 import cors from 'cors'
-import { applyMiddleware } from 'graphql-middleware'
-import { authenticate, authorize, isAuthenticated, isAdmin, isOwner, isHost } from '../infrastructure/auth.js'
-import { permissions } from '../infrastructure/permissions.js'
-// import { AuthenticationError, ForbiddenError } from '../middleware/errors.js' // Ensure the path is correct
-
-// Import typeDefs and resolvers
+// import authRouter from './auth.route.js'
+import authDirectives from '../shared/src/directives/authDirectives.js'
+import { getToken, handleInvalidToken } from './helpers/tokens.js'
+import errors from '../utils/errors.js'
+const { AuthenticationError } = errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }))
 import resolvers from './resolvers.js'
-
-// Import AccountsAPI data source
 import AccountsAPI from './datasources/accounts.js'
 
+const httpClient = axios.create({
+  baseURL: 'http://localhost:4011'
+})
 const app = express()
 app.use(express.json())
-
-// Middleware to handle Paseto token
+// app.use('/api',authRouter)
+// Use paseto as a middleware  
 app.use(async (req, res, next) => {
   const token = req.headers['authorization']
   if (token) {
     try {
       const payload = await V2.verify(token, process.env.PASETO_SECRET)
-      req.user = payload // Attach the payload to the request object
+      req.user = payload //attach the payload to the request object
     } catch (error) {
-      console.error('Invalid token:', error.message)
+      console.error('Invalid token:', err.message)
     }
   }
   next();
@@ -45,22 +45,19 @@ if (process.env.NODE_ENV === 'development') {
   )
 }
 
-// Build the executable schema and apply middleware
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers
-})
-const schemaWithMiddleware = applyMiddleware(schema, permissions);
-
 async function startApolloServer() {
   const server = new ApolloServer({
-    schema: schemaWithMiddleware,
+    schema: buildSubgraphSchema({
+      typeDefs,
+      resolvers
+    }),
+    // Other ApolloServer configurations...
     dataSources: () => ({
       accountsAPI: new AccountsAPI()
     }),
-    context: ({ req }) => ({
-      user: req.user // Attach the user from the middleware to the context
-    })
+    // schemaDirectives: {
+    //   unique: authDirectives
+    //   }
   })
 
   const port = 4011
@@ -68,12 +65,35 @@ async function startApolloServer() {
 
   try {
     const { url } = await startStandaloneServer(server, {
-      listen: { port }
+      context: async ({ req }) => {
+        const token = req.headers.authorization || ''
+
+        const userId = token.split(' ')[1] // get the user name after 'Bearer '
+
+        let userInfo = {}
+        if (userId) {
+          const { data } = await axios
+            .get(`http://localhost:4011/login/${userId}`)
+            .catch(error => {
+              throw AuthenticationError('you can not login with userId')
+            })
+
+          userInfo = { userId: data.id, userRole: data.role }
+        }
+        const { cache } = server
+
+        return {
+          ...userInfo,
+        }
+      },
+      listen: {
+        port
+      }
     })
 
     console.log(`🚀 Subgraph ${subgraphName} running at ${url}`)
-  } catch (error) {
-    console.error(error)
+  } catch (err) {
+    console.error(err)
   }
 }
 

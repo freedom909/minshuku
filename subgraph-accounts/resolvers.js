@@ -6,8 +6,7 @@ import { validateInviteCode } from './helpers/validateInvitecode.js';
 import DateTimeType from '../shared/src/scalars/DateTimeType.js';
 
 const resolvers = {
-  DateTime: DateTimeType,
-
+  DateTime:DateTimeType,
   Account: {
     __resolveReference(reference, { dataSources, user }) {
       if (user?.sub) {
@@ -20,9 +19,6 @@ const resolvers = {
     },
     createdAt(account) {
       return account.created_at;
-    },
-    email(account) {
-      return account.email;
     }
   },
 
@@ -30,7 +26,7 @@ const resolvers = {
     user: async (_, { id }, { dataSources }) => {
       const user = await dataSources.accountsAPI.getUser(id);
       if (!user) {
-        throw new GraphQLError('No user found', { extensions: { code: 'NO_USER_FOUND' } });
+        GraphQLError(message, {extension:{code:'No user found'}});
       }
       return user;
     },
@@ -39,24 +35,18 @@ const resolvers = {
       const user = await dataSources.accountsAPI.getUser(userId);
       return user;
     },
-    account: async (_, { id }, { dataSources }) => {
+    account(root, { id }, { dataSources }) {
       return dataSources.accountsAPI.getAccountById(id);
     },
-    accounts: async (_, __, { dataSources }) => {
+    accounts(root, args, { dataSources }) {
       return dataSources.accountsAPI.getAccounts();
     },
-    viewer: async (_, __, { dataSources, user }) => {
+    viewer(root, args, { dataSources, user }) {
       if (user?.sub) {
         return dataSources.accountsAPI.getAccountById(user.sub);
       }
       return null;
-    },
-    bookings: async (_, __, { ctx, dataSources }) => {
-      const { user } = ctx;
-      if (!user) throw new AuthenticationError('You must be logged in to view bookings');
-      const bookings = await dataSources.bookingsAPI.getBookingsForUser(user);
-      return bookings;
-    },
+    }
   },
 
   Mutation: {
@@ -83,12 +73,15 @@ const resolvers = {
     },
 
     logout: (_, __, context) => {
-      if (context.session) {
-        context.session.destroy(err => {
-          if (err) {
-            throw new GraphQLError('Failed to terminate the session', { extensions: { code: 'FAILED_TO_TERMINATE_SESSION' } });
-          }
-        });
+      // Logic to handle session termination can be added here
+      if(context.session){
+        context.session.destroy(
+          (err) => {
+            if (err) {
+              throw new GraphQLError(message,{extension:{code:'Failed to terminate the session'}});
+            }
+          },
+        );
       }
       return true;
     },
@@ -97,7 +90,7 @@ const resolvers = {
       if (email && password) {
         return dataSources.accountsAPI.login(email, password);
       }
-      throw new GraphQLError('Email and password must be provided', { extensions: { code: 'EMAIL_PASSWORD_REQUIRED' } });
+      throw new GraphQLError(message,{extension:{code:'Email and password must be provided'}});
     },
 
     signUp: async (_, { signUpInput }, { dataSources }) => {
@@ -112,19 +105,27 @@ const resolvers = {
         return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
       }
     },
-
-    createAccount: async (_, { input: { email, password } }, { dataSources }) => {
+    createAccount(root, { input: { email, password } }, { dataSources }) {
       return dataSources.accountsAPI.createAccount(email, password);
     },
-    deleteAccount: async (_, { id }, { dataSources }) => {
+    deleteAccount(root, { id }, { dataSources }) {
       return dataSources.accountsAPI.deleteAccount(id);
     },
-    updateAccountEmail: async (_, { input: { id, email } }, { dataSources }) => {
+    updateAccountEmail(root, { input: { id, email } }, { dataSources }) {
       return dataSources.accountsAPI.updateAccountEmail(id, email);
     },
-    updateAccountPassword: async (_, { input: { id, newPassword, password } }, { dataSources }) => {
-      return dataSources.accountsAPI.updateAccountPassword(id, newPassword, password);
+    updateAccountPassword(
+      root,
+      { input: { id, newPassword, password } },
+      { dataSources }
+    ) {
+      return dataSources.accountsAPI.updateAccountPassword(
+        id,
+        newPassword,
+        password
+      );
     }
+  
   },
 
   User: {
@@ -134,6 +135,7 @@ const resolvers = {
       } else if (user.role === 'GUEST') {
         return 'Guest';
       }
+      // Handle other cases or return null if necessary
       return null;
     },
   },
@@ -141,14 +143,23 @@ const resolvers = {
   Host: {
     __resolveReference: (user, { dataSources }) => {
       return dataSources.accountsAPI.getUser(user.id);
-    }
+    },
+    // Uncomment and implement if necessary
+    // __coordinates: ({ id }, _, { dataSources }) => {
+    //   return dataSources.accountsAPI.getGalacticCoordinates(id);
+    // }
   },
 
   Guest: {
     __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
+      return dataSources.accountsAPI.getUser(user.id)
+    }
+  },
+  Account:{
+    __resolveReference(reference){
+      return accounts.find(account => account.id ===reference.id)
     }
   }
-};
+}
 
 export default resolvers;

@@ -1,10 +1,10 @@
 import { RESTDataSource } from '@apollo/datasource-rest'
 
-import { OAuth2Client } from 'google-auth-library';
+// import { OAuth2Client } from 'google-auth-library';
 import { GraphQLError, graphql } from 'graphql'
 import fetch from 'node-fetch';
-import { validateInviteCode } from '../helpers/validateInvitecode.js'
-import { hashPassword, checkPassword } from '../helpers/passwords.js'
+import { validateInviteCode } from '../../../infrastructure/helpers/validateInvitecode.js'
+import { hashPassword, checkPassword } from '../../../infrastructure/helpers/passwords.js'
 import pkgj from 'jsonwebtoken'
 const { sign, verify, decode } = pkgj
 import { V2 as paseto } from 'paseto';

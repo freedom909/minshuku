@@ -1,18 +1,20 @@
-export class AuthenticationError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'AuthenticationError';
-    this.extensions = { code: 'UNAUTHENTICATED' };
-  }
-}
+import { GraphQLError } from 'graphql';
 
-export class ForbiddenError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'ForbiddenError';
-    this.extensions = { code: 'FORBIDDEN' };
-  }
-}
+const AuthenticationError = () => {
+  const authErrMessage = '*** you must be logged in ***';
+  return new GraphQLError(authErrMessage, {
+    extensions: {
+      code: 'UNAUTHENTICATED',
+    },
+  });
+};
 
+const ForbiddenError = (errMessage) => {
+  return new GraphQLError(errMessage, {
+    extensions: {
+      code: 'FORBIDDEN',
+    },
+  });
+};
 
 export default { AuthenticationError, ForbiddenError };

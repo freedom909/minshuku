@@ -1,0 +1,24 @@
+{
+    "development": {
+      "username": "",
+      "password": "",
+      "database": "",
+      "host": "127.0.0.1",
+      "dialect": "mongodb"
+    },
+    "test": {
+      "username": "",
+      "password": "",
+      "database": "",
+      "host": "127.0.0.1",
+      "dialect": "mongodb"
+    },
+    "production": {
+      "username": "",
+      "password": "",
+      "database": "",
+      "host": "127.0.0.1",
+      "dialect": "mongodb"
+    }
+  }
+ 

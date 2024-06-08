@@ -15,15 +15,14 @@ export const validRegister = [
     }).withMessage('Password must contain at least 88 characters').matches(/\d/).withMessage('password must contain a number'),
 ]
 
-export const validLogin = [
-    check('email').isEmail().withMessage('Must be a valid email address'),
-    check('password', 'Password is required').notEmpty(),
-    check('password')
-        .isLength({ min: 8 })
-        .withMessage('Password must contain at least 8 characters')
-        .matches(/\d/)
-        .withMessage('Password must contain a number')
-];
+export const validLogin=[
+    check('email')
+    .isEmail()
+    .withMessage('Must be a valid email address'),
+    check('password', 'password is required').notEmpty(),
+    check('password').isLength({min:8})
+    .withMessage('Password must contain at least 6 characters').matches(/\d/).withMessage('password must contain a number')
+    ]
 //  export const forgetPasswordValidator=[
 //     check('email')
 //     .not()
