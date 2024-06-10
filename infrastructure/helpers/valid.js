@@ -23,17 +23,3 @@ export const validLogin=[
     check('password').isLength({min:8})
     .withMessage('Password must contain at least 6 characters').matches(/\d/).withMessage('password must contain a number')
     ]
-//  export const forgetPasswordValidator=[
-//     check('email')
-//     .not()
-//     .isEmpty()
-//     .isEmail()
-//     .withMessage('Must be a valid email address')
-//  ]
-//  export const resetPasswordValidator = [
-//     check('newPassword')
-//         .not()
-//         .isEmpty()
-//         .isLength({ min: 6 })
-//         .withMessage('Password must be at least  6 characters long')
-// ];

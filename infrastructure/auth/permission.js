@@ -1,4 +1,4 @@
-import { rule, shield, or} from 'graphql-shield';
+import { rule, shield, and, or } from 'graphql-shield';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Booking from '../models/booking.js';
@@ -11,7 +11,7 @@ const isAuthenticated = rule()(async (parent, args, ctx, info) => {
 // Rule to check if the user is an admin
 const isAdmin = rule()(async (parent, args, ctx, info) => {
   const user = await User.findOne({ where: { id: ctx.user.id } });
-  return user && user.role === 'admin';
+  return user && user.role === 'ADMIN';
 });
 
 // Rule to check if the user is the owner of the booking
@@ -30,10 +30,15 @@ const isHost = rule()(async (parent, args, ctx, info) => {
 const permissions = shield({
   Query: {
     bookingsWithPermission: or(isAdmin, isOwner),
-    listingsWithPermission: or(isHost, isAdmin)
+    listingsWithPermission: or(isHost, isAdmin),
+    getUser: or(and(isAuthenticated, isOwner), isAdmin),
   },
+  Mutation: {
+    createUser: isAdmin,
+  }
 }, {
   fallbackRule: isAuthenticated,
+  fallbackError: new Error('Not authorized!'),
 });
 
-export { permissions, isAdmin, isOwner, isHost, isAuthenticated };
+export { permissions };

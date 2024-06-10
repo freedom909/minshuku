@@ -3,7 +3,8 @@ import { RESTDataSource } from '@apollo/datasource-rest'
 // import { OAuth2Client } from 'google-auth-library';
 import { GraphQLError, graphql } from 'graphql'
 import fetch from 'node-fetch';
-import { validateInviteCode } from '../../../infrastructure/helpers/validateInvitecode.js'
+import { validateInviteCode } from './helpers/validateInvitecode.js';
+import  inviteCode from './helpers/inviteCodes.js'
 import { hashPassword, checkPassword } from '../../../infrastructure/helpers/passwords.js'
 import pkgj from 'jsonwebtoken'
 const { sign, verify, decode } = pkgj
@@ -289,79 +290,9 @@ console.log(token)
     }
   }
 
-  async forgotPassword (req, res) {
-    const { email }=req.body
-    const user = await getUserByEmail ( email )
-    if (!user) {
-      return res.status(400).json({
-        errors: 'User not found'
-      })
-    }
-    const token = sign(
-      {
-        _id: user.id
-      },
-      process.env.JWT_SECRET_RESET_PASSWORD,
-      {
-        expiresIn: '10m'
-      }
-    )
-    const emailData={
-      from:process.env.EMAIL_FROM,
-      to:email,
-      subject:"Account activation link",
-      html: `
-      <h1>Please use the following to activate your account</h1>
-      <p>${process.env.CLIENT_URL}/users/activate/${token}</p>
-      <hr />
-      <p>This email may containe sensetive information</p>
-      <p>${process.env.CLIENT_URL}</p>
-  `
-    }
+ 
 
-    let transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    });
-    let info = await transporter.sendMail(emailData)
-    if (info) {
-      return res.status(200).json({
-        message: 'Email sent successfully'
-      })
-    }
-  }
 
-async requireSignin (req, res, next)  {
-  try {
-    const token = req.headers.authorization;
-    const secret = process.env.JWT_SECRET;
-    
-    const payload = await paseto.verify(token, secret);
-    
-    req.user = payload.sub; // Assuming the user ID is stored in the "sub" claim
-    
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-};
-
-async resetPassword(req,res) {
-  const {resetPasswordLink,newPassword}=req.body
-  const token=resetPasswordLink.split('/')[2]
-  if (token) {
-    const userId=await getUserId(token)
-    const user=await getUserById(userId)
-    const salt=await bcrypt.genSalt(10)
-    const hashedPassword=await bcrypt.hash(newPassword,salt)
-    await updateUserById(userId,{password:hashedPassword})
-    res.status(200).json({message:'Password reset successfully'})
-  }
- return "something wrong with resetPassword"
-  }  
 
 client = new OAuth2Client(process.env.GOOGLE_CLIENT);
 async googleLogin(req,res){
@@ -392,48 +323,6 @@ async googleLogin(req,res){
     )
   }}
 
-
-
-  async facebookLogin(req, res) {
-    const token = req.body.token;
-    const profileUrl = `https://graph.facebook.com/v3.3/${token}?fields=first_name,last_name,email,picture&access_token=${process.env.FACEBOOK_SECRET}`;
-  
-    try {
-      const response = await fetch(profileUrl);
-      const profile = await response.json();
-      const userId = profile.id;
-      const email = profile.email;
-      const name = profile.first_name + ' ' + profile.last_name;
-      const picture = profile.picture.data.url;
-      const user = await getUserByEmail(email);
-  
-      if (user) {
-        const token = signToken(user._id);
-        res.status(200).json({ token });
-      } else {
-        const newUser = await createUser({
-          email,
-          name,
-          password: token,
-          picture,
-        });
-        res.status(200).json({ token: signToken(newUser._id) });
-      }
-    } catch (error) {
-      res.status(500).json({ error: 'Something went wrong' });
-    }
-  }
-  
-  async adminMiddleware (req, res, next) {
-    const adminUser = getUserById(userId)
-    if (adminUser.role !== 'admin') {
-      return res.status(400).json({
-        error: 'User not found'
-      })
-      req.profile = adminUser
-      next()
-    }
-  }
   //retrieve Id of user
   async getUserByEmail ( email ) {
     const url = `/user`
@@ -464,9 +353,9 @@ async googleLogin(req,res){
   getUser (userId) {
     return this.get(`user/${userId}`)
   }
-  getGalacticCoordinates (userId) {
-    return this.get(`users/${userId}/coordinates`)
-  }
+  // getGalacticCoordinates (userId) {
+  //   return this.get(`users/${userId}/coordinates`)
+  // }
 }
 
 export default AccountsAPI

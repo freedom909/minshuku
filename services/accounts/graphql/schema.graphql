@@ -1,7 +1,6 @@
-directive @link(
-  url: "https://specs.apollo.dev/federation/v2.4",
-  import: ["@key", "@shareable", "@override", "@provides", "@external", "@requires"]
-) on SCHEMA
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.7", 
+        import: ["@key", "@shareable"])
 
 # SCALARS
 scalar DateTime
@@ -25,7 +24,7 @@ type AuthPayload {
 }
 
 "Represents an Airlock user's common properties"
-interface User @shareable {
+interface User {
   id: ID!
   "The user's first and last name"
   name: String!
@@ -79,7 +78,9 @@ type Guest implements User @key(fields: "id") {
   "The role of the user"
   role: Role!
   "The bookings of the user"  
-  bookings: [Booking]!
+  bookings: [Booking]! @shareable
+  "the listings of the user booked"
+  listings:[Listing]! @shareable
 }
 
 interface MutationResponse {
@@ -179,7 +180,7 @@ input SignInInput {
 
 type Booking @key(fields: "id") {
   id: ID!
-  "The unique ID associated with the account."
+  "The unique ID associated with the bookings."
   guestId: ID!
   "The date and time the booking was created."
   createdAt: DateTime
@@ -187,6 +188,10 @@ type Booking @key(fields: "id") {
   cancelledAt: DateTime
   "The date and time the booking was confirmed."
   confirmedAt: DateTime
+  "The unique ID associated with the userId"
+  GuestId: ID!
+  "The unique ID associated with the listingsId"
+  listingId: ID! @shareable
 }
 
 type Listing @key(fields: "id") {
@@ -199,7 +204,7 @@ type Listing @key(fields: "id") {
   "The price of the listing."
   price: Float!
   "The host of the listing."
-  host: User!
+  hostId: UserId!
   "The location of the listing."
   location: Location!
   "The latitude of the listing."
@@ -208,19 +213,19 @@ type Listing @key(fields: "id") {
   longitude: Float!
 }
 
-type Location {
+type Location @key(fields:"id") {
   "The unique ID associated with the location"
-  id: Int! @shareable
+  id: Int! 
   "The name of the address"
-  name: String! @shareable
+  name: String! 
   "The address of the location"
-  address: String! @shareable
+  address: String! 
   "The city of the location"
-  city: String! @shareable
+  city: String! 
   "The state of the location"
-  state: String! @shareable
+  state: String! 
   "The zip code of the location"
-  zip: String! @shareable
+  zip: String! 
   "The listings of the location"
   listings: [Listing] @shareable
 }
@@ -234,11 +239,16 @@ type _Service {
   sdl: String
 }
 
+type UserId {
+  id: ID!
+}
+
 scalar _Any
 
-union _Entity = Listing | User
+union _Entity =  Listing | Host | Guest | Generator
 
-extend type Query {
+
+type Query {
   getUser(id: String!): User
   listings: [Listing] @shareable
   "User accounts"
@@ -248,11 +258,27 @@ extend type Query {
   "Retrieves the account of the currently logged-in user."
   viewer: Account
   "The booking of the currently user"
-  bookings: [Booking] @private
+  bookings: [Booking] 
   "Retrieves the account of the currently logged-in user."
   account(id: ID!): Account @shareable
   "Retrieves the accounts of the currently logged-in user."
   accounts: [Account] @shareable
+  "Fetch bookings for a specific user"
+  bookingsByUser(userId: ID!): [Booking]
+  "Fetch a booking by its ID"
+  bookingById(id: ID!): Booking
+}
+
+type Generator {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  createdBy: User!
+  isActive: Boolean!
+  getUser(id: ID!): User
+  createUser(input: CreateUserInput): User
+  # Add other fields as needed
 }
 
 extend type Mutation {
@@ -277,7 +303,7 @@ extend type Mutation {
 }
 
 
-input CreatUserInput {
+input CreateUserInput {
   "the name of user"
   name: String!
   "the email of user"
@@ -298,3 +324,4 @@ input CreateListingInput {
   "the id of host"
   hostId: String!
 }
+

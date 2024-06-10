@@ -1,14 +1,15 @@
-import errors from '../utils/errors.js';
+import errors from '../../utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
 
-import { validateInviteCode } from '../../infrastructure/helpers/validateInvitecode.js';
-import DateTimeType from '../../shared/src/scalars/DateTimeType.js';
-import { authenticateJWT,checkPermissions } from '../../infrastructure/auth/auth.js'
-import { isHost,isAdmin } from '../../infrastructure/auth/permission.js';
+import { validateInviteCode } from '../datasources/helpers/validateInvitecode.js';
+
+import DateTimeType from '../../../shared/src/scalars/DateTimeType.js';
+import { authenticateJWT,checkPermissions } from '../../../infrastructure/auth/auth.js'
+import { permissions} from '../../../infrastructure/auth/permission.js';
 
 
-
+const {isAdmin,isHost} =permissions
 const resolvers = {
   DateTime: DateTimeType,
 
@@ -64,6 +65,12 @@ const resolvers = {
       }
       const bookings = await dataSources.bookingsAPI.getBookingsForUser(user);
       return bookings;
+    },
+    bookingsByUser: async (_, { userId }, { dataSources }) => {
+      return dataSources.bookingsAPI.getBookingsByUserId(userId);
+    },
+    bookingById: async (_, { id }, { dataSources }) => {
+      return dataSources.bookingsAPI.getBookingById(id);
     },
     listings: async (_, __, { ctx, dataSources }) => {
       const { user } = ctx;
@@ -194,6 +201,7 @@ const resolvers = {
         return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
       }
     },
+    
 
     createAccount: async (_, { input: { email, password } }, { dataSources }) => {
       return dataSources.accountsAPI.createAccount(email, password);
