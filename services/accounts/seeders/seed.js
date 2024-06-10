@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import userData from './users.json' assert { type: 'json' };
+import usersData from './users.json' assert { type: 'json' };
+import bookingData from './bookings.json' assert { type: 'json' };
+import listingsData from './listings.json' assert { type: 'json' };
 import User from '../models/user.js';
 
 dotenv.config();
@@ -15,7 +17,7 @@ async function main() {
     });
     
     const existingNicknames = new Set();
-    for (const u of userData) {
+    for (const u of usersData) {
       if (u.nickname) {
         if (existingNicknames.has(u.nickname)) {
           console.error(`Duplicate nickname found: ${u.nickname}. Skipping user creation.`);

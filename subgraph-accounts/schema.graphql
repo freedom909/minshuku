@@ -233,3 +233,5 @@ type Listing @key(fields: "id") {
   "The host of the listing."
   host: User!
 }
+
+

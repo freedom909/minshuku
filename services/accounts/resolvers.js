@@ -1,9 +1,13 @@
 import errors from '../utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
-const { AuthenticationError, ForbiddenError } = errors;
+
 import { validateInviteCode } from '../../infrastructure/helpers/validateInvitecode.js';
 import DateTimeType from '../../shared/src/scalars/DateTimeType.js';
+import { authenticateJWT,checkPermissions } from '../../infrastructure/auth/auth.js'
+import { isHost,isAdmin } from '../../infrastructure/auth/permission.js';
+
+
 
 const resolvers = {
   DateTime: DateTimeType,
@@ -13,7 +17,9 @@ const resolvers = {
       if (user?.sub) {
         return dataSources.accountsAPI.getAccountById(reference.id);
       }
-      throw new AuthenticationError("Not authorized!");
+      throw new GraphQLError("Not authorized!",{extensions:{
+        code:'Unauthorizated',
+      }});
     },
     id(account) {
       return account.user_id;
@@ -53,13 +59,89 @@ const resolvers = {
     },
     bookings: async (_, __, { ctx, dataSources }) => {
       const { user } = ctx;
-      if (!user) throw new AuthenticationError('You must be logged in to view bookings');
+      if (!user) {
+        throw new GraphQLError('No user found', { extensions: { code: 'NO_USER_FOUND' } });
+      }
       const bookings = await dataSources.bookingsAPI.getBookingsForUser(user);
       return bookings;
+    },
+    listings: async (_, __, { ctx, dataSources }) => {
+      const { user } = ctx;
+      if (!user) throw new AuthenticationError('You must be logged in to view your listing');
+
+      if (user.role === 'HOST') {
+        const listings = await dataSources.listingsAPI.getListingsForHost(user.id);
+        if (listings) {
+          return listings;
+        }
+        throw new Error('No listings found for this host');
+      } else {
+        throw new GraphQLError('You are not authorized to view listings',{extensions:{
+          code:'Unauthorizated'
+        }});
+      }
     },
   },
 
   Mutation: {
+    createUser: async (_, { CreateUserInput }, { dataSources, userId }) => {
+      try {
+        const user = await dataSources.accountsAPI.getUser(userId);
+        if (user.role !== 'Admin') {
+          throw new AuthenticationError('Only admin can create a user');
+        }
+        const { name, password, email } = CreateUserInput;
+        const newUser = await dataSources.accountsAPI.createUser({
+          name,
+          email,
+          password,
+        });
+        return {
+          code: 200,
+          success: true,
+          message: 'A user successfully created',
+          user: newUser,
+        };
+      } catch (error) {
+        return {
+          code: 400,
+          success: false,
+          message: error.message,
+        };
+      }
+    },
+
+
+    createListing: async (_, { CreateListingInput }, { dataSources, hostId, locationId }) => {
+      const { title, description, price } = CreateListingInput;
+      try {
+        if (!hostId) {
+          throw new AuthenticationError('You do not have the right to create a listing');
+        }
+        if (!locationId) {
+          throw new AuthenticationError('You must select a location');
+        }
+        const newListing = await dataSources.listingsAPI.createListing({
+          title,
+          description,
+          price,
+          locationId,
+        });
+        return {
+          code: 200,
+          success: true,
+          message: 'A listing successfully created',
+          listing: newListing,
+        };
+      } catch (error) {
+        return {
+          code: 400,
+          success: false,
+          message: error.message,
+        };
+      }
+    },
+  
     updateProfile: async (_, { updateProfileInput }, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError();
       try {

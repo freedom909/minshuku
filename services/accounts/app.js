@@ -21,6 +21,9 @@ router.use(express.json());
 
 const { bookingsWithPermission, listingsWithPermission } = permissions;
 
+router.get('/', (req, res) => {
+  res.send('Hello World!');
+});
 // Example route to register a new user
 router.post('/register', async (req, res) => {
   try {
@@ -141,6 +144,14 @@ router.get('/users/:userId/bookings', authenticateJWT, checkPermissions, async (
     console.error('Error fetching bookings:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
+});
+
+router.get('/login/:userId', async (req, res) => {
+  const user = await User.findOne(req.params.userId);
+  if (!user) {
+    return res.status(404).send('Could not log in');
+  }
+  return res.json(user);
 });
 
 // Example route to get user profile

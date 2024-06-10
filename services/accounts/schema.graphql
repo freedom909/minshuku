@@ -1,5 +1,5 @@
 directive @link(
-  url: "https://specs.apollo.dev/federation/v2.6", 
+  url: "https://specs.apollo.dev/federation/v2.4",
   import: ["@key", "@shareable", "@override", "@provides", "@external", "@requires"]
 ) on SCHEMA
 
@@ -208,7 +208,7 @@ type Listing @key(fields: "id") {
   longitude: Float!
 }
 
-type Location @key(fields: "id") {
+type Location {
   "The unique ID associated with the location"
   id: Int! @shareable
   "The name of the address"
@@ -239,9 +239,8 @@ scalar _Any
 union _Entity = Listing | User
 
 extend type Query {
-  _service: _Service!
   getUser(id: String!): User
-  listListings: [Listing]
+  listings: [Listing] @shareable
   "User accounts"
   user(id: ID!): User @shareable
   "Currently logged-in user"
@@ -275,4 +274,27 @@ extend type Mutation {
   updateAccountEmail(input: UpdateAccountEmailInput!): Account!
   "Updates an account's password."
   updateAccountPassword(input: UpdateAccountPasswordInput!): Account!
+}
+
+
+input CreatUserInput {
+  "the name of user"
+  name: String!
+  "the email of user"
+  email: String!
+  "the password of user"
+  password: String!
+}
+
+input CreateListingInput {
+  "the title of listing"
+  title: String!
+  "the description of listing"
+  description: String
+  "the price of listing"
+  price: Float!
+  "the id of location"
+  locationId: String!
+  "the id of host"
+  hostId: String!
 }
