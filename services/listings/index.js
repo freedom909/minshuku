@@ -1,20 +1,48 @@
-import express,{ json }  from 'express';
+import express, { json } from 'express';
 import db from './models/index.js';
-// import Listing from './models/listing.js';
-import help from "./helpers.js";
-import {Op} from '@sequelize/core';
+import jwt from 'jsonwebtoken';
+import { Op } from '@sequelize/core';
+import help from './helpers.js';
 const { getDifferenceInDays, transformListingWithAmenities } = help;
 
 const app = express();
 const port = 4010 || process.env.PORT;
 app.use(json());
 
+const { Amenity, Listing, ListingAmenities } = db;
+
+// Authentication Middleware
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization || '';
+  if (!token) {
+    return res.status(401).json({ error: 'You must be logged in' });
+  }
+
+  try {
+    const decodedToken = jwt.verify(token, JWT_SECRET); // Replace 'your-secret-key' with your actual secret
+    req.user = decodedToken;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// Authorization Middleware
+const authorize = (role) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'You must be logged in' });
+  }
+  if (req.user.role !== role) {
+    return res.status(403).json({ error: 'You do not have the necessary permissions' });
+  }
+  next();
+};
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-const {Amenity, Listing, ListingAmenities} =db
-app.get("/listings", async (req, res) => {
+app.get("/listings", authenticate, async (req, res) => {
   const { page = 1, limit = 5, sortBy } = req.query;
   const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10); // 0 indexed for page
   const minNumOfBeds = parseInt(req.query.numOfBeds, 10) || 1; // Default to 0 if not provided or invalid
@@ -43,8 +71,7 @@ app.get("/listings", async (req, res) => {
   }
 });
 
-// get 3 featured listings
-app.get("/featured-listings", async (req, res) => {
+app.get("/featured-listings", authenticate, async (req, res) => {
   let limit = Number(req.query.limit);
   if (isNaN(limit)) {
     limit = 3; // Set a default value
@@ -59,16 +86,14 @@ app.get("/featured-listings", async (req, res) => {
   return res.json(listings);
 });
 
-// get all listings for a specific user
-app.get("/users/:userId/listings", async (req, res) => {
+app.get("/users/:userId/listings", authenticate, async (req, res) => {
   const listings = await Listing.findAll({
     where: { hostId: req.params.userId },
   });
   return res.json(listings);
 });
 
-// get all possible listing amenities,this route should be before of "/listing/listingId"
-app.get('/listings/amenities', async (req, res) => {
+app.get('/listings/amenities', authenticate, async (req, res) => {
   try {
     const listings = await Listing.findAll({
       include: {
@@ -87,8 +112,8 @@ app.get('/listings/amenities', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
- 
-app.get("/listings/:listingId/totalCost", async (req, res) => {
+
+app.get("/listings/:listingId/totalCost", authenticate, async (req, res) => {
   try {
     const { listingId } = req.params;
     const { checkInDate, checkOutDate } = req.query;
@@ -118,7 +143,7 @@ app.get("/listings/:listingId/totalCost", async (req, res) => {
   }
 });
 
-app.get("/users/:userId/totalCost", async (req, res) => {
+app.get("/users/:userId/totalCost", authenticate, async (req, res) => {
   try {
     const { userId } = req.params;
     if (userId === null) {
@@ -154,8 +179,7 @@ app.get("/users/:userId/totalCost", async (req, res) => {
   }
 });
 
-// create a listing
-app.post("/listings", async (req, res) => {
+app.post("/listings", authenticate, authorize('HOST'), async (req, res) => {
   const listingData = req.body.listing;
   const amenitiesData = req.body.listing.amenities;
   const id = uuidv4();
@@ -174,8 +198,8 @@ app.post("/listings", async (req, res) => {
   const listingToReturn = transformListingWithAmenities(updatedListing);
   return res.json(listingToReturn);
 });
-debugger;
-app.get("/listings/:listingId", async (req, res) => {
+
+app.get("/listings/:listingId", authenticate, async (req, res) => {
   try {
     // Fetch the listing instance with associated amenities
     const listingInstance = await Listing.findOne({
@@ -203,7 +227,7 @@ app.get("/listings/:listingId", async (req, res) => {
   }
 });
 
-app.get('/amenities', async (req, res) => {
+app.get('/amenities', authenticate, async (req, res) => {
   try {
     const amenities = await db.Amenity.findAll();
     res.json(amenities);
@@ -212,8 +236,8 @@ app.get('/amenities', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-// edit a listing
-app.patch("/listings/:listingId", async (req, res) => {
+
+app.patch("/listings/:listingId", authenticate, authorize('HOST'), async (req, res) => {
   let listing = await Listing.findOne({
     include: Amenity,
     where: { id: req.params.listingId },

@@ -58,7 +58,7 @@ async function startApolloServer() {
   
   })
 
-  const port = 4011
+  const port = 4002
   const subgraphName = 'accounts'
 
   try {

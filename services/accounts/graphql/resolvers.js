@@ -4,7 +4,7 @@ import { GraphQLError } from 'graphql';
 
 import { validateInviteCode } from '../../../infrastructure/helpers/validateInvitecode.js';
 
-import DateTimeType from '../../../shared/src/scalars/DateTimeType.js';
+import DateTimeType from '../../../infrastructure/scalar/DateTimeType.js';
 import { authenticateJWT,checkPermissions } from '../../../infrastructure/auth/auth.js'
 import { permissions} from '../../../infrastructure/auth/permission.js';
 

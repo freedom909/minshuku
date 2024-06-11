@@ -30,14 +30,14 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Replace with your Redis connection string
-const keyv = new Keyv('redis://user:pass@localhost:6379'); 
+// const keyv = new Keyv('redis://user:pass@localhost:6379'); 
 const schema = buildSubgraphSchema({ typeDefs, resolvers });
 // const schemaWithMiddleware = applyMiddleware(schema, permissions); // Apply permissions middleware
 
 async function startApolloServer() {
   const server = new ApolloServer({
     schema: schema, // Use schema with middleware
-    cache:keyv,
+    // cache:keyv,
     dataSources: () => ({
       accountsAPI: new AccountsAPI({ auth0 }),
       bookingsAPI: new BookingsAPI(),

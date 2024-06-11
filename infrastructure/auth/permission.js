@@ -2,6 +2,7 @@ import { rule, shield, and, or } from 'graphql-shield';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Booking from '../models/booking.js';
+import Listing from '../models/listing.js';
 
 // Rule to check if the user is authenticated
 const isAuthenticated = rule()(async (parent, args, ctx, info) => {
@@ -26,6 +27,11 @@ const isHost = rule()(async (parent, args, ctx, info) => {
   return user && user.role === 'HOST';
 });
 
+const isHostOfListing=rule()(async (_,__,ctx,info)=>{
+  const listing =await Listing.findOne({where:{id:__.id}})
+  return listing && listing.hostId===ctx.user.id
+})
+
 const isGuest=rule()(async (_,__,ctx, info)=>{
   const user= await User.findOne({where: { id:ctx.user.id}})
   return user && user.role ==='GUEST'
@@ -39,12 +45,13 @@ const permissions = shield({
     me:isAuthenticated,
   },
   Mutation: {
-    createUser: isAdmin,
-    createAuthor:isAuthenticated,
-    updateAuthor:isAdmin,
-    updateUser:isAuthenticated,
-    deleteAuthor:isAdmin,
-    deleteUser:isAdmin,
+    createUserOK: isAdmin,
+    createAuthorOK:isAuthenticated,
+    updateAuthorOK:isAdmin,
+    updateUserOK:isAuthenticated,
+    deleteAuthorOK:isAdmin,
+    deleteUserOK:isAdmin,
+    updateListingOK:(isAdmin,and(isHost,isHostOfListing))
   }
 }, {
   fallbackRule: isAuthenticated,
