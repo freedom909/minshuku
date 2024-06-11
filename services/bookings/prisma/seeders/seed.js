@@ -3,8 +3,6 @@ import { PrismaClient, Prisma } from '@prisma/client'
 import bookingData from "./bookings.json" assert { type: "json" };
 const prisma = new PrismaClient()
 
-
-
 async function main() {
   console.log(`Start seeding ...`)
   for (const b of bookingData) {

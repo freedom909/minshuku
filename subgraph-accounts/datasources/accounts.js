@@ -7,7 +7,6 @@ const { sign } = pkgj;
 import EmailVerification from '../../infrastructure/email/emailVerification.js';
 import GoogleLogin from '../../infrastructure/auth/googleLogin.js';
 
-
 class AccountsAPI extends RESTDataSource {
   constructor() {
     super();
