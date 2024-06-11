@@ -3,8 +3,8 @@ import { RESTDataSource } from '@apollo/datasource-rest'
 // import { OAuth2Client } from 'google-auth-library';
 import { GraphQLError, graphql } from 'graphql'
 import fetch from 'node-fetch';
-import { validateInviteCode } from './helpers/validateInvitecode.js';
-import  inviteCode from './helpers/inviteCodes.js'
+import { validateInviteCode } from '../../../infrastructure/helpers/validateInvitecode.js';
+import  inviteCode from '../../../infrastructure/helpers/inviteCodes.js'
 import { hashPassword, checkPassword } from '../../../infrastructure/helpers/passwords.js'
 import pkgj from 'jsonwebtoken'
 const { sign, verify, decode } = pkgj

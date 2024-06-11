@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "nodemon index.js",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate",
+    "server": "concurrently -k npm:server:*",
+    "server:rest": "json-server -w db.json -p 5000 -r routes.json -q",
+    "server:graphql": "nodemon --ignore db.json -r dotenv/config ./src/index.js"
   },
   "nodemonConfig": {
     "ext": "*.js, *.graphql"

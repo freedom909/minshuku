@@ -2,7 +2,7 @@ import errors from '../../utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
 
-import { validateInviteCode } from '../datasources/helpers/validateInvitecode.js';
+import { validateInviteCode } from '../../../infrastructure/helpers/validateInvitecode.js';
 
 import DateTimeType from '../../../shared/src/scalars/DateTimeType.js';
 import { authenticateJWT,checkPermissions } from '../../../infrastructure/auth/auth.js'

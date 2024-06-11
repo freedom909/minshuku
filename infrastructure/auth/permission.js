@@ -26,15 +26,25 @@ const isHost = rule()(async (parent, args, ctx, info) => {
   return user && user.role === 'HOST';
 });
 
+const isGuest=rule()(async (_,__,ctx, info)=>{
+  const user= await User.findOne({where: { id:ctx.user.id}})
+  return user && user.role ==='GUEST'
+})
 // Permissions
 const permissions = shield({
   Query: {
     bookingsWithPermission: or(isAdmin, isOwner),
     listingsWithPermission: or(isHost, isAdmin),
     getUser: or(and(isAuthenticated, isOwner), isAdmin),
+    me:isAuthenticated,
   },
   Mutation: {
     createUser: isAdmin,
+    createAuthor:isAuthenticated,
+    updateAuthor:isAdmin,
+    updateUser:isAuthenticated,
+    deleteAuthor:isAdmin,
+    deleteUser:isAdmin,
   }
 }, {
   fallbackRule: isAuthenticated,

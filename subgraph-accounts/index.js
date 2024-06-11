@@ -9,8 +9,8 @@ const { V2 } = paseto;
 import express from 'express'
 import cors from 'cors'
 // import authRouter from './auth.route.js'
-import authDirectives from '../shared/src/directives/authDirectives.js'
-import { getToken, handleInvalidToken } from './helpers/tokens.js'
+
+import { getToken, handleInvalidToken } from '../infrastructure/helpers/tokens.js'
 import errors from '../utils/errors.js'
 const { AuthenticationError } = errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }))
@@ -22,7 +22,7 @@ const httpClient = axios.create({
 })
 const app = express()
 app.use(express.json())
-// app.use('/api',authRouter)
+
 // Use paseto as a middleware  
 app.use(async (req, res, next) => {
   const token = req.headers['authorization']
@@ -55,9 +55,7 @@ async function startApolloServer() {
     dataSources: () => ({
       accountsAPI: new AccountsAPI()
     }),
-    // schemaDirectives: {
-    //   unique: authDirectives
-    //   }
+  
   })
 
   const port = 4011

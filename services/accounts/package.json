@@ -11,7 +11,11 @@
     "scripts": {
         "seed": "nodemon prisma/seed.js",
         "start": "nodemon index.js",
-        "migrate": "node manual-migration.mjs"
+        "migrate": "node manual-migration.mjs",
+        "server": "concurrently -k npm:server:*",
+        "server:rest": "json-server -w db.json -p 5000 -r routes.json -q",
+        "server:graphql": "nodemon --ignore db.json -r dotenv/config ./index.js",
+        "dev": "nodemon -r dotenv/config -e env,graphql,js ./index.js"
     },
     "dependencies": {
         "@apollo/datasource-rest": "^6.2.2",
@@ -28,7 +32,9 @@
         "graphql-middleware": "^6.1.35",
         "graphql-shield": "^7.6.5",
         "hashids": "^2.3.0",
+        "ioredis": "^5.4.1",
         "jsonwebtoken": "^9.0.2",
+        "keyv": "^2.0.2",
         "mongodb": "^6.5.0",
         "mongoose": "^8.4.1",
         "nodemon": "^3.1.0",

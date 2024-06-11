@@ -13,7 +13,7 @@ import resolvers from './graphql/resolvers.js';
 import AccountsAPI from './datasources/accountsApi.js';
 import BookingsAPI from './datasources/bookingsApi.js';
 import initDataLoaders from './datasources/dataLoaders.js';
-
+import Keyv from 'keyv';
 const typeDefs = gql(readFileSync('./graphql/schema.graphql', { encoding: 'utf-8' }));
 
 const app = express();
@@ -29,12 +29,15 @@ if (process.env.NODE_ENV === 'development') {
   );
 }
 
+// Replace with your Redis connection string
+const keyv = new Keyv('redis://user:pass@localhost:6379'); 
 const schema = buildSubgraphSchema({ typeDefs, resolvers });
 // const schemaWithMiddleware = applyMiddleware(schema, permissions); // Apply permissions middleware
 
 async function startApolloServer() {
   const server = new ApolloServer({
     schema: schema, // Use schema with middleware
+    cache:keyv,
     dataSources: () => ({
       accountsAPI: new AccountsAPI({ auth0 }),
       bookingsAPI: new BookingsAPI(),
