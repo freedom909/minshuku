@@ -9,8 +9,8 @@ const DateTimeType = new GraphQLScalarType({
     if (validator.isISO8601(value)) {
       return value;
     }
-    throw new GraphQLError(message, {
-        extensions: { code: '"DateTime must be a valid ISO 8601 Date string"' },
+    throw new GraphQLError("DateTime must be a valid ISO 8601 Date string", {
+        extensions: { code: 'format wrong' },
       });
   },
   serialize: value => {
@@ -21,16 +21,16 @@ const DateTimeType = new GraphQLScalarType({
     if (validator.isISO8601(value)) {
       return value;
     }
-    throw new GraphQLError(message, {
-        extensions: { code: '"DateTime must be a valid ISO 8601 Date string"' },
+    throw new GraphQLError("DateTime must be a valid ISO 8601 Date string", {
+        extensions: { code: 'format wrong' },
       });
   },
   parseLiteral: ast => {
     if (validator.isISO8601(ast.value)) {
       return ast.value;
     }
-    throw new GraphQLError(message, {
-        extensions: { code: '"DateTime must be a valid ISO 8601 Date string"' },
+    throw new GraphQLError("DateTime must be a valid ISO 8601 Date string", {
+        extensions: { code: 'format wrong' },
       });
   }
 });
