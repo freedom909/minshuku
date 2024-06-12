@@ -42,5 +42,5 @@ app.use(
   }),
 );
 
-await new Promise((resolve) => httpServer.listen({ port: 4004 }, resolve));
-console.log(`🚀 Server ready at http://localhost:4004/graphql`);
+await new Promise((resolve) => httpServer.listen({ port: 4014 }, resolve));
+console.log(`🚀 Server ready at http://localhost:4014/graphql`);

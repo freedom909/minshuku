@@ -7,31 +7,45 @@ import {
 } from '@apollo/server/plugin/landingPage/default';
 import { readFileSync } from 'fs';
 import axios from 'axios';
-import  get  from 'axios';
 import gql from 'graphql-tag';
 import resolvers from './resolvers.js';
-import BookingsAPI from './datasources/bookings.js';
-import ListingsAPI from './datasources/listings.js';
+import BookingsAPI from './datasources/bookingsApi.js';
+import ListingsAPI from './datasources/listingsApi.js';
 
-import errors from '../utils/errors.js';
+import errors from '../infrastructure/utils/errors.js';
 
-const {AuthenticationError} = errors
+const { AuthenticationError } = errors;
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
-let plugins = [];
-if (process.env.NODE_ENV === 'production') {
-  plugins = [ApolloServerPluginLandingPageProductionDefault({ embed: true, graphRef: 'myGraph@prod' })]
-} else {
-  plugins = [ApolloServerPluginLandingPageLocalDefault({ embed: true })]
-}
+const plugins = process.env.NODE_ENV === 'production' 
+  ? [ApolloServerPluginLandingPageProductionDefault({ embed: true, graphRef: 'myGraph@prod' })]
+  : [ApolloServerPluginLandingPageLocalDefault({ embed: true })];
 
 async function startApolloServer() {
   const server = new ApolloServer({
-    schema: buildSubgraphSchema({
-      typeDefs,
-      resolvers,
-      plugins
-    }),
+    schema: buildSubgraphSchema({ typeDefs, resolvers }),
+    plugins,
+    context: async ({ req }) => {
+      const token = req.headers.authorization || '';
+      const userId = token.split(' ')[1]; // get the user name after 'Bearer '
+
+      let userInfo = {};
+      if (userId) {
+        try {
+          const { data } = await axios.get(`http://localhost:4011/login/${userId}`);
+          userInfo = { userId: data.id, userRole: data.role };
+        } catch (error) {
+          throw new AuthenticationError();
+        }
+      }
+      return {
+        ...userInfo,
+        dataSources: {
+          bookingsAPI: new BookingsAPI(),
+          listingsAPI: new ListingsAPI()
+        },
+      };
+    },
   });
 
   const port = 4004; // TODO: change port number
@@ -39,32 +53,7 @@ async function startApolloServer() {
 
   try {
     const { url } = await startStandaloneServer(server, {
-      context: async ({ req }) => {
-        const token = req.headers.authorization || '';
-        const userId = token.split(' ')[1]; // get the user name after 'Bearer '
-
-        let userInfo = {};
-        if (userId) {
-          const { data } = await axios.get(`http://localhost:4011/login/${userId}`)
-            .catch((error) => {
-              throw AuthenticationError();
-            });
-
-          userInfo = { userId: data.id, userRole: data.role };
-        }
-        return {
-          ...userInfo,
-
-          dataSources: {
-            // TODO: add data sources here
-            bookingsAPI:new BookingsAPI(),
-            listingsAPI:new ListingsAPI()
-          },
-        };
-      },
-      listen: {
-        port,
-      },
+      listen: { port },
     });
 
     console.log(`🚀 Subgraph ${subgraphName} running at ${url}`);

@@ -1,22 +1,15 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import {PrismaClient} from "@prisma/client"
-class BookingsDb {
+import PrismaClient from "@prisma/client"
+import pkg from '@apollo/datasource-rest';
+const { RESTDataSource} = pkg;
+
+class BookingsAPI extends RESTDataSource {
   constructor() {
+    super()
     this.prisma = new PrismaClient();
   }
-
-//   async getBookings() {
-//     return await this.prisma.booking.findMany();
-//   }
-// }
-//   // // Create an instance of bookingsAPI
-//   const bookingsDb=new BookingsDb()
-  
-//   // // Call the getReviews method
-//   bookingsDb.getBookings().then((bookings) => console.log(bookings))
-
 
   helper
   getHumanReadableDate(date) {
@@ -135,4 +128,4 @@ class BookingsDb {
   }
 }
 
-export default BookingsDb;
+export default BookingsAPI;
