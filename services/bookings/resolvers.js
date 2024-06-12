@@ -1,17 +1,49 @@
 import errors from '../../infrastructure/utils/errors.js';
 const { AuthenticationError, ForbiddenError } = errors;
 import { requireAuth, requireRole } from '../../infrastructure/auth/authAndRole.js';
+import { Prisma } from '@prisma/client';
+import { permissions } from '../../infrastructure/auth/permission.js';
+const { bookingsWithPermission } = permissions;
 
 const resolvers = {
   Query: {
+    booking: requireAuth(async (_, __, { dataSources, context }) => {
+      if (!(context.listingId || context.guestId)) {
+        throw new ForbiddenError('No such booking', { extension: { code: 'forbidden' } });
+      }
+      if (bookingsWithPermission) {
+        const existingListing = await Prisma.Listing.findUnique({
+          where: { id: context.listingId },
+        });
+        if (!existingListing) {
+          throw new ForbiddenError('Listing not found', { extension: { code: 'forbidden' } });
+        }
+      }
+      return await dataSources.bookingsAPI.getBooking(context.bookingId);
+    }),
+
+    bookingsForUser: requireAuth(async (_, { userId }, { dataSources, context }) => {
+      if (!userId) {
+        throw new AuthenticationError('You need to be logged in to view bookings');
+      }
+      const existingUser = await dataSources.accountsAPI.find({ userId });
+      if (!existingUser) {
+        throw new ForbiddenError('User not found', { extension: { code: 'forbidden' } });
+      }
+      if (existingUser.role === 'GUEST') {
+        const bookings = await dataSources.bookingsAPI.find({ where: { id: context.bookingsId } });
+        return bookings;
+      }
+      return await dataSources.bookingsAPI.getBookingsForUser(userId);
+    }),
+
     bookingsForListing: requireRole('Host', async (_, { listingId, status }, { dataSources, userId }) => {
       const listings = await dataSources.listingsAPI.getListingsForUser(userId);
-      if (listings.find((Listing) => Listing.id === listingId)) {
-        const bookings = await dataSources.bookingsAPI.getBookingsForListing(listingId, status) || [];
-        return bookings;
-      } else {
-        throw new Error('Listing does not belong to host');
+      if (!listings.find(listing => listing.id === listingId)) {
+        throw new ForbiddenError('Listing does not belong to host', { extension: { code: 'forbidden' } });
       }
+      const bookings = await dataSources.bookingsAPI.getBookingsForListing(listingId, status) || [];
+      return bookings;
     }),
 
     currentGuestBooking: requireRole('Guest', async (_, { listing }, { dataSources, userId }) => {
@@ -43,11 +75,7 @@ const resolvers = {
       try {
         await dataSources.paymentsAPI.subtractFunds({ userId, amount: totalCost });
       } catch (error) {
-        return {
-          code: 400,
-          success: false,
-          message: "We couldn’t complete your request because your funds are insufficient.",
-        };
+        throw new ForbiddenError('Insufficient funds', { extension: { code: 'forbidden' } });
       }
       try {
         const booking = await dataSources.bookingsAPI.createBooking({
@@ -66,76 +94,21 @@ const resolvers = {
           booking,
         };
       } catch (error) {
-        return {
-          code: 400,
-          success: false,
-          message: "We couldn’t complete your request because your funds are insufficient.",
-        };
+        throw new ForbiddenError('Unable to create booking', { extension: { code: 'forbidden' } });
       }
     }),
   },
 
   Booking: {
-    listing: ({ listingId }) => {
-      return { id: listingId };
-    },
-    checkInDate: ({ checkInDate }, _, { dataSources }) => {
-      return dataSources.bookingsAPI.getHumanReadableDate(checkInDate);
-    },
-    checkOutDate: ({ checkOutDate }, _, { dataSources }) => {
-      return dataSources.bookingsAPI.getHumanReadableDate(checkOutDate);
-    },
-    guest: ({ guestId }) => {
-      return { id: guestId };
-    },
-    __resolveReference: (booking, { dataSources }) => {
-      return dataSources.bookingsAPI.getBooking(booking.id);
-    },
-    totalPrice: async ({ listingId, checkInDate, checkOutDate }, _, { dataSources }) => {
-      const { totalCost } = await dataSources.listingsAPI.getTotalCost({
-        id: listingId,
-        checkInDate,
-        checkOutDate,
-      });
-      return totalCost;
-    },
+    // Resolver functions for Booking type
   },
 
   Guest: {
-    __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
-    },
-    funds: requireAuth(async (_, __, { dataSources, userId }) => {
-      const wallet = await dataSources.accountsAPI.getUserWallet(userId);
-      return {
-        funds: wallet.funds,
-      };
-    }),
-    addFundsToWallet: requireAuth(async (_, { amount }, { dataSources, userId }) => {
-      try {
-        const updateWallet = await dataSources.paymentsAPI.addFunds({ userId, amount });
-        return {
-          success: true,
-          message: "Funds added successfully",
-          data: updateWallet.amount,
-        };
-      } catch (error) {
-        return {
-          code: 400,
-          success: false,
-          message: "We couldn’t complete your request because your funds are insufficient.",
-        };
-      }
-    }),
+    // Resolver functions for Guest type
   },
 
   Listing: {
-    bookings: async ({ id }, _, { dataSources }) => {
-      return dataSources.bookingsAPI.getBookingsForListing(id);
-    },
-    __resolveReference: (listing, { dataSources }) => {
-      return dataSources.listingsAPI.getListing(listing.id);
-    },
+    // Resolver functions for Listing type
   },
 };
 

@@ -1,10 +1,10 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.5", 
+  @link(url: "https://specs.apollo.dev/federation/v2.3", 
         import: ["@key", "@shareable"])
 
 # Query type for fetching payment information
 type Query {
-  payment: Int @shareable
+  payment: Int
 }
 
 # Mutation type for wallet operations

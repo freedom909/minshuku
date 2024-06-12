@@ -2,6 +2,8 @@ extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7", 
   import: ["@key", "@shareable"])
 
+scalar DateTime
+
 type Query {
   ### Bookings
   "All bookings for the given listing, optionally filtered by a BookingStatus"
@@ -14,11 +16,17 @@ type Query {
   pastGuestBookings: [Booking]!
   "A list of bookings for the guest - must be authenticated as guest"
   guestBookings: [Booking]!
+  "Query type for fetching booking information"
+  booking(id: ID!): Booking
+  "Query type for fetching booking information"
+  bookingsForUser(userId: ID!): [Booking]
 }
 
 type Mutation {
   ### Bookings
   createBooking(createBookingInput: CreateBookingInput): CreateBookingResponse!
+  cancelBooking(id: ID!): Booking
+  confirmBooking(id: ID!): Booking
   addFundsToWallet(amount: Float!): AddFundsToWalletResponse!
 }
 
@@ -50,13 +58,17 @@ type Booking @key(fields: "id") {
   "The review associated with the reservation"
   review: Review
   "The guest that reserved the location"
-  checkInDate: String!
+  checkInDate: DateTime!
   "Check-out date for the reservation"
-  checkOutDate: String!
+  checkOutDate: DateTime!
   "Total price paid, calculated using the listing's costPerNight and the check-in check-out dates"
   totalPrice: Float!
   "The status of the booking - check BookingStatus type for all possibilities"
   status: BookingStatus!
+  "the booking was cancelled time"
+  cancelledAt: DateTime
+  "the booking was confirmed time"
+  confirmedAt: DateTime
 }
 
 "A booking is reserved for a certain date range, marked by the checkInDate and checkOutDate fields"
