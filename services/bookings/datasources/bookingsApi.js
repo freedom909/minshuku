@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { RESTDataSource } from '@apollo/datasource-rest';
 import {PrismaClient} from "@prisma/client"
+import { AuthenticationError} from '../../../infrastructure/utils/errors.js';
 
 class BookingsAPI extends RESTDataSource {
   constructor() {
@@ -70,6 +71,18 @@ async getBooking(bookingId) {
     return booking.listingId;
   }
 
+  async updateBookingStatus({id, status, guestId,confirmedAt=null}) {
+    if (!guestId) {
+       throw new AuthenticationError('Please login to update')
+    }
+    const response =await this.patch(`bookings/${id}`,{
+      body:{
+        status,
+        confirmedAt
+      }
+    })
+    return response
+  }
   // using the checkInDate and checkOutDate, return true if listing is available and false if not
   async isListingAvailable({ listingId, checkInDate, checkOutDate }) {
     const bookings = await this.prisma.booking.findMany({

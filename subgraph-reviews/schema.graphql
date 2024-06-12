@@ -1,37 +1,34 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.4", import: ["@key","@shareable"])
-        
+  @link(url: "https://specs.apollo.dev/federation/v2.7", import: ["@key"])
+
 type Mutation {
   "Creates a review for the guest - must be authored by host of past booking"
-  submitGuestReview(guestReview: ReviewInput!, bookingId : ID!) : SubmitGuestReviewResponse! @shareable
+  submitGuestReview(guestReview: ReviewInput!, bookingId: ID!): SubmitGuestReviewResponse!
   # Creates a review for the host - can only be created if user is authorised to do so (i.e. has role 'HOST')
   submitHostAndLocationReviews(
     bookingId: ID!
-    hostReview: ReviewInput! 
-    locationReview: ReviewInput! 
-  ): SubmitHostAndLocationReviewsResponse! @shareable
+    hostReview: ReviewInput!
+    locationReview: ReviewInput!
+  ): SubmitHostAndLocationReviewsResponse!
 }
 
 ### Reviews
 "A review consists of a numerical rating and written text. It can be written by a host or a guest."
-type Review @key(fields:"id"){
+type Review @key(fields: "id") {
   id: ID!
   "The numerical rating for the review target, on a scale of 1-5, with 5 being excellent."
-  rating: Float! @shareable
-  content: String! @shareable
-  author: User! @shareable
+  rating: Float!
+  content: String!
+  author: User!
   "The ID of the booking this review is about"
-  bookingId: ID! @shareable
+  bookingId: ID!
   "The ID of the location this review is about"
-  locationId: ID @shareable
+  locationId: ID
   "The ID of the guest this review is about"
-  guestId: ID @shareable
+  guestId: ID
   "The ID of the host this review is about"
-  hostId: ID @shareable
-  "The ID of the location this review is about"
-  location: Location @shareable
-
-
+  hostId: ID
+  location: Location
 }
 
 "ReviewInput is the bare minimum needed to submit a review, not tied to any target."
@@ -49,9 +46,9 @@ type SubmitHostAndLocationReviewsResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String!
   "Newly created review about the host"
-  hostReview: Review @shareable
+  hostReview: Review
   "Newly created review about the location"
-  locationReview: Review @shareable
+  locationReview: Review
 }
 
 "The response after submitting reviews for a guest."
@@ -63,7 +60,7 @@ type SubmitGuestReviewResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String!
   "Newly created review about the guest"
-  guestReview: Review @shareable
+  guestReview: Review
 }
 
 interface MutationResponse {
@@ -77,40 +74,40 @@ interface MutationResponse {
 
 ### Bookings
 "A booking is a reservation for a specific listing"
-type Booking @key(fields:"id"){
+type Booking @key(fields: "id") {
   id: ID!
   "The guest's review of the location"
-  locationReview: Review @shareable
+  locationReview: Review
   "The guest's review about the host"
-  hostReview: Review @shareable
+  hostReview: Review
   "The host's review about the guest"
-  guestReview: Review @shareable
+  guestReview: Review
 }
 
 type Listing @key(fields: "id") {
   id: ID!
-  reviews: [Review]! @shareable
+  reviews: [Review]!
   "The overall calculated rating for a listing"
-  overallRating: Float @shareable
+  overallRating: Float
 }
 
 #### User accounts
 "Represents an Airlock user's common properties"
 interface User {
   id: ID!
-  name: String! 
+  name: String!
 }
 
 "A host is a type of Airlock user. They own listings."
 type Host implements User @key(fields: "id") {
   id: ID!
-  name: String! @shareable
+  name: String!
   "The overall calculated rating for the host"
-  overallRating: Float @shareable
+  overallRating: Float
 }
 
 "A guest is a type of Airlock user. They book places to stay."
-type Guest implements User @key(fields:"id"){
-  id: ID!  
-  name: String! @shareable
+type Guest implements User @key(fields: "id") {
+  id: ID!
+  name: String!
 }

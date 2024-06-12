@@ -116,7 +116,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\takayama\\Desktop\\air0\\subgraph-reviews\\prisma\\@prisma\\client",
+      "value": "C:\\Users\\Administrator\\Desktop\\AirLock\\subgraph-reviews\\prisma\\@prisma\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -133,8 +133,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../..",
   "clientVersion": "5.4.2",
@@ -152,8 +151,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "Ly8gVGhpcyBpcyB5b3VyIFByaXNtYSBzY2hlbWEgZmlsZSwKLy8gbGVhcm4gbW9yZSBhYm91dCBpdCBpbiB0aGUgZG9jczogaHR0cHM6Ly9wcmlzLmx5L2QvcHJpc21hLXNjaGVtYQoKCmdlbmVyYXRvciBjbGllbnQgewogIHByb3ZpZGVyID0gInByaXNtYS1jbGllbnQtanMiCiAgb3V0cHV0ICAgPSAiQHByaXNtYS9jbGllbnQiCn0KCmRhdGFzb3VyY2UgZGIgewogIHByb3ZpZGVyID0gIm1vbmdvZGIiCiAgdXJsICAgICAgPSBlbnYoIkRBVEFCQVNFX1VSTCIpCn0KbW9kZWwgcmV2aWV3IHsKICBpZCBTdHJpbmcgQGlkIEBtYXAoIl9pZCIpCiAgcmF0aW5nIEludAogIHRleHQgU3RyaW5nCiAgY3JlYXRlZEF0IERhdGVUaW1lIEBkZWZhdWx0KG5vdygpKQogIGF1dGhvcklkIFN0cmluZwogIHRhcmdldElkIFN0cmluZwogIHRhcmdldFR5cGUgU3RyaW5nCiAgYm9va2luZ0lkIFN0cmluZwp9",
-  "inlineSchemaHash": "ca5d1d5b0b1a856baa5aaa6435abef47ecfaf11e1e7526b7ecada83827eaf511",
+  "inlineSchema": "Ly8gVGhpcyBpcyB5b3VyIFByaXNtYSBzY2hlbWEgZmlsZSwNCi8vIGxlYXJuIG1vcmUgYWJvdXQgaXQgaW4gdGhlIGRvY3M6IGh0dHBzOi8vcHJpcy5seS9kL3ByaXNtYS1zY2hlbWENCg0KDQpnZW5lcmF0b3IgY2xpZW50IHsNCiAgcHJvdmlkZXIgPSAicHJpc21hLWNsaWVudC1qcyINCiAgb3V0cHV0ICAgPSAiQHByaXNtYS9jbGllbnQiDQp9DQoNCmRhdGFzb3VyY2UgZGIgew0KICBwcm92aWRlciA9ICJtb25nb2RiIg0KICB1cmwgICAgICA9IGVudigiREFUQUJBU0VfVVJMIikNCn0NCm1vZGVsIHJldmlldyB7DQogIGlkIFN0cmluZyBAaWQgQG1hcCgiX2lkIikNCiAgcmF0aW5nIEludA0KICB0ZXh0IFN0cmluZw0KICBjcmVhdGVkQXQgRGF0ZVRpbWUgQGRlZmF1bHQobm93KCkpDQogIGF1dGhvcklkIFN0cmluZw0KICB0YXJnZXRJZCBTdHJpbmcNCiAgdGFyZ2V0VHlwZSBTdHJpbmcNCiAgYm9va2luZ0lkIFN0cmluZw0KfQ==",
+  "inlineSchemaHash": "e7bb4688b52809f6ef17836a82ed411efdaafb30ef5e720a972ca5405caa0812",
   "noEngine": false
 }
 
