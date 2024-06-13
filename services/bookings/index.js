@@ -10,7 +10,7 @@ import resolvers from './resolvers.js';
 import BookingsAPI from './datasources/bookingsApi.js';
 import PaymentsAPI from './datasources/paymentsApi.js';
 import ListingsAPI from './datasources/listingsApi.js';
-import errors from '../../infrastructure/utils/errors.js';
+import {AuthenticationError, ForbiddenError}from '../../infrastructure/utils/errors.js';
 import http from 'http';
 import cors from 'cors';
 import express from 'express';

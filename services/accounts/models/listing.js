@@ -10,7 +10,8 @@ const listingSchema = new Schema({
   hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
-  userId: { type: String, required: true }
+  userId: { type: String, required: true },
+  location: { type: String},
 });
 
 const Listing = mongoose.model('Listing', listingSchema);

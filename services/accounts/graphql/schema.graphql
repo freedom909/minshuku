@@ -206,7 +206,7 @@ type Listing @key(fields: "id") {
   "The host of the listing."
   hostId: UserId!
   "The location of the listing."
-  location: Location!
+  location: Location! @shareable
   "The latitude of the listing."
   latitude: Float!
   "The longitude of the listing."

@@ -1,7 +1,7 @@
 
-import errors from '../utils/errors.js';
+import {AuthenticationError, ForbiddenError} from '../utils/errors.js';
 import { info } from 'console';
-const { AuthenticationError, ForbiddenError } = errors;
+
 
 const requireAuth=(resolver)=>{
     return (_,__,context,info)=>{

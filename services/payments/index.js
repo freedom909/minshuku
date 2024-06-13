@@ -1,15 +1,17 @@
-const { ApolloServer } = require('@apollo/server');
-const { startStandaloneServer } = require('@apollo/server/standalone');
-const { buildSubgraphSchema } = require('@apollo/subgraph');
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { buildSubgraphSchema } from '@apollo/subgraph';
 
-const { readFileSync } = require('fs');
-const axios = require('axios');
-const gql = require('graphql-tag');
+import { readFileSync } from 'fs';
+import axios from 'axios';
+import  get  from 'axios';
+import gql from 'graphql-tag';
 
-const { AuthenticationError } = require('./utils/errors');
+import  { AuthenticationError, ForbiddenError } from '../../infrastructure/utils/errors.js';
+
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-const resolvers = require('./resolvers');
+import resolvers from './resolvers.js';
 
 async function startApolloServer() {
   const server = new ApolloServer({
@@ -19,8 +21,8 @@ async function startApolloServer() {
     }),
   });
 
-  const port = 4003; // TODO: change port number
-  const subgraphName = ''; // TODO: change to subgraph name
+  const port = 4016; 
+  const servicesName = 'payments'; 
 
   try {
     const { url } = await startStandaloneServer(server, {
@@ -30,8 +32,7 @@ async function startApolloServer() {
 
         let userInfo = {};
         if (userId) {
-          const { data } = await axios
-            .get(`http://localhost:4011/login/${userId}`)
+          const { data } = await get(`http://localhost:4011/login/${userId}`)
             .catch((error) => {
               throw AuthenticationError();
             });
@@ -39,12 +40,10 @@ async function startApolloServer() {
           userInfo = { userId: data.id, userRole: data.role };
         }
 
-        const { cache } = server;
-
         return {
           ...userInfo,
           dataSources: {
-            // TODO: add data sources here
+            paymentsAPI: new PaymentsAPI(),
           },
         };
       },
@@ -53,7 +52,7 @@ async function startApolloServer() {
       },
     });
 
-    console.log(`🚀 Subgraph ${subgraphName} running at ${url}`);
+    console.log(`🚀 Subgraph ${servicesName} running at ${url}`);
   } catch (err) {
     console.error(err);
   }

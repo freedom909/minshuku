@@ -49,7 +49,7 @@ async function startApolloServer() {
   });
 
   const port = 4011;
-  const subgraphName = 'accounts';
+  const servicesName = 'accounts';
 
   try {
     const { url } = await startStandaloneServer(server, {
@@ -57,7 +57,7 @@ async function startApolloServer() {
       expressApp: app,
     });
 
-    console.log(`🚀 Subgraph ${subgraphName} running at ${url}`);
+    console.log(`🚀 Subgraph ${servicesName} running at ${url}`);
   } catch (error) {
     console.error(error);
   }

@@ -7,16 +7,6 @@ class ReviewsAPI {
   constructor() {
     this.prisma = new PrismaClient();
   }
-  // async getReviews() {
-  //   return await this.prisma.review.findMany();
-  // }
-
-
-// // Create an instance of ReviewsAPI
-// const reviewsAPI = new ReviewsAPI();
-
-// // Call the getReviews method
-// reviewsAPI.getReviews().then(reviews => console.log(reviews));
 
   async getReviewsByUser(userId) {
     return this.prisma.Review.findMany({ where: { authorId: userId } });

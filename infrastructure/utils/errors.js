@@ -17,4 +17,4 @@ const ForbiddenError = (errMessage) => {
   });
 };
 
-export default { AuthenticationError, ForbiddenError };
+export  { AuthenticationError, ForbiddenError };

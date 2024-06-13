@@ -11,7 +11,7 @@ import cors from 'cors'
 // import authRouter from './auth.route.js'
 
 import { getToken, handleInvalidToken } from '../infrastructure/helpers/tokens.js'
-import errors from '../utils/errors.js'
+import errors from '../infrastructure/utils/errors.js'
 const { AuthenticationError } = errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }))
 import resolvers from './resolvers.js'

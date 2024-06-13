@@ -1,1 +1,0 @@
-directive @unique(path: String!, key: String) on INPUT_FIELD_DEFINITION

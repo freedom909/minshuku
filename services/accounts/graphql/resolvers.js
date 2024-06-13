@@ -1,4 +1,4 @@
-import errors from '../../utils/errors.js';
+import errors from '../../../infrastructure/utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
 

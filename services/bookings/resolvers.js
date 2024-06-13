@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import errors from '../../infrastructure/utils/errors.js';
-const { AuthenticationError, ForbiddenError } = errors;
+import {AuthenticationError, ForbiddenError} from '../../infrastructure/utils/errors.js';
+
 import { requireAuth, requireRole } from '../../infrastructure/auth/authAndRole.js';
 import { Prisma } from '@prisma/client';
 import { permissions } from '../../infrastructure/auth/permission.js';
