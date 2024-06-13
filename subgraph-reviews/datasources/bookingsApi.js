@@ -3,11 +3,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 // import { PrismaClient } from '../node_modules/.prisma/client';
 import { PrismaClient } from "@prisma/client"
+import { RESTDataSource } from '@apollo/datasource-rest';
 
-class BookingsDb {
+class BookingsAPI extends RESTDataSource {
   constructor() {
-    this.prisma = new PrismaClient();
+    super();
+    this.baseURL = 'http://localhost:4005';
   }
+
 
   // helper
   getHumanReadableDate(date) {
@@ -120,10 +123,14 @@ class BookingsDb {
       };
     } else {
       throw new Error("We couldn't complete your request ")
-}
-
-    
+       }  
+  }
+  async updateBookingStatus(bookingId, status) {
+    const booking = await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status },
+    });
+    return booking;
   }
 }
-
-export default BookingsDb;
+export default BookingsAPI;

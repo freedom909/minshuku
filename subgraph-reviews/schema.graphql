@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7", import: ["@key"])
+  @link(url: "https://specs.apollo.dev/federation/v2.5", import: ["@key"])
 
 type Mutation {
   "Creates a review for the guest - must be authored by host of past booking"
@@ -28,7 +28,6 @@ type Review @key(fields: "id") {
   guestId: ID
   "The ID of the host this review is about"
   hostId: ID
-  location: Location
 }
 
 "ReviewInput is the bare minimum needed to submit a review, not tied to any target."

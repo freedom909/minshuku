@@ -1,6 +1,7 @@
 import errors from "../utils/errors.js";
 const { AuthenticationError, ForbiddenError } = errors;
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
+import { extensions } from "sequelize/lib/utils/validator-extras";
 
 const resolvers = {
   Mutation: {
@@ -10,6 +11,9 @@ const resolvers = {
       { dataSources, userId }
     ) => {
       const guestId = await dataSources.bookingsAPI.getGuestIdForBooking(bookingId);
+      if (bookingId.Booking,statusbar!=='complete') {
+        throw new ForbiddenError("you can't review this Booking now",{extensions:code('unsupported')})
+      }
       const createGuestReview = await dataSources.reviewsAPI.postReview({
         ...guestReviewInput,
         guestId,
