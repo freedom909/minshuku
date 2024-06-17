@@ -1,16 +1,13 @@
 import { DataTypes, Model } from '@sequelize/core';
 import sequelize from './seq.js'; // Adjust path as necessary
+import User from './user.js'; // Ensure User model is imported
 
-export class User extends Model {}
+ class Account extends Model {}
 
-User.init({
+Account.init({
   id: {
     type: DataTypes.STRING,
     primaryKey: true,
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
   },
   email: {
     type: DataTypes.STRING,
@@ -21,10 +18,6 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
-  nickname: {
-    type: DataTypes.STRING,
-    unique: true,
-  },
   token: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -33,23 +26,17 @@ User.init({
     type: DataTypes.STRING,
     allowNull: true,
   },
-  picture: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  role: {
-    type: DataTypes.ENUM('ADMIN', 'GUEST', 'HOST'),
-    allowNull: false,
-    defaultValue: 'GUEST',
-  },
-  description: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
 }, {
   sequelize, // Here is where you provide the sequelize instance
-  modelName: 'User',
+  modelName: 'Account',
   timestamps: true,
 });
 
-export default User;
+Account.associate = (models) => {
+  Account.belongsTo(models.User, {
+    foreignKey: 'userId',
+    as: 'user',
+  });
+};
+
+export default Account;

@@ -1,12 +1,43 @@
-import mongoose from 'mongoose';
+import { DataTypes, Model } from '@sequelize/core';
+import sequelize from './seq.js';
 
-const bookingSchema = new mongoose.Schema({
-  guestId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
-}, { timestamps: true });
+export class Booking extends Model {}
 
-const Booking = mongoose.model('Booking', bookingSchema);
+Booking.init({
+  id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+  checkInDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  checkOutDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  status: {
+    type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'),
+    allowNull: false,
+    defaultValue: 'PENDING',
+  },
+  guestId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  listingId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+}, {
+  sequelize,
+  modelName: 'Booking',
+  timestamps: true,
+});
+
+Booking.associate = (models) => {
+  Booking.belongsTo(models.User, { foreignKey: 'guestId', as: 'guest' });
+  Booking.belongsTo(models.Listing, { foreignKey: 'listingId', as: 'listing' });
+};
 
 export default Booking;

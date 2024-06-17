@@ -25,20 +25,14 @@ class EmailVerification {
       }
     });
 
-    return transporter.sendMail(emailData);
+    try {
+      await transporter.sendMail(emailData);
+      console.log(`Activation email sent to ${email}`);
+    } catch (error) {
+      console.error('Error sending activation email:', error);
+      throw new Error('Error sending activation email');
+    }
   }
-
-  async activateUser(token) {
-    return new Promise((resolve, reject) => {
-      verify(token, process.env.JWT_ACCOUNT_ACTIVATION, (err, decoded) => {
-        if (err) {
-          reject('Expired link, please signup again');
-        } else {
-          resolve(decoded);
-        }
-      });
-    });
-  }
-}
+} 
 
 export default EmailVerification;

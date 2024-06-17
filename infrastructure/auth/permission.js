@@ -1,6 +1,6 @@
 import { rule, shield, and, or } from 'graphql-shield';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import User from '../models/user.js';
 import Booking from '../models/booking.js';
 import Listing from '../models/listing.js';
 
@@ -51,7 +51,8 @@ const permissions = shield({
     updateUserOK:isAuthenticated,
     deleteAuthorOK:isAdmin,
     deleteUserOK:isAdmin,
-    updateListingOK:(isAdmin,and(isHost,isHostOfListing))
+    updateListingOK:(isAdmin,and(isHost,isHostOfListing)),
+    deleteListingOK:(isAdmin,and(isHost,isHostOfListing))
   }
 }, {
   fallbackRule: isAuthenticated,
