@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import {validateInviteCode} from '../../infrastructure/helpers/validateInvitecode.js';
 import { validationResult } from 'express-validator';
 import { validRegister, validLogin } from '../../infrastructure/helpers/valid.js';
 import { hashPassword, checkPassword } from '../../infrastructure/helpers/passwords.js';
@@ -12,49 +13,63 @@ import User from './models/user.js';
 import Account from './models/account.js';
 import Listing from './models/listing.js';
 import Location from './models/location.js';
+import Booking from '../../infrastructure/models/booking.js';
+import AccountsAPI from './datasources/accountsApi.js';
 
 dotenv.config();
 connectDB();
-
 const router = express.Router();
 router.use(express.json());
-
+const accountsAPI = new AccountsAPI();
 const { bookingsWithPermission, listingsWithPermission } = permissions;
 
 router.get('/', (req, res) => {
   res.send('Hello World!');
 });
+
+app.post('/account', async (req, res) => {
+  const { email } = req.body;
+  const account = await accountsCollection.findOne({ email });
+  if (!account) {
+    return res.status(404).send({ error: 'Account not found' });
+  }
+  res.send(account);
+});
+
 // Example route to register a new user
-router.post('/register', async (req, res) => {
+router.post('/registerHost', async (req, res) => {
   try {
     if (!getToken(req, res)) {
-      const { email, password, name } = req.body;
-
-      if (validRegister(email, password)) {
-        // Hash the password
-        const hashedPassword = await hashPassword(password);
-        // Create a new user
-        const newUser = new User({
-          email,
-          password: hashedPassword,
-          name,
-        });
-        await newUser.save();
-
-        // Return the new user
-        res.status(201).json(newUser);
-      } else {
-        res.status(400).json({ error: 'Invalid registration details' });
+      const { email, password, name, nickname, inviteCode, picture } = req.body;
+      // Validate the invite code
+      const isValidInviteCode = await validateInviteCode(inviteCode);
+      if (!isValidInviteCode) {
+        return res.status(400).json({ error: 'Invalid invite code' });
       }
-    } else {
-      res.status(403).json({ error: 'Token already exists' });
+
+      // Register the host
+      const result = await accountsAPI.register({ email, password, name, nickname, role: 'HOST', picture });
+      res.json(result);
     }
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+  }
+  catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
+router.post('/registerGuest', async (req, res) => {
+  try {
+    if (!getToken(req, res)) {
+      const { email, password, name, nickname, picture } = req.body;
+    
+        // Register the guest
+        const result = await accountsAPI.register({ email, password, name, nickname, role: 'GUEST', picture });
+        res.json(result);
+      } }
+      catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    })
 // Example route to login a user
 router.post('/login', validLogin, async (req, res) => {
   try {
@@ -64,15 +79,12 @@ router.post('/login', validLogin, async (req, res) => {
       // Redirect to a specific route (e.g., dashboard)
       return res.redirect('/dashboard'); // Change the destination as needed
     }
-
     const { email, password } = req.body;
-
     // Validate login credentials
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
     // Find the user by email
     const user = await User.findOne({ email });
     if (!user || !(await checkPassword(password, user.password))) {
@@ -146,7 +158,7 @@ router.get('/users/:userId/bookings', authenticateJWT, checkPermissions, async (
   }
 });
 
-router.get('/login/:userId', async (req, res) => {
+router.get('/login', async (req, res) => {
   const user = await User.findOne(req.params.userId);
   if (!user) {
     return res.status(404).send('Could not log in');
@@ -154,6 +166,21 @@ router.get('/login/:userId', async (req, res) => {
   return res.json(user);
 });
 
+// Define the activation endpoint
+router.post('/activate', async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+
+  try {
+    const result = await accountsAPI.activateUser(token);
+    res.json(result);
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+});
 // Example route to get user profile
 router.get('/profile', authenticateJWT, async (req, res) => {
   try {

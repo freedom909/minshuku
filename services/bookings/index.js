@@ -10,6 +10,8 @@ import resolvers from './resolvers.js';
 import BookingsAPI from './datasources/bookingsApi.js';
 import PaymentsAPI from './datasources/paymentsApi.js';
 import ListingsAPI from './datasources/listingsApi.js';
+import ReviewsAPI from './datasources/reviewsApi.js';
+
 import {AuthenticationError, ForbiddenError}from '../../infrastructure/utils/errors.js';
 import http from 'http';
 import cors from 'cors';
@@ -27,6 +29,7 @@ const server = new ApolloServer({
     bookingsAPI: new BookingsAPI(),
     paymentsAPI: new PaymentsAPI(),
     listingsAPI: new ListingsAPI(),
+    reviewsAPI: new ReviewsAPI(),
   }),
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });

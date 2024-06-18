@@ -1,12 +1,11 @@
-import errors from '../../../infrastructure/utils/errors.js';
+import {AuthenticationError} from '../../infrastructure/utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
-
-import { validateInviteCode } from '../../../infrastructure/helpers/validateInvitecode.js';
-
-import DateTimeType from '../../../infrastructure/scalar/DateTimeType.js';
-import { authenticateJWT,checkPermissions } from '../../../infrastructure/auth/auth.js'
-import { permissions} from '../../../infrastructure/auth/permission.js';
+import AccountsAPI from './datasources/accountsApi.js'
+import { validateInviteCode } from '../../infrastructure/helpers/validateInvitecode.js';
+import DateTimeType from '../../infrastructure/scalar/DateTimeType.js';
+import { authenticateJWT,checkPermissions } from '../../infrastructure/auth/auth.js'
+import { permissions} from '../../infrastructure/auth/permission.js';
 
 
 const {isAdmin,isHost} =permissions
@@ -41,8 +40,11 @@ const resolvers = {
       }
       return user;
     },
+    getUserByEmail: async (_, { email }, { dataSources }) => {
+      return dataSources.accountsAPI.getUserByEmail({ email });
+    },
     me: async (_, __, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError();
+      if (!userId) throw new ApolloServerErrorCode.BAD_REQUEST_ERROR;
       const user = await dataSources.accountsAPI.getUser(userId);
       return user;
     },
@@ -189,20 +191,25 @@ const resolvers = {
       throw new GraphQLError('Email and password must be provided', { extensions: { code: 'EMAIL_PASSWORD_REQUIRED' } });
     },
 
-    signUp: async (_, { signUpInput }, { dataSources }) => {
-      const { email, password, name, nickname, role, inviteCode, picture } = signUpInput;
+    signUp: async (_, { input }, { dataSources }) => {
+      const { email, password, name, nickname, role, inviteCode, picture } = input;
+      console.log('Received input:', input);  // Add this line for debugging
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
-        if (!inviteCode || !isValidInviteCode) {
-          return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
+        if (!isValidInviteCode) {
+          throw new UserInputError('Invalid invite code', {
+            extensions: { code: 'BAD_USER_INPUT' }
+          });
         }
-        return dataSources.accountsAPI.registerHost(email, name, password, nickname, 'HOST', picture);
+        return dataSources.accountsAPI.register({ email, password, name, nickname, role: 'HOST', picture });
       } else {
-        return dataSources.accountsAPI.registerGuest(email, name, password, nickname, 'GUEST', picture);
+        return dataSources.accountsAPI.register({ email, password, name, nickname, role: 'GUEST', picture });
       }
+      return {
+        token: response.token,
+        userId: response.userId,
+      };
     },
-    
-
     createAccount: async (_, { input: { email, password } }, { dataSources }) => {
       return dataSources.accountsAPI.createAccount(email, password);
     },
@@ -214,9 +221,8 @@ const resolvers = {
     },
     updateAccountPassword: async (_, { input: { id, newPassword, password } }, { dataSources }) => {
       return dataSources.accountsAPI.updateAccountPassword(id, newPassword, password);
-    }
+    },
   },
-
   User: {
     __resolveType(user) {
       if (user.role === 'HOST') {

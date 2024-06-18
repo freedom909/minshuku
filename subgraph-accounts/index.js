@@ -11,14 +11,14 @@ import cors from 'cors'
 // import authRouter from './auth.route.js'
 
 import { getToken, handleInvalidToken } from '../infrastructure/helpers/tokens.js'
-import errors from '../infrastructure/utils/errors.js'
-const { AuthenticationError } = errors
+import { AuthenticationError }  from '../infrastructure/utils/errors.js'
+
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }))
 import resolvers from './resolvers.js'
 import AccountsAPI from './datasources/accounts.js'
 
 const httpClient = axios.create({
-  baseURL: 'http://localhost:4011'
+  baseURL: 'http://localhost:4002'
 })
 const app = express()
 app.use(express.json())
@@ -40,7 +40,7 @@ app.use(async (req, res, next) => {
 if (process.env.NODE_ENV === 'development') {
   app.use(
     cors({
-      origin: ['https://studio.apollographql.com', 'http://localhost:4011']
+      origin: ['https://studio.apollographql.com', 'http://localhost:4002']
     })
   )
 }

@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -26,8 +26,8 @@ model Listing {
   photoThumbnail  String
   isFeatured      Boolean?
   amenities       ListingAmenities[]
-// galacticCoordinateId  String?  @unique
-  // galacticCoordinate    GalacticCoordinates? @relation(fields: [galacticCoordinateId], references: [id])
+  latitude        Float
+  longitude       Float
 }
 
 model ListingAmenities {

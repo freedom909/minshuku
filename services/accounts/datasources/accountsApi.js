@@ -1,21 +1,25 @@
-import { RESTDataSource } from '@apollo/datasource-rest'
-
-// import { OAuth2Client } from 'google-auth-library';
-import { GraphQLError, graphql } from 'graphql'
-import fetch from 'node-fetch';
+import { GraphQLError } from 'graphql';
 import { validateInviteCode } from '../../../infrastructure/helpers/validateInvitecode.js';
-import inviteCode from '../../../infrastructure/helpers/inviteCodes.js'
-import { hashPassword, checkPassword } from '../../../infrastructure/helpers/passwords.js'
-import pkgj from 'jsonwebtoken'
-const { sign, verify, decode } = pkgj
-import { V2 as paseto } from 'paseto';
-import nodemailer from 'nodemailer'
+import { validRegister,validLogin } from '../../../infrastructure/helpers/valid.js';
+import { hashPassword, checkPassword } from '../../../infrastructure/helpers/passwords.js';
+import pkgj from 'jsonwebtoken';
+const { sign } = pkgj;
+import EmailVerification from '../../../infrastructure/email/emailVerification.js';
+import GoogleLogin from '../../../infrastructure/auth/googleLogin.js';
+import axios from 'axios';
 
-class AccountsAPI extends RESTDataSource {
-  constructor() {
-    super()
-    baseURL = 'http://localhost:4011/'
+class AccountsAPI {
+  constructor({ db }) {
+    this.usersCollection = db.collection('users');
+    this.emailVerification = new EmailVerification();
+    this.googleLogin = new GoogleLogin();
+
+    // Optionally, you can configure a base URL for axios
+    this.httpClient = axios.create({
+      baseURL: 'http://localhost:4011' // Adjust as needed
+    });
   }
+
   async createAccount(email, password) {
     return this.auth0.createUser({
       connection: "Username-Password-Authentication",
@@ -25,341 +29,198 @@ class AccountsAPI extends RESTDataSource {
   }
 
   async login(email, password) {
-    const message = 'Username or password is incorrect'
-    let user
-    try {
-      user = await this.getUserByEmail(email)
-      console.log(user)
-      const isValidPassword = await checkPassword(password, user.password)
-      if (!isValidPassword) {
-        throw new GraphQLError(message, {
+    if (validLogin(email, password)) {
+      const existingUser = await this.getUserByEmail({ email });
+      if (!existingUser) {
+        throw new GraphQLError('User does not exist', {
           extensions: {
-            code: 'BAD_EMAIL_OR_PASSWORD',
-            description: message
+            code: 'BAD_USER_INPUT'
           }
-        })
-      }
-    } catch (error) {
-      if (!user) {
-        throw new GraphQLError(message, {
+        });
+      } 
+      const passwordMatch = await checkPassword(password, existingUser.password);
+      if (!passwordMatch) {
+        throw new GraphQLError('Incorrect password', {
           extensions: {
-            code: 'BAD_EMAIL',
-            description: 'User with that email does not exist'
+            code: 'BAD_USER_INPUT'
           }
-        })
+        });
       }
-      return user
+      const payload = { id: user.id };
+      const token = sign(payload, process.env.JWT_SECRET, {
+        algorithm: 'HS256',
+        subject: user.id.toString(),
+        expiresIn: '1d'
+      });
+      return { token };
     }
-    const payload = { id: user.id }
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      algorithm: 'HS256',
-      subject: user.id.toString(),
-      expiresIn: '1d'
-    })
-    console.log(token)
-    return { token }
-  }
-  async getUserWallet(userId) {
-    return await this.get(`wallet/${userId}`);
   }
 
-  async registerGuest(email, password, name, nickname, role = 'GUEST', picture) {
-    const existingUser = await this.getUserByEmailOrNickname({
-      email,
-      nickname
-    })
-    if (existingUser) {
-      if (existingUser.email === email) {
-        throw new ApolloServerErrorCode.BAD_USER_INPUT(
-          'Email is already in use'
-        )
-      } else if (existingUser.nickname === nickname) {
-        throw new ApolloServerErrorCode.BAD_USER_INPUT(
-          'nickname is already in use'
-        )
-      }
-    }
+  async registerGuest(email, password, name, nickname, role = "GUEST", picture) {
+    return this.register({ email, password, name, nickname, role, picture });
+  }
 
-    if (!validator.isStrongPassword(password)) {
-      throw new GraphQLError('message', {
-        extensions: {
-          code: 'BAD_PASSWORD',
-          description:
-            'The password must be at least 8 characters long and contain a mix of uppercase letters, lowercase letters, numbers, and symbols'
+  async registerHost(email, password, name, nickname, role = "HOST", picture) {
+    return this.register({ email, password, name, nickname, role, picture });
+  }
+
+  async register({ email, password, name, nickname, role, picture }) {
+    // Assuming validRegister is a function or a variable defined elsewhere
+    if (validRegister) {
+      const existingUser = await this.getUserByNickname({ nickname });
+      if (existingUser) {
+        if (existingUser.nickname === nickname) {
+          throw new GraphQLError('Nickname is already in use, please use another one', {
+            extensions: {
+              code: 'BAD_USER_INPUT'
+            }
+          });
         }
-      })
+      }
     }
-
-    const passwordHash = await hashPassword(password)
+  
+    const passwordHash = await hashPassword(password);
     const newUser = {
       email,
       name,
       password: passwordHash,
       nickname,
-      role: 'GUEST',
+      role,
       picture
-    }
-    console.log(newUser)
+    };
+  
     try {
-      const { data, error } = await this.post(`/user`, newUser)
-      if (error) {
-        throw new GraphQLError('Something went wrong on our end', {
-          extensions: {
-            code: 'SERVER_ERROR',
-          }
-        })
+      const result = await this.usersCollection.insertOne(newUser);
+      if (!result.insertedId) {
+        throw new Error('Failed to insert user');
       }
-
-      const payload = { id: data.id }
-      const token = jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        {
-          algorithm: 'HS256',
-          subject: user.id.toString(),
-          expiresIn: '1d' // expiration time
-        },
-        process.env.JWT_ACCOUNT_ACTIVATION,
-        {
-          expiresIn: '5m'
-        }
-      )
-      console.log(token)
-
-      const emailData = {
-        from: process.env.EMAIL_FROM,
-        to: email,
-        subject: 'Account activation link',
-        html: `
-        <h1>Please use the following to activate your account</h1>
-        <p>${process.env.CLIENT_URL}/users/activate/${token}</p>
-        <hr />
-        <p>This email may containe sensetive information</p>
-        <p>${process.env.CLIENT_URL}</p>
- `
-      }
-
-      let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_FROM,
-          password: process.env.EMAIL_PASSWORD
-        }
-      })
-      transporter.sendMail(emailData, function (error, info) {
-        if (error) {
-          console.log(error)
-        } else {
-          console.log(info.response + 'was send')
-        }
-      })
-
-      return { token }
+  
+      const payload = { _id: result.insertedId };
+      const token = sign(payload, process.env.JWT_SECRETKEY, {
+        algorithm: 'HS256',
+        subject: result.insertedId.toString(),
+        expiresIn: '1d'
+      });
+      return { ...newUser, _id: result.insertedId, token };
+      await this.emailVerification.sendActivationEmail(email, token);
     } catch (e) {
-      throw new GraphQLError('message', {
+      console.error('Registration error:', e); // Log the error details for debugging
+      throw new GraphQLError('Email is already in use or an internal server error occurred', {
         extensions: {
-          code: 'BAD_EMAIL',
-          description: 'The email is already in use'
+          code: 'SERVER_ERROR'
         }
-      })
-    }
-  }
-
-  async registerHost(email, password, nickname, name, inviteCode, picture) {
-    validateInviteCode(_, inviteCode)
-    // Validate password strength
-    if (!validator.isStrongPassword(password)) {
-      throw new GraphQLError('message', {
-        extensions: {
-          code: 'BAD_PASSWORD',
-          description:
-            'The password must be at least 8 characters long and contain a mix of uppercase letters, lowercase letters, numbers, and symbols'
-        }
-      })
-    }
-    // Check for existing email and nickname
-    const res = await Promise.all([
-      this.get(`/users?email=${email}&& ${nickname}`)
-    ])
-
-    const [existingEmail, existingNickname] = res
-
-    if (existingEmail.length) {
-      throw new ApolloServerErrorCode.BAD_USER_INPUT('Email is already in use')
-    } else if (existingNickname.length) {
-      throw new ApolloServerErrorCode.BAD_USER_INPUT(
-        `Username ${existingNickname} already in use`
-      )
-    }
-    const passwordHash = await hashPassword(password)
-    const newUser = {
-      name,
-      email,
-      password: passwordHash,
-      nickname,
-      picture,
-      role: 'HOST'
-    }
-    try {
-      const { data, error } = await this.post(`/user`, newUser)
-
-      const payload = { id: data.id }
-      const token = jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        {
-          algorithm: 'HS256',
-          subject: user.id.toString(),
-          expiresIn: '1d' // expiration time
-        },
-        process.env.JWT_ACCOUNT_ACTIVATION,
-        {
-          expiresIn: '5m'
-        }
-      )
-
-      // Send activation email using nodemailer
-      const emailData = {
-        from: process.env.EMAIL_FROM,
-        to: email,
-        subject: 'Account activation link',
-        html: `
-        <h1>Please use the following to activate your account</h1>
-        <p>${process.env.CLIENT_URL}/users/activate/${token}</p>
-        <hr />
-        <p>This email may containe sensetive information</p>
-        <p>${process.env.CLIENT_URL}</p>
-        `
-      }
-      let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_FROM,
-          pass: process.env.EMAIL_PASSWORD
-        }
-      })
-      transporter.sendMail(emailData, function (error, info) {
-        if (error) {
-          console.log(error)
-        } else {
-          console.log(info.response + 'was send')
-        }
-      })
-      return { token }
-    } catch (e) {
-      throw new GraphQLError('message', {
-        extensions: {
-          code: 'SERVER_ERROR',
-          description: 'Something went wrong on our end'
-        }
-      })
+      });
     }
   }
 
   async activateUser(req, res) {
-    const { token } = req.body
-    if (token) {
-      verify(token, process.env.JWT_ACCOUNT_ACTIVATION, (err, decode) => {
-        if (err) {
-          console.log('Activation error')
-          return res.status(401).json({
-            errors: 'Exprired link, please signup again'
-          })
-        } else {
-          const { name, email, password } = decode(token)
-          console.log(email)
-          const newUser = new UserActivation({
-            name,
-            email,
-            password
-          })
-          newUser.save((err, user) => {
-            if (err) {
-              console.log('Activation error')
-              return res.status(401).json({
-                errors: 'Exprired link, please signup again'
-              })
-            } else {
-              return res.json({
-                sucess: true,
-                data: user,
-                message: 'Account activated successfully'
-              })
-            }
-          })
-        }
-      })
-    } else {
-      return res.status(401).json({
-        errors: 'Exprired link, please signup again'
-      })
-    }
-  }
-
-  client = new OAuth2Client(process.env.GOOGLE_CLIENT);
-  async googleLogin(req, res) {
-    const token = req.body.token
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT
-    })
-    const payload = ticket.getPayload()
-    const userId = payload.sub
-    const email = payload.email
-    const name = payload.name
-    const picture = payload.picture
-    const user = await getUserByEmail(email)
-    if (user) {
-      const token = signToken(user._id)
-      res.status(200).json({
-        token
-      })
-    }
-    else {
-      const newUser = await createUser({
-        email,
+    const { token } = req.body;
+    try {
+      const decoded = await this.emailVerification.activateUser(token);
+      const { name, email, password } = decoded;
+      const newUser = new UserActivation({
         name,
-        password: token,
-        picture
-
-      }
-      )
+        email,
+        password
+      });
+      newUser.save((err, user) => {
+        if (err) {
+          return res.status(401).json({
+            errors: 'Expired link, please signup again'
+          });
+        } else {
+          return res.json({
+            success: true,
+            data: user,
+            message: 'Account activated successfully'
+          });
+        }
+      });
+    } catch (error) {
+      return res.status(401).json({
+        errors: error
+      });
     }
   }
 
-  //retrieve Id of user
+  async googleLogin(req, res) {
+    const token = req.body.token;
+    try {
+      const payload = await this.googleLogin.verifyGoogleToken(token);
+      const { email, name, picture } = payload;
+      let user = await this.getUserByEmail(email);
+      if (!user) {
+        user = await this.createAccount(email, payload.password, name, picture);
+      }
+      const jwtToken = this.googleLogin.generateToken(user);
+      res.status(200).json({ token: jwtToken });
+    } catch (error) {
+      res.status(400).json({ error: 'Google login failed' });
+    }
+  }
+
   async getUserByEmail(email) {
-    const url = `/user`
-    const body = { email }
-    const result = await this.post(url, body)
-    console.log(this)
-    return result.data[0]
+    const url = `/user`;
+    const body = { email };
+    const result = await this.httpClient.post(url, body);
+    return result.data[0];
   }
 
   async getUserById(userId) {
-    const url = `/user/${userId}`
-    console.log(url)
-    const result = await this.get(url)
-    console.log(result)
-    return result.data[0]
+    const url = `/user/${userId}`;
+    const result = await this.httpClient.get(url);
+    return result.data[0];
   }
 
-  async getUserByEmailOrNickname({ email, nickname }) {
-    const url = `/user`
-    const body = { email, nickname }
-    const result = await this.post(url, body)
-    return result.data[0]
+  async getUserByNickname({ nickname }) {
+    const url = `/user`;
+    const body = { nickname };
+    try {
+      const result = await this.httpClient.post(url, body);
+      return result.data[0];
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        return null; // No user found
+      }
+      throw error; // Rethrow other errors
+    }
+  }  
+
+  async getAccountByEmail({ email }) {
+    const url = `/account`;
+    const body = { email };
+    const result = await this.httpClient.post(url, body);
+    return result.data[0];
   }
 
-  updateUser(userId, userInfo) {
-    return this.patch(`users/${userId}`, { body: { ...userInfo } })
+  async getUserByEmail({ email }) {
+    const account = await this.getAccountByEmail({ email });
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    const userId = account.id;
+    return this.getUserById(userId);
   }
-  getUser(userId) {
-    return this.get(`user/${userId}`)
+
+
+  async updateUser(userId, userInfo) {
+    const url = `users/${userId}`;
+    const result = await this.httpClient.patch(url, userInfo);
+    return result.data;
   }
-  getGalacticCoordinates (userId) {
-    return this.get(`users/${userId}/coordinates`)
+
+  async getUser(userId) {
+    const url = `user/${userId}`;
+    const result = await this.httpClient.get(url);
+    return result.data[0];
+  }
+
+  async getGalacticCoordinates(userId) {
+    const url = `users/${userId}/coordinates`;
+    const result = await this.httpClient.get(url);
+    return result.data;
   }
 }
 
-export default AccountsAPI
+export default AccountsAPI;

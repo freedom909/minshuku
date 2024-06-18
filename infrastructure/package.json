@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "migrate": "npx migrate-mongoose up",
-    "start": "babel-node models/database.js"
+    "start": "babel-node models/seq.js"
   },
   "author": "",
   "license": "ISC",

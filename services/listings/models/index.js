@@ -1,5 +1,5 @@
 import sequelize from './sequelize.js';
-import Amenity from './amenity.js';
+// import Amenity from './amenity.js';
 import Listing from './listing.js';
 import ListingAmenities from './listingamenities.js';
 

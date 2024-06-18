@@ -1,4 +1,4 @@
-import { RESTDataSource } from '@apollo/datasource-rest';
+
 import { GraphQLError } from 'graphql';
 import { validateInviteCode } from '../../infrastructure/helpers/validateInvitecode.js';
 import { hashPassword, checkPassword } from '../../infrastructure/helpers/passwords.js';
@@ -7,12 +7,13 @@ const { sign } = pkgj;
 import EmailVerification from '../../infrastructure/email/emailVerification.js';
 import GoogleLogin from '../../infrastructure/auth/googleLogin.js';
 
-class AccountsAPI extends RESTDataSource {
-  constructor() {
-    super();
-    this.baseURL = 'http://localhost:4011/';
+class AccountsAPI {
+  constructor({db}) {
+    this.usersCollection = db.collection('users');
+    // super();
+    // this.baseURL = 'http://localhost:4011/';
     this.emailVerification = new EmailVerification();
-    this.googleLogin = new GoogleLogin();
+    // this.googleLogin = new GoogleLogin();
   }
 
   async createAccount(email, password) {
@@ -57,8 +58,15 @@ class AccountsAPI extends RESTDataSource {
     return { token };
   }
 
-  async registerGuest(email, password, name, nickname, role = 'GUEST', picture) {
-    const existingUser = await this.getUserByEmailOrNickname({ email, nickname });
+async registerGuest(email, password, name, nickname, role="GUEST", picture) {
+  return this.register({email, password, name, nickname, role, picture})
+}
+async registerHost(email, password, name, nickname, role="HOST", picture){
+  return this.register({email, password, name, nickname, role, picture})
+}
+
+async register({email, password, name, nickname, role, picture}) {
+  const existingUser = await this.getUserByEmailOrNickname({ email, nickname });
     if (existingUser) {
       if (existingUser.email === email) {
         throw new GraphQLError('Email is already in use', {
@@ -89,26 +97,32 @@ class AccountsAPI extends RESTDataSource {
       name,
       password: passwordHash,
       nickname,
-      role: 'GUEST',
+      role,
       picture
     };
 
     try {
-      const { data, error } = await this.post(`/user`, newUser);
+      const { data, error } = await this.usersCollection.insertOne(newUser);
       if (error) {
         throw new GraphQLError('Something went wrong on our end', {
           extensions: {
             code: 'SERVER_ERROR'
           }
+          
         });
       }
 
-      const payload = { id: data.id };
+      const payload = { _id: data.insertedId };
       const token = sign(payload, process.env.JWT_SECRET, {
         algorithm: 'HS256',
         subject: data.id.toString(),
         expiresIn: '1d'
       });
+      return {
+        ...newUser,
+        _id,
+        token
+      }
 
       await this.emailVerification.sendActivationEmail(email, token);
 
@@ -119,73 +133,7 @@ class AccountsAPI extends RESTDataSource {
           code: 'BAD_EMAIL'
         }
       });
-    }
-  }
-
-  async registerHost(email, password, nickname, name, inviteCode, picture) {
-    validateInviteCode(inviteCode);
-
-    if (!validator.isStrongPassword(password)) {
-      throw new GraphQLError('The password must be at least 8 characters long and contain a mix of uppercase letters, lowercase letters, numbers, and symbols', {
-        extensions: {
-          code: 'BAD_PASSWORD'
-        }
-      });
-    }
-
-    const res = await Promise.all([
-      this.get(`/users?email=${email}&&nickname=${nickname}`)
-    ]);
-
-    const [existingEmail, existingNickname] = res;
-
-    if (existingEmail.length) {
-      throw new GraphQLError('Email is already in use', {
-        extensions: {
-          code: 'BAD_USER_INPUT'
-        }
-      });
-    } else if (existingNickname.length) {
-      throw new GraphQLError('Username already in use', {
-        extensions: {
-          code: 'BAD_USER_INPUT'
-        }
-      });
-    }
-
-    const passwordHash = await hashPassword(password);
-    const newUser = {
-      name,
-      email,
-      password: passwordHash,
-      nickname,
-      picture,
-      role: 'HOST'
-    };
-
-    try {
-      const { data, error } = await this.post(`/user`, newUser);
-
-      const payload = { id: data.id };
-      const token = sign(payload, process.env.JWT_SECRET, {
-        algorithm: 'HS256',
-        subject: data.id.toString(),
-        expiresIn: '1d'
-      });
-
-      await this.emailVerification.sendActivationEmail(email, token);
-
-      return { token };
-    } catch (e) {
-      throw new GraphQLError('Something went wrong on our end', {
-        extensions: {
-          code: 'SERVER_ERROR',
-          description: 'Something went wrong on our end'
-        }
-      });
-    }
-  }
-
+    }}
   async activateUser(req, res) {
     const { token } = req.body;
     try {
