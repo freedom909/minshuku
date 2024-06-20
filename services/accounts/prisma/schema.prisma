@@ -1,32 +1,28 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider    = "prisma-client-js"
+  engineType  = "library"  // or "binary" if you prefer
 }
 
 datasource db {
   provider = "mongodb"
-  url      = env("DATABASE_URL")
+  url      = env("MONGODB_URL")
 }
 
-model User {
-  id      String   @id @map("_id") 
-  email   String   @unique
-  name    String   
-  role    ROLE  @default(GUEST)
-  password String
-  token String?
-  refresh_token String?
-  profilePicture String?
-  profileDescription String?
-  nickname String @unique
+model accounts {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique(map: "email_1")
 }
 
-enum ROLE {
-  ADMIN
-  GUEST
-  HOST
+model listings {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
+model locations {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
 
+model users {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  email    String @unique(map: "email_1")
+  nickname String @unique(map: "nickname_1")
+}

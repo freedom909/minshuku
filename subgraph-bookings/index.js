@@ -7,15 +7,14 @@ import {
 } from '@apollo/server/plugin/landingPage/default';
 import { readFileSync } from 'fs';
 import axios from 'axios';
-import  get  from 'axios';
 import gql from 'graphql-tag';
 import resolvers from './resolvers.js';
-import BookingsAPI from './datasources/bookings.js';
-import ListingsAPI from './datasources/listings.js';
+import BookingsAPI from './datasources/bookingsApi.js';
+import ListingsAPI from './datasources/listingsApi.js';
+import PaymentsAPI from './datasources/paymentsApi.js';
+import errors from '../infrastructure/utils/errors.js';
 
-import errors from '../utils/errors.js';
-
-const {AuthenticationError} = errors
+const { AuthenticationError } = errors;
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 let plugins = [];
@@ -47,18 +46,17 @@ async function startApolloServer() {
         if (userId) {
           const { data } = await axios.get(`http://localhost:4011/login/${userId}`)
             .catch((error) => {
-              throw AuthenticationError();
+              throw new AuthenticationError();
             });
 
           userInfo = { userId: data.id, userRole: data.role };
         }
         return {
           ...userInfo,
-
           dataSources: {
-            // TODO: add data sources here
-            bookingsAPI:new BookingsAPI(),
-            listingsAPI:new ListingsAPI()
+            bookingsAPI: new BookingsAPI(),
+            listingsAPI: new ListingsAPI(),
+            paymentsAPI: new PaymentsAPI(),
           },
         };
       },

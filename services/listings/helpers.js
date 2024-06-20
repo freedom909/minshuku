@@ -10,39 +10,20 @@ const getDifferenceInDays = (checkIn, checkOut) => {
   return Math.round(diffInTime / oneDayConversion);
 };
 
-// const transformListingWithAmenities = (listingInstance) => {
-//   // Check if listingInstance is an instance of a class or a valid object
-//   if (typeof listingInstance !== 'object' || listingInstance === null) {
-//     throw new Error('listingInstance must be a valid object');
-//   }
-  
-//   // Convert listingInstance to JSON if it has a toJSON method
-//   const listing = typeof listingInstance.toJSON === 'function'
-//     ? listingInstance.toJSON()
-//     : listingInstance;
-  
-//   // Extract Amenities property and return other listing properties
-//   const { Amenities, ...listingPropertiesToReturn } = listing;
-  
-//   // Extract ListingAmenities property from each amenity and return other amenity properties
-//   if (Amenities) {
-//     const amenities = Amenities.map((a) => {
-//       const { ListingAmenities, ...amenitiesToReturn } = a;
-//       return amenitiesToReturn;
-//     });
-//     // Return the transformed listing and amenities
-//   return { ...listingPropertiesToReturn, amenities }; 
-//   }                                       
-// };
 const transformListingWithAmenities = (amenities) => {
+  console.log("amenities",amenities)
   // Check if amenities is an array
   if (!Array.isArray(amenities)) {
+    console.error('Input amenities is not an array:', amenities);
     throw new Error('amenities must be an array');
   }
-  
-  // Transform each amenity
-  const transformedAmenities = amenities.map((a) => {
-    const { id, category, name } = a;
+
+  // Transform each Amenity instance
+  const transformedAmenities = amenities.map((amenity) => {
+    if (!amenity.dataValues) {
+      return {}; // Return an empty object if dataValues is undefined
+    }
+    const { id, category, name } = amenity.dataValues;
     return { id, category, name };
   });
 

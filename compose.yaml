@@ -1,91 +1,57 @@
 version: '3.9'
+
 services:
+  listings-db:
+    image: mysql:8.0.33
+    container_name: listings-db
+    restart: always
+    volumes:
+      - listings-db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_PASSWORD: princess
+      MYSQL_DATABASE: listings
+    networks:
+      - backend
+      
   accounts-service: 
     build: ./services/accounts
     ports:
-      - "4002:3000"
+      - "4011:4011"
     environment:
       - NODE_ENV=development
     depends_on:
       - accounts-db
 
-  bookings-service:
-    build: ./services/bookings
-    ports:
-      - "4003:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - bookings-db
-
-  reviews-service:
-    build: ./services/reviews
-    ports:
-      - "4005:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - reviews-db
-
-  listings-service:
-    build: ./services/listings
-    ports:
-      - "4004:3000"
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - listings-db
-
   accounts-db:
     image: mongo:latest
     container_name: accounts-db
     restart: always
-    ports:
-      - "4002:27017"
     volumes:
       - accounts-db-data:/data/db
-
-  bookings-db:
-    image: postgres:latest
-    container_name: bookings-db
-    restart: always
     ports:
-      - "4003:5432"
-    volumes:
-      - bookings-db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgrePassword
-      - POSTGRES_DB=bookings
+      - "27017:27017"
+    networks:
+      - backend
 
-  listings-db:
-    image: postgres:latest
-    container_name: listings-db
-    restart: always
+  listings-service:
+    build: ./services/listings
     ports:
-      - "4004:5432"
-    volumes:
-      - listings-db-data:/var/lib/postgresql/data
+      - "4010:4010"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgrePassword
-      - POSTGRES_DB=listings
+      NODE_ENV: development
+      MYSQL_HOST: listings-db
+      MYSQL_PASSWORD: princess
+      MYSQL_DB: listings
+    depends_on:
+      - listings-db
+    networks:
+      - backend
 
-  reviews-db:
-    image: postgres:latest
-    container_name: reviews-db
-    restart: always
-    ports:
-      - "4005:5432"
-    volumes:
-      - reviews-db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgrePassword
-      - POSTGRES_DB=reviews
+networks:
+  backend:
 
 volumes:
-  accounts-db-data:
-  bookings-db-data:
   listings-db-data:
-  reviews-db-data:
+  accounts-db-data:

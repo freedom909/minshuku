@@ -1,42 +1,57 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.5",
-        import: ["@key","@shareable"])
-        
+  @link(url: "https://specs.apollo.dev/federation/v2.5", 
+        import: ["@key", "@shareable"])
+
+# Query type for fetching payment information
 type Query {
-  payment:Int @shareable 
+  payment: Int @shareable
 }
 
+# Mutation type for wallet operations
 type Mutation {
-  ### wallet
-  addFundsToWallet(amount:Float!):AddFundsToWalletResponse! @shareable
+  addFundsToWallet(amount: Float!): AddFundsToWalletResponse!
+  cancelBooking(bookingId: ID!): CancelBookingResponse!
 }
 
+# User interface with common user fields
 interface User {
-
-  id : ID!
-  name:String!
+  id: ID!
+  name: String!
 }
 
+# Interface for mutation responses
 interface MutationResponse {
   code: Int!
-  success : Boolean!,
-  message : String,
+  success: Boolean!
+  message: String!
 }
 
-type AddFundsToWalletResponse implements MutationResponse{
-  "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!  @shareable
-  "Indicates whether the mutation was successful"
-  success: Boolean!  @shareable
-  "Human-readable message for the UI"
-  message: String!  @shareable
-  "Updated wallet amount"
-  amount: Float  @shareable
+# Response type for addFundsToWallet mutation
+type AddFundsToWalletResponse implements MutationResponse {
+  code: Int!
+  success: Boolean!
+  message: String!
+  amount: Float
 }
 
-type Guest implements User @key(fields:"id"){
-  id:ID!
-  name:String! @shareable
-  funds:Float! @shareable
+# Response type for cancelBooking mutation
+type CancelBookingResponse implements MutationResponse {
+  code: Int!
+  success: Boolean!
+  message: String!
+  refundAmount: Float!
 }
 
+# Guest type implementing User interface with federated key
+type Guest implements User @key(fields: "id") {
+  id: ID!
+  name: String!
+  funds: Float!
+}
+
+# Host type implementing User interface with federated key
+type Host implements User @key(fields: "id") {
+  id: ID!
+  name: String!
+  earnings: Float!
+}

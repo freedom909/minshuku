@@ -1,7 +1,6 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
-
 import { readFileSync } from 'fs';
 import axios from 'axios';
 import get  from 'axios';
@@ -11,9 +10,10 @@ import errors from '../utils/errors.js';
 const {AuthenticationError}=errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
-import BookingsAPI from '../subgraph-listings/datasources/bookings.js';
-import ListingsAPI from '../subgraph-bookings/datasources/listings.js';
-import ReviewsAPI from '../subgraph-reviews/datasources/reviews.js';
+import BookingsAPI from './datasources/bookingsApi.js';
+import ListingsAPI from './datasources/listingsApi.js';
+import ReviewsAPI from './datasources/reviewsApi.js';
+import AccountsAPI from './datasources/accountsApi.js';
 async function startApolloServer() {
   const server = new ApolloServer({
     schema: buildSubgraphSchema({
@@ -22,9 +22,8 @@ async function startApolloServer() {
     }),
   });
 
-  const port = 4005; // TODO: change port number
-  const subgraphName = 'reviews'; // TODO: change to subgraph name
-
+  const port = 4006; 
+  const subgraphName = 'reviews'; 
   try {
     const { url } = await startStandaloneServer(server, {
       context: async ({ req }) => {
@@ -45,7 +44,8 @@ async function startApolloServer() {
           dataSources: {
            reviewsAPI:new ReviewsAPI(),
            bookingsAPI:new BookingsAPI(),
-           listingsAPI:new ListingsAPI()
+           listingsAPI:new ListingsAPI(),
+           accountsAPI:new AccountsAPI()
           },
         };
       },

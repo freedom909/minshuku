@@ -1,10 +1,8 @@
 import '@apollo/space-kit/reset.css';
 import {extendTheme} from '@chakra-ui/react';
-
 import {colors} from '@apollo/space-kit/colors';
 
 const {grey, silver, midnight} = colors;
-
 const Button = {
   // The styles all buttons have in common
   baseStyle: {

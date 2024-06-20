@@ -1,205 +1,248 @@
-import express, { json } from "express";
-import { v4 as uuidv4 } from "uuid";
-const app = express();
+import express, { json } from 'express';
+import db from './models/index.js';
+import jwt from 'jsonwebtoken';
+import { Op } from '@sequelize/core';
+import help from './helpers.js';
 
+import { authenticate,authorize } from '../../infrastructure/auth/authenticateAndAuthorize.js';
+const { getDifferenceInDays, transformListingWithAmenities } = help;
+
+const app = express();
 const port = 4010 || process.env.PORT;
-import help from "./helpers.js";
-const { getDifferenceInDays, transformListingWithAmenities } =help
-import { PrismaClient} from "@prisma/client";
-const prisma = new PrismaClient()
 app.use(json());
+
+const { Amenity, Listing, ListingAmenities } = db;
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// get listing matching query params
-app.get("/listings", async (req, res) => {
+app.get("/listings",  async (req, res) => {
   const { page = 1, limit = 5, sortBy } = req.query;
-  const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10); // 0 indexed for page
-  const { numOfBeds: minNumOfBeds } = req.query;
+  const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10); // 0 indexed for page
+  const minNumOfBeds = parseInt(req.query.numOfBeds, 10) || 1; // Default to 0 if not provided or invalid
 
-  let sortOrder = { costPerNight: 'desc' }; // default descending cost
+  let order = [['costPerNight', 'DESC']]; // default descending cost
   if (sortBy === "COST_ASC") {
-    sortOrder = { costPerNight: 'asc' };
+    order = [['costPerNight', 'ASC']];
   }
 
-  const listings = await prisma.listing.findMany({
-    where: {
-      numOfBeds: {
-        gte: minNumOfBeds,
+  try {
+    const listings = await Listing.findAll({
+      where: {
+        numOfBeds: {
+          [Op.gte]: minNumOfBeds, // Use Op.gte to specify the greater than or equal condition
+        },
       },
-    },
-    orderBy: sortOrder,
-    take: parseInt(limit, 10),
-    skip: skipValue,
-  });
+      order,
+      limit: parseInt(limit, 10),
+      offset,
+    });
 
-  return res.json(listings);
+    return res.json(listings);
+  } catch (error) {
+    console.error('Error fetching listings:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
-// get 3 featured listings
-app.get("/featured-listings", async (req, res) => {
+app.get('/listing/amenities', async (req, res) => {
+  try {
+    const amenities = await Amenity.findAll();
+    return res.json(amenities);
+  } catch (error) {
+    console.error('Error fetching amenities:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+})
+
+app.get("/featured-listings",  async (req, res) => {
   let limit = Number(req.query.limit);
   if (isNaN(limit)) {
     limit = 3; // Set a default value
   }
-  const listings = await prisma.listing.findMany({
+  const listings = await Listing.findAll({
     where: {
       isFeatured: true,
     },
-    take: limit,
+    limit,
   });
 
   return res.json(listings);
 });
 
-// get all listings for a specific user
-app.get("/user/:userId/listings", async (req, res) => {
-  const listings = await prisma.listing.findMany({
+app.get("/users/:userId/listings", authenticate, async (req, res) => {
+  const listings = await Listing.findAll({
     where: { hostId: req.params.userId },
   });
-  // console.log(listings);
   return res.json(listings);
 });
 
-//defined a globe variable
-let transAmenities=[]
-// get all possible listing amenities,this route should be before of "/listing/listingId"
+app.get('/listings/amenities',async (req, res) => {
+  try {
+    const listings = await Listing.findAll({
+      include: {
+        model: Amenity,
+        through: { attributes: [] }, // This prevents extra data from ListingAmenities being included
+      }
+    });
 
-app.get("/listing/amenities", async (req, res) => {
-  const amenitiesList=await prisma.amenity.findMany()
-  // console.log({amenitiesList});
-  const amenities = amenitiesList.map(amenity => ({
-    ...amenity,
-    category: amenity.category.replace(/ /g, '_').toUpperCase()
-  }));
-  // console.log(amenities);
-  const transAmenities = transformListingWithAmenities(amenities); // Update the global variable
+    if (!listings || listings.length === 0) {
+      return res.status(400).send("Could not find any listings with amenities");
+    }
 
-  if (!transAmenities) {
-    return res.status(400).send("Could not find any amenities");
+    res.json(listings);
+  } catch (error) {
+    console.error("Error fetching listings with amenities:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-
-// console.log(transAmenities);
-  return res.json(transAmenities);
 });
 
+app.get("/listings/:listingId/totalCost", async (req, res) => {
+  try {
+    const { listingId } = req.params;
+    const { checkInDate, checkOutDate } = req.query;
 
-app.get("/listing/:listingId", async (req, res) => {
-  const listingInstance = await prisma.listing.findUnique({
-    where: { id: req.params.listingId },
-    include: { amenities: true },
+    const diffInDays = getDifferenceInDays(checkInDate, checkOutDate);
+
+    if (isNaN(diffInDays)) {
+      return res.status(400).send("Invalid date format. Please provide valid check-in and check-out dates.");
+    }
+
+    // Find the specific listing
+    const listingInstance = await Listing.findOne({
+      where: { id: listingId },
+      attributes: ['costPerNight'],
+    });
+
+    if (!listingInstance) {
+      return res.status(400).send("Could not find listing with specified ID.");
+    }
+
+    // Calculate total cost
+    const totalCost = listingInstance.costPerNight * diffInDays;
+    res.json({ totalCost });
+  } catch (error) {
+    console.error("Error fetching total cost for listing:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.get("/users/:userId/totalCost", authenticate, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (userId === null) {
+      throw new Error("You must provide a userId in order to get total cost");
+    }
+    const { checkInDate, checkOutDate } = req.query;
+
+    const diffInDays = getDifferenceInDays(checkInDate, checkOutDate);
+
+    if (isNaN(diffInDays)) {
+      return res.status(400).send("Invalid date format. Please provide valid check-in and check-out dates.");
+    }
+
+    // Find all listings for the user
+    const userListings = await Listing.findAll({
+      where: { hostId: userId },
+      attributes: ['costPerNight'],
+    });
+
+    if (!userListings || userListings.length === 0) {
+      return res.status(400).send("No listings found for the specified user.");
+    }
+
+    // Calculate total cost
+    const totalCost = userListings.reduce((sum, listing) => {
+      return sum + (listing.costPerNight * diffInDays);
+    }, 0);
+
+    res.json({ totalCost });
+  } catch (error) {
+    console.error("Error fetching total cost for user:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/listings", authenticate, authorize('HOST'), async (req, res) => {
+  const listingData = req.body.listing;
+  const amenitiesData = req.body.listing.amenities;
+  const id = uuidv4();
+
+  const listing = await Listing.create({
+    id,
+    ...listingData,
   });
 
-  if (!listingInstance) {
-    return res.status(404).send("Listing not found");
-  }
+  await listing.addAmenities(amenitiesData.map(amenity => amenity.id));
 
-  if (typeof listingInstance !== 'object' || listingInstance === null) {
-    return res.status(500).send("Server error: Invalid listing data");
-  }
+  const updatedListing = await Listing.findByPk(id, {
+    include: Amenity,
+  });
 
-  // Pass only the amenities array to the transformListingWithAmenities function
-  const transformedAmenities=transformListingWithAmenities(listingInstance.amenities)
-   // Add the transformed amenities back to the listing object
-
-  const listingToReturn = {...listingInstance,amenities:transformedAmenities}
-
+  const listingToReturn = transformListingWithAmenities(updatedListing);
   return res.json(listingToReturn);
 });
 
+app.get("/listings/:listingId", async (req, res) => {
+  try {
+    // Fetch the listing instance with associated amenities
+    const listingInstance = await Listing.findOne({
+      include: {
+        model: Amenity,
+        as: 'amenities' // This matches the association alias defined earlier
+      },
+      where: { id: req.params.listingId },
+    });
 
+    // Debugging output to see what we got from the database
+    console.log('Listing Instance:', listingInstance);
 
-
-app.get("/listings/:listingId/totalCost", async (req, res) => {
-  const listingInstance = await prisma.listing.findUnique({
-    where: { id: req.params.listingId },
-    select: { costPerNight: true },
-  });
-
-  if (!listingInstance) {
-    return res.status(400).send("Could not find listing with specified ID");
-  }
-
-  const { checkInDate, checkOutDate } = req.query;
-  const diffInDays = getDifferenceInDays(checkInDate, checkOutDate);
-
-  if (isNaN(diffInDays)) {
-    return res
-      .status(400)
-      .send(
-        "Could not calculate total cost. Please double check the check-in and check-out date format."
-      );
-  }
-
-  return res.json({ totalCost: listingInstance.costPerNight * diffInDays });
-});
-
-
-
-// create a listing
-app.post("/listings", async (req, res) => {
-  
-/* 
-   // this should never be triggered when called from the mutation resolver as the input will be validated,
-   // do we keep it in case we call the REST endpoint directly
-   if (!(title && photoThumbnail && description && numOfBeds && costPerNight && hostId && locationType && amenities)) {
-     return res.status(400).send('missing data to create a new listing');
-   }
-*/
-
-const listingData = req.body.listing;
-const amenitiesData = req.body.listing.amenities;
-const id = uuidv4();
- const listing = await prisma.listing.create({
-  data: {
-    id,
-    ...listingData,
-    amenities: {
-      connect: amenitiesData.map((amenity) => ({ id: amenity.id }))
+    // Check if the listing instance was found
+    if (!listingInstance) {
+      console.log('Listing not found');
+      return res.status(400).send("Could not find listing with specified ID");
     }
+
+    // If everything is fine, send the listing instance as a response
+    res.json(listingInstance);
+  } catch (error) {
+    console.error("Error fetching listing:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-let updatedListing = await prisma.listing.findUnique({
-   include:{amenities:true},
-   where:{id}
- });
- 
-const listingToReturn = transformListingWithAmenities(updatedListing);
-
-return res.json(listingToReturn);
+app.get('/amenities',  async (req, res) => {
+  try {
+    const amenities = await db.Amenity.findAll();
+    res.json(amenities);
+  } catch (error) {
+    console.error("Error fetching amenities:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
-// edit a listing
-app.patch("/listings/:listingId", async (req, res) => {
-
-let listing = await prisma.listing.findUnique({
-   include:{amenities:true},
-   where:{id:req.params.listingId}
- });
-
-const newListingData=req.body.listing;
-const newAmenities=req.body.listing.amenities;
-
-await prisma.listing.update({
-   where:{id:req.params.listingId},
-   data:{
-     ...newListingData,
-     amenities:{
-       set:[],
-       connectOrCreate:newAmenities.map((amenity)=>({where:{id:amenity.id},create:{id:amenity.id,name:amenity.name}}))
-     }
-   }
- });
-
-  let updatedListing = await prisma.listing.findUnique({
+app.patch("/listings/:listingId", authenticate, authorize('HOST'), async (req, res) => {
+  let listing = await Listing.findOne({
     include: Amenity,
     where: { id: req.params.listingId },
   });
-  const listingToReturn = transformListingWithAmenities(updatedListing);
 
+  const newListingData = req.body.listing;
+  const newAmenities = req.body.listing.amenities;
+
+  await listing.update({
+    ...newListingData,
+  });
+
+  await listing.setAmenities([]); // Clear existing amenities
+  await listing.addAmenities(newAmenities.map(amenity => amenity.id));
+
+  const updatedListing = await Listing.findByPk(req.params.listingId, {
+    include: Amenity,
+  });
+
+  const listingToReturn = transformListingWithAmenities(updatedListing);
   return res.json(listingToReturn);
 });
 

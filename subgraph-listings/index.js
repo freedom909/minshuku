@@ -9,8 +9,8 @@ import errors from '../utils/errors.js';
 const { AuthenticationError } = errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 import resolvers from './resolvers.js';
-import BookingsAPI from './datasources/bookings.js';
-import ListingsAPI from './datasources/listings.js';
+import BookingsAPI from './datasources/bookingsApi.js';
+import ListingsAPI from './datasources/listingsApi.js';
 
 
 async function startApolloServer() {

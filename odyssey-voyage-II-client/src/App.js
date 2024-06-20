@@ -17,11 +17,10 @@ import {
 } from './pages';
 import {useUser} from './utils';
 
-import {
-  Redirect,
+import { 
+  Navigate,
   Route,
-  BrowserRouter as Router,
-  Switch
+  BrowserRouter as Router, 
 } from 'react-router-dom';
 
 export default function App() {
@@ -29,12 +28,12 @@ export default function App() {
 
   return (
     <Router>
-      <Switch>
+      
         <Route path="/search">
           <Search />
         </Route>
         <Route path="/login">
-          <Login />
+          <Login />   
         </Route>
         <Route exact path="/listings">
           <Listings />
@@ -69,7 +68,7 @@ export default function App() {
         <Route exact path="/">
           <Home />
         </Route>
-      </Switch>
+    
     </Router>
   );
 }

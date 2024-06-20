@@ -48,6 +48,9 @@ type Booking @key(fields: "id") {
   listing: Listing! @shareable
   "The guest that reserved the location"
   guest: Guest! @shareable
+  "The review associated with the reservation"
+  review: Review! @shareable
+  "The guest that reserved the location"
   checkInDate: String! @shareable
   "Check-out date for the reservation"
   checkOutDate: String! @shareable
@@ -73,6 +76,8 @@ type Listing @key(fields: "id") {
 
 type Guest @key(fields: "id") {
   id: ID!
+  "The list of bookings for a guest"
+  bookings: [Booking]! @shareable
 }
 
 type Review @key(fields: "id") {
