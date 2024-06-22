@@ -8,9 +8,9 @@ import paseto from 'paseto';
 const { V2 } = paseto;
 import express from 'express'
 import cors from 'cors'
-// import authRouter from './auth.route.js'
+import AuthAPI from './datasources/auth.js'
 
-import { getToken, handleInvalidToken } from '../infrastructure/helpers/tokens.js'
+// import { getToken, handleInvalidToken } from '../infrastructure/helpers/tokens.js'
 import { AuthenticationError }  from '../infrastructure/utils/errors.js'
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }))
@@ -53,7 +53,8 @@ async function startApolloServer() {
     }),
     // Other ApolloServer configurations...
     dataSources: () => ({
-      accountsAPI: new AccountsAPI()
+      accountsAPI: new AccountsAPI(),
+      authAPI: new AuthAPI() // Pass the HTTP client to the AuthAPI data source
     }),
   
   })

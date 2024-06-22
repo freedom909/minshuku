@@ -1,5 +1,5 @@
-import { RESTDataSource } from '@apollo/datasource-rest';
 
+import { RESTDataSource } from "@apollo/datasource-rest";
 class BookingsAPI extends RESTDataSource {
   constructor() {
     super();

@@ -1,12 +1,12 @@
-import { GraphQLError } from 'graphql';
+
 import pkgj from 'jsonwebtoken';
 const { sign } = pkgj;
 import EmailVerification from '../../../infrastructure/email/emailVerification.js';
 import GoogleLogin from '../../../infrastructure/auth/googleLogin.js';
-import axios from 'axios';
+// import axios from 'axios';
 import UserRepository from '../../../infrastructure/userRepository.js';
-import { connectToDatabase } from '../../../infrastructure/DB/connectDB.js'; // Your database connection
-import UserService from '../../users/userService.js';
+// Your database connection
+import UserService from '../../users/datasources/userService.js';
 
 class AccountsAPI {
   constructor({ db }) {

@@ -37,26 +37,32 @@ const isGuest=rule()(async (_,__,ctx, info)=>{
   return user && user.role ==='GUEST'
 })
 // Permissions
+// Define bookingsWithPermission and listingsWithPermission
+const bookingsWithPermission = or(isAdmin, isOwner);
+const listingsWithPermission = or(isHost, isAdmin);
+
+// Define the permissions using these rules
 const permissions = shield({
   Query: {
-    bookingsWithPermission: or(isAdmin, isOwner),
-    listingsWithPermission: or(isHost, isAdmin),
+    bookingsWithPermission,
+    listingsWithPermission,
     getUser: or(and(isAuthenticated, isOwner), isAdmin),
-    me:isAuthenticated,
+    me: isAuthenticated,
   },
   Mutation: {
     createUserOK: isAdmin,
-    createAuthorOK:isAuthenticated,
-    updateAuthorOK:isAdmin,
-    updateUserOK:isAuthenticated,
-    deleteAuthorOK:isAdmin,
-    deleteUserOK:isAdmin,
-    updateListingOK:(isAdmin,and(isHost,isHostOfListing)),
-    deleteListingOK:(isAdmin,and(isHost,isHostOfListing))
+    createAuthorOK: isAuthenticated,
+    updateAuthorOK: isAdmin,
+    updateUserOK: isAuthenticated,
+    deleteAuthorOK: isAdmin,
+    deleteUserOK: isAdmin,
+    updateListingOK: or(isAdmin, and(isHost, isHostOfListing)),
+    deleteListingOK: or(isAdmin, and(isHost, isHostOfListing)),
   }
 }, {
   fallbackRule: isAuthenticated,
   fallbackError: new Error('Not authorized!'),
 });
 
-export { permissions };
+// Export the necessary parts
+export { permissions, bookingsWithPermission, listingsWithPermission };

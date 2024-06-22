@@ -1,29 +1,55 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import {validateInviteCode} from '../../infrastructure/helpers/validateInvitecode.js';
+// import {validateInviteCode} from '../../infrastructure/helpers/validateInvitecode.js';
 import { validationResult } from 'express-validator';
-import { validRegister, validLogin } from '../../infrastructure/helpers/valid.js';
-import { hashPassword, checkPassword } from '../../infrastructure/helpers/passwords.js';
+// import { validRegister, validLogin } from '../../infrastructure/helpers/valid.js';
+// import { hashPassword, checkPassword } from '../../infrastructure/helpers/passwords.js';
 import { getToken } from '../../infrastructure/helpers/tokens.js';
-import { permissions } from '../../infrastructure/auth/permission.js';
-import { authenticateJWT, checkPermissions } from '../../infrastructure/auth/auth.js';
-import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
-import User from './models/user.js';
+// import {bookingsWithPermission, listingsWithPermission } from '../../infrastructure/auth/permission.js';
+// import { authenticateJWT, checkPermissions } from '../../infrastructure/auth/auth.js';
+// import User from '../users/models/user.js';
 import Account from './models/account.js';
 import Listing from './models/listing.js';
 import Location from './models/location.js';
-import Booking from '../../infrastructure/models/booking.js';
-import AccountsAPI from './datasources/accountsApi.js';
+// import Booking from '../../infrastructure/models/booking.js';
+// import AccountsAPI from './datasources/accountsApi.js';
+import { MongoClient } from 'mongodb';
 
 dotenv.config();
 const router = express.Router();
 router.use(express.json());
-// const accountsAPI = new AccountsAPI();
-const { bookingsWithPermission, listingsWithPermission } = permissions;
+async function main() {
+  const client =new MongoClient(process.env.MONGODB_URI, { 
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  try {
+    await client.connect();
+    const db = client.db(process.env.DB_NAME);
+    const accountsAPI = new AccountsAPI({ db });
+    const accountsCollection = db.collection('accounts');
+    const listingsCollection = db.collection('listings');
+    const locationsCollection = db.collection('locations');
+    const bookingsCollection = db.collection('bookings');
+
+    // Example route to get all listings
+    router.get('/listings', authenticateJWT, async (req, res) => {
+      const listings = await listingsCollection.find().toArray();
+      res.send(listings);
+    });
+
+    // Example route to get all listings for a specific location
+    router.get('/listings/:locationId', authenticateJWT, async (req, res) => {
+      const locationId = req.params.locationId;
+      const listings = await listingsCollection.find({ locationId }).toArray();
+      res.send(listings);
+    });
+
+    // Example route to 
 
 router.get('/', (req, res) => {
-  res.send('Hello World!');
+  res.send('Hello World! af');
 });
 
 router.post('/account', async (req, res) => {
@@ -203,5 +229,12 @@ router.get('/profile', authenticateJWT, async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
+    process.exit(1);
+  }
+  console.log('Server is running on port 3000');
 
+}
+main().catch(console.error);
 export default router;

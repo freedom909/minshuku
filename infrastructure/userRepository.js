@@ -22,6 +22,9 @@ class UserRepository {
     return await this.userCollection.findOne({ nickname });
   }
 
+  async getUserFromDb(id) {
+    return await this.userCollection.findOne({ _id: new ObjectId(id) });
+  }
   async getUserByEmailFromDb(email) {
     return await this.userCollection.findOne({ email });
   }

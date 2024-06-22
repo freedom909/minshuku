@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
-import {initializeServices} from '../users/userService.js';
+import pkg from '../users/userService.js';
+const initializeServices = pkg;
 import  AccountsAPI  from './datasources/accountsApi.js';
 import router from './app.js';
 
@@ -11,7 +12,7 @@ app.use(express.json());
 
 async function startServer() {
   const db = await connectToDatabase();
-  const { userService, accountsAPI } = await initializeServices(db);
+  const { userService, accountsAPI } = new initializeServices({db});
 
   app.use((req, res, next) => {
     req.userService = userService;

@@ -1,5 +1,5 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
-import { GraphQLError } from 'graphql';
+
 import { shield, allow } from 'graphql-shield';
 import { permissions} from '../../../infrastructure/auth/permission.js';
 

@@ -142,8 +142,8 @@ const resolvers = {
       throw new GraphQLError('Email and password must be provided', { extensions: { code: 'EMAIL_PASSWORD_REQUIRED' } });
     },
 
-    signUp: async (_, { signUpInput }, { dataSources }) => {
-      const { email, password, name, nickname, role, inviteCode, picture } = signUpInput;
+    signUp: async (_, {input:{ email, password, name, nickname, role, inviteCode, picture }}, { dataSources }) => {
+      
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
         if (!inviteCode || !isValidInviteCode) {
