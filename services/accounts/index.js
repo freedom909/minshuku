@@ -1,36 +1,46 @@
-import dotenv from 'dotenv';
+import { ApolloServer } from '@apollo/server';
+import { buildSubgraphSchema } from '@apollo/subgraph';
+import { gql } from 'graphql-tag';
+import { readFileSync } from 'fs';
+import path from 'path';
+import AccountService from '../../infrastructure/services/accountService.js';
+import resolvers from './resolvers.js';
 import express from 'express';
-import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
-import pkg from '../users/userService.js';
-const initializeServices = pkg;
-import  AccountsAPI  from './datasources/accountsApi.js';
-import router from './app.js';
+import http from 'http';
+import { expressMiddleware } from '@apollo/server/express4';
+import AccountRepository from '../../infrastructure/repositories/accountRepository.js';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import cors from 'cors';
 
-dotenv.config();
-const app = express();
-app.use(express.json());
-
-async function startServer() {
+async function initializeServices() {
   const db = await connectToDatabase();
-  const { userService, accountsAPI } = new initializeServices({db});
-
-  app.use((req, res, next) => {
-    req.userService = userService;
-    req.accountsAPI = accountsAPI;
-    next();
-  });
-
-  app.use(router);
-
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+  const accountRepository = new AccountRepository(db);
+  const accountService = new AccountService(accountRepository);
+  return { accountService };
 }
 
-startServer().catch(err => {
-  console.error('Failed to start server:', err);
-});
+const app = express();
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+const httpServer=http.createServer(app);
+const server = new ApolloServer({
+  schema: buildSubgraphSchema({ typeDefs, resolvers }),
+  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  dataSources: () => {({initializeServices: initializeServices }, {accountService: new AccountService()  })},
+  context:   ({ req }) => ({
+    token: req.headers.authorization || '',
+    user: req.headers.user || null,
+  }),
+})
+await server.start();
+app.use(
+  '/graphql',
+  cors(),
+  express.json(),
+  expressMiddleware(server, {
+ 
+  
+  }),
+);
 
-
-
+await new Promise((resolve) => httpServer.listen({ port: 4002 }, resolve));
+console.log(`🚀 Server ready at http://localhost:4002/graphql`);

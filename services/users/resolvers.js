@@ -10,18 +10,12 @@ import { permissions } from '../../infrastructure/auth/permission.js';
 import UserService from './datasources/userService.js';
 import UserRepository from '../../infrastructure/userRepository.js';
 // import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
-import { validLogin, validRegister } from '../../infrastructure/helpers/valid.js';
+import  validRegister from '../../infrastructure/helpers/valid.js';
 import dotenv from 'dotenv';
 import runValidations from './runValidations.js';
 import {connectToDatabase} from '../../infrastructure/DB/connectDB.js';
 dotenv.config();
 
-
-async function initializeServices() {
-  const db = await connectToDatabase();
-  const userService = new UserService(new UserRepository(db));
-  return { userService };
-}
 
 const resolvers = {
   DateTime: DateTimeType,
@@ -53,22 +47,38 @@ const resolvers = {
     signUp: async (_, { input }, { dataSources }) => {
       const { email, password, name, nickname, role, inviteCode, picture } = input;
       console.log('Received input:', input);  // Add this line for debugging
-      await runValidations({ email, password, name, nickname, role, inviteCode, picture });
+
+      // Run validations
+      // await validRegister({ email, password, name, nickname, role, inviteCode, picture });
+
+      // Additional role validation
+      if (role !== 'GUEST' && role !== 'HOST') {
+        throw new GraphQLError('Invalid role', {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
+      }
+
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
         if (!isValidInviteCode) {
-          throw new UserInputError('Invalid invite code', {
+          throw new GraphQLError('Invalid invite code', {
             extensions: { code: 'BAD_USER_INPUT' }
           });
         }
-        const {userService } = await initializeServices()
-        return dataSources.userService.register({ email, password, name, nickname, role: 'HOST', picture });
-      } else {
-        const {userService } = await initializeServices()
-        return dataSources.userService.register({ email, password, name, nickname, role: 'GUEST', picture });
       }
+      initializeServices();
+      // Ensure dataSources.userService is available
+      const { userService } = dataSources;
+      if (!userService) {
+        throw new GraphQLError('UserService not available', {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' }
+        });
+      }
+
+      return userService.register({ email, password, name, nickname, role, picture });
     },
   },
+
 
     logout: async (_, __, { dataSources }) => {
       return await dataSources.userService.logout();

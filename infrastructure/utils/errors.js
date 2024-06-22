@@ -17,4 +17,10 @@ const ForbiddenError = (errMessage) => {
   });
 };
 
-export  { AuthenticationError, ForbiddenError };
+ const handleGraphQLError = (message, code) => {
+  throw new GraphQLError(message, {
+    extensions: { code },
+  });
+};
+
+export  { AuthenticationError, ForbiddenError, handleGraphQLError};

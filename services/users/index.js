@@ -8,9 +8,10 @@ import resolvers from './resolvers.js';
 import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
-
+import { initializeServices } from '../accounts/datasources/accountsApi.js';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import cors from 'cors';
+
 
 const app = express();
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -18,10 +19,11 @@ const httpServer=http.createServer(app);
 const server = new ApolloServer({
   schema: buildSubgraphSchema({ typeDefs, resolvers }),
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-  dataSources: () => ({
-    userService: new UserService(),
+  dataSources: () => ({initializeServices: initializeServices }), userService: new UserService()  });
+  context:   ({ req }) => ({
+    token: req.headers.authorization || '',
+    user: req.headers.user || null,
   }),
-});
 
 await server.start();
 app.use(
@@ -29,10 +31,8 @@ app.use(
   cors(),
   express.json(),
   expressMiddleware(server, {
-    context:   ({ req }) => ({
-      token: req.headers.authorization || '',
-      user: req.headers.user || null,
-    }),
+ 
+  
   }),
 );
 

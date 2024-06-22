@@ -13,61 +13,7 @@ type Account @key(fields: "id") {
   "The date and time the account was created."
   createdAt: DateTime!
   "The email associated with the account (must be unique)."
-  email: String! 
-}
-
-type AuthPayload {
-  "The user's JWT"
-  token: String!
-  "The user's ID"
-  userId: ID!
-}
-
-"Represents an Airlock user's common properties"
-interface User @key(fields: "id") {
-  id: ID!
-  "The user's first and last name"
-  name: String!
-  "The user's role"
-  role: Role!
-  "The user's profile photo URL"
-  picture: String!
-  "The nickname of the user"
-  nickname: String!
-  "The listings of the user"
-  listings: [Listing]!
-}
-
-type Host implements User @key(fields: "id") {
-  id: ID!
-  "The user's first and last name"
-  name: String! @shareable
-  "The user's profile photo URL"
-  picture: String! @shareable
-  "The host's profile bio description, will be shown in the listing"
-  description: String @shareable
-  "The user's chosen nickname (must be unique)."
-  nickname: String!
-  "The role of the user"
-  role: Role!
-  "The listings of the user"
-  listings: [Listing]!
-}
-
-type Guest implements User @key(fields: "id") {
-  id: ID!
-  "The user's first and last name"
-  name: String! @shareable
-  "The user's profile photo URL"
-  picture: String! @shareable
-  "The user's chosen nickname (must be unique)."
-  nickname: String!
-  "The role of the user"
-  role: Role!
-  "The bookings of the user"  
-  bookings: [Booking]! @shareable
-  "The listings of the user booked"
-  listings: [Listing]! @shareable
+  email: String!
 }
 
 enum Role {
@@ -85,13 +31,7 @@ interface MutationResponse {
   message: String!
 }
 
-"The response after updating a profile"
-type UpdateProfileResponse implements MutationResponse {
-  code: Int!
-  success: Boolean!
-  message: String!
-  user: User @shareable
-}
+
 
 """
 Provides data to update an existing account's email.
@@ -125,49 +65,8 @@ input CreateAccountInput {
   password: String!
 }
 
-input SignUpInput {
-  email: String!
-  name: String!
-  password: String!
-  nickname: String!
-  inviteCode: String
-  role: Role!
-  picture: String! 
-}
-
-input SignInInput {
-  email: String!
-  password: String!
-}
-
-type Booking @key(fields: "id") {
+type UserId {
   id: ID!
-  guestId: ID!
-  createdAt: DateTime
-  cancelledAt: DateTime
-  confirmedAt: DateTime
-  listingId: ID! @shareable
-}
-
-type Listing @key(fields: "id") {
-  id: ID!
-  title: String!
-  description: String!
-  price: Float!
-  hostId: UserId!
-  location: Location! @shareable
-  latitude: Float!
-  longitude: Float!
-}
-
-type Location @key(fields: "id") {
-  id: Int! 
-  name: String! 
-  address: String! 
-  city: String! 
-  state: String! 
-  zip: String! 
-  listings: [Listing] @shareable
 }
 
 interface Node {
@@ -178,60 +77,19 @@ type _Service {
   sdl: String
 }
 
-type UserId {
-  id: ID!
-}
-
 scalar _Any
 
-union _Entity = Listing | Host | Guest | Generator
+union _Entity = Account
 
 type Query {
-  getUser(id: String!): User
-  listings: [Listing] @shareable
-  user(id: ID!): User @shareable
-  me: User! @shareable
   viewer: Account
-  bookings: [Booking] 
   account(id: ID!): Account @shareable
   accounts: [Account] @shareable
-  bookingsByUser(userId: ID!): [Booking]
-  bookingById(id: ID!): Booking
-}
-
-type Generator {
-  id: ID!
-  name: String!
-  description: String
-  createdAt: DateTime!
-  createdBy: User!
-  isActive: Boolean!
-  getUser(id: ID!): User
 }
 
 extend type Mutation {
-createUser(name: String!, email: String!, password: String!): User
-  createListing(title: String!, description: String!, price: Float, locationId: Int, hostId: String): Listing
-  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
-  signIn(email: String!, password: String!): AuthPayload!
-  logout: Boolean!
-  signUp(input: SignUpInput!): AuthPayload!
   createAccount(input: CreateAccountInput!): Account!
   deleteAccount(id: ID!): Boolean!
   updateAccountEmail(input: UpdateAccountEmailInput!): Account!
   updateAccountPassword(input: UpdateAccountPasswordInput!): Account!
-}
-
-input CreateUserInput {
-  name: String!
-  email: String!
-  password: String!
-}
-
-input CreateListingInput {
-  title: String!
-  description: String
-  price: Float!
-  locationId: String!
-  hostId: String!
 }

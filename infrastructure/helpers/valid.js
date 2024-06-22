@@ -1,38 +1,32 @@
-import { check } from 'express-validator';
-export const validRegister = [
-    check('nickname', 'Nickname is required').notEmpty(),
-    check('role').notEmpty().default('GUEST'),,
-    check('picture').notEmpty(),
-    check('picture').isURL().withMessage('Must be a valid URL'),
-    check('name', 'Name is required').notEmpty()
-    .isLength({
-        min: 2,
-        max: 18
-    }).withMessage('name must be between 3 to 18 characters'),
-    check('email')
-    .isEmail()
-    .withMessage('Must be a valid email address'),
-    check('password', 'password is required').notEmpty(),
-    check('password').isLength({
-        min: 8,
-        max: 88
-    }).withMessage('Password must contain at least 88 characters').matches(/\d/).withMessage('password must contain a number'),
-]
+// validators.js
+import { GraphQLError } from 'graphql';
 
-export const validLogin=[
-    check('email')
-    .isEmail()
-    .withMessage('Must be a valid email address'),
-    check('password', 'password is required').notEmpty(),
-    check('password').isLength({min:8})
-    .withMessage('Password must contain at least 8 characters').matches(/\d/).withMessage('password must contain a number')
-    ]
+const validRegister = async ({ email, password, name, nickname, role, picture }) => {
+  const errors = [];
 
-    export const validPassword = [
-        check('password', 'Password is required')
-            .notEmpty()
-            .isLength({ min: 8 })
-            .withMessage('Password must contain at least 8 characters')
-            .matches(/\d/)
-            .withMessage('Password must contain a number'),
-    ];
+  if (!nickname) {
+    errors.push('Nickname is required');
+  }
+  if (!role) {
+    errors.push('Role is required');
+  }
+  if (!picture || !/^https?:\/\/.*\.(jpg|jpeg|png|gif)$/.test(picture)) {
+    errors.push('Picture must be a valid URL');
+  }
+  if (!name || name.length < 2 || name.length > 18) {
+    errors.push('Name must be between 2 and 18 characters');
+  }
+  if (!email || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email)) {
+    errors.push('Must be a valid email address');
+  }
+  if (!password || password.length < 8 || password.length > 88 || !/\d/.test(password)) {
+    errors.push('Password must contain at least 8 characters and include a number');
+  }
+
+  if (errors.length > 0) {
+    throw new GraphQLError(errors.join(', '), {
+      extensions: { code: 'BAD_USER_INPUT' }
+    });
+  }
+};
+export default validRegister;
