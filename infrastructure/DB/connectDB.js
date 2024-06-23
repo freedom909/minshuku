@@ -1,7 +1,7 @@
 import pkg from 'mongodb';
 const {MongoClient} = pkg;
 
-const uri=process.env.MONGODB_URI ||'mongodb://localhost:27017';
+const uri='mongodb+srv://chika:13GhspHKakjX4UPx@cluster0.lidru.mongodb.net/' ;
 const dbName=process.env.DB_NAME ||'air';
 
 let db;

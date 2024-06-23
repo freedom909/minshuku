@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 class UserService extends RESTDataSource {
   constructor(userRepository) {
     super();
-    this.baseURL = 'http://localhost:4000/';
+    this.baseURL = 'http://localhost:4011/';
     this.userRepository = userRepository;
   }
 

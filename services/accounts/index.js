@@ -21,25 +21,28 @@ async function initializeServices() {
 
 const app = express();
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-const httpServer=http.createServer(app);
+const httpServer = http.createServer(app);
+
 const server = new ApolloServer({
   schema: buildSubgraphSchema({ typeDefs, resolvers }),
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-  dataSources: () => {({initializeServices: initializeServices }, {accountService: new AccountService()  })},
-  context:   ({ req }) => ({
-    token: req.headers.authorization || '',
-    user: req.headers.user || null,
-  }),
-})
+  context: async ({ req }) => {
+    const { accountService } = await initializeServices();
+    return {
+      token: req.headers.authorization || '',
+      user: req.headers.user || null,
+      dataSources: { accountService }
+    };
+  }
+});
+
 await server.start();
+
 app.use(
   '/graphql',
   cors(),
   express.json(),
-  expressMiddleware(server, {
- 
-  
-  }),
+  expressMiddleware(server)
 );
 
 await new Promise((resolve) => httpServer.listen({ port: 4002 }, resolve));

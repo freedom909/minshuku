@@ -1,17 +1,24 @@
-import { hashPassword, checkPassword } from './helpers/passwords.js';
+import { hashPassword, checkPassword } from '../helpers/passwords.js';
 import pkg from 'jsonwebtoken';
 const { sign } = pkg;
-import EmailVerification from './email/emailVerification.js';
+import EmailVerification from '../email/emailVerification.js';
 import axios from 'axios';
-
+import dotenv from 'dotenv';
+dotenv.config()
 class UserRepository {
   constructor(db) {
-    this.userCollection = db.collection('users');
+    console.log('db object in UserRepository constructor:', db);
+    if (typeof db.collection !== 'function') {
+      throw new Error('db.collection is not a function. Ensure the database object is correctly initialized.');
+    }
+    this.userCollection = db.collection('User');
     this.emailVerification = new EmailVerification();
     this.httpClient = axios.create({
       baseURL: 'http://localhost:4011', // Adjust as needed
     });
   }
+
+  // Additional methods for UserRepository can be added here
 
   // Database interactions
   async insertUser(user) {

@@ -1,14 +1,18 @@
-import UserRepository from '../../../infrastructure/repositories/userRepository.js';
-import { MongoClient } from 'mongodb';
-import dotenv from 'dotenv';
+// import { initializeRepositories } from './datasources/initializeRepositories.js';
+import  UserRepository  from '../../../infrastructure/repositories/userRepository.js';
+import UserService from './userService.js';
+import pkg from 'mongodb';
+const { MongoClient } = pkg;
+import dotenv from 'dotenv'
 dotenv.config();
 
 
 
-async function initializeServices() {
+async function main() {
   const uri = process.env.MONGODB_URL;
   const dbName = process.env.DB_NAME;
 
+  // Debugging statements to verify the environment variables
   if (!uri) {
     console.error('MONGODB_URL is not defined');
     return;
@@ -25,10 +29,7 @@ async function initializeServices() {
 
   try {
     await client.connect();
-    const db = client.db(dbName);
-
-    // Log to verify db object structure
-    console.log('Database object:', db);
+    const db = client.db(dbName); // Specify the database name here
 
     // Pass the db object to your UserRepository
     const userRepository = new UserRepository(db);
@@ -40,4 +41,4 @@ async function initializeServices() {
   }
 }
 
-initializeServices().catch(console.error);
+main().catch(console.error);

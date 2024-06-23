@@ -8,12 +8,14 @@ import DateTimeType from '../../infrastructure/scalar/DateTimeType.js';
 import { authenticateJWT, checkPermissions } from '../../infrastructure/auth/auth.js';
 import { permissions } from '../../infrastructure/auth/permission.js';
 import UserService from './datasources/userService.js';
-import UserRepository from '../../infrastructure/userRepository.js';
+import UserRepository from '../../infrastructure/repositories/userRepository.js';
 // import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
 import  validRegister from '../../infrastructure/helpers/valid.js';
 import dotenv from 'dotenv';
 import runValidations from './runValidations.js';
-import {connectToDatabase} from '../../infrastructure/DB/connectDB.js';
+// import {connectToDatabase} from '../../infrastructure/DB/connectDB.js';
+import initializeService from './datasources/initializeService.js';
+
 dotenv.config();
 
 
@@ -66,7 +68,7 @@ const resolvers = {
           });
         }
       }
-      initializeServices();
+      initializeService();
       // Ensure dataSources.userService is available
       const { userService } = dataSources;
       if (!userService) {
