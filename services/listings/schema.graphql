@@ -1,6 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7", 
-        import: ["@key", "@shareable"])
+  @link(url: "https://specs.apollo.dev/federation/v2.7", import: ["@key"])
 
 scalar DateTime
 
@@ -8,23 +7,19 @@ type Query {
   listings: [Listing] @shareable
 }
 
-extend schema @federation {
-  query: Query
-}
-
 type Listing @key(fields: "id") {
-  id: ID! @shareable
+  id: ID!
   title: String!
   description: String!
   price: Float!
-  hostId: ID! @shareable
+  hostId: ID!
   location: Location!
   latitude: Float!
   longitude: Float!
 }
 
 type Location @key(fields: "id") {
-  id: Int! @shareable
+  id: ID!
   name: String!
   address: String!
   city: String!
@@ -41,6 +36,6 @@ input CreateListingInput {
   title: String!
   description: String
   price: Float!
-  locationId: String!
-  hostId: String!
+  locationId: ID!
+  hostId: ID!
 }

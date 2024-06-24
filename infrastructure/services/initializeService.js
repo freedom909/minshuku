@@ -1,5 +1,6 @@
-import UserRepository from '../../../infrastructure/repositories/userRepository.js';
-import { MongoClient } from 'mongodb';
+import UserRepository from '../repositories/userRepository.js';
+import pkg from 'mongodb';
+const { MongoClient } = pkg;
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -41,3 +42,4 @@ async function initializeServices() {
 }
 
 initializeServices().catch(console.error);
+export default initializeServices;

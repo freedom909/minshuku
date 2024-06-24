@@ -1,23 +1,28 @@
-// import { AuthenticationError } from '../../infrastructure/utils/errors.js';
+import { AuthenticationError } from '../infrastructure/utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
-
-import { readFileSync } from 'fs';
-import { validateInviteCode } from '../../infrastructure/helpers/validateInvitecode.js';
-import DateTimeType from '../../infrastructure/scalar/DateTimeType.js';
-import { authenticateJWT, checkPermissions } from '../../infrastructure/auth/auth.js';
-import { permissions } from '../../infrastructure/auth/permission.js';
+import { authenticateJWT, checkPermissions } from '../infrastructure/auth/auth.js';
+import { permissions } from '../infrastructure/auth/permission.js';
 import UserService from './datasources/userService.js';
-import UserRepository from '../../infrastructure/repositories/userRepository.js';
+import UserRepository from '../infrastructure/repositories/userRepository.js';
 // import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
-import  validRegister from '../../infrastructure/helpers/valid.js';
+// import  validRegister from '../../infrastructure/utils/valid.js';
 import dotenv from 'dotenv';
-import runValidations from './runValidations.js';
-// import {connectToDatabase} from '../../infrastructure/DB/connectDB.js';
-import initializeService from './datasources/initializeService.js';
+import  initializeService from '../infrastructure/services/initializeService.js'; 
+import validLogin from '../infrastructure/utils/valid.js';
+import DateTimeType from '../infrastructure/scalar/DateTimeType.js';
 
 dotenv.config();
 
+
+import {
+  validateInviteCode,
+ 
+  // validRegister,
+  // validatePassword,
+  // createResetPasswordToken,
+  // sendResetPasswordEmail,
+} from '../infrastructure/utils/validateInvitecode.js'; 
 
 const resolvers = {
   DateTime: DateTimeType,
@@ -45,12 +50,12 @@ const resolvers = {
     },
   },
   Mutation: {
-
     signUp: async (_, { input }, { dataSources }) => {
       const { email, password, name, nickname, role, inviteCode, picture } = input;
-      console.log('Received input:', input);  // Add this line for debugging
+      console.log('Received input:', input); // Add this line for debugging
 
       // Run validations
+
       // await validRegister({ email, password, name, nickname, role, inviteCode, picture });
 
       // Additional role validation
@@ -79,9 +84,6 @@ const resolvers = {
 
       return userService.register({ email, password, name, nickname, role, picture });
     },
-  },
-
-
     logout: async (_, __, { dataSources }) => {
       return await dataSources.userService.logout();
     },
@@ -147,7 +149,7 @@ const resolvers = {
     //     message: "Reset password email sent successfully!",
     //   };
     // },
-  
+  },
   User: {
     __resolveType(user) {
       if (user.role === "HOST") {

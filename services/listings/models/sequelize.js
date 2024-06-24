@@ -1,17 +1,10 @@
-import { Sequelize, DataTypes, Model } from '@sequelize/core';
-import { MySqlDialect } from '@sequelize/mysql';
-import config from '../config/config.json' assert { type: 'json' };
+import { Sequelize, DataTypes, Model } from 'sequelize';
 
-// Initialize Sequelize
-const env = 'development';
-const { database, user,password,host } = config[env];
-
-const sequelize = new Sequelize({
-  dialect: MySqlDialect,
-  database,
-  user,
-  password,
-  host,
-  port: 3306,
+const sequelize = new Sequelize('air', 'root', 'princess', {
+  host: 'localhost',
+  dialect: 'mysql'
 });
+console.log('Connection has been established successfully.');
+
+
 export default sequelize;

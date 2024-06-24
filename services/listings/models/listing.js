@@ -1,9 +1,7 @@
-import { Model, DataTypes } from '@sequelize/core';
-import sequelize from './sequelize.js';
-
+import { Model, DataTypes } from 'sequelize'; // Correct import path for Sequelize
+import sequelize from './sequelize.js'; // Ensure this path is correct
 
 class Listing extends Model {}
-
 
 Listing.init({
   id: {
@@ -26,22 +24,11 @@ Listing.init({
     type: DataTypes.FLOAT, 
     allowNull: true, // Initially allow null values
   },
-  
-  createdAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  updatedAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
 }, 
-
 {
   sequelize,
   modelName: 'Listing',
-  timestamps: true,
-  
+  timestamps: true, // This enables createdAt and updatedAt fields
 });
 
 export default Listing;
