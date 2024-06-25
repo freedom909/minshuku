@@ -8,7 +8,7 @@ import resolvers from './resolvers.js';
 import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
-import  initializeServices  from './datasources/initializeService.js';
+import  initializeServices  from '../../infrastructure/services/initializeService.js';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import cors from 'cors';
 

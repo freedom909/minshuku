@@ -10,10 +10,7 @@ import UserService from './datasources/userService.js';
 import User from '../../infrastructure/models/user.js';
 import mongoose from 'mongoose';
 
-mongoose.connect('mongodb://localhost:27017/air', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect();
 
 dotenv.config();
 const router = express.Router();
