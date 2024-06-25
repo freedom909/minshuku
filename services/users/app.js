@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import {initializeProducer, sendLoginMessage } from '../MQ/producer/kafkaProducer';
 import { validateInviteCode } from '../../infrastructure/helpers/validateInvitecode.js';
 import { validationResult } from 'express-validator';
 import { validLogin, validRegister } from '../../infrastructure/helpers/valid.js';
@@ -8,6 +9,11 @@ import { checkPassword } from '../../infrastructure/helpers/passwords.js';
 import UserService from './datasources/userService.js';
 import User from '../../infrastructure/models/user.js';
 import mongoose from 'mongoose';
+
+mongoose.connect('mongodb://localhost:27017/air', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 dotenv.config();
 const router = express.Router();
@@ -45,15 +51,20 @@ router.post('/registerGuest',
   }
 });
 
+initializeProducer();
 router.post('/login', validLogin, async (req, res) => {
   try {
+     // Send login message to Kafka
+ 
     const { email, password } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     const result = await userService.login({ email, password });
+    const { userId, username } = result;
+    await sendLoginMessage(userId, username);
     res.json(result);
   } catch (error) {
     console.error('Error logging in:', error);
