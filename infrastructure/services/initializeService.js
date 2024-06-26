@@ -4,8 +4,6 @@ const { MongoClient } = pkg;
 import dotenv from 'dotenv';
 dotenv.config();
 
-
-
 async function initializeServices() {
   const uri = process.env.MONGODB_URL;
   const dbName = process.env.DB_NAME;

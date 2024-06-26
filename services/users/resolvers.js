@@ -7,7 +7,8 @@ import { validateInviteCode } from '../../infrastructure/utils/validateInvitecod
 import DateTimeType from '../../infrastructure/scalar/DateTimeType.js';
 import { authenticateJWT, checkPermissions } from '../../infrastructure/auth/auth.js';
 import { permissions } from '../../infrastructure/auth/permission.js';
-import UserService from './datasources/userService.js';
+import UserService from '../../infrastructure/services/userService.js';
+
 import UserRepository from '../../infrastructure/repositories/userRepository.js';
 // import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
 import  validRegister from '../../infrastructure/utils/valid.js';
@@ -17,7 +18,6 @@ import runValidations from './runValidations.js';
 import initializeService from '../../infrastructure/services/initializeService.js';
 
 dotenv.config();
-
 
 const resolvers = {
   DateTime: DateTimeType,
@@ -49,17 +49,16 @@ const resolvers = {
     signUp: async (_, { input }, { dataSources }) => {
       const { email, password, name, nickname, role, inviteCode, picture } = input;
       console.log('Received input:', input);  // Add this line for debugging
-
       // Run validations
-      // await validRegister({ email, password, name, nickname, role, inviteCode, picture });
+      await runValidations(input);
 
       // Additional role validation
-      if (role !== 'GUEST' && role !== 'HOST') {
+      if (role!== 'GUEST' && role!== 'HOST') {
         throw new GraphQLError('Invalid role', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
       }
-
+       
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
         if (!isValidInviteCode) {
@@ -71,12 +70,13 @@ const resolvers = {
       initializeService();
       // Ensure dataSources.userService is available
       const { userService } = dataSources;
+      console.log('dataSources');  // Add this line for debugging
       if (!userService) {
         throw new GraphQLError('UserService not available', {
           extensions: { code: 'INTERNAL_SERVER_ERROR' }
         });
       }
-
+    
       return userService.register({ email, password, name, nickname, role, picture });
     },
   },

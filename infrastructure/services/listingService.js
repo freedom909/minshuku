@@ -1,7 +1,7 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
 import { GraphQLError } from 'graphql';
 import { shield, allow } from 'graphql-shield';
-import { permissions } from '../../../infrastructure/auth/permissions';
+import { permissions } from '../auth/permissions';
 
 // Applying the permissions middleware
 const permissionsMiddleware = shield({
@@ -13,7 +13,7 @@ const permissionsMiddleware = shield({
   },
 });
 
-class ListingsAPI extends RESTDataSource {
+class ListingService extends RESTDataSource {
   constructor() {
     super();
     this.baseURL = 'http://localhost:4010/';
@@ -33,16 +33,26 @@ class ListingsAPI extends RESTDataSource {
   }
 
   async getAllListings() {
-    const response = await this.get('listings');
-    return response.data;
+    try {
+      const response = await this.get('listings');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all listings:', error);
+      throw new GraphQLError('Error fetching listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
   }
 
   async getListingById(id) {
     if (!this.context.user) {
       throw new GraphQLError('You must be logged in to view listings', { extensions: { code: 'UNAUTHENTICATED' } });
     }
-    const response = await this.get(`listings/${id}`);
-    return response.data;
+    try {
+      const response = await this.get(`listings/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching listing by ID:', error);
+      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
   }
 
   async getListings({ numOfBeds, page, limit, sortBy }) {
@@ -53,7 +63,7 @@ class ListingsAPI extends RESTDataSource {
       return response.data;
     } catch (error) {
       console.error('Error fetching listings:', error);
-      throw error;
+      throw new GraphQLError('Error fetching listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -63,7 +73,7 @@ class ListingsAPI extends RESTDataSource {
       return response.data;
     } catch (error) {
       console.error('Error fetching featured listings:', error);
-      throw error;
+      throw new GraphQLError('Error fetching featured listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -79,7 +89,7 @@ class ListingsAPI extends RESTDataSource {
       }
     } catch (error) {
       console.error('Error fetching listing:', error);
-      throw error;
+      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -89,7 +99,7 @@ class ListingsAPI extends RESTDataSource {
       return amenities;
     } catch (error) {
       console.error('Error fetching amenities:', error);
-      throw error;
+      throw new GraphQLError('Error fetching amenities', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -101,7 +111,7 @@ class ListingsAPI extends RESTDataSource {
       return response.data;
     } catch (error) {
       console.error('Error fetching total cost:', error);
-      throw error;
+      throw new GraphQLError('Error fetching total cost', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -111,7 +121,7 @@ class ListingsAPI extends RESTDataSource {
       return response.data;
     } catch (error) {
       console.error('Error fetching listing coordinates:', error);
-      throw error;
+      throw new GraphQLError('Error fetching listing coordinates', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -130,7 +140,7 @@ class ListingsAPI extends RESTDataSource {
       return response.data;
     } catch (error) {
       console.error('Error creating listing:', error);
-      throw error;
+      throw new GraphQLError('Error creating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -147,9 +157,9 @@ class ListingsAPI extends RESTDataSource {
       }
     } catch (error) {
       console.error('Error updating listing:', error);
-      throw error;
+      throw new GraphQLError('Error updating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 }
 
-export default ListingsAPI;
+export default ListingService;
