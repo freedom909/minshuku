@@ -64,6 +64,43 @@ class UserService extends RESTDataSource {
 
     return { token };
   }
+
+  async getUserByNicknameFromDb(nickname) {
+    return await this.userRepository.findOne({ nickname });
+  }
+
+  async getUserByEmailFromDb(email) {
+    return await this.userCollection.findOne({ email });
+  }
+
+  async updateUser(userId, newData) {
+    try {
+      const updatedUser = await this.userRepository.findByIdAndUpdate(userId, newData, { new: true });
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new GraphQLError('Error updating user', {
+        extensions: { code: 'SERVER_ERROR' }
+      });
+    }
+  }
+
+  async deleteUser(userId) {
+    try {
+      const result = await this.userRepository.findByIdAndDelete(userId);
+      if (result) {
+        console.log('Successfully deleted one document.');
+      } else {
+        console.log('No documents matched the query. Deleted 0 documents.');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw new GraphQLError('Error deleting user', {
+        extensions: { code: 'SERVER_ERROR' }
+      });
+    }
+  }
+}
 }
 
 export default UserService;

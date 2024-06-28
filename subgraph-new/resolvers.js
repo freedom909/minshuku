@@ -1,23 +1,29 @@
-// import { AuthenticationError } from '../../infrastructure/utils/errors.js';
+import { AuthenticationError } from '../infrastructure/utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
-
-import { readFileSync } from 'fs';
-import { validateInviteCode } from '../../infrastructure/utils/validateInvitecode.js';
-import DateTimeType from '../../infrastructure/scalar/DateTimeType.js';
-import { authenticateJWT, checkPermissions } from '../../infrastructure/middleware/auth.js';
-import { permissions } from '../../infrastructure/auth/permission.js';
-import UserService from '../../infrastructure/services/userService.js';
-
-import UserRepository from '../../infrastructure/repositories/userRepository.js';
+import { authenticateJWT, checkPermissions } from '../infrastructure/middleware/auth.js';
+import { permissions } from '../infrastructure/auth/permission.js';
+// import UserService from './datasources/userService.js';
+import UserRepository from '../infrastructure/repositories/userRepository.js';
 // import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
-import  validRegister from '../../infrastructure/utils/valid.js';
+// import  validRegister from '../../infrastructure/utils/valid.js';
 import dotenv from 'dotenv';
-import runValidations from './runValidations.js';
-// import {connectToDatabase} from '../../infrastructure/DB/connectDB.js';
-import initializeService from '../../infrastructure/services/initializeService.js';
+// import  initializeService from '../infrastructure/services/initializeService.js'; 
+import validLogin from '../infrastructure/utils/valid.js';
+import DateTimeType from '../infrastructure/scalar/DateTimeType.js';
 
 dotenv.config();
+
+
+import {
+  validateInviteCode,
+ 
+  // validRegister,
+  // validatePassword,
+  // createResetPasswordToken,
+  // sendResetPasswordEmail,
+} from '../infrastructure/utils/validateInvitecode.js'; 
+import UsersAPI from './datasources/userApi.js';
 
 const resolvers = {
   DateTime: DateTimeType,
@@ -45,20 +51,21 @@ const resolvers = {
     },
   },
   Mutation: {
-
     signUp: async (_, { input }, { dataSources }) => {
       const { email, password, name, nickname, role, inviteCode, picture } = input;
-      console.log('Received input:', input);  // Add this line for debugging
+      console.log('Received input:', input); // Add this line for debugging
+
       // Run validations
-      await runValidations(input);
+
+      // await validRegister({ email, password, name, nickname, role, inviteCode, picture });
 
       // Additional role validation
-      if (role!== 'GUEST' && role!== 'HOST') {
+      if (role !== 'GUEST' && role !== 'HOST') {
         throw new GraphQLError('Invalid role', {
           extensions: { code: 'BAD_USER_INPUT' },
         });
       }
-       
+
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
         if (!isValidInviteCode) {
@@ -67,20 +74,19 @@ const resolvers = {
           });
         }
       }
-      initializeService();
-      // Ensure dataSources.userService is available
-      const { userService } = dataSources;
-      console.log('dataSources');  // Add this line for debugging
-      if (!userService) {
-        throw new GraphQLError('UserService not available', {
+
+      // Ensure dataSources.usersAPI is available
+      const { usersAPI } = dataSources;
+      if (!usersAPI) {
+        throw new GraphQLError('UsersAPI not available', {
           extensions: { code: 'INTERNAL_SERVER_ERROR' }
         });
       }
-    
-      return userService.register({ email, password, name, nickname, role, picture });
-    },
-  },
 
+      return dataSources.usersAPI.register({ email, password, name, nickname, role, picture });
+    },
+    // Define other mutations here
+  },
 
     logout: async (_, __, { dataSources }) => {
       return await dataSources.userService.logout();
@@ -147,7 +153,7 @@ const resolvers = {
     //     message: "Reset password email sent successfully!",
     //   };
     // },
-  
+  // },
   User: {
     __resolveType(user) {
       if (user.role === "HOST") {
