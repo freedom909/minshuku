@@ -1,7 +1,10 @@
 extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7",
   import: ["@key","@shareable"])
-  
+import { gql } from 'graphql-tag';
+import { readFileSync } from 'fs';
+
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
   extend type User @key(fields: "id") {
     id: ID! 
     email: String!
@@ -28,3 +31,4 @@ extend schema
   type Query {
     getUser(id: ID!): User
   }
+export default typeDefs;

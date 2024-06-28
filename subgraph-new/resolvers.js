@@ -22,7 +22,7 @@ import {
   // validatePassword,
   // createResetPasswordToken,
   // sendResetPasswordEmail,
-} from '../infrastructure/utils/validateInvitecode.js'; 
+} from '../infrastructure/helpers/validateInvitecode.js'; 
 import UsersAPI from './datasources/userApi.js';
 
 const resolvers = {

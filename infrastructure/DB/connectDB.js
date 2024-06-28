@@ -1,7 +1,7 @@
 import pkg from 'mongodb';
 const {MongoClient} = pkg;
 
-const uri='mongodb+srv://chika:13GhspHKakjX4UPx@cluster0.lidru.mongodb.net/' ;
+const uri='mongodb+srv://chika:13GhspHKakjX4UPx@cluster0.lidru.mongodb.net/air?retryWrites=true&w=majority'; ;
 const dbName=process.env.DB_NAME ||'air';
 
 let db;

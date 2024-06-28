@@ -7,11 +7,12 @@ import dotenv from 'dotenv';
 dotenv.config()
 class UserRepository {
   constructor(db) {
-    console.log('db object in UserRepository constructor:', db);
-    if (typeof db.collection !== 'function') {
-      throw new Error('db.collection is not a function. Ensure the database object is correctly initialized.');
+    console.log('db object in UserRepository constructor:', db); // Debugging line
+    if (!db || typeof db.collection !== 'function') {
+      throw new Error('Invalid db object');
     }
-    this.userCollection = db.collection('User');
+    this.collection = db.collection('users');
+    console.log('collection object:', this.collection); // Add this line to log the collection object
     this.emailVerification = new EmailVerification();
     this.httpClient = axios.create({
       baseURL: 'http://localhost:4011', // Adjust as needed
@@ -19,12 +20,39 @@ class UserRepository {
   }
 
   // Additional methods for UserRepository can be added here
-
-  // Database interactions
-  async insertUser(user) {
-    return await this.userCollection.insertOne(user);
+  async findOne(query) {
+    return await this.collection.findOne(query);
   }
 
+async findByIdAndUpdate(id, update) {
+    return await this.collection.findOneAndUpdate(
+      { _id: id },
+      { $set: update },
+      { returnDocument: 'after' }
+    );
+  }
+
+  async save(user) {
+    const result = await this.collection.insertOne(user);
+    if (!result.insertedId) {
+      throw new Error('Failed to insert user');
+    }
+    return { ...user, _id: result.insertedId };
+  }
+  // Database interactions
+  async insertUser(user) {
+    return await this.collection.insertOne(user);
+  }
+  async findByIdAndUpdate(id, update) {
+    return await this.collection.findOneAndUpdate(
+      { _id: id },
+      { $set: update },
+      { returnDocument: 'after' }
+    );
+  }
+  async findByIdAndDelete(id) {
+    return await this.collection.findOneAndDelete({ _id: id });
+  }
   async getUserByNicknameFromDb(nickname) {
     return await this.userCollection.findOne({ nickname });
   }
@@ -101,6 +129,32 @@ class UserRepository {
       throw error; // Rethrow other errors
     }
   }
+
+// infrastructure/repositories/userRepository.js
+
+
+
+
+  async save(user) {
+    const result = await this.collection.insertOne(user);
+    if (!result.insertedId) {
+      throw new Error('Failed to insert user');
+    }
+    return { ...user, _id: result.insertedId };
+  }
+
+  async findByIdAndUpdate(id, update) {
+    return await this.collection.findOneAndUpdate(
+      { _id: id },
+      { $set: update },
+      { returnDocument: 'after' }
+    );
+  }
+
+  async findByIdAndDelete(id) {
+    return await this.collection.findOneAndDelete({ _id: id });
+  }
 }
 
 export default UserRepository;
+

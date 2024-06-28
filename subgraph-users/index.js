@@ -5,43 +5,47 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
-import UsersAPI from './datasources/usersApi.js';
+import UserService from '../infrastructure/services/userService.js'; // Adjust this import based on your services
 import resolvers from './resolvers.js';
 import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { initializeServices } from '../infrastructure/services/initializeService.js'; // Adjust this import based on your services
+import initializeServices  from '../infrastructure/services/initService.js'; // Adjust this import based on your services
 import cors from 'cors';
-
+import UserRepository from '../infrastructure/repositories/userRepository.js'; // Adjust this import based
 dotenv.config();
 
 const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const dbName = process.env.DB_NAME;
+const client = new MongoClient(uri);
 
 async function startApolloServer() {
   try {
-    await client.connect();
-    const db = client.db('air');
+    const { userService } = await initializeServices();
     const app = express();
     const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
     const httpServer = http.createServer(app);
-    const usersAPI = new UsersAPI({ db });
 
     const server = new ApolloServer({
       schema: buildSubgraphSchema({ typeDefs, resolvers }),
-      plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-      context: async ({ req }) => {
-        // Assuming initializeServices() returns a userService, adjust accordingly if needed
-        const { userService } = await initializeServices();
-        return {
-          token: req.headers.authorization || '',
-          user: req.headers.user || null,
-          dataSources: {
-            usersAPI, // Ensure usersAPI is correctly set up
-          },
-        };
-      },
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+                await closeConnection();
+              }
+            };
+          }
+        }
+      ],
+      context: async ({ req }) => ({
+        token: req.headers.authorization || '',
+        user: req.headers.user || null,
+        dataSources: { userService }
+      })
     });
 
     await server.start();
@@ -50,14 +54,22 @@ async function startApolloServer() {
       '/graphql',
       cors(),
       express.json(),
-      expressMiddleware(server) // Corrected middleware usage
+      expressMiddleware(server, {
+        context: async ({ req }) => ({
+          token: req.headers.authorization || '',
+          dataSources: { userService }
+        })
+      })
     );
 
-    await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+    await new Promise((resolve) => httpServer.listen({ port: 4011 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4011/graphql`);
   } catch (error) {
     console.error('Error starting server:', error);
   }
 }
 
+
 startApolloServer();
+
+

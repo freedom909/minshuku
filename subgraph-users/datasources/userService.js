@@ -6,7 +6,7 @@ import { RESTDataSource } from '@apollo/datasource-rest';
 class UserService extends RESTDataSource {
   constructor(userRepository, userCollection) {
     super();
-    this.baseURL = 'http://localhost:4000/';
+    this.baseURL = 'http://localhost:4011/';
     this.userRepository = userRepository;
     this.userCollection = userCollection; // Assuming this is for MongoDB
   }
@@ -30,11 +30,11 @@ class UserService extends RESTDataSource {
     });
 
     try {
-      const result = await newUser.save();
+      const result = await this.userRepository.save(newUser);
       const payload = { _id: result._id };
       const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-      return { ...result._doc, token };
+      return { ...result._doc,_id: result._id , token };
     } catch (e) {
       console.error('Registration error:', e);
       throw new GraphQLError('Email is already in use or an internal server error occurred', {

@@ -12,7 +12,6 @@ class UserService extends RESTDataSource {
   }
 
   async register({ email, password, name, nickname, role, picture }) {
-    // Validation is handled outside
     const existingUser = await this.userRepository.findOne({ nickname });
     if (existingUser) {
       throw new GraphQLError('Nickname is already in use, please use another one', {
@@ -21,29 +20,42 @@ class UserService extends RESTDataSource {
     }
 
     const passwordHash = await hashPassword(password);
-    const newUser = new this.userRepository({
+    const newUser = {
       email,
       name,
       password: passwordHash,
       nickname,
       role,
       picture
-    });
+    };
 
     try {
-      const result = await newUser.save();
-      const payload = { _id: result._id };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const result = await this.userRepository.insertUser(newUser);
+      console.log('User successfully inserted:', result);
 
-      return { ...result._doc, token };
+      const payload = { _id: result.insertedId.toString() };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+      console.log('JWT token generated:', token);
+
+      return {
+        userId: result.insertedId.toString(),  // Ensure this is not null
+        token
+      };
     } catch (e) {
-      console.error('Registration error:', e);
-      throw new GraphQLError('Email is already in use or an internal server error occurred', {
+      console.error('Error during registration:', e);
+
+      if (e.code === 11000) {
+        throw new GraphQLError('Email is already in use', {
+          extensions: { code: 'BAD_USER_INPUT' }
+        });
+      }
+
+      throw new GraphQLError('An internal server error occurred', {
         extensions: { code: 'SERVER_ERROR' }
       });
     }
   }
-
+  
   async login({ email, password }) {
     const existingUser = await this.userRepository.findOne({ email });
     if (!existingUser) {
@@ -65,18 +77,10 @@ class UserService extends RESTDataSource {
     return { token };
   }
 
-  async getUserByNicknameFromDb(nickname) {
-    return await this.userRepository.findOne({ nickname });
-  }
-
-  async getUserByEmailFromDb(email) {
-    return await this.userCollection.findOne({ email });
-  }
-
   async updateUser(userId, newData) {
     try {
-      const updatedUser = await this.userRepository.findByIdAndUpdate(userId, newData, { new: true });
-      return updatedUser;
+      const updatedUser = await this.userRepository.findByIdAndUpdate(userId, newData);
+      return updatedUser.value;
     } catch (error) {
       console.error('Error updating user:', error);
       throw new GraphQLError('Error updating user', {
@@ -88,7 +92,7 @@ class UserService extends RESTDataSource {
   async deleteUser(userId) {
     try {
       const result = await this.userRepository.findByIdAndDelete(userId);
-      if (result) {
+      if (result.value) {
         console.log('Successfully deleted one document.');
       } else {
         console.log('No documents matched the query. Deleted 0 documents.');
@@ -101,6 +105,4 @@ class UserService extends RESTDataSource {
     }
   }
 }
-}
-
 export default UserService;

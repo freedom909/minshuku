@@ -18,9 +18,9 @@ class UsersAPI extends RESTDataSource {
   constructor({ db }) {
     super();
     this.usersCollection = db.collection('User');
-    // this.httpClient = axios.create({
-    //   baseURL: 'http://localhost:4000', // Adjust as needed
-    // });
+    this.httpClient = axios.create({
+      baseURL: 'http://localhost:4000', // Adjust as needed
+    });
     console.log('UsersAPI instance created with DB:', db.databaseName);
   }
 
@@ -66,7 +66,6 @@ class UsersAPI extends RESTDataSource {
       });
     }
   }
-
 
   async getUserByNickname({ nickname }) {
     return await this.usersCollection.findOne({ nickname });

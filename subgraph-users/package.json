@@ -17,6 +17,7 @@
     "@apollo/subgraph": "^2.8.1",
     "apollo-server": "^3.13.0",
     "express": "^4.19.2",
+    "express-validator": "^7.1.0",
     "fs": "^0.0.1-security",
     "graphql-scalars": "^1.23.0",
     "graphql-tag": "^2.12.6",
