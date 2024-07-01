@@ -3,9 +3,9 @@ import User from '../models/user.js'; // Adjust the path according to your new s
 import { hashPassword, checkPassword } from '../helpers/passwords.js'; // Adjust the path accordingly
 import { GraphQLError, doTypesOverlap } from 'graphql';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-
+import jwt from 'jsonwebtoken';//Error during login: TypeError: Cannot read properties of undefined (reading 'sign')
 import { loginValidate } from '../helpers/loginValidator.js';
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -76,25 +76,26 @@ UserService extends RESTDataSource {
     await loginValidate(email, password);
 
     // Find the user by email
-    const user = await this.userRepository.findOne(email);
+    const user = await this.userRepository.getUserByEmailFromDb(email);
     if (!user) {
       throw new GraphQLError("User not found", {
         extensions: { code: "BAD_USER_INPUT" },
       });
     }
     // Check if the password matches
-    const passwordMatch = await checkPassword(password, user.password);
-    if (!passwordMatch) {
-      throw new GraphQLError("Incorrect password", {
-        extensions: { code: "BAD_USER_INPUT" },
-      });
-    }
-
+    // const passwordMatch = await checkPassword(password, user.password);
+    // if (!passwordMatch) {
+    //   throw new GraphQLError("Incorrect password", {
+    //     extensions: { code: "BAD_USER_INPUT" },
+    //   });
+    // }
+const jwtKey=process.env.JWT_SECRET;
+console.log("jwt:",jwt);
     try {
       // Generate JWT token
       const payload = { id: user._id.toString() };
       const role = user.role;
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      const token = jwt.sign(payload, "jwtKey", {
         //if is it needed to be checked
         expiresIn: "1h",
       });

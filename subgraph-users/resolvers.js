@@ -65,7 +65,7 @@ const resolvers = {
           });
         }
       }
-      initializeService();
+      // initializeService();
       // Ensure dataSources.userService is available
       const { userService } = dataSources;
       console.log('dataSources');  // Add this line for debugging
@@ -81,7 +81,7 @@ const resolvers = {
 
   signIn: async (_, { input}, { dataSources }) => {
     const { email, password } = input;
-    initializeService();
+    
     // Ensure dataSources.userService is available
     const { userService } = dataSources;
     console.log('dataSources');  // Add this line for debugging

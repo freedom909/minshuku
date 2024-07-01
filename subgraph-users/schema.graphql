@@ -62,7 +62,7 @@ enum Role {
   HOST
 }
 
-type SignInResponse {
+type SignInResponse  implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
   code: Int!
   "Indicates whether the mutation was successful"
@@ -94,11 +94,6 @@ input SignUpInput {
   inviteCode: String
   role: Role!
   picture: String! 
-}
-
-input SignInInput {
-  email: String!
-  password: String!
 }
 
 interface Node {

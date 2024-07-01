@@ -73,7 +73,7 @@ async findByIdAndUpdate(id, update) {
   }
 
   async getUserByEmailFromDb(email) {
-    return await this.collection('users').findOne({ email: email });
+    return await this.db.collection('users').findOne({ email: email });// "message": "this.collection is not a function",
   }
 
 
