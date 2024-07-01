@@ -1,4 +1,3 @@
-
 extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7", 
         import: ["@key", "@shareable"])
@@ -7,15 +6,22 @@ extend schema
 # SCALARS
 scalar DateTime
 
-# OBJECTS
+
 type AuthPayload {
-  "The user's JWT"
-  token: String!
-  "The user's ID"
+  code: Int!
+  success: Boolean!
+  message: String!
   userId: ID!
-  "The user's role"
-  role: Role
+  role: Role!
+  token: String!
 }
+
+input UpdatePasswordInput {
+  userId: ID!
+  newPassword: String!
+  password: String!
+}
+
 
 "Represents an Airlock user's common properties"
 interface User @key(fields: "id") {
@@ -62,20 +68,7 @@ enum Role {
   HOST
 }
 
-type SignInResponse {
-  "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
-  "Indicates whether the mutation was successful"
-  success: Boolean!
-  "Human-readable message for the UI"
-  message: String!
-  "The user's JWT"
-  token: String!
-  "The user's ID"
-  userId: ID!
-  "The user's role"
-  role: Role!
-}
+
 
 interface MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
@@ -86,20 +79,8 @@ interface MutationResponse {
   message: String!
 }
 
-input SignUpInput {
-  email: String!
-  name: String!
-  password: String!
-  nickname: String!
-  inviteCode: String
-  role: Role!
-  picture: String! 
-}
 
-input SignInInput {
-  email: String!
-  password: String!
-}
+
 
 interface Node {
   id: ID!
@@ -117,11 +98,6 @@ scalar _Any
 
 union _Entity = Host | Guest | Generator
 
-type Query {
-  getUser(id: String!): User
-  user(id: ID!): User @shareable
-  me: User! @shareable
-}
 
 type Generator {
   id: ID!
@@ -132,18 +108,9 @@ type Generator {
   isActive: Boolean!
 }
 
-type ForgotPasswordResponse {
-  code: Int!
-  success: Boolean!
-  message: String!
-}
-
  type Mutation {
-  createUser(name: String!, email: String!, password: String!): User
-  signIn(email: String!, password: String!): SignInResponse!
-  logout: Boolean!
-  signUp(input: SignUpInput!): AuthPayload!
-  forgotPassword(email: String!):ForgotPasswordResponse!
-  updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
+
+ updatePassword(input: UpdatePasswordInput!): AuthPayload!
   requestResetPassword(email: String!): MutationResponse!
 }
+

@@ -15,6 +15,7 @@ async function main() {
   
       // Pass the db object to your UserRepository
       const userRepository = new UserRepository(db);
+      userRepository.findOne( {"email":"nuDdfaFA@gmail.com"})
       console.log('UserRepository initialized successfully');
     } catch (e) {
       console.error('Error:', e);

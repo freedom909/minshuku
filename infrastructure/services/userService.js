@@ -1,22 +1,33 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
 import User from '../models/user.js'; // Adjust the path according to your new structure
 import { hashPassword, checkPassword } from '../helpers/passwords.js'; // Adjust the path accordingly
-import { GraphQLError } from 'graphql';
+import { GraphQLError, doTypesOverlap } from 'graphql';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-class UserService extends RESTDataSource {
+import { loginValidate } from '../helpers/loginValidator.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+class 
+UserService extends RESTDataSource {
   constructor(userRepository) {
     super();
-    this.baseURL = 'http://localhost:4011/';
+    this.baseURL = "http://localhost:4000/";
     this.userRepository = userRepository;
   }
 
   async register({ email, password, name, nickname, role, picture }) {
     const existingUser = await this.userRepository.findOne({ nickname });
+    console.log("existingUser:", existingUser); // Corrected the variable name
+
     if (existingUser) {
-      throw new GraphQLError('Nickname is already in use, please use another one', {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
+      throw new GraphQLError(
+        "Nickname is already in use, please use another one",
+        {
+          extensions: { code: "BAD_USER_INPUT" },
+        }
+      );
     }
 
     const passwordHash = await hashPassword(password);
@@ -26,65 +37,113 @@ class UserService extends RESTDataSource {
       password: passwordHash,
       nickname,
       role,
-      picture
+      picture,
     };
 
     try {
       const result = await this.userRepository.insertUser(newUser);
-      console.log('User successfully inserted:', result);
+      console.log("User successfully inserted:", result);
 
-      const payload = { _id: result.insertedId.toString() };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-      console.log('JWT token generated:', token);
+      const userId = result.insertedId.toString();
+      const payload = { _id: userId };
+      console.log("payload", payload); // Added payload to the log
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "1h",
+      });
+      console.log("JWT token generated:", token);
 
       return {
-        userId: result.insertedId.toString(),  // Ensure this is not null
-        token
+        userId,
+        token,
       };
     } catch (e) {
-      console.error('Error during registration:', e);
+      console.error("Error during registration:", e);
 
       if (e.code === 11000) {
-        throw new GraphQLError('Email is already in use', {
-          extensions: { code: 'BAD_USER_INPUT' }
+        throw new GraphQLError("Email is already in use", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      // Re-throw error if it is not a duplicate key error
+      throw new GraphQLError("Registration failed", {
+        extensions: { code: "INTERNAL_SERVER_ERROR" },
+      });
+    }
+  }
+  async login({ email, password }) {
+    // Validate email and password
+    await loginValidate(email, password);
+
+    // Find the user by email
+    const user = await this.userRepository.findOne(email);
+    if (!user) {
+      throw new GraphQLError("User not found", {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+    // Check if the password matches
+    const passwordMatch = await checkPassword(password, user.password);
+    if (!passwordMatch) {
+      throw new GraphQLError("Incorrect password", {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+
+    try {
+      // Generate JWT token
+      const payload = { id: user._id.toString() };
+      const role = user.role;
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        //if is it needed to be checked
+        expiresIn: "1h",
+      });
+
+      // Return the token and user info
+      return {
+        code: 200,
+        success: true,
+        message: "Login successful",
+        token:token,
+        userId: user._id.toString(),
+        role:role,
+      };
+    } catch (e) {
+      console.error("Error during login:", e);
+
+      // Handle specific error codes
+      if (e.code === 11000) {
+        throw new GraphQLError("Email can't be found", {
+          extensions: { code: "BAD_USER_INPUT" },
         });
       }
 
-      throw new GraphQLError('An internal server error occurred', {
-        extensions: { code: 'SERVER_ERROR' }
+      // Re-throw the error if it's not specifically handled
+      throw new GraphQLError("Login failed", {
+        extensions: { code: "INTERNAL_SERVER_ERROR" },
       });
     }
   }
-  
-  async login({ email, password }) {
-    const existingUser = await this.userRepository.findOne({ email });
-    if (!existingUser) {
-      throw new GraphQLError('User does not exist', {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
 
-    const passwordMatch = await checkPassword(password, existingUser.password);
-    if (!passwordMatch) {
-      throw new GraphQLError('Incorrect password', {
-        extensions: { code: 'BAD_USER_INPUT' }
-      });
-    }
-
-    const payload = { id: existingUser._id };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    return { token };
+  async sendLinkToUser(email, token) {
+    await this.sendPasswordToUser.sendActivationPassword(email, token);
   }
-
   async updateUser(userId, newData) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     try {
-      const updatedUser = await this.userRepository.findByIdAndUpdate(userId, newData);
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          password: hashedPassword
+        },
+        { new: true }
+
+      );
       return updatedUser.value;
     } catch (error) {
-      console.error('Error updating user:', error);
-      throw new GraphQLError('Error updating user', {
-        extensions: { code: 'SERVER_ERROR' }
+      console.error("Error updating user:", error);
+      throw new GraphQLError("Error updating user", {
+        extensions: { code: "SERVER_ERROR" },
       });
     }
   }
@@ -93,16 +152,61 @@ class UserService extends RESTDataSource {
     try {
       const result = await this.userRepository.findByIdAndDelete(userId);
       if (result.value) {
-        console.log('Successfully deleted one document.');
+        console.log("Successfully deleted one document.");
       } else {
-        console.log('No documents matched the query. Deleted 0 documents.');
+        console.log("No documents matched the query. Deleted 0 documents.");
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
-      throw new GraphQLError('Error deleting user', {
-        extensions: { code: 'SERVER_ERROR' }
+      console.error("Error deleting user:", error);
+      throw new GraphQLError("Error deleting user", {
+        extensions: { code: "SERVER_ERROR" },
       });
     }
   }
+
+  async getUserFromDb(id) {
+    return await this.userRepository.findById(id);
+  }
+
+  async getUserByEmailFromDb(email) {
+    return this.userRepository.findOne({ email });
+  }
+
+  async validatePassword(inputPassword, storedPassword) {
+    return bcrypt.compare(inputPassword, storedPassword);
+  }
+
+  async updatePassword(id, newPassword) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const user = await User.findByIdAndUpdate(
+      id,
+      { password: hashedPassword },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new GraphQLError("Error updating password", {
+        extensions: { code: "INTERNAL_SERVER_ERROR" },
+      });
+    }
+    // Optionally generate a new token if needed
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    return { ...user.toObject(), token };
+  }
+
+  async createResetPasswordToken(userId) {
+    const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    // Save the token in the database or a cache if necessary
+    return token;
+  }
+
+  async sendResetPasswordEmail(email, token) {
+    // Implement your email sending logic here
+    return true;
+  }
 }
-export default UserService;
+export default UserService

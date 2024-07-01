@@ -1,15 +1,23 @@
-import { promisify } from "util";
-import { randomBytes, scrypt, timingSafeEqual } from "crypto";
+import bcrypt from 'bcrypt';
 
-const scryptAsync = promisify(scrypt);
+export const hashPassword = async (plainPassword) => {
+  const saltRounds = 10;
+  try {
+    return await bcrypt.hash(plainPassword, saltRounds);
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    throw new Error('Error hashing password');
+  }
+};
 
-export async function hashPassword(password) {
-    const salt=randomBytes(16).toString("hex")
-    const hash = (await scryptAsync(password, salt, 64)).toString("hex")    
-    return `${salt}.${hash}`;
-}
-export async function checkPassword(password, hash) {
-    const [salt, hash2] = hash.split(".");
-    const hash1 = (await scryptAsync(password, salt, 64)).toString("hex");
-    return timingSafeEqual(Buffer.from(hash1), Buffer.from(hash2));
-}
+export const checkPassword = async (plainPassword, hashedPassword) => {
+  if (typeof plainPassword !== 'string' || typeof hashedPassword !== 'string') {
+    throw new TypeError('Arguments must be of type string');
+  }
+  try {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  } catch (error) {
+    console.error('Error comparing passwords:', error);
+    throw new Error('Error comparing passwords');
+  }
+};

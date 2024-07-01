@@ -4,7 +4,7 @@ import { gql } from 'graphql-tag';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { MongoClient } from 'mongodb';
-import dotenv from 'dotenv';
+
 import UserService from '../infrastructure/services/userService.js'; // Adjust this import based on your services
 import resolvers from './resolvers.js';
 import express from 'express';
@@ -14,7 +14,9 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import initializeServices  from '../infrastructure/services/initService.js'; // Adjust this import based on your services
 import cors from 'cors';
 import UserRepository from '../infrastructure/repositories/userRepository.js'; // Adjust this import based
+import dotenv from 'dotenv';
 dotenv.config();
+
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
@@ -62,8 +64,8 @@ async function startApolloServer() {
       })
     );
 
-    await new Promise((resolve) => httpServer.listen({ port: 4011 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4011/graphql`);
+    await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
   } catch (error) {
     console.error('Error starting server:', error);
   }
@@ -71,5 +73,4 @@ async function startApolloServer() {
 
 
 startApolloServer();
-
 

@@ -5,12 +5,16 @@ import EmailVerification from '../email/emailVerification.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config()
+
+import { GraphQLError } from 'graphql';
 class UserRepository {
   constructor(db) {
     console.log('db object in UserRepository constructor:', db); // Debugging line
-    if (!db || typeof db.collection !== 'function') {
+    if (!db || typeof db!== 'object') {
       throw new Error('Invalid db object');
     }
+    this.db = db;
+    console.log('db object in UserRepository constructor:', this.db);
     this.collection = db.collection('users');
     console.log('collection object:', this.collection); // Add this line to log the collection object
     this.emailVerification = new EmailVerification();
@@ -21,8 +25,15 @@ class UserRepository {
 
   // Additional methods for UserRepository can be added here
   async findOne(query) {
-    return await this.collection.findOne(query);
+    try {
+      console.log('query:', query);
+      return await this.collection.findOne(query);
+    } catch (error) {
+      console.error('Error during findOne:', error);
+      throw error;
+    }
   }
+  
 
 async findByIdAndUpdate(id, update) {
     return await this.collection.findOneAndUpdate(
@@ -54,15 +65,17 @@ async findByIdAndUpdate(id, update) {
     return await this.collection.findOneAndDelete({ _id: id });
   }
   async getUserByNicknameFromDb(nickname) {
-    return await this.userCollection.findOne({ nickname });
+    return await this.collection.findOne({ nickname });
   }
 
   async getUserFromDb(id) {
-    return await this.userCollection.findOne({ _id: new ObjectId(id) });
+    return await this.collection.findOne({ _id: new ObjectId(id) });
   }
+
   async getUserByEmailFromDb(email) {
-    return await this.userCollection.findOne({ email });
+    return await this.collection('users').findOne({ email: email });
   }
+
 
   // Password methods
   async checkPassword(password, hashedPassword) {
@@ -75,7 +88,7 @@ async findByIdAndUpdate(id, update) {
 
   // Token generation
   async generateToken(payload) {
-    const jwtSecret = process.env.JWT_SECRET || 'default_jwt_secret';
+    const jwtSecret = process.env.JWT_SECRET 
     return sign(payload, jwtSecret, {
       algorithm: 'HS256',
       subject: payload._id.toString(),
@@ -88,6 +101,16 @@ async findByIdAndUpdate(id, update) {
     await this.emailVerification.sendVerificationEmail(email, token);
   }
 
+  async findById(id) {
+    return await this.db.collection('users').findOne({ _id: new ObjectId(id) });
+  }
+
+  async updatePassword(id, hashedPassword) {
+    return await this.db.collection('users').updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { password: hashedPassword } }
+    );
+  }
   // API interactions
   async getUserByEmailFromApi(email) {
     const url = `/user`;
@@ -132,9 +155,6 @@ async findByIdAndUpdate(id, update) {
 
 // infrastructure/repositories/userRepository.js
 
-
-
-
   async save(user) {
     const result = await this.collection.insertOne(user);
     if (!result.insertedId) {
@@ -157,4 +177,3 @@ async findByIdAndUpdate(id, update) {
 }
 
 export default UserRepository;
-

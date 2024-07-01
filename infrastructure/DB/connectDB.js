@@ -1,8 +1,10 @@
 import pkg from 'mongodb';
 const {MongoClient} = pkg;
 
-const uri='mongodb+srv://chika:13GhspHKakjX4UPx@cluster0.lidru.mongodb.net/air?retryWrites=true&w=majority'; ;
-const dbName=process.env.DB_NAME ||'air';
+import dotenv from 'dotenv';
+
+const uri=process.env.MONGODB_URI; ;
+const dbName=process.env.DB_NAME;
 
 let db;
 
