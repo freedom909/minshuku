@@ -1,0 +1,146 @@
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.7", 
+        import: ["@key", "@shareable"])
+
+
+# SCALARS
+scalar DateTime
+
+# OBJECTS
+type AuthPayload {
+  "The user's JWT"
+  token: String!
+  "The user's ID"
+  userId: ID!
+  "The user's role"
+  role: Role
+}
+
+"Represents an Airlock user's common properties"
+interface User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String!
+  "The user's role"
+  role: Role!
+  "The user's profile photo URL"
+  picture: String!
+  "The nickname of the user"
+  nickname: String!
+}
+
+type Host implements User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String! @shareable
+  "The user's profile photo URL"
+  picture: String! @shareable
+  "The host's profile bio description, will be shown in the listing"
+  description: String @shareable
+  "The user's chosen nickname (must be unique)."
+  nickname: String!
+  "The role of the user"
+  role: Role!
+}
+
+type Guest implements User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String! @shareable
+  "The user's profile photo URL"
+  picture: String! @shareable
+  "The user's chosen nickname (must be unique)."
+  nickname: String!
+  "The role of the user"
+  role: Role!
+}
+
+enum Role {
+  ADMIN
+  GUEST
+  HOST
+}
+
+type SignInResponse  implements Response {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+  "The user's JWT"
+  token: String!
+  "The user's ID"
+  userId: ID!
+  "The user's role"
+  role: Role!
+}
+
+interface Response {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+}
+
+input SignUpInput {
+  email: String!
+  name: String!
+  password: String!
+  nickname: String!
+  inviteCode: String
+  role: Role!
+  picture: String! 
+}
+
+interface Node {
+  id: ID!
+}
+
+type _Service {
+  sdl: String
+}
+
+type UserId {
+  id: ID!
+}
+
+scalar _Any
+
+union _Entity = Host | Guest | Generator
+
+type Query {
+  getUser(id: String!): User
+  user(id: ID!): User @shareable
+  me: User! @shareable
+}
+
+type Generator {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  createdBy: User!
+  isActive: Boolean!
+}
+
+type ForgotPasswordResponse implements Response {
+  code: Int!
+  success: Boolean!
+  message: String!
+  email: String!
+  link: String!
+}
+
+ type Mutation {
+  createUser(name: String!, email: String!, password: String!): User
+  signIn(email: String!, password: String!): SignInResponse!
+  logout: Boolean!
+  signUp(input: SignUpInput!): AuthPayload!
+  forgotPassword(email: String!):ForgotPasswordResponse!
+  updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
+  requestResetPassword(email: String!): Response!
+}

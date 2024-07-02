@@ -9,13 +9,14 @@ import pkg from 'mongodb';
 const { MongoClient,ObjectId } = pkg;
 import dotenv from 'dotenv';
 dotenv.config();
-
+import MailToUser from '../helpers/mailToUser.js'; // Adjust the path accordingly
 
 class UserService extends RESTDataSource {
   constructor(userRepository) {
     super();
     this.baseURL = "http://localhost:4000/";
     this.userRepository = userRepository;
+    this.mailToUser = new MailToUser();
   }
 
   async register({ email, password, name, nickname, role, picture }) {
@@ -123,7 +124,8 @@ class UserService extends RESTDataSource {
   }
 
   async sendLinkToUser(email, token) {
-    await this.sendPasswordToUser.sendActivationPassword(email, token);
+    const emailData = new MailToUser();
+    await this.emailData.sendActivationPassword(email, token);
   }
   async updateUser(userId, newData) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -222,9 +224,40 @@ async findById(id) {
     return token;
   }
 
-  async sendResetPasswordEmail(email, token) {
-    // Implement your email sending logic here
-    return true;
+
+
+  async  sendResetPasswordEmail (email, token) {
+  const emailData = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'Password Reset Link',
+    html: `
+      <h1>Please use the following link to reset your password</h1>
+      <p>${process.env.CLIENT_URL}/reset-password?token=${token}</p>
+      <hr />
+      <p>This email may contain sensitive information</p>
+      <p>${process.env.CLIENT_URL}</p>
+    `,
+  };
+
+  let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_FROM,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+
+  try {
+    await transporter.sendMail(emailData);
+    console.log(`Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw new Error('Error sending password reset email');
   }
+};
+
+
+
 }
 export default UserService

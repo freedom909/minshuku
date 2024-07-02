@@ -1,5 +1,6 @@
+import nodemailer from 'nodemailer';
 
-class SendPasswordToUser {
+class MailToUser {
     async sendActivationPassword(email, token) {
         const emailData = {
           from: process.env.EMAIL_FROM,
@@ -30,4 +31,18 @@ class SendPasswordToUser {
           throw new Error('Error sending activation email');
         }
       }
+      // async sendResetPassword(email, token) {
+      //   const emailData = {
+      //     from: process.env.EMAIL_FROM,
+      //     to: email,
+      //     subject: 'Password Reset Link',
+      //     html: `
+      //       <h1>Please use the following link to reset your password</h1>
+      //       <p>${process.env.CLIENT_URL}/users/reset-password/${token}</p>
+      //       <hr />
+      //       <p>This email may contain sensitive information</p>
+      //       <p>${process.env.CLIENT_URL}</p>
+      //     `,
+      //   };
+      // }
     }
