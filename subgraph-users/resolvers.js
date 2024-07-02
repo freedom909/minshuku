@@ -1,6 +1,6 @@
 // import { AuthenticationError } from '../../infrastructure/utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
-import { GraphQLError } from 'graphql';
+
 import bcrypt from 'bcrypt';
 import { readFileSync } from 'fs';
 import { validateInviteCode } from '../infrastructure/helpers/validateInvitecode.js';
@@ -11,11 +11,10 @@ import UserService from '../infrastructure/services/userService.js';
 import { passwordValidate } from '../infrastructure/helpers/RegPassValidator.js';
 import UserRepository from '../infrastructure/repositories/userRepository.js';
 // import { connectToDatabase } from '../infrastructure/DB/connectDB.js';
-import { validRegister } from '../infrastructure/utils/valid.js';
-import dotenv from 'dotenv';
+import { GraphQLError } from 'graphql';
 import runValidations from './runValidations.js';
 import initializeService from '../infrastructure/services/initService.js';
-
+import dotenv from 'dotenv';
 dotenv.config();
 
 const resolvers = {
@@ -79,12 +78,20 @@ const resolvers = {
     },
   },
 
-  signIn: async (_, { input}, { dataSources }) => {
+  signIn: async (_, {input}, { dataSources }) => {    
     const { email, password } = input;
-    
-    // Ensure dataSources.userService is available
+    await loginValidate(email, password);
     const { userService } = dataSources;
-    console.log('dataSources');  // Add this line for debugging
+    const user=await userService.getUserByEmailFromDb(email);
+    if (!user) {
+      throw new GraphQLError("User not available", {
+        extensions: { code: "BAD_USER_INPUT" },});
+    }
+    if (!passwordValidate(password)) {
+      throw new GraphQLError("Invalid password", {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
     //  Find the user by email
    return userService.login({ email, password }); 
   },
@@ -144,75 +151,7 @@ forgotPassword: async (_, { input:{email} }, { dataSources }) => {
     };
   },
 
-  updatePassword: async (_, { input: { userId, newPassword, password } }, { dataSources }) => {
-    // Fetch user from database
-    const user = await dataSources.userService.getUserFromDb(userId);
-    if (!user) {
-      throw new GraphQLError("User not found", {
-        extensions: { code: "BAD_USER_INPUT" },
-      });
-    }
-    console.log('User retrieved:', user);
-    console.log('Provided password:', password);
-    console.log('Stored password hash:', user.password);
-    // Validate the current password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    console.log('Password comparison result:', isValidPassword);
-    if (!isValidPassword) {
-      throw new GraphQLError("Invalid password", {
-        extensions: { code: "BAD_USER_INPUT" },
-      });
-    }
-    console.log('Password validation successful');
-
-    // Validate the new password
-    if (!newPassword || newPassword.length < 8 || !/\d/.test(newPassword)) {
-      return {
-        code: 400,
-        success: false,
-        message: "New password must contain at least 8 characters and include a number",
-        userId: null,
-        role: null,
-        token: null,
-      };
-    }
-    console.log('New password validation successful');
-
-    // Hash the new password
-    // const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-    console.log('New password hashed:', hashedNewPassword);
-    // Update the password
-    const updatedUser = await dataSources.userService.updatePassword(userId, newPassword);
-
-    // Ensure updatedUser is not null
-    if (!updatedUser || !updatedUser._id) {
-      console.error('Updated user is null or missing properties', updatedUser);
-      throw new GraphQLError("Failed to update password", {
-        extensions: { code: "INTERNAL_SERVER_ERROR" },
-      });
-    }
-    console.log('Updated user:', updatedUser);
-    try {
-      // Generate JWT token
-      const payload = { id: updatedUser._id.toString() };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-      console.log('JWT token generated:', token);
-      // Return the token and user info
-      return {
-        code: 200,
-        success: true,
-        message: "Password updated successfully",
-        userId: updatedUser._id.toString(),
-        role: updatedUser.role,
-        token,
-      };
-    } catch (error) {
-      console.error('Error in updatePassword resolver:', error);
-      throw new GraphQLError('An error occurred while updating the password', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      });
-    }
-  },
+  
 
   User: {
     __resolveType(user) {

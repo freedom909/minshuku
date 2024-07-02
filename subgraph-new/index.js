@@ -1,32 +1,26 @@
 import { ApolloServer } from '@apollo/server';
-import gql from 'graphql-tag';
-
-
-import { MongoClient } from 'mongodb';
 import { buildSubgraphSchema } from '@apollo/subgraph';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { gql } from 'graphql-tag';
 import { readFileSync } from 'fs';
-import resolvers from './resolvers.js';
-import { expressMiddleware } from '@apollo/server/express4';
 import path from 'path';
+import { MongoClient } from 'mongodb';
+
+import UserService from '../infrastructure/services/userService.js'; // Adjust this import based on your services
+import resolvers from './resolvers.js';
 import express from 'express';
 import http from 'http';
-import initializeServices from '../infrastructure/services/initService.js'; // Adjust this import based
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import initializeServices  from '../infrastructure/services/initService.js'; // Adjust this import based on your services
 import cors from 'cors';
+import UserRepository from '../infrastructure/repositories/userRepository.js'; // Adjust this import based
 import dotenv from 'dotenv';
 dotenv.config();
 
 
-const app = express();
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-const httpServer = http.createServer(app);
 const uri = process.env.MONGODB_URI;
-
+const dbName = process.env.DB_NAME;
 const client = new MongoClient(uri);
-await client.connect();
-const db = client.db('air');
-
-
 
 async function startApolloServer() {
   try {
@@ -79,5 +73,4 @@ async function startApolloServer() {
 
 
 startApolloServer();
-
 

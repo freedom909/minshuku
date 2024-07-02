@@ -1,6 +1,8 @@
 import { hashPassword, checkPassword } from '../helpers/passwords.js';
 import pkg from 'jsonwebtoken';
 const { sign } = pkg;
+import pkg1 from 'mongodb';
+const { MongoClient, ObjectId } = pkg1;
 import EmailVerification from '../email/emailVerification.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
@@ -23,6 +25,7 @@ class UserRepository {
     });
   }
 
+ 
   // Additional methods for UserRepository can be added here
   async findOne(query) {
     try {
@@ -69,7 +72,8 @@ async findByIdAndUpdate(id, update) {
   }
 
   async getUserFromDb(id) {
-    return await this.collection.findOne({ _id: new ObjectId(id) });
+    const query = { _id: new ObjectId("id") };
+    return await this.collection.findOne(query);
   }
 
   async getUserByEmailFromDb(email) {
@@ -102,7 +106,8 @@ async findByIdAndUpdate(id, update) {
   }
 
   async findById(id) {
-    return await this.db.collection('users').findOne({ _id: new ObjectId(id) });
+    const query = { _id: new ObjectId(id) };
+    return await this.db.collection('users').findOne(query);
   }
 
   async updatePassword(id, hashedPassword) {
@@ -125,6 +130,15 @@ async findByIdAndUpdate(id, update) {
       throw error; // Rethrow other errors
     }
   }
+  async findByIdAndUpdate(id, update, options) {
+    const result = await this.collection.findOneAndUpdate(
+      { _id: id },
+      { $set: update },
+      options
+    );
+    return result.value;
+  }
+
 
   async getUserByIdFromApi(userId) {
     const url = `/user/${userId}`;

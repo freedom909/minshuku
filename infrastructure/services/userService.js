@@ -5,12 +5,13 @@ import { GraphQLError, doTypesOverlap } from 'graphql';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';//Error during login: TypeError: Cannot read properties of undefined (reading 'sign')
 import { loginValidate } from '../helpers/loginValidator.js';
-
+import pkg from 'mongodb';
+const { MongoClient,ObjectId } = pkg;
 import dotenv from 'dotenv';
 dotenv.config();
 
-class 
-UserService extends RESTDataSource {
+
+class UserService extends RESTDataSource {
   constructor(userRepository) {
     super();
     this.baseURL = "http://localhost:4000/";
@@ -82,25 +83,20 @@ UserService extends RESTDataSource {
         extensions: { code: "BAD_USER_INPUT" },
       });
     }
-    // Check if the password matches
-    // const passwordMatch = await checkPassword(password, user.password);
-    // if (!passwordMatch) {
-    //   throw new GraphQLError("Incorrect password", {
-    //     extensions: { code: "BAD_USER_INPUT" },
-    //   });
-    // }
-const jwtKey=process.env.JWT_SECRET;
-console.log("jwt:",jwt);
+    //Check if the password matches
+    const passwordMatch = await checkPassword(password, user.password);
+    if (!passwordMatch) {
+      throw new GraphQLError("Incorrect password", {
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    }
+   
     try {
       // Generate JWT token
       const payload = { id: user._id.toString() };
       const role = user.role;
-      const token = jwt.sign(payload, "jwtKey", {
-        //if is it needed to be checked
-        expiresIn: "1h",
-      });
-
-      // Return the token and user info
+      const token = jwt.sign(payload, "good", { expiresIn: '1h' });
+  // Return the token and user info
       return {
         code: 200,
         success: true,
@@ -149,6 +145,22 @@ console.log("jwt:",jwt);
     }
   }
 
+  async getUserById(id) {
+    try {
+      const user = await this.userRepository.findById(id);
+      if (!user) {
+        throw new GraphQLError("User not found", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+      return user;
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      throw new GraphQLError("Error fetching user", {
+        extensions: { code: "INTERNAL_SERVER_ERROR" },
+      });
+    }
+  }
   async deleteUser(userId) {
     try {
       const result = await this.userRepository.findByIdAndDelete(userId);
@@ -165,6 +177,10 @@ console.log("jwt:",jwt);
     }
   }
 
+async findById(id) {
+  return await this.userRepository.findById(id);
+}
+
   async getUserFromDb(id) {
     return await this.userRepository.findById(id);
   }
@@ -177,25 +193,26 @@ console.log("jwt:",jwt);
     return bcrypt.compare(inputPassword, storedPassword);
   }
 
-  async updatePassword(id, newPassword) {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const user = await User.findByIdAndUpdate(
-      id,
-      { password: hashedPassword },
-      { new: true }
+  async editPassword(userId, hashedNewPassword) {
+    const result = await this.userRepository.findByIdAndUpdate(
+      userId,
+      { password: hashedNewPassword },
+      { returnOriginal: false, new: true }
     );
 
-    if (!user) {
-      throw new GraphQLError("Error updating password", {
-        extensions: { code: "INTERNAL_SERVER_ERROR" },
-      });
+    if (!result) {
+      throw new GraphQLError("Error updating password", { extensions: { code: "INTERNAL_SERVER_ERROR" } });
     }
-    // Optionally generate a new token if needed
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-    return { ...user.toObject(), token };
+
+    // Generate a new token if needed
+    const token = jwt.sign({ id: result._id }, process.env.JWT_SECRET || "good", { expiresIn: "1h" });
+    console.log('Generated token:', token);
+
+    const userObject = typeof result.toObject === 'function' ? result.toObject() : result;
+
+    return { ...userObject, token,userId };
   }
+
 
   async createResetPasswordToken(userId) {
     const token = jwt.sign({ userId }, process.env.JWT_SECRET, {

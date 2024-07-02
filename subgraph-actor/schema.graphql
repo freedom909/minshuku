@@ -8,12 +8,9 @@ scalar DateTime
 
 
 type AuthPayload {
-  code: Int!
-  success: Boolean!
-  message: String!
-  userId: ID!
-  role: Role!
   token: String!
+  userId: ID!
+  role:Role
 }
 
 input UpdatePasswordInput {
@@ -111,6 +108,6 @@ type Generator {
  type Mutation {
 
  updatePassword(input: UpdatePasswordInput!): AuthPayload!
-  requestResetPassword(email: String!): MutationResponse!
+ requestResetPassword(email: String!): MutationResponse!
 }
 
