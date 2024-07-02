@@ -1,5 +1,5 @@
 import { validationResult } from 'express-validator';
-import {validRegister} from '../infrastructure/utils/valid.js';
+import {validRegister} from '../utils/valid.js';
 
 const runValidations = async (input) => {
   // Mock a request object

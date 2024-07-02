@@ -106,7 +106,7 @@ async findByIdAndUpdate(id, update) {
   }
 
   async findById(id) {
-    const query = { _id: new ObjectId(id) };
+    const query = { _id: ObjectId.createFromHexString(id) };
     return await this.db.collection('users').findOne(query);
   }
 

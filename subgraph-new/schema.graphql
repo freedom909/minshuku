@@ -2,47 +2,41 @@ extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7",
   import: ["@key","@shareable"])
 
-
-  extend type User @key(fields: "id") {
-    id: ID! 
-    email: String!
-    name: String!
-    nickname: String!
-    role: String!
-    picture: String
-    token: String
-  }
-
-  input signUpInput {
-    email: String!
-    password: String!
-    name: String!
-    nickname: String!
-    role: String = "GUEST"
-    picture: String
-  }
-
-type SignInResponse implements MutationResponse {
-  token: String!
-  userId: String!
-  role: Role!
-  message: String!
-  code: Int!
-  success: Boolean! 
-}
-
 enum Role {
   ADMIN
   HOST
   GUEST
 }
-input SignInInput {
-    email: String!
-    password: String!
-  }
 
-interface MutationResponse {
-  "Similar to HTTP status code, represents the status of the mutation"
+# SCALARS
+scalar DateTime
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
+input SignUpInput {
+  email: String!
+  password: String!
+  name: String!
+  nickname: String!
+  role: Role = GUEST
+  picture: String
+}
+
+input UpdatePasswordInput {
+  userId: ID!
+  newPassword: String!
+  password: String!
+}
+
+interface Node {
+  id: ID!
+}
+
+interface Response {
+  "Similar to HTTP status code, represents the status of the response"
   code: Int!
   "Indicates whether the mutation was successful"
   success: Boolean!
@@ -50,11 +44,95 @@ interface MutationResponse {
   message: String!
 }
 
-  type Mutation {
-    signUp(input: signUpInput!): User!
-    signIn(input: SignInInput!): SignInResponse!
-  }
+interface User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String!
+  "The user's role"
+  role: Role!
+  "The user's profile photo URL"
+  picture: String
+  "The nickname of the user"
+  nickname: String!
+}
 
-  type Query {
-    getUser(id: ID!): User
-  }
+type SignInResponse implements Response {
+  token: String!
+  userId: String!
+  role: Role!
+  message: String!
+  code: Int!
+  success: Boolean!
+}
+
+type AuthPayload {
+  token: String!
+  userId: ID!
+  role: Role
+}
+
+type Host implements User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String! @shareable
+  "The user's profile photo URL"
+  picture: String @shareable
+  "The host's profile bio description, will be shown in the listing"
+  description: String @shareable
+  "The user's chosen nickname (must be unique)"
+  nickname: String!
+  "The role of the user"
+  role: Role!
+}
+
+type Guest implements User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String! @shareable
+  "The user's profile photo URL"
+  picture: String @shareable
+  "The user's chosen nickname (must be unique)"
+  nickname: String!
+  "The role of the user"
+  role: Role!
+}
+
+type _Service {
+  sdl: String
+}
+
+type UserId {
+  id: ID!
+}
+
+scalar _Any
+
+union _Entity = Host | Guest | Generator
+
+type Query {
+  getUser(id: ID!): User
+}
+
+type Generator {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  createdBy: User!
+  isActive: Boolean!
+}
+
+type ReqResetPwdResponse implements Response {
+  message: String!
+  code: Int!
+  success: Boolean!
+  link: String!
+  authPayload: AuthPayload!
+}
+
+type Mutation {
+  signUp(input: SignUpInput!):AuthPayload!
+  signIn(input: SignInInput!): SignInResponse!
+  updatePassword(input: UpdatePasswordInput!): AuthPayload!
+  requestResetPassword(email: String!): ReqResetPwdResponse!
+}

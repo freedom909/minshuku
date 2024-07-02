@@ -48,8 +48,8 @@ class UserService extends RESTDataSource {
       const userId = result.insertedId.toString();
       const payload = { _id: userId };
       console.log("payload", payload); // Added payload to the log
-
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      const jwtKey=process.env.JWT_SECRET
+      const token = jwt.sign(payload,"jwtKey" , {
         expiresIn: "1h",
       });
       console.log("JWT token generated:", token);

@@ -24,8 +24,8 @@ const resolvers={
         }
         //validate the password
      
-        // await passwordValidate(newPassword);
-        // await passwordValidate(password);
+        await passwordValidate(newPassword);
+        await passwordValidate(password);
        //validate the is matching
         // const passwordMatch=bcrypt.compareSync(password, user.password);
         // console.log('Password match result:', passwordMatch);
