@@ -2,6 +2,7 @@ import express, { json } from 'express';
 import { verify } from 'jsonwebtoken';
 import { hash } from 'bcrypt';
 import { User } from './models'; // Assuming you have a User model
+import { generateInviteCode } from '../infrastructure/helpers/generateInviteCode.js';
 
 const app = express();
 app.use(json());
@@ -24,6 +25,16 @@ app.post('/api/reset-password', async (req, res) => {
   } catch (error) {
     console.error('Error resetting password:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+app.post('/generate-invite-code', async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    const inviteCode = await generateInviteCode(userId);
+    res.json({ inviteCode });
+  } catch (error) {
+    res.status(500).json({ error: 'Error generating invite code' });
   }
 });
 

@@ -132,7 +132,13 @@ type ForgotPasswordResponse implements Response {
   success: Boolean!
   message: String!
   email: String!
-  link: String!
+}
+
+type InviteCodeResponse {
+  code: Int!
+  success: Boolean!
+  message: String!
+  email: String!
 }
 
  type Mutation {
@@ -143,4 +149,5 @@ type ForgotPasswordResponse implements Response {
   forgotPassword(email: String!):ForgotPasswordResponse!
   updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
   requestResetPassword(email: String!): Response!
+  sendInviteCode(email: String!): InviteCodeResponse!
 }

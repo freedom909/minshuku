@@ -1,9 +1,9 @@
 // import { AuthenticationError } from '../../infrastructure/utils/errors.js';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
-
+import neo4j from 'neo4j-driver';
 import bcrypt from 'bcrypt';
 import { readFileSync } from 'fs';
-import { validateInviteCode } from '../infrastructure/helpers/validateInvitecode.js';
+import  validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
 import DateTimeType from '../infrastructure/scalar/DateTimeType.js';
 import { authenticateJWT, checkPermissions } from '../infrastructure/middleware/auth.js';
 import { permissions } from '../infrastructure/auth/permission.js';
@@ -17,6 +17,8 @@ import initializeService from '../infrastructure/services/initService.js';
 import { loginValidate } from '../infrastructure/helpers/loginValidator.js';
 import dotenv from 'dotenv';
 dotenv.config();
+import jwt from 'jsonwebtoken';
+
 
 const resolvers = {
 
@@ -79,7 +81,7 @@ const resolvers = {
 
       return userService.register({ email, password, name, nickname, role, picture });
     },
-  },
+  
 
   signIn: async (_, {input}, { dataSources }) => {    
     const { email, password } = input;
@@ -99,64 +101,113 @@ const resolvers = {
    return userService.login({ email, password }); 
   },
   
-   forgotPassword: async (_, { input:{email} }, { dataSources }) => {
-     await loginValidate(email);
+   forgotPassword: async (_, { email }, { dataSources }) => {
+    try {
+    console.log('Received email:', email); // Debugging line
+    //  await loginValidate(email);
      const { userService } = dataSources;
-
-  try {
+ // Validate the email input
+ if (!email) {
+  throw new GraphQLError("Email is required", {
+    extensions: { code: "BAD_USER_INPUT" },
+  });
+}
+  
+    // Retrieve the user by email from the database
     const user = await userService.getUserByEmailFromDb(email);
+   
     if (!user) {
       throw new GraphQLError("User not found", {
         extensions: { code: "BAD_USER_INPUT" },
       });
     }
    
+    // Generate a reset password token
     const token = jwt.sign(
       { id: user._id.toString() },
-      process.env.JWT_SECRET,
+     "good",
       { expiresIn: '15m' }
     );
-
-    await userService.sendLinkToUser(email, token);
+    console.log('Generated token:', token); // Debugging line
+    await userService.sendLinkToUser(user.email, token);
+    console.log('Email sent to user:', user.email); // Debugging line
     // Return the token and user info
-    return {
+    const response={
       code: 200,
       success: true,
       message: "Password reset link sent successfully",
-    };
+      email: user.email,
+    }
+    console.log('Response:', response); // Debugging line
+    return response;
   } catch (error) {
-
-    console.error('Error in forgetPassword resolver:', error);
+    console.error('Error in forgotPassword resolver:', error);
+    throw new GraphQLError('Internal Server Error', {
+      extensions: { code: 'INTERNAL_SERVER_ERROR' },
+    });
   }
 },
 
   logout: async (_, __, { dataSources }) => {
+    // Ensure dataSources.userService is available
+    const { userService } = dataSources;
+    if (!userService) {
+      throw new GraphQLError('UserService not available', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' }
+      });
+    }
+    // Call the logout method on the UserService
+    console.log('dataSources');  // Add this line for debugging
+    console.log(dataSources);  // Add this line for debugging
+    console.log(dataSources.userService);  // Add this line for debugging
+    console.log(dataSources.userService.logout);  // Add this line for debugging
+    console.log(dataSources.userService.logout());  // Add this line for debugging
+    console.log(await dataSources.userService.logout());  // Add this line for debugging
+    console.log(await dataSources.userService.logout());  // Add this line for debugging
     return await dataSources.userService.logout();
   },
 
   sendInviteCode: async (_, { email }, { dataSources }) => {
+    const { userService } = dataSources;
     const user = await userService.getUserByEmailFromDb(email);
     if (!user) {
       throw new GraphQLError("User not found", {
         extensions: { code: "BAD_USER_INPUT" },
       });
     }
-    const inviteCode = await validateInviteCode(user.invite_code);
-    if (!inviteCode) {
-      throw new GraphQLError("Invalid invite code", {
-        extensions: { code: "BAD_USER_INPUT" },
-      });
-    }
-    return {
-      code: 200,
-      success: true,
-      message: "Invite code sent successfully!",
-      user: user,
-    };
-  },
 
+    const driver = neo4j.driver(
+      'bolt://localhost:7687',
+      neo4j.auth.basic('username', 'password')
+    );
+
+    const session = driver.session();
+
+    try {
+      const inviteCodeValid = await validateInviteCode(session, user.invite_code);
+      if (!inviteCodeValid) {
+        throw new GraphQLError("Invalid invite code", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
+      return {
+        code: 200,
+        success: true,
+        message: "Invite code sent successfully!",
+        email: user.email,
+      };
+    } catch (error) {
+      console.error('Error in sendInviteCode resolver:', error);
+      throw new GraphQLError('Internal Server Error', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
+    } finally {
+      await session.close();
+    }
+  },
 requestResetPassword:  async (_,{email}, { dataSources }) => {
-  const {userService} =dataSources
+  const {userService} = dataSources
   // Validate the email input (optional step)
   if (!email) {
     throw new GraphQLError("Email is required", {
@@ -178,7 +229,7 @@ requestResetPassword:  async (_,{email}, { dataSources }) => {
     message: "Password reset link sent successfully",
   };
 },
-
+  },
 
   User: {
     __resolveType(user) {

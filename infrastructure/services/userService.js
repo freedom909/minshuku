@@ -6,10 +6,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';//Error during login: TypeError: Cannot read properties of undefined (reading 'sign')
 import { loginValidate } from '../helpers/loginValidator.js';
 import pkg from 'mongodb';
+import MailToUser from '../email/mailTo.js';
 const { MongoClient,ObjectId } = pkg;
 import dotenv from 'dotenv';
 dotenv.config();
-import MailToUser from '../helpers/mailToUser.js'; // Adjust the path accordingly
+// Adjust the path accordingly
 
 class UserService extends RESTDataSource {
   constructor(userRepository) {
@@ -124,8 +125,8 @@ class UserService extends RESTDataSource {
   }
 
   async sendLinkToUser(email, token) {
-    const emailData = new MailToUser();
-    await this.emailData.sendActivationPassword(email, token);
+   
+    await this.mailToUser.sendActivationPassword(email, token);
   }
   async updateUser(userId, newData) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -187,8 +188,8 @@ async findById(id) {
     return await this.userRepository.findById(id);
   }
 
-  async getUserByEmailFromDb(email) {
-    return this.userRepository.findOne({ email });
+  async getUserByEmailFromDb(email) {     
+    return this.userRepository.findOne({email });
   }
 
   async validatePassword(inputPassword, storedPassword) {
@@ -223,8 +224,6 @@ async findById(id) {
     // Save the token in the database or a cache if necessary
     return token;
   }
-
-
 
   async  sendResetPasswordEmail (email, token) {
   const emailData = {
