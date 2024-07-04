@@ -2,10 +2,13 @@ import neo4j from 'neo4j-driver';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
+console.log('NEO4J_URI:', process.env.NEO4J_URI);
+console.log('NEO4J_USERNAME:', process.env.NEO4J_USERNAME);
+console.log('NEO4J_PASSWORD:', process.env.NEO4J_PASSWORD);
 // Use the connection string provided by Neo4j Aura
 const driver = neo4j.driver(
-  process.env.CONNECTION_URI,
-  neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD)
+  process.env.NEO4J_URI,
+  neo4j.auth.basic(process.env.NEO4J_USERNAME, process.env.NEO4J_PASSWORD)
 );
   
   
@@ -36,3 +39,7 @@ const driver = neo4j.driver(
   }).catch(error => {
     console.error('Error:', error);
   });
+
+  export default generateInviteCode;
+ // generateInviteCode('667fc020d1cb0f48487da6f7')
+  // "inviteCode":"092c7a23-77f1-4881-8955-f7a963662625",  

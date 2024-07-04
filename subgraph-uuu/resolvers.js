@@ -164,7 +164,7 @@ const resolvers = {
     console.log(dataSources.userService.logout());  // Add this line for debugging
     console.log(await dataSources.userService.logout());  // Add this line for debugging
     console.log(await dataSources.userService.logout());  // Add this line for debugging
-    return await dataSources.userService.logout();
+    return await userService.logout();
   },
 
   sendInviteCode: async (_, { email }, { dataSources }) => {

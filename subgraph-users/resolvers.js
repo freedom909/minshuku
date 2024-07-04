@@ -2,10 +2,11 @@ import {GraphQLError} from 'graphql';
 import {loginValidate} from '../infrastructure/helpers/loginValidator.js';
 import { passwordValidate } from '../infrastructure/helpers/RegPassValidator.js';
 import runValidations from '../infrastructure/helpers/runValidations.js';
+import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
 import bcrypt from 'bcrypt';
 const resolvers={
   Mutation:{
-    signIn: async (_, {input:{ email, password  } }, { dataSources }) => { //"TypeError: Cannot read properties of undefined (reading 'email')"
+    signIn: async (_, {input:{ email, password  } }, { dataSources }) => { 
       const {userService}=dataSources
       const user = await userService.getUserByEmailFromDb(email);
       if (!user) {
@@ -36,13 +37,14 @@ const resolvers={
 
       if (role === 'HOST') {
         const isValidInviteCode = await validateInviteCode(inviteCode);
+        console.log('Invite code validation result:', isValidInviteCode);  // Debugging line
         if (!isValidInviteCode) {
           throw new GraphQLError('Invalid invite code', {
             extensions: { code: 'BAD_USER_INPUT' }
           });
         }
       }
-      // initializeService();
+     
       // Ensure dataSources.userService is available
       const { userService } = dataSources;
       console.log('dataSources');  // Add this line for debugging

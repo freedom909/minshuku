@@ -1,9 +1,6 @@
 import neo4j from 'neo4j-driver';
+import  driver from './driver.js';
 
-const driver = neo4j.driver(
-  'bolt://localhost:7687',
-  neo4j.auth.basic('neo4j', 'neo4j')
-);
 async function validateInviteCode(inviteCode) {
   const session = driver.session();
   
@@ -18,6 +15,7 @@ async function validateInviteCode(inviteCode) {
     );
 
     const isValid = result.records[0].get('isValid');
+    console.log('Invite code validation result:', isValid);  // Debugging line
     return isValid;
   } catch (error) {
     console.error('Error validating invite code:', error);
@@ -27,4 +25,4 @@ async function validateInviteCode(inviteCode) {
   }
 }
 
-export default validateInviteCode;
+ export default validateInviteCode;

@@ -23,6 +23,7 @@ input SignUpInput {
   nickname: String!
   role: Role = GUEST
   picture: String
+  inviteCode: String
 }
 
 input UpdatePasswordInput {
