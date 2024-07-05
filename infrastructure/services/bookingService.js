@@ -8,10 +8,10 @@ class BookingService extends RESTDataSource {
     }
 }
 
-async function getBookingsForListing(listing){
-    const bookingService = await this.bookingRepository.getBookingsForListing(listing)
-    return await bookingService.get(`listing/${listing.id}/bookings`);
-}
+// async function getBookingsForListing(listing){
+//     const bookingService = await this.bookingRepository.getBookingsForListing(listing)
+//     return await bookingService.get(`listing/${listing.id}/bookings`);
+// }
 
 async function getBookingsForListing(id){
     const bookingService = await this.bookingRepository.getBookingsForListing(id)

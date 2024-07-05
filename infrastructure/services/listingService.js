@@ -77,16 +77,10 @@ class ListingService extends RESTDataSource {
     }
   }
 
-  async getListing({ listingId }) {
+  async getListing(id) {  // Updated to match the resolver method name
     try {
-      const listingData = await this.get(`listing/${listingId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (listingData) {
-        return listingData;
-      }
+      const listingData = await this.get(`listing/${id}`);
+      return listingData;
     } catch (error) {
       console.error('Error fetching listing:', error);
       throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
@@ -149,12 +143,8 @@ class ListingService extends RESTDataSource {
       throw new GraphQLError('You must be logged in to update listings', { extensions: { code: 'UNAUTHENTICATED' } });
     }
     try {
-      if (await permissionsMiddleware.can(this.context, { action: 'updateListing' })) {
-        const response = await this.patch(`listings/${listingId}`, { body: { listing } });
-        return response.data;
-      } else {
-        throw new GraphQLError('Not authorized to update listing', { extensions: { code: 'FORBIDDEN' } });
-      }
+      const response = await this.patch(`listings/${listingId}`, listing);
+      return response.data;
     } catch (error) {
       console.error('Error updating listing:', error);
       throw new GraphQLError('Error updating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });

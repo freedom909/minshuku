@@ -253,10 +253,6 @@ async findById(id) {
   } catch (error) {
     console.error('Error sending password reset email:', error);
     throw new Error('Error sending password reset email');
-  }
-};
-
-
-
+  }};
 }
 export default UserService

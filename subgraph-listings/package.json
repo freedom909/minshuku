@@ -27,6 +27,7 @@
     "date-fns": "^2.30.0",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
+    "http": "^0.0.1-security",
     "mysql2": "^3.6.0",
     "postinstall": "^0.8.0",
     "prisma": "^5.4.2"

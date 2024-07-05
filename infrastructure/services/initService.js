@@ -1,9 +1,9 @@
-import UserRepository from '../repositories/userRepository.js';
+import UserRepository from '../repositories/userRepository.js'
+// import AccountRepository from '../repositories/accountRepository.js';
 import UserService from './userService.js';
-import bookingService from './bookingService.js';
-import AccountService from './accountService.js';
-
-import ListingService from './listingService.js';
+// import BookingService from './bookingService.js';
+// import AccountService from './accountService.js';
+// import ListingService from './listingService.js';
 import pkg from 'mongodb';
 const { MongoClient } = pkg;
 import dotenv from 'dotenv';
@@ -27,10 +27,11 @@ async function initializeServices() {
     }
 
     const userRepository = new UserRepository(db);
+    // const accountRepository = new AccountRepository(db);
     const userService = new UserService(userRepository);
-    const accountService= new AccountService(accountRepository);
-    const bookingService= new BookingService(bookingRepository);
-    const listingService= new ListingService(bookingRepository);
+    // const accountService= new AccountService(accountRepository);
+    // const bookingService= new BookingService(bookingRepository);
+    // const listingService= new ListingService(listingRepository);
 
 
     return { userService };
