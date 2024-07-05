@@ -22,6 +22,7 @@
     "@apollo/server": "^4.9.1",
     "@apollo/subgraph": "^2.4.12",
     "@prisma/client": "^5.4.2",
+    "awilix": "^10.0.2",
     "axios": "^1.4.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",

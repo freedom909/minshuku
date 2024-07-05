@@ -5,26 +5,31 @@ const { AuthenticationError, ForbiddenError } = errors;
 const resolvers = {
   Query: {
     listing: async (_, { id }, { dataSources }) => {
-      return await dataSources.listingsAPI.getListing(id);
+      const {listingService}=dataSources
+      return await listingService.getListing(id);
     },
     featuredListings: async (_, __, { dataSources }) => {
+      const {listingService}=dataSources
       const limit = 3;
-      return await dataSources.listingsAPI.getFeaturedListings(limit);
+      return await listingService.getFeaturedListings(limit);
     },
     hostListings: async (_, __, { dataSources, userId, userRole }) => {
+      const {listingService}=dataSources
       if (!userId) throw new AuthenticationError();
       if (userRole === 'Host') {
-        return dataSources.listingsAPI.getListingsForUser(userId);
+        return listingService.getListingsForUser(userId);
       } else {
         throw new ForbiddenError('You are not authorized to perform this action');
       }
     },
     listingAmenities: (_, __, { dataSources }) => {
-      return dataSources.listingsAPI.getAllAmenities();
+      const {listingService}=dataSources
+      return listingService.getAllAmenities();
     },
     searchListings: async (_, { criteria }, { dataSources }) => {
+      const {listingService}=dataSources
       const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } = criteria;
-      const listings = await dataSources.listingsAPI.getListings({
+      const listings = await listingService.getListings({
         numOfBeds,
         page,
         limit,
@@ -32,7 +37,7 @@ const resolvers = {
       });
       const listingAvailability = await Promise.all(
         listings.map(listing =>
-          dataSources.bookingsAPI.isListingAvailable({
+          bookingService.isListingAvailable({
             listingId: listing.id,
             checkInDate,
             checkOutDate
@@ -46,13 +51,14 @@ const resolvers = {
 
   Mutation: {
     createListing: async (_, { listing }, { dataSources, userId, userRole }) => {
+      const {listingService}=dataSources
       if (!userId) throw new AuthenticationError();
       if (userRole === 'Guest') {
         throw new Error('You do not have the right to create a listing');
       }
       const { title, description, photoThumbnail, numOfBeds, costPerNight, locationType, amenities } = listing;
       try {
-        const newListing = await dataSources.listingsAPI.createListing({
+        const newListing = await listingService.createListing({
           title,
           description,
           photoThumbnail,
@@ -79,10 +85,11 @@ const resolvers = {
       }
     },
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
+      const {listingService}=dataSources
       if (!userId) throw new AuthenticationError();
       if (!listingId) throw new Error('The listing does not exist');
       try {
-        const updatedListing = await dataSources.listingsAPI.updateListing({
+        const updatedListing = await listingService.updateListing({
           ...listing,
           id: listingId
         });
@@ -104,13 +111,15 @@ const resolvers = {
 
   Listing: {
     __resolveReference: async ({ id }, { dataSources }) => {
-      return await dataSources.listingsAPI.getListing(id);
+      const {listingService}=dataSources
+      return await listingService.getListing(id);
     },
     host: ({ hostId }) => {
       return { id: hostId };
     },
     totalCost: async ({ id }, { checkInDate, checkOutDate }, { dataSources }) => {
-      const { cost } = await dataSources.listingsAPI.getTotalCost({
+      const {listingService}=dataSources
+      const { cost } = await listingService.getTotalCost({
         id,
         checkInDate,
         checkOutDate
@@ -118,7 +127,8 @@ const resolvers = {
       return cost;
     },
     amenities: async ({ id }, _, { dataSources }) => {
-      const listing = await dataSources.listingsAPI.getListing(id);
+      const {listingService}=dataSources
+      const listing = await listingService.getListing(id);
       if (!listing) throw new Error('Listing not found');
       return listing.amenities.map(amenity => ({
         ...amenity,
@@ -127,17 +137,21 @@ const resolvers = {
       }));
     },
     currentlyBookedDates: ({ id }, _, { dataSources }) => {
-      return dataSources.bookingsAPI.getCurrentlyBookedDateRangesForListing(id);
+      const {listingService,bookingService}=dataSources // 'listingService' is declared but its value is never read.
+      return bookingService.getCurrentlyBookedDateRangesForListing(id);
     },
     bookings: ({ id }, _, { dataSources }) => {
-      return dataSources.bookingsAPI.getBookingsForListing(id);
+      const {listingService,bookingService}=dataSources
+      return bookingService.getBookingsForListing(id);
     },
     numberOfUpcomingBookings: async ({ id }, _, { dataSources }) => {
-      const bookings = await dataSources.bookingsAPI.getBookingsForListing(id, 'UPCOMING') || [];
+      const {listingService,bookingService}=dataSources
+      const bookings = await bookingService.getBookingsForListing(id, 'UPCOMING') || [];
       return bookings.length;
     },
     coordinates: ({ id }, _, { dataSources }) => {
-      return dataSources.listingsAPI.getListingCoordinates(id);
+      const {listingService}=dataSources
+      return listingService.getListingCoordinates(id);
     }
   },
 

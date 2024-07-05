@@ -26,20 +26,37 @@ const resolvers={
      
         await passwordValidate(newPassword);
         await passwordValidate(password);
-       //validate the is matching
-        // const passwordMatch=bcrypt.compareSync(password, user.password);
-        // console.log('Password match result:', passwordMatch);
-        // if (!passwordMatch) {
-        //     throw new GraphQLError("Invalid password", {
-        //       extensions: { code: "INVALID_PASSWORD" },
-        //     });
-        //   }
-          
+
           const hashedNewPassword = await bcrypt.hash(newPassword, 10);
           const updatedUser = await userService.editPassword(userId, hashedNewPassword);
         console.log('User after password update:', updatedUser);
         return updatedUser;
 
+      },
+
+      researchListing: async (_, { hostId }, { dataSources: { listingService } }) => {
+        return listingService.getListingsByHost(hostId);
+      },
+      researchBooking: async (_, { guestId }, { dataSources: { bookingService } }) => {
+        return bookingService.getBookingsByGuest(guestId);
+      },
+      confirmBooking: async (_, { id }, { dataSources: { bookingService } }) => {
+        return bookingService.updateBookingStatus(id, 'CONFIRMED');
+      },
+      cancelBooking: async (_, { id }, { dataSources: { bookingService } }) => {
+        return bookingService.updateBookingStatus(id, 'CANCELLED');
+      },
+      confirmListing: async (_, { id }, { dataSources: { listingService } }) => {
+        return listingService.updateListingStatus(id, 'CONFIRMED');
+      },
+      cancelListing: async (_, { id }, { dataSources: { listingService } }) => {
+        return listingService.updateListingStatus(id, 'CANCELLED');
+      },
+      updateUser: async (_, { id, input }, { dataSources: { userService } }) => {
+        return userService.updateUser(id, input);
+      },
+      deleteUser: async (_, { id }, { dataSources: { userService } }) => {
+        return userService.deleteUser(id);
       },
     }
 }

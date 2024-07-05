@@ -83,25 +83,13 @@ type Guest implements User @key(fields: "id") {
   listings: [Listing]! 
 }
 
-interface MutationResponse {
+interface Response {
   "Similar to HTTP status code, represents the status of the mutation"
   code: Int!
   "Indicates whether the mutation was successful"
   success: Boolean!
   "Human-readable message for the UI"
   message: String!
-}
-
-"The response after updating a profile"
-type UpdateProfileResponse implements MutationResponse {
-  "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
-  "Indicates whether the mutation was successful"
-  success: Boolean!
-  "Human-readable message for the UI"
-  message: String!
-  "Updated user"
-  user: User 
 }
 
 """
@@ -126,15 +114,7 @@ input UpdateAccountPasswordInput {
   password: String!
 }
 
-"Fields that can be updated"
-input UpdateProfileInput {
-  "The user's first and last name"
-  name: String
-  "The user's profile photo URL"
-  picture: String
-  "The host's profile bio description, will be shown in the listing"
-  description: String
-}
+
 
 """
 Provides data to create a new account.
@@ -143,38 +123,6 @@ input CreateAccountInput {
   "The new account's email (must be unique)."
   email: String!
   "The new account's password."
-  password: String!
-}
-
-input SignUpInput {
-  "The email address of the user (must be unique)."
-  email: String!
-  "The full name of the user."
-  name: String!
-  """
-  The user's chosen password.
-  It must be a minimum of 8 characters in length and contain 1 lowercase
-  letter, 1 uppercase letter, 1 number, and 1 special character.
-  """
-  password: String!
-  "The user's chosen nickname (must be unique)."
-  nickname: String!
-  "The user's inviteCode"
-  inviteCode: String
-  "The user's role"
-  role: Role
-  "The user's profile photo URL"
-  picture: String! 
-}
-
-input SignInInput {
-  "The email address of the user (must be unique)."
-  email: String!
-  """
-  The user's chosen password.
-  It must be a minimum of 8 characters in length and contain 1 lowercase
-  letter, 1 uppercase letter, 1 number, and 1 special character.
-  """
   password: String!
 }
 
@@ -243,8 +191,7 @@ type UserId {
 
 scalar _Any
 
-union _Entity =  Listing | Host | Guest | Generator
-
+union _Entity = Listing | Host | Guest | Generator | Booking
 
 type Query {
   getUser(id: String!): User
@@ -276,22 +223,26 @@ type Generator @key(fields: "id") {
   isActive: Boolean!
   getUser(id: ID!): User
   createUser(input: CreateUserInput): User
-  # Add other fields as needed
 }
 
+input UpdateUserInput {
+  "The user's first and last name"
+  name: String
+
+  "The user's profile photo URL"
+  picture: String
+
+  "The email address of the user (must be unique)."
+  email: String
+
+  "The user's chosen nickname (must be unique)."
+  nickname: String
+}
 
 extend type Mutation {
   createUser(name: String!, email: String!, password: String!): User
   createListing(title: String!, description: String!, price: Float, locationId: Int, hostId: String): Listing
-  "Updates the logged-in user's profile information"
-  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
-  "Authenticates an existing user."
-  signIn(email: String!, password: String!): AuthPayload!
-  "Logs an authenticated user out."
-  logout: Boolean!
-  "Creates a new Guest user."
-  signUp(input: SignUpInput!): AuthPayload!
-  "Creates a new account."
+  "Creates a new Guest user." 
   createAccount(input: CreateAccountInput!): Account!
   "Deletes an account."
   deleteAccount(id: ID!): Boolean!
@@ -299,6 +250,31 @@ extend type Mutation {
   updateAccountEmail(input: UpdateAccountEmailInput!): Account!
   "Updates an account's password."
   updateAccountPassword(input: UpdateAccountPasswordInput!): Account!
+  "Research listing information according to hostId."
+  researchListing(hostId: ID!): [Listing!]!
+
+  "Research booking information according to guestId."
+  researchBooking(guestId: ID!): [Booking!]!
+
+  "Guest confirms the status of booking."
+  confirmBooking(id: ID!): Boolean!
+
+  "Guest cancels the status of booking."
+  cancelBooking(id: ID!): Boolean!
+
+  "Host confirms the status of listing."
+  confirmListing(id: ID!): Boolean!
+
+  "Host cancels the status of listing."
+  cancelListing(id: ID!): Boolean!
+
+  # Additional mutations for user management
+  "Update user information."
+  updateUser(id: ID!, input: UpdateUserInput!): User
+
+  "Delete a user."
+  deleteUser(id: ID!): Boolean!
+
 }
 
 input CreateUserInput {

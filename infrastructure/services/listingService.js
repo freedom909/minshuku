@@ -1,7 +1,7 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
 import { GraphQLError } from 'graphql';
 import { shield, allow } from 'graphql-shield';
-import { permissions } from '../auth/permissions';
+import { permissions } from '../auth/permission.js';
 
 // Applying the permissions middleware
 const permissionsMiddleware = shield({
