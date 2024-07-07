@@ -1,26 +1,23 @@
 import { GraphQLError } from 'graphql';
 
-const AuthenticationError = () => {
-  const authErrMessage = '*** you must be logged in ***';
-  return new GraphQLError(authErrMessage, {
-    extensions: {
-      code: 'UNAUTHENTICATED',
-    },
-  });
-};
+class AuthenticationError extends GraphQLError {
+  constructor(message) {
+    super(message, {
+      extensions: {
+        code: 'UNAUTHENTICATED',
+      },
+    });
+  }
+}
 
-const ForbiddenError = (errMessage) => {
-  return new GraphQLError(errMessage, {
-    extensions: {
-      code: 'FORBIDDEN',
-    },
-  });
-};
+class ForbiddenError extends GraphQLError {
+  constructor(message) {
+    super(message, {
+      extensions: {
+        code: 'FORBIDDEN',
+      },
+    });
+  }
+}
 
- const handleGraphQLError = (message, code) => {
-  throw new GraphQLError(message, {
-    extensions: { code },
-  });
-};
-
-export  { AuthenticationError, ForbiddenError, handleGraphQLError};
+export { AuthenticationError, ForbiddenError };

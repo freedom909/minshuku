@@ -13,7 +13,7 @@ class ListingRepository {
         this.collection = db.collection('listings');
         console.log('collection object:', this.collection); // Add this line to log the collection object
         this.httpClient = axios.create({
-            baseURL: 'http://localhost:4010', // Adjust as needed
+            baseURL: 'http://localhost:4011', // Adjust as needed
         });
     }
 

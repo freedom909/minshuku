@@ -4,6 +4,18 @@ import { GraphQLError } from 'graphql';
 
 const resolvers = {
   Query: {
+    hostListings: () => {
+      return [
+        {
+          description: "Cozy apartment",
+          coordinates: { latitude: 40.7128, longitude: -74.0060 }
+        },
+        {
+          description: "Beach house",
+          coordinates: { latitude: 34.0194, longitude: -118.4912 }
+        }
+      ];
+    },
     // Resolver for fetching all listings
     listings: async (_, __, { dataSources }) => {
       return await dataSources.listingService.getAllListings();

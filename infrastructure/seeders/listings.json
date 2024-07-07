@@ -1,3 +1,4 @@
+
 [
   {
     "costPerNight": 120.0,
@@ -10,7 +11,9 @@
     "hostId": "user-1",
     "isFeatured": true,
     "latitude": 12.34, 
-    "longitude": 56.78
+    "longitude": 56.78,
+    "saleAmount": 20.1,
+    "bookingNumber":109
   },
   {
     "costPerNight": 592.0,
@@ -23,7 +26,9 @@
     "hostId": "user-1",
     "isFeatured": true,
     "latitude": 12.34, 
-    "longitude": 56.78
+    "longitude": 56.78,
+    "saleAmount": 10.1,
+    "bookingNumber":108
   },
   {
     "costPerNight": 313.0,
@@ -35,7 +40,9 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353887/odyssey/federation-course2/illustrations/listings-03.png",
     "hostId": "user-1",
     "latitude": 90.12, 
-    "longitude": 34.56
+    "longitude": 34.56,
+    "saleAmount": 0.91,
+    "bookingNumber":107
   },
   {
     "costPerNight": 520.0,
@@ -47,8 +54,8 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353888/odyssey/federation-course2/illustrations/listings-04.png",
     "hostId": "user-1",
     "isFeatured": true,
-    "latitude": 12.34, 
-    "longitude": 56.78
+    "saleAmount": 0.81,
+    "bookingNumber":106
   },
   {
     "costPerNight": 580.0,
@@ -59,8 +66,8 @@
     "numOfBeds": 1,
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353889/odyssey/federation-course2/illustrations/listings-05.png",
     "hostId": "user-1",
-    "latitude": 12.34, 
-    "longitude": 56.78
+    "saleAmount": 0.71,
+    "bookingNumber":105
   },
   {
     "costPerNight": 330.0,
@@ -71,8 +78,8 @@
     "numOfBeds": 1,
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-06.png",
     "hostId": "user-4",
-    "latitude": 12.34, 
-    "longitude": 56.78
+    "saleAmount": 0.61,
+    "bookingNumber":104
   },
   {
     "costPerNight": 430.0,
@@ -83,8 +90,8 @@
     "numOfBeds": 2,
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-07.png",
     "hostId": "user-4",
-    "latitude": 12.34, 
-    "longitude": 56.78
+    "saleAmount": 0.51,
+    "bookingNumber":103
   },
   {
     "costPerNight": 688.0,
@@ -95,8 +102,8 @@
     "numOfBeds": 3,
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-08.png",
     "hostId": "user-5",
-    "latitude": 12.34, 
-    "longitude": 56.78
+    "saleAmount": 0.41,
+    "bookingNumber":102
   },
   {
     "costPerNight": 474.0,
@@ -108,8 +115,8 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353889/odyssey/federation-course2/illustrations/listings-09.png",
     "hostId": "user-6",
     "isFeatured": true,
-    "latitude": 12.34, 
-    "longitude": 56.78
+    "saleAmount": 0.31,
+    "bookingNumber":101
   },
   {
     "costPerNight": 687.0,
@@ -120,7 +127,7 @@
     "numOfBeds": 4,
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-10.png",
     "hostId": "user-6",
-    "latitude": 12.34, 
-    "longitude": 56.78
+    "saleAmount": 0.21,
+    "bookingNumber":100
   }
 ]

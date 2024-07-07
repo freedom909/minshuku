@@ -1,5 +1,6 @@
 import { hashPassword, checkPassword } from '../helpers/passwords.js';
-import { handleGraphQLError } from '../utils/errors.js';
+import GraphError from 'graphql';
+import { ForbiddenError } from '../utils/errors.js';
 
 class AccountService {
   constructor(accountRepository) {
@@ -10,7 +11,7 @@ class AccountService {
     // Validation logic
     const existingUser = await this.accountRepository.findOne({ nickname });
     if (existingUser) {
-      handleGraphQLError('Nickname is already in use, please use another one', 'BAD_USER_INPUT');
+      throw new ForbiddenError('Nickname is already in use, please use another one', 'BAD_USER_INPUT');
     }
 
     const passwordHash = await hashPassword(password);

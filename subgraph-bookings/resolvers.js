@@ -22,6 +22,11 @@ const resolvers = {
       }
     },
 
+    bookings: async (_, { guestId }, { dataSources }) => {
+      const { bookingService } = dataSources;
+      return await bookingService.getBookingsForUser(guestId);
+    },
+
     currentGuestBooking: async (_, { listing }, { dataSources, userId, userRole }) => {
       const {listingId,checkInDate,checkOutDate}=listing
       if (!userId) throw AuthenticationError();

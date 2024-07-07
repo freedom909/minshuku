@@ -1,83 +1,38 @@
-// import mongoose from 'mongoose';
+import { Model, DataTypes } from 'sequelize'; // Correct import path for Sequelize
+import sequelize from './sequelize.js'; // Ensure this path is correct
 
-// const listingSchema = new mongoose.Schema({
-//   title: { type: String, required: true },
-//   description: { type: String, required: true },
-//   price: { type: Number, required: true },
-//   locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true },
-//   hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-//   latitude: { type: Number, required: true },
-//   longitude: { type: Number, required: true },
-//   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-//   reviewId:{ type: mongoose.Schema.Types.ObjectId, ref: 'Review'},
-// }, { timestamps: true });
-
-// const Listing = mongoose.model('Listing', listingSchema);
-
-// export default Listing;
-
-import { DataTypes, Model } from '@sequelize/core';
-import sequelize from './seq.js';
-
-export class Listing extends Model {}
+class Listing extends Model {}
 
 Listing.init({
   id: {
     type: DataTypes.STRING,
     primaryKey: true,
   },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  costPerNight: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
-  hostId: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  locationType: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  numOfBeds: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  photoThumbnail: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  isFeatured: {
-    type: DataTypes.BOOLEAN,
-    allowNull: true,
-  },
+  title: DataTypes.STRING,
+  description: DataTypes.TEXT,
+  costPerNight: DataTypes.FLOAT,
+  hostId: DataTypes.STRING,
+  locationType: DataTypes.STRING,
+  numOfBeds: DataTypes.INTEGER,
+  photoThumbnail: DataTypes.STRING,
+  isFeatured: DataTypes.BOOLEAN,
+  saleAmount: DataTypes.FLOAT,
+  bookingNumber: DataTypes.INTEGER,
   latitude: {
     type: DataTypes.FLOAT,
-    allowNull: false,
+    allowNull: true, // Initially allow null values
   },
   longitude: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
+    type: DataTypes.FLOAT, 
+    allowNull: true, // Initially allow null values
   },
-}, {
+  saleAmount:DataTypes.FLOAT,
+  bookingNumber:DataTypes.INTEGER
+}, 
+{
   sequelize,
   modelName: 'Listing',
-  timestamps: true,
+  timestamps: true, // This enables createdAt and updatedAt fields
 });
 
-Listing.associate = (models) => {
-  Listing.hasMany(models.ReviewGuest, { foreignKey: 'listingId', as: 'guestReviews' });
-  Listing.hasMany(models.ReviewHost, { foreignKey: 'listingId', as: 'hostReviews' });
-  Listing.belongsToMany(Amenity, { through: ListingAmenities, foreignKey: 'listingId', as: 'amenities' });
-
-};
-
 export default Listing;
-

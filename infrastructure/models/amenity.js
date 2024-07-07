@@ -1,6 +1,7 @@
-import { DataTypes, Model } from '@sequelize/core';
-import sequelize from './seq.js';
+import { DataTypes, Model } from 'sequelize';
+import sequelize from './sequelize.js';
 
+// Amenity model
 class Amenity extends Model {}
 Amenity.init({
   id: {
@@ -15,10 +16,20 @@ Amenity.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
 }, {
   sequelize,
   modelName: 'Amenity',
-  timestamps: false,
+  timestamps: true,
 });
 
 export default Amenity;
+
+// Repeat similar setup for Listing and ListingAmenities models

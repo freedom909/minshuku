@@ -21,7 +21,7 @@ class UserRepository {
     console.log('collection object:', this.collection); // Add this line to log the collection object
     this.emailVerification = new EmailVerification();
     this.httpClient = axios.create({
-      baseURL: 'http://localhost:4011', // Adjust as needed
+      baseURL: 'http://localhost:4010', // Adjust as needed
     });
   }
 

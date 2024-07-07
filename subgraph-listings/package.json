@@ -23,6 +23,7 @@
     "@apollo/server": "^4.9.1",
     "@apollo/subgraph": "^2.8.0",
     "@prisma/client": "^5.4.2",
+    "awilix": "^10.0.2",
     "axios": "^1.7.2",
     "date-fns": "^2.30.0",
     "graphql": "^16.8.1",

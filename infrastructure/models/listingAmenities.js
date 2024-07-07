@@ -1,14 +1,14 @@
-import { DataTypes, Model } from '@sequelize/core';
-import sequelize from './seq.js';
+import { Model, DataTypes } from 'sequelize';
+import sequelize from './sequelize.js';
 
 class ListingAmenities extends Model {}
 
 ListingAmenities.init({
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   listingId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -17,10 +17,18 @@ ListingAmenities.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+  },
 }, {
   sequelize,
-  modelName: 'ListingAmenities',
-  timestamps: false,
+  modelName: 'ListingAmenities', // Specify the model name explicitly
+  timestamps: true,
 });
 
 export default ListingAmenities;

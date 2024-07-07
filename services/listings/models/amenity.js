@@ -1,8 +1,8 @@
-import { Model, DataTypes } from '@sequelize/core';
+import { DataTypes, Model } from 'sequelize';
 import sequelize from './sequelize.js';
 
+// Amenity model
 class Amenity extends Model {}
-
 Amenity.init({
   id: {
     type: DataTypes.STRING,
@@ -31,3 +31,5 @@ Amenity.init({
 });
 
 export default Amenity;
+
+// Repeat similar setup for Listing and ListingAmenities models

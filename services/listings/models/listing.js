@@ -16,6 +16,8 @@ Listing.init({
   numOfBeds: DataTypes.INTEGER,
   photoThumbnail: DataTypes.STRING,
   isFeatured: DataTypes.BOOLEAN,
+  saleAmount: DataTypes.FLOAT,
+  bookingNumber: DataTypes.INTEGER,
   latitude: {
     type: DataTypes.FLOAT,
     allowNull: true, // Initially allow null values
@@ -24,6 +26,8 @@ Listing.init({
     type: DataTypes.FLOAT, 
     allowNull: true, // Initially allow null values
   },
+  saleAmount:DataTypes.FLOAT,
+  bookingNumber:DataTypes.INTEGER
 }, 
 {
   sequelize,

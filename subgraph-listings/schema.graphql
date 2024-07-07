@@ -16,6 +16,10 @@ extend type Query {
   searchListings(criteria: SearchListingsInput!): [Listing]! @shareable
   "Returns the listings that match the criteria provided"
   listings: [Listing] 
+  "according to sale amount to sort"
+  hotListingsByMoney: [Listing]
+  "according to the number of bookings"
+  hotListingsByBookingNumber: [Listing]
 }
 
 # Mutation definitions for creating and updating listing data
@@ -151,6 +155,8 @@ type Listing @key(fields: "id") {
   currentlyBookedDates: [ReservedDate]! @shareable
   totalCost(checkInDate: String!, checkOutDate: String!): Float!
   coordinates: GalacticCoordinates @shareable
+  saleAmount: Float
+  bookingNumber: Int
 }
 
 # Type representing galactic coordinates for a listing

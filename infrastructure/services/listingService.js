@@ -25,6 +25,41 @@ class ListingService extends RESTDataSource {
     }
   }
 
+  async getTop5Listings() {
+    try {
+      const response = await this.httpClient.get('/top-listings?limit=5&sort=bookings');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching top 5 listings:', error);
+      throw new GraphQLError('Error fetching top 5 listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }}
+
+    async hotListingsByMoneyBookingTop5(){
+      try {
+        const response = await this.httpClient.get('/hot-listings/money-booking-top5');
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching hot listings by money booking top 5:', error);
+        throw new GraphQLError('Error fetching hot listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      }
+    }
+
+    async hotListingsByNumberBookingTop5(){
+      try {
+        const response = await this.httpClient.get('/hot-listings/number-booking-top5');
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching hot listings by number booking top 5:', error);
+        throw new GraphQLError('Error fetching hot listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      }
+    }
+  async getHostListings() {
+    // Mock data, replace with your actual data fetching logic
+    return [
+      { description: "Cozy apartment", coordinates: { latitude: 40.7128, longitude: -74.0060 } },
+      { description: "Beach house", coordinates: { latitude: 34.0194, longitude: -118.4912 } }
+    ];
+  }
   async getListingsForUser(userId) {
     if (!this.context.user) {
       throw new GraphQLError('You must be logged in to view listings', { extensions: { code: 'UNAUTHENTICATED' } });
@@ -56,10 +91,19 @@ class ListingService extends RESTDataSource {
   }
 
   async getListings({ numOfBeds, page, limit, sortBy }) {
+    // const { page = 1, limit = 5, sortBy, numOfBeds: minNumOfBeds } = req.query;
+    const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10); 
+    let sortOrder = { costPerNight: -1 }; // default descending cost
+    if (sortBy === "COST_ASC") {
+      sortOrder = { costPerNight: 1 };
+    }
     try {
       const response = await this.get(
         `listings?numOfBeds=${numOfBeds}&page=${page}&limit=${limit}&sortBy=${sortBy}`
-      );
+      ).sort(sortOrder)
+      .skip(skipValue)
+      .limit(parseInt(limit, 10))
+      .toArray();
       return response.data;
     } catch (error) {
       console.error('Error fetching listings:', error);
@@ -67,7 +111,10 @@ class ListingService extends RESTDataSource {
     }
   }
 
-  async getFeaturedListings(limit) {
+  async getFeaturedListings(limit) {  
+    if(NaN(limit) || limit){
+      throw new Error('Limit must be a positive integer');
+    }
     try {
       const response = await this.get(`featured-listings?limit=${limit}`);
       return response.data;

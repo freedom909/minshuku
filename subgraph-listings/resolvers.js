@@ -3,6 +3,29 @@ import { AuthenticationError, ForbiddenError} from '../infrastructure/utils/erro
 
 const resolvers = {
   Query: {
+    hostListings: () => {
+      return [
+        {
+          description: "Cozy apartment",
+          coordinates: { latitude: 40.7128, longitude: -74.0060 }
+        },
+        {
+          description: "Beach house",
+          coordinates: { latitude: 34.0194, longitude: -118.4912 }
+        }
+      ];
+    },
+
+    hotListingsByMoney: async (_, __, { dataSources }) => {
+      const { listingService } = dataSources;
+      return listingService.hotListingsByMoneyBookingTop5();
+    },
+
+    hotListingsByBookingNumber: async (_, __, { dataSources }) => {
+      const { listingService } = dataSources;
+      return listingService.hotListingsByNumberBookingTop5();
+    },
+    
     listing: async (_, { id }, { dataSources }) => {
       const { listingService } = dataSources;
       return await listingService.getListing(id);
@@ -12,15 +35,11 @@ const resolvers = {
       const limit = 3;
       return await listingService.getFeaturedListings(limit);
     },
-    hostListings: async (_, __, { dataSources, userId, userRole }) => {
-      const { listingService } = dataSources;
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (userRole === 'Host') {
-        return listingService.getListingsForUser(userId);
-      } else {
-        throw new ForbiddenError('You are not authorized to perform this action');
-      }
+    hotListings: async (_, __, { dataSources }) => {
+      const { listingService } = dataSources;      
+        return listingService.getTop5Listings();
     },
+
     listingAmenities: (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       return listingService.getAllAmenities();

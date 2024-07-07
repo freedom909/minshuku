@@ -1,4 +1,4 @@
-import { Model, DataTypes } from '@sequelize/core';
+import { Model, DataTypes } from 'sequelize';
 import sequelize from './sequelize.js';
 
 class ListingAmenities extends Model {}
@@ -27,7 +27,7 @@ ListingAmenities.init({
   },
 }, {
   sequelize,
-  modelName: 'ListingAmenities',
+  modelName: 'ListingAmenities', // Specify the model name explicitly
   timestamps: true,
 });
 
