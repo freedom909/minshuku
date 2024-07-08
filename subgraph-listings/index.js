@@ -34,7 +34,7 @@ async function startApolloServer() {
           async serverWillStart() {
             return {
               async drainServer() {
-                await container.resolve('db').client.close();
+                await container.resolve('pool').client.close();
               }
             };
           }

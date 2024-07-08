@@ -1,4 +1,6 @@
 import { AuthenticationError, ForbiddenError} from '../infrastructure/utils/errors.js';
+// import ListingService from '../infrastructure/services/listingService.js';
+
 
 
 const resolvers = {
@@ -18,12 +20,19 @@ const resolvers = {
 
     hotListingsByMoney: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
-      return listingService.hotListingsByMoneyBookingTop5();
+      try {
+        const listings = await listingService.hotListingsByMoneyBookingTop5();
+        console.log('listings');
+        return listings;
+      } catch (error) {
+        console.error('Error in hotListingsByMoney resolver:', error);
+        throw new Error('Failed to fetch hot listings by money');
+      }
     },
 
-    hotListingsByBookingNumber: async (_, __, { dataSources }) => {
-      const { listingService } = dataSources;
-      return listingService.hotListingsByNumberBookingTop5();
+    hotListingsByBookingNumber: async (_,__,{dataSources}) => {
+      const {listingService} =dataSources
+      return listingService.getListingsByNumberBooking();
     },
     
     listing: async (_, { id }, { dataSources }) => {
