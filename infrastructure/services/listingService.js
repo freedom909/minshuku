@@ -2,6 +2,7 @@ import { RESTDataSource } from '@apollo/datasource-rest';
 import { GraphQLError } from 'graphql';
 import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
+import ListingRepository from '../repositories/listingRepository.js';
 
 // Applying the permissions middleware
 const permissionsMiddleware = shield({
@@ -14,45 +15,36 @@ const permissionsMiddleware = shield({
 });
 
 class ListingService extends RESTDataSource {
-  constructor() {
-    super();
-    this.baseURL = 'http://localhost:4010/';
+  constructor( listingRepository) {
+  super();
+    // Initialize the repository with the database instance
+    this.listingRepository = listingRepository; 
   }
-
   willSendRequest(request) {
     if (this.context.user) {
       request.headers.set('Authorization', this.context.user.token);
     }
   }
-
-  async getTop5Listings() {
+  
+  async hotListingsByMoneyBookingTop5() {
     try {
-      const response = await this.httpClient.get('/top-listings?limit=5&sort=bookings');
-      return response.data;
+      const listings = await this.listingRepository.getListingsTop5ByMoneyBooking();
+      return listings;
     } catch (error) {
       console.error('Error fetching top 5 listings:', error);
       throw new GraphQLError('Error fetching top 5 listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }}
-
-    async hotListingsByMoneyBookingTop5(){
+          
+    async hotListingsByMoneyNumberTop5() {
       try {
-        const response = await this.httpClient.get('/hot-listings/money-booking-top5');
-        return response.data;
+        const listings = await this.listingRepository.getListingsTop5ByBookingNumber();
+        return listings;
       } catch (error) {
         console.error('Error fetching hot listings by money booking top 5:', error);
         throw new GraphQLError('Error fetching hot listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
       }
     }
 
-    async hotListingsByNumberBookingTop5(){
-      try {
-        const response = await this.httpClient.get('/hot-listings/number-booking-top5');
-        return response.data;
-      } catch (error) {
-        console.error('Error fetching hot listings by number booking top 5:', error);
-        throw new GraphQLError('Error fetching hot listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-      }
-    }
   async getHostListings() {
     // Mock data, replace with your actual data fetching logic
     return [

@@ -5,7 +5,7 @@ router.get('/hot-listings-by-money', async (req, res) => {
     try {
         const listings = await db.collection('listings').aggregate([
           {
-            $lookup: {
+          $lookup: {
           from: 'bookings',
           localField: 'id',
           foreignField: 'listingId',

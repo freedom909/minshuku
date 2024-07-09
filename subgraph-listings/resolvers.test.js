@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import resolvers from './resolvers.js';
 
 describe('hotListingsByMoney resolver', () => {

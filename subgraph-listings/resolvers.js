@@ -1,7 +1,4 @@
 import { AuthenticationError, ForbiddenError} from '../infrastructure/utils/errors.js';
-// import ListingService from '../infrastructure/services/listingService.js';
-
-
 
 const resolvers = {
   Query: {
@@ -22,7 +19,6 @@ const resolvers = {
       const { listingService } = dataSources;
       try {
         const listings = await listingService.hotListingsByMoneyBookingTop5();
-        console.log('listings');
         return listings;
       } catch (error) {
         console.error('Error in hotListingsByMoney resolver:', error);

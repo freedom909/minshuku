@@ -3,18 +3,23 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "engines": {
     "npm": ">=6.0.0",
     "node": ">=14.0.0"
   },
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "start": "nodemon .",
     "postinstall": "npx prisma generate --schema=\"..\\services\\bookings\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\listings\\prisma\\schema.prisma\""
   },
+  "type": "module",
   "nodemonConfig": {
     "ext": "*.js, *.graphql"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    }
   },
   "keywords": [],
   "author": "",
@@ -27,6 +32,7 @@
     "awilix": "^10.0.2",
     "axios": "^1.7.2",
     "date-fns": "^2.30.0",
+    "esm": "^3.2.25",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "http": "^0.0.1-security",

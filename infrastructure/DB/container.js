@@ -1,34 +1,24 @@
-import { asClass, asValue, createContainer } from 'awilix';
-import dotenv from 'dotenv';
-dotenv.config();
-
-import UserRepository from '../repositories/userRepository.js';
-import UserService from '../services/userService.js';
-import AccountService from '../services/accountService.js';
-import BookingService from '../services/bookingService.js';
-import ListingService from '../services/listingService.js';
-import pkg from 'mongodb';
-const { MongoClient } = pkg;
+// container.js
+import { createContainer, asClass, asValue } from 'awilix';
+import { connectToDB } from './mysqlDB.js'; // Adjust the path as necessary
+import UserRepository from '../repositories/userRepository.js'; // Adjust the path as necessary
+import UserService from '../services/userService.js'; // Adjust the path as necessary
+import AccountService from '../services/accountService.js'; // Adjust the path as necessary
+import BookingService from '../services/bookingService.js'; // Adjust the path as necessary
+import ListingService from '../services/listingService.js'; // Adjust the path as necessary
 
 const container = createContainer();
-async function connectToDB() {
-  const uri = process.env.MONGODB_URI;
-  const dbName = process.env.DB_NAME;
-  const client = new MongoClient(uri);
-  await client.connect();
-  console.log('MongoDB connected');
-  return client.db(dbName);
-}
 
 const initializeContainer = async () => {
-  const db = await connectToDB();
+  const db = await connectToDB(); // Initialize the database connection
   container.register({
-    db: asValue(db),
+    db: asValue(db), // Use the db object instead of pool
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton(),
     accountService: asClass(AccountService).singleton(),
     bookingService: asClass(BookingService).singleton(),
-    listingService: asClass(ListingService).singleton()
+    listingService: asClass(ListingService).singleton(),
   });
-}
+};
+
 export { container, initializeContainer };

@@ -69,7 +69,7 @@ async function startApolloServer() {
       })
     );
     // Use the router
-    app.use(router);
+    // app.use(router);
     await new Promise((resolve) => httpServer.listen({ port: 4010 }, resolve));
     console.log(`🚀 Server ready at http://localhost:4010/graphql`);
   } catch (error) {

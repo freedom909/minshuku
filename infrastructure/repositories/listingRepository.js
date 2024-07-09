@@ -1,22 +1,41 @@
 import axios from 'axios';
-import UserService from "../services/userService";
 import { AuthenticationError, ForbiddenError } from '../utils/errors.js';
-
+import connectToDB from '../DB/mysqlDB.js'
 class ListingRepository {
-    constructor(db) {
-        console.log('db object in ListingRepository constructor:', db); // Debugging line
-        if (!db || typeof db !== 'object') {
-            throw new Error('Invalid db object');
-        }
-        this.db = db;
-        console.log('db object in ListingRepository constructor:', this.db);
-        this.collection = db.collection('listings');
-        console.log('collection object:', this.collection); // Add this line to log the collection object
-        this.httpClient = axios.create({
-            baseURL: 'http://localhost:4011', // Adjust as needed
-        });
+    constructor() {
+        this.db = null;
+        this.initPromise = this.init();
     }
 
+    async init() {
+        this.db = await connectToDB()
+    }
+          
+    async getListingsTop5ByMoneyBooking() {
+        await this.initPromise; // Ensure the database is initialized before proceeding
+        if (!this.db) {
+          throw new Error('Database not initialized');
+        }
+        try {
+            //TypeError: Cannot read properties of null (reading 'query')  
+            const [rows] = await this.db.query('SELECT * FROM listings ORDER BY saleAmount DESC LIMIT 5');
+            return rows;
+        } catch (error) {
+            console.error('Error fetching listings from the database:', error);
+            throw new Error('Error fetching listings from the database');
+        }
+    }
+
+
+    async getListingsTop5ByBookingNumber() {
+        try {
+            const listings = await this.db.collection('listings').find().sort({ bookingNumber: -1 }).limit(5).toArray();
+            return listings;
+        } catch (error) {
+            console.error('Error fetching listings from the database:', error);
+            throw new Error('Error fetching listings from the database');
+        }
+    }
     async findOne(query) {
         try {
             console.log('query:', query);

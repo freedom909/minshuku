@@ -15,6 +15,7 @@ import initializeServices  from '../infrastructure/services/initService.js'; // 
 import cors from 'cors';
 import UserRepository from '../infrastructure/repositories/userRepository.js'; // Adjust this import based
 import dotenv from 'dotenv';
+import connectToDB from '../infrastructure/DB/mysqlDB.js';
 dotenv.config();
 
 
@@ -22,11 +23,24 @@ const uri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
 const client = new MongoClient(uri);
 
-async function startApolloServer() {
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+
+const initializeContainer = async () => {
+  const db = await connectToDB();
+  const container = createContainer();
+  container.register({
+    db: asValue(db),
+    listingRepository: asClass(ListingRepository).singleton(),
+    listingService: asClass(ListingService).singleton()
+  });
+  return container;
+};
+
+const startApolloServer = async () => {
   try {
-    const { userService } = await initializeServices();
+    const container = await initializeContainer();
+
     const app = express();
-    const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
     const httpServer = http.createServer(app);
 
     const server = new ApolloServer({
@@ -37,7 +51,7 @@ async function startApolloServer() {
           async serverWillStart() {
             return {
               async drainServer() {
-                await closeConnection();
+                await container.resolve('db').end();
               }
             };
           }
@@ -45,8 +59,9 @@ async function startApolloServer() {
       ],
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
-        user: req.headers.user || null,
-        dataSources: { userService }
+        dataSources: {
+          listingService: container.resolve('listingService')
+        }
       })
     });
 
@@ -59,18 +74,16 @@ async function startApolloServer() {
       expressMiddleware(server, {
         context: async ({ req }) => ({
           token: req.headers.authorization || '',
-          dataSources: { userService }
+          dataSources: {
+            listingService: container.resolve('listingService')
+          }
         })
       })
     );
 
-    await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+    await new Promise((resolve) => httpServer.listen({ port: 4010 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4010/graphql`);
   } catch (error) {
     console.error('Error starting server:', error);
   }
-}
-
-
-startApolloServer();
-
+};
