@@ -3,6 +3,11 @@ import { GraphQLError } from 'graphql';
 import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
 import ListingRepository from '../repositories/listingRepository.js';
+import dotenv from 'dotenv';
+import connectToDB from '../DB/mysqlDB.js';
+import mysql from 'mysql2/promise';
+import queryDatabase from '../DB/dbUtils.js'
+dotenv.config();
 
 // Applying the permissions middleware
 const permissionsMiddleware = shield({
@@ -19,7 +24,7 @@ class ListingService extends RESTDataSource {
   super();
     // Initialize the repository with the database instance
     this.listingRepository = listingRepository; 
-  }
+}
   willSendRequest(request) {
     if (this.context.user) {
       request.headers.set('Authorization', this.context.user.token);
@@ -27,14 +32,17 @@ class ListingService extends RESTDataSource {
   }
   
   async hotListingsByMoneyBookingTop5() {
-    try {
-      const listings = await this.listingRepository.getListingsTop5ByMoneyBooking();
-      return listings;
-    } catch (error) {
-      console.error('Error fetching top 5 listings:', error);
-      throw new GraphQLError('Error fetching top 5 listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }}
-          
+    const query=`
+    SELECT saleAmount FROM listings ORDER BY saleAmount DESC LIMIT 5
+    `
+    const listings=await queryDatabase(query)
+    return listings.map(listing=>({
+      ...listing,
+      saleAmount: parseFloat(listing.saleAmount.toFixed(2))
+    }))
+  }
+  
+    
     async hotListingsByMoneyNumberTop5() {
       try {
         const listings = await this.listingRepository.getListingsTop5ByBookingNumber();

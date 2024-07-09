@@ -21,7 +21,6 @@ const resolvers = {
         const listings = await listingService.hotListingsByMoneyBookingTop5();
         return listings;
       } catch (error) {
-        console.error('Error in hotListingsByMoney resolver:', error);
         throw new Error('Failed to fetch hot listings by money');
       }
     },

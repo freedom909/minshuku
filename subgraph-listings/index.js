@@ -18,6 +18,8 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { expressMiddleware } from '@apollo/server/express4';
 import cors from 'cors';
 import router from './router.js';
+
+
 async function startApolloServer() {
   try {
     await initializeContainer();
