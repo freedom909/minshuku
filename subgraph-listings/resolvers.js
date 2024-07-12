@@ -2,18 +2,13 @@ import { AuthenticationError, ForbiddenError} from '../infrastructure/utils/erro
 
 const resolvers = {
   Query: {
-    hostListings: () => {
-      return [
-        {
-          description: "Cozy apartment",
-          coordinates: { latitude: 40.7128, longitude: -74.0060 }
-        },
-        {
-          description: "Beach house",
-          coordinates: { latitude: 34.0194, longitude: -118.4912 }
-        }
-      ];
-    },
+    hostListings: async (_, __, { dataSources }) => {
+      const {listingService} = dataSources
+        const listings = await listingService.getListingsWithCoordinates();
+        return listings;
+      },
+      
+  
 
     hotListingsByMoney: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
@@ -27,7 +22,11 @@ const resolvers = {
 
     hotListingsByBookingNumber: async (_,__,{dataSources}) => {
       const {listingService} =dataSources
-      return listingService.getListingsByNumberBooking();
+      try {
+      return listingService.hotListingsByNumberBookingTop5();
+      } catch (error) {
+        throw new Error('Failed to fetch hot listings by booking number');
+      }
     },
     
     listing: async (_, { id }, { dataSources }) => {

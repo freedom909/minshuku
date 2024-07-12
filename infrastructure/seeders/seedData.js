@@ -2,18 +2,15 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sequelize from '../models/seq.js';
-import User from '../models/user.js';
-import Account from '../models/account.js';
 import Listing from '../models/listing.js';
-import Review from '../models/review.js';
-import ReviewOfGuest from '../models/reviewOfGuest.js';
-import ReviewOfHost from '../models/reviewOfHost.js';
 import Booking from '../models/booking.js';
 import Payment from '../models/payment.js';
-import Amenity from '../models/Amenity.js';
+import Amenity from '../models/amenity.js';
+import Coordinate from '../models/coordinate.js';
 import ListingAmenities from '../models/listingAmenities.js';
+// import Location from '../models/location.js'; // Ensure this model exists and is imported correctly
 
-const models = { User, Account, Listing, Review, ReviewOfGuest, ReviewOfHost, Booking, Payment, Amenity, ListingAmenities };
+const models = { Listing, Coordinate,  Booking, Payment, Amenity, ListingAmenities };
 
 async function loadJSON(filePath) {
   const data = await fs.readFile(filePath, 'utf-8');
@@ -33,24 +30,18 @@ async function seedDatabase() {
   try {
     await sequelize.sync({ force: true });
     console.log('Database synced!');
-
-    const users = await loadJSON(path.join(__dirname, 'users.json'));
-    const accounts = await loadJSON(path.join(__dirname, 'accounts.json'));
+    
+    // const locations = await loadJSON(path.join(__dirname, 'locations.json'));
     const listings = await loadJSON(path.join(__dirname, 'listings.json'));
-    const reviews = await loadJSON(path.join(__dirname, 'reviews.json'));
-    const reviewsOfGuest = await loadJSON(path.join(__dirname, 'reviewsOfGuest.json'));
-    const reviewsOfHost = await loadJSON(path.join(__dirname, 'reviewsOfHost.json'));
+    const coordinates = await loadJSON(path.join(__dirname, 'coordinates.json'));
     const bookings = await loadJSON(path.join(__dirname, 'bookings.json'));
     const payments = await loadJSON(path.join(__dirname, 'payments.json'));
     const amenities = await loadJSON(path.join(__dirname, 'amenities.json'));
     const listingAmenities = await loadJSON(path.join(__dirname, 'listingAmenities.json'));
 
-    await seedModel(User, users);
-    await seedModel(Account, accounts);
+    // await seedModel(Location, locations);
     await seedModel(Listing, listings);
-    await seedModel(Review, reviews);
-    await seedModel(ReviewOfGuest, reviewsOfGuest);
-    await seedModel(ReviewOfHost, reviewsOfHost);
+    await seedModel(Coordinate, coordinates);
     await seedModel(Booking, bookings);
     await seedModel(Payment, payments);
     await seedModel(Amenity, amenities);

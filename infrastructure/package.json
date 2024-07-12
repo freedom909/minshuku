@@ -12,8 +12,6 @@
   "description": "",
   "dependencies": {
     "@apollo/datasource-rest": "^6.3.0",
-    "@sequelize/core": "^7.0.0-alpha.37",
-    "@sequelize/mysql": "^7.0.0-alpha.41",
     "awilix": "^10.0.2",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",

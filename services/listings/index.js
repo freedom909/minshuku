@@ -3,12 +3,12 @@ import db from './models/index.js';
 import jwt from 'jsonwebtoken';
 import { Op } from '@sequelize/core';
 import help from './helpers.js';
-
+import { readFileSync } from 'fs';
 import { authenticate,authorize } from '../../infrastructure/auth/authenticateAndAuthorize.js';
 const { getDifferenceInDays, transformListingWithAmenities } = help;
 
 const app = express();
-const port = 4010 || process.env.PORT;
+const port = 4003 || process.env.PORT;
 app.use(json());
 
 const { Amenity, Listing, ListingAmenities } = db;
@@ -83,6 +83,7 @@ app.get('/listings/amenities',async (req, res) => {
     const listings = await Listing.findAll({
       include: {
         model: Amenity,
+        as: 'amenities',
         through: { attributes: [] }, // This prevents extra data from ListingAmenities being included
       }
     });
@@ -249,3 +250,5 @@ app.patch("/listings/:listingId", authenticate, authorize('HOST'), async (req, r
 app.listen(port, () => {
   console.log(`Listing API running at http://localhost:${port}`);
 });
+
+export default app;

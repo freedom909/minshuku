@@ -1,7 +1,8 @@
 import { DataTypes, Model } from 'sequelize';
-import sequelize from './sequelize.js';
+import sequelize from './seq.js';
 
 // Amenity model
+
 class Amenity extends Model {}
 Amenity.init({
   id: {
@@ -31,5 +32,7 @@ Amenity.init({
 });
 
 export default Amenity;
+
+// Repeat similar setup for Listing and ListingAmenities models
 
 // Repeat similar setup for Listing and ListingAmenities models

@@ -3,9 +3,10 @@ import Amenity from'./amenity.js';
 import Listing from './listing.js';
 import ListingAmenities from './listingamenities.js';
 
+
 // Define associations with compatible options
 
-belongsToMany(Amenity, { through: ListingAmenities, foreignKey: 'listingId', otherKey: 'amenityId', as: 'amenities' });
+Listing.belongsToMany(Amenity, { through: ListingAmenities, foreignKey: 'listingId', otherKey: 'amenityId', as: 'amenities' });
 Amenity.belongsToMany(Listing, { through: ListingAmenities, foreignKey: 'amenityId', otherKey: 'listingId', as: 'listings' });
 
 const db = {

@@ -1,6 +1,8 @@
 import { exec } from 'child_process';
 import { resolve as _resolve } from 'path';
-
+import { fileURLToPath } from 'url'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 async function installService(command, name, cwd, prefixColor) {
   return new Promise((resolve, reject) => {
     const childProcess = exec(command, { cwd });

@@ -1,5 +1,5 @@
 import { AuthenticationError, ForbiddenError } from '../../infrastructure/utils/errors.js';
-import { ApolloServerErrorCode } from '@apollo/server-errors';
+import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
 
 const resolvers = {
@@ -40,8 +40,9 @@ const resolvers = {
       return dataSources.listingService.getAllAmenities()
     },
     searchListings: async (parent, { criteria }, { dataSources }) => {
+      const {listingService}=dataSources
       const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } = criteria;
-      const listings = await dataSources.listingService.getListings({
+      const listings = await listingService.getListings({
         numOfBeds, checkInDate, checkOutDate
       });
       if (sortBy) {
@@ -57,12 +58,13 @@ const resolvers = {
 
   Mutation: {
     createListing: async (_, { listing }, { dataSources, userId, userRole }) => {
+      const {listingService} = dataSources
       if (!userId) throw AuthenticationError()
       if (userRole === "Guest") {
         throw Error(`you do not have right to create a listing`)
       }
       try {
-        const newListing = await dataSources.listingService.createListing({
+        const newListing = await listingService.createListing({
           title,
           description,
           photoThumbnail,
@@ -90,11 +92,12 @@ const resolvers = {
     }
   },
   updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
+    const { listingService } = dataSources;
     //check user role and id
     if (!userId) throw AuthenticationError()
     if (!listingId) throw Error('the listing is not existing')
     try {
-      let updatedListing = await dataSources.listingService.updateListing({ ...listing });
+      let updatedListing = await listingService.updateListing({ ...listing });
       return {
         code: 201,
         success: true,
@@ -113,29 +116,35 @@ const resolvers = {
   },
   Listing: {
     __resolverReference: ({ id }, _, { dataSources }) => {
-      return dataSources.listingService.getListing(id)
+      const { listingService } = dataSources;
+      return listingService.getListing(id)
     },
     host: ({ hostId }) => {
       return { id: hostId }
     },
     totalCost: async (_, { listingId, checkInDate, checkOutDate }, { dataSources }) => {
-      const { cost } = await dataSources.listingService.calculateTotalCost({ listingId, checkInDate, checkOutDate });
+      const { listingService } = dataSources;
+      const { cost } = await listingService.calculateTotalCost({ listingId, checkInDate, checkOutDate });
       return cost
     },
     amenities: async ({ id }, _, { dataSources }) => {
-      const amenityList = await dataSources.listingService.getListing(id);
+      const {listingService } = dataSources;
+      const amenityList = await listingService.getListing(id);
       return amenityList.amenities
 
     },
     currentlyBookedDates: ({ id }, _, { dataSources }) => {
-      return dataSources.bookingsAPI.getCurrentlyBookedDateRangesForListing(id)
+      const { bookingService } = dataSources;
+      return bookingService.getCurrentlyBookedDateRangesForListing(id)
     },
     bookings: ({ id }, _, { dataSources }) => {
+      const { bookingService } = dataSources;
       console.log("BOOKINGS", args, "LIMIT", limit);
-      return dataSources.bookingsAPI.getBookingsForListing(id)
+      return bookingService.bookingsAPI.getBookingsForListing(id)
     },
     numberOfUpcomingBookings: async ({ id }, _, { dataSources }) => {
-      const numberOfUpComingBooking = await dataSources.bookingsAPI.getBookingsForListing(id, "UPCOMING") || []
+      const { bookingService } = dataSources;
+      const numberOfUpComingBooking = await bookingService.getBookingsForListing(id, "UPCOMING") || []
       return numberOfUpComingBooking.length
     },
     coordinates: ({ id }, _, { dataSources }) => {
@@ -150,9 +159,10 @@ const resolvers = {
 
 
     reviews: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getAllReviewsByListingID(id);
+      const {reviewsService } = dataSources;
+      return bookingService.getAllReviewsByListingID(id);
     }
   }
 };
-module.exports = resolvers;
+export default resolvers;
 

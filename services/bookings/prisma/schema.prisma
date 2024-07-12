@@ -11,7 +11,7 @@ datasource db {
 }
 
 model booking  {
-  id String  @id   @default(uuid v4)
+  id String  @id   @default(cuid())
   guestId String   
   checkInDate DateTime
   checkOutDate DateTime

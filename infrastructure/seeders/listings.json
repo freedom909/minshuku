@@ -10,8 +10,6 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644350721/odyssey/federation-course2/illustrations/listings-01.png",
     "hostId": "user-1",
     "isFeatured": true,
-    "latitude": 12.34, 
-    "longitude": 56.78,
     "saleAmount": 20.1,
     "bookingNumber":109
   },
@@ -25,8 +23,6 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644350839/odyssey/federation-course2/illustrations/listings-02.png",
     "hostId": "user-1",
     "isFeatured": true,
-    "latitude": 12.34, 
-    "longitude": 56.78,
     "saleAmount": 10.1,
     "bookingNumber":108
   },
@@ -39,8 +35,6 @@
     "numOfBeds": 5,
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353887/odyssey/federation-course2/illustrations/listings-03.png",
     "hostId": "user-1",
-    "latitude": 90.12, 
-    "longitude": 34.56,
     "saleAmount": 0.91,
     "bookingNumber":107
   },

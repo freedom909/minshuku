@@ -1,4 +1,4 @@
-import { DataTypes, Model } from '@sequelize/core';
+import { DataTypes, Model } from 'sequelize';
 import sequelize from './seq.js';
 
 export class Booking extends Model {}

@@ -1,7 +1,7 @@
 
 import { check } from 'express-validator';
 
-const validRegister = [
+export const validRegister = [
   check('email')
     .isEmail()
     .withMessage('Must be a valid email'),
@@ -26,7 +26,7 @@ const validRegister = [
     .isURL()
     .withMessage('Picture must be a valid URL'),
 ];
-const validLogin = [
+export const validLogin = [
   check('email')
     .isEmail()
     .withMessage('Must be a valid email'),
@@ -35,5 +35,5 @@ const validLogin = [
     .withMessage('Password must be at least 6 characters long'),
 ];
 
-export {validRegister, validLogin};
+
 

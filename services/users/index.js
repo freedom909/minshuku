@@ -10,16 +10,16 @@ import resolvers from './resolvers.js';
 import express from 'express';
 import http from 'http';
 
-import  initializeServices  from '../../infrastructure/services/initializeService.js';
+import  initializeServices  from '../../infrastructure/services/initService.js';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import cors from 'cors';
 import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const mongoUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017/air';
+const mongoUri = process.env.MONGODB_URI;
 const dbName = process.env.DB_NAME;
-const dbClient = new MongoClient(mongoUrl);
+const dbClient = new MongoClient(mongoUri);
 await dbClient.connect();
 const db = dbClient.db(dbName);
 const userRepository = new UserRepository(db);

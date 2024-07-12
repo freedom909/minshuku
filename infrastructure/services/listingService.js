@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import connectToDB from '../DB/mysqlDB.js';
 import mysql from 'mysql2/promise';
 import queryDatabase from '../DB/dbUtils.js'
+
 dotenv.config();
 
 // Applying the permissions middleware
@@ -23,13 +24,14 @@ class ListingService extends RESTDataSource {
   constructor( listingRepository) {
   super();
     // Initialize the repository with the database instance
-    this.listingRepository = listingRepository; 
+     this.listingRepository = listingRepository;  
+     this.baseURL = 'http://localhost:4013'
 }
-  willSendRequest(request) {
-    if (this.context.user) {
-      request.headers.set('Authorization', this.context.user.token);
-    }
+willSendRequest(request) {
+  if (this.context && this.context.user) {
+    request.headers.set('Authorization', this.context.user.token);
   }
+}
   
   async hotListingsByMoneyBookingTop5() {
     const query=`
@@ -43,16 +45,17 @@ class ListingService extends RESTDataSource {
   }
   
     
-    async hotListingsByMoneyNumberTop5() {
-      try {
-        const listings = await this.listingRepository.getListingsTop5ByBookingNumber();
-        return listings;
-      } catch (error) {
-        console.error('Error fetching hot listings by money booking top 5:', error);
-        throw new GraphQLError('Error fetching hot listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-      }
+    async hotListingsByNumberBookingTop5() {
+      const query=`
+      SELECT saleAmount,bookingNumber FROM listings ORDER BY bookingNumber DESC LIMIT 5
+      `;
+      const listings=await queryDatabase(query)
+      return listings.map(listing=>({
+       ...listing,
+        saleAmount: parseFloat(listing.saleAmount.toFixed(2)),
+      }))
     }
-
+ 
   async getHostListings() {
     // Mock data, replace with your actual data fetching logic
     return [
@@ -112,16 +115,21 @@ class ListingService extends RESTDataSource {
   }
 
   async getFeaturedListings(limit) {  
-    if(NaN(limit) || limit){
+    if(!Number.isInteger(limit) || limit <= 0) {
       throw new Error('Limit must be a positive integer');
     }
     try {
       const response = await this.get(`featured-listings?limit=${limit}`);
+      console.log('API Response:', response);
+      if (!response || !response.data) {
+        throw new Error('Invalid response from API');
+      }
       return response.data;
     } catch (error) {
       console.error('Error fetching featured listings:', error);
       throw new GraphQLError('Error fetching featured listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
+  
   }
 
   async getListing(id) {  // Updated to match the resolver method name
@@ -137,6 +145,7 @@ class ListingService extends RESTDataSource {
   async getAllAmenities() {
     try {
       const amenities = await this.get(`listing/amenities`);
+      console.log('amenities:',+ amenities);
       return amenities;
     } catch (error) {
       console.error('Error fetching amenities:', error);
@@ -156,13 +165,18 @@ class ListingService extends RESTDataSource {
     }
   }
 
-  async getListingCoordinates(id) {
+  async getListingsWithCoordinates() {
     try {
-      const response = await this.get(`listings/${id}/coordinates`);
-      return response.data;
+      const listings = await this.listingRepository.findAll({
+        include: {
+          model: Coordinate,
+          as: 'coordinates'
+        }
+      });
+      return listings;
     } catch (error) {
-      console.error('Error fetching listing coordinates:', error);
-      throw new GraphQLError('Error fetching listing coordinates', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      console.error('Error fetching listings with coordinates:', error);
+      throw new GraphQLError('Error fetching listings with coordinates', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 

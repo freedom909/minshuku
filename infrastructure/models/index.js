@@ -7,8 +7,10 @@ import ReviewOfGuest from './reviewOfGuest.js';
 import ReviewOfHost from './reviewOfHost.js';
 import Booking from './booking.js';
 import Payment from './payment.js';
-import Amenity from './Amenity.js';
+import Amenity from './amenity.js';
 import ListingAmenities from './listingAmenities.js';
+import Coordinate from './coordinate.js';
+import Location from './location.js';
 
 // Define associations
 Listing.associate = (models) => {
@@ -18,6 +20,10 @@ Listing.associate = (models) => {
   Listing.hasMany(models.Payment, { foreignKey: 'listingId', as: 'payments' });
   Listing.belongsToMany(models.Amenity, { through: models.ListingAmenities, foreignKey: 'listingId', as: 'amenities' });
   Listing.belongsTo(models.User, { foreignKey: 'hostId', as: 'host' });
+  Listing.hasOne(models.Coordinate, { foreignKey: 'listingId', as: 'coordinate'});
+  Listing.belongsTo(models.Coordinate, { foreignKey: 'coordinateId', as: 'coordinate'});
+  Listing.belongsTo(models.Location, { foreignKey: 'locationId', as: 'location'});
+  Listing.hasOne(models.Location, { foreignKey: 'locationId', as: 'location'});
 };
 
 ReviewOfGuest.associate = (models) => {

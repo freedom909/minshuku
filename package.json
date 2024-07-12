@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "nodemon index.js",
-    "launch": "node utils/launch.js",
+    "launch": "node infrastructure/utils/launch.js",
     "install-services": "node utils/install.js",
     "db:reset": "node utils/reset.js",
     "launch:accounts": "rover subgraph publish airlock-uatwf@current  --schema ./subgraph-accounts/schema.graphql --name accounts --routing-url http://localhost:4002",
@@ -24,7 +24,6 @@
     "@apollo/server": "^4.10.4",
     "@apollo/subgraph": "^2.8.1",
     "@prisma/client": "^5.10.2",
-    "apollo-server-express": "^3.13.0",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",

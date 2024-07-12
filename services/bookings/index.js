@@ -5,14 +5,14 @@ import { buildSubgraphSchema } from '@apollo/subgraph';
 import { PrismaClient } from '@prisma/client';
 import gql from 'graphql-tag';
 import { readFileSync } from 'fs';
-import { createContext } from '../../infrastructure/helpers/createContext.js';
+import { createContext } from '../../infrastructure/dataSources/createContext.js';
 import resolvers from './resolvers.js';
 import BookingsAPI from './datasources/bookingsApi.js';
 import PaymentsAPI from './datasources/paymentsApi.js';
 import ListingsAPI from './datasources/listingsApi.js';
 import ReviewsAPI from './datasources/reviewsApi.js';
 
-import {AuthenticationError, ForbiddenError}from '../../infrastructure/utils/errors.js';
+import {AuthenticationError, ForbiddenError} from '../../infrastructure/utils/errors.js';
 import http from 'http';
 import cors from 'cors';
 import express from 'express';
@@ -45,5 +45,5 @@ app.use(
   }),
 );
 
-await new Promise((resolve) => httpServer.listen({ port: 4014 }, resolve));
+await new Promise((resolve) => httpServer.listen({ port: 4004 }, resolve));
 console.log(`🚀 Server ready at http://localhost:4014/graphql`);

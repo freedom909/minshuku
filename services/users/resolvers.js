@@ -3,7 +3,7 @@ import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { GraphQLError } from 'graphql';
 
 import { readFileSync } from 'fs';
-import { validateInviteCode } from '../../infrastructure/helpers/validateInvitecode.js';
+import validateInviteCode  from '../../infrastructure/helpers/validateInvitecode.js';
 import DateTimeType from '../../infrastructure/scalar/DateTimeType.js';
 import { authenticateJWT, checkPermissions } from '../../infrastructure/middleware/auth.js';
 import { permissions } from '../../infrastructure/auth/permission.js';
@@ -11,7 +11,7 @@ import UserService from '../../infrastructure/services/userService.js';
 
 import UserRepository from '../../infrastructure/repositories/userRepository.js';
 // import { connectToDatabase } from '../../infrastructure/DB/connectDB.js';
-import  validRegister from '../../infrastructure/utils/valid.js';
+import  {validRegister} from '../../infrastructure/helpers/valid.js';
 import dotenv from 'dotenv';
 import runValidations from './runValidations.js';
 // import {connectToDatabase} from '../../infrastructure/DB/connectDB.js';

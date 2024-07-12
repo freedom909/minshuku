@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize'; // Correct import path for Sequelize
-import sequelize from './sequelize.js'; // Ensure this path is correct
+import { Model, DataTypes } from 'sequelize';
+import sequelize from './seq.js'; // Correct path to seq.js
 
 class Listing extends Model {}
 
@@ -20,19 +20,16 @@ Listing.init({
   bookingNumber: DataTypes.INTEGER,
   latitude: {
     type: DataTypes.FLOAT,
-    allowNull: true, // Initially allow null values
+    allowNull: true,
   },
   longitude: {
-    type: DataTypes.FLOAT, 
-    allowNull: true, // Initially allow null values
+    type: DataTypes.FLOAT,
+    allowNull: true,
   },
-  saleAmount:DataTypes.FLOAT,
-  bookingNumber:DataTypes.INTEGER
-}, 
-{
+}, {
   sequelize,
   modelName: 'Listing',
-  timestamps: true, // This enables createdAt and updatedAt fields
+  timestamps: true,
 });
 
 export default Listing;

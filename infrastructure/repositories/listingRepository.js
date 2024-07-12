@@ -10,7 +10,16 @@ class ListingRepository {
     async init() {
         this.db = await connectToDB()
     }
-          
+       
+    
+    async findAll() {
+        try {
+            return await this.db.collection('listings').find().toArray();
+        } catch (error) {
+            console.error('Error fetching listings from the database:', error);
+            throw new Error('Error fetching listings from the database');
+        }
+    }
     async getListingsTop5ByMoneyBooking() {
         await this.initPromise; // Ensure the database is initialized before proceeding
         if (!this.db) {

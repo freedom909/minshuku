@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './sequelize.js';
+import sequelize from './seq.js';
 
 class ListingAmenities extends Model {}
 

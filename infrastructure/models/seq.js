@@ -1,18 +1,8 @@
-import { Sequelize } from '@sequelize/core';
+import { Sequelize } from 'sequelize';
 
-const sequelize = new Sequelize({
-  dialect: 'mysql',
+const sequelize = new Sequelize('air', 'root', 'princess', {
   host: 'localhost',
-  port: 3306,
-  user: 'root',
-  password: 'princess',
-  database: 'airlock',
-  pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
-  },
+  dialect: 'mysql', // or the dialect you are using
 });
 
 export default sequelize;

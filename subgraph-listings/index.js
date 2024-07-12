@@ -17,8 +17,7 @@ import UserService from '../infrastructure/services/userService.js';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { expressMiddleware } from '@apollo/server/express4';
 import cors from 'cors';
-import router from './router.js';
-
+import router from './router.js'
 
 async function startApolloServer() {
   try {
@@ -70,14 +69,12 @@ async function startApolloServer() {
         })
       })
     );
-    // Use the router
-    // app.use(router);
-    await new Promise((resolve) => httpServer.listen({ port: 4010 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4010/graphql`);
+    app.use(router)
+    await new Promise((resolve) => httpServer.listen({ port: 4013 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4013/graphql`);
   } catch (error) {
     console.error('Error starting server:', error);
   }
 }
 
 startApolloServer();
-

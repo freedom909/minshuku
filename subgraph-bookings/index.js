@@ -1,73 +1,80 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
-import {
-  ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginLandingPageProductionDefault 
-} from '@apollo/server/plugin/landingPage/default';
 import { readFileSync } from 'fs';
 import axios from 'axios';
 import gql from 'graphql-tag';
-import resolvers from './resolvers.js';
-import BookingsAPI from './datasources/bookingsApi.js';
-import ListingsAPI from './datasources/listingsApi.js';
-import PaymentsAPI from './datasources/paymentsApi.js';
-import errors from '../infrastructure/utils/errors.js';
-
-const { AuthenticationError } = errors;
+import express from 'express';
+import { AuthenticationError } from '../infrastructure/utils/errors.js';
+import http from 'http';
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+import resolvers from './resolvers.js';
 
-let plugins = [];
-if (process.env.NODE_ENV === 'production') {
-  plugins = [ApolloServerPluginLandingPageProductionDefault({ embed: true, graphRef: 'myGraph@prod' })]
-} else {
-  plugins = [ApolloServerPluginLandingPageLocalDefault({ embed: true })]
-}
+// import PaymentService from '../infrastructure/services/paymentService.js';
+import ListingService from '../infrastructure/services/listingService.js';
+import UserService from '../infrastructure/services/userService.js';
+import bookingService from '../infrastructure/services/bookingService.js';
+import { initializeContainer, container } from '../infrastructure/DB/container.js';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { expressMiddleware } from '@apollo/server/express4';
+import cors from 'cors';
+
 
 async function startApolloServer() {
-  const server = new ApolloServer({
-    schema: buildSubgraphSchema({
-      typeDefs,
-      resolvers,
-      plugins
-    }),
-  });
-
-  const port = 4004; // TODO: change port number
-  const subgraphName = 'bookings'; // TODO: change to subgraph name
-
   try {
-    const { url } = await startStandaloneServer(server, {
-      context: async ({ req }) => {
-        const token = req.headers.authorization || '';
-        const userId = token.split(' ')[1]; // get the user name after 'Bearer '
+    await initializeContainer();
 
-        let userInfo = {};
-        if (userId) {
-          const { data } = await axios.get(`http://localhost:4011/login/${userId}`)
-            .catch((error) => {
-              throw new AuthenticationError();
-            });
+    const app = express();
+    const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+    const httpServer = http.createServer(app);
 
-          userInfo = { userId: data.id, userRole: data.role };
+    const server = new ApolloServer({
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+                await container.resolve('pool').client.close();
+              }
+            };
+          }
         }
-        return {
-          ...userInfo,
-          dataSources: {
-            bookingsAPI: new BookingsAPI(),
-            listingsAPI: new ListingsAPI(),
-            paymentsAPI: new PaymentsAPI(),
-          },
-        };
-      },
-      listen: {
-        port,
-      },
+      ],
+      context: async ({ req }) => ({
+        token: req.headers.authorization || '',
+        user: req.headers.user || null,
+        dataSources: {        
+          listingService: container.resolve('listingService'),
+          bookingService: container.resolve('bookingService'),
+          userService: container.resolve('userService'),
+        }
+      })
     });
 
-    console.log(`🚀 Subgraph ${subgraphName} running at ${url}`);
-  } catch (err) {
-    console.error(err);
+    await server.start();
+
+    app.use(
+      '/graphql',
+      cors(),
+      express.json(),
+      expressMiddleware(server, {
+        context: async ({ req }) => ({
+          token: req.headers.authorization || '',
+          dataSources: {
+            listingService: container.resolve('listingService'),
+            bookingService: container.resolve('bookingService'),
+            userService: container.resolve('userService'),
+          }
+        })
+      })
+    );
+    app.use(router)
+    await new Promise((resolve) => httpServer.listen({ port: 4014 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4014/graphql`);
+  } catch (error) {
+    console.error('Error starting server:', error);
   }
 }
 
