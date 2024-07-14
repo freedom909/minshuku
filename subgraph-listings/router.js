@@ -1,5 +1,6 @@
 import { Router } from 'express';
 const router = Router();
+import { container } from '../infrastructure/DB/container.js';
 
 router.get('/hot-listings-by-money', async (req, res) => {
     try {
@@ -58,4 +59,16 @@ router.get('/hot-listings-by-booking-number', async (req, res) => {
     }
   });
   
+  router.get('/hotListingsByMoneyBookingTop5', async (req, res) => {
+    try {
+      const listingService = container.resolve('listingService');
+      const listings = await listingService.hotListingsByMoneyBookingTop5();
+      res.json(listings);
+    } catch (error) {
+      console.error('Error fetching hot listings by money:', error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+
+
   export default router

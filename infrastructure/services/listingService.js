@@ -1,4 +1,4 @@
-import { RESTDataSource } from '@apollo/datasource-rest';
+ import { RESTDataSource } from '@apollo/datasource-rest';
 import { GraphQLError } from 'graphql';
 import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
@@ -6,6 +6,8 @@ import ListingRepository from '../repositories/listingRepository.js';
 import dotenv from 'dotenv';
 import connectToDB from '../DB/mysqlDB.js';
 import mysql from 'mysql2/promise';
+import { Sequelize , QueryTypes} from 'sequelize';
+import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
 
 dotenv.config();
@@ -21,59 +23,58 @@ const permissionsMiddleware = shield({
 });
 
 class ListingService extends RESTDataSource {
-  constructor( listingRepository) {
-  super();
-    // Initialize the repository with the database instance
-     this.listingRepository = listingRepository;  
-     this.baseURL = 'http://localhost:4013'
-}
+  constructor() {
+    super();
+    this.baseURL = 'http://localhost:4013';
+  }
 willSendRequest(request) {
   if (this.context && this.context.user) {
     request.headers.set('Authorization', this.context.user.token);
   }
 }
   
-  async hotListingsByMoneyBookingTop5() {
-    const query=`
+async hotListingsByMoneyBookingTop5() {
+  const query = `
     SELECT saleAmount FROM listings ORDER BY saleAmount DESC LIMIT 5
-    `
-    const listings=await queryDatabase(query)
-    return listings.map(listing=>({
-      ...listing,
-      saleAmount: parseFloat(listing.saleAmount.toFixed(2))
-    }))
-  }
-  
+  `;
+  const listings = await this.sequelize.query(query, { type: QueryTypes.SELECT });
+  return listings.map(listing => ({
+    ...listing,
+    saleAmount: parseFloat(listing.saleAmount.toFixed(2))
+  }));
+}
     
     async hotListingsByNumberBookingTop5() {
       const query=`
       SELECT saleAmount,bookingNumber FROM listings ORDER BY bookingNumber DESC LIMIT 5
       `;
-      const listings=await queryDatabase(query)
+      const listings=await this.sequelize.query(query, { type: QueryTypes.SELECT });
       return listings.map(listing=>({
        ...listing,
         saleAmount: parseFloat(listing.saleAmount.toFixed(2)),
       }))
     }
  
-  async getHostListings() {
-    // Mock data, replace with your actual data fetching logic
-    return [
-      { description: "Cozy apartment", coordinates: { latitude: 40.7128, longitude: -74.0060 } },
-      { description: "Beach house", coordinates: { latitude: 34.0194, longitude: -118.4912 } }
-    ];
-  }
   async getListingsForUser(userId) {
     if (!this.context.user) {
       throw new GraphQLError('You must be logged in to view listings', { extensions: { code: 'UNAUTHENTICATED' } });
     }
-    return this.get(`user/${userId}/listings`);
+    try {
+    const query=`SELECT * from listing where userId=${userId}`
+    return this.sequelize.query(query,{type:QueryTypes.SELECT})
+    } catch (error) {
+      console.error('Error fetching listings for user:', error);
+      throw new GraphQLError('Error fetching listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
   }
 
   async getAllListings() {
     try {
-      const response = await this.get('listings');
-      return response.data;
+      const query=`
+      SELECT * FROM listings
+      `;
+      const response = await this.sequelize.query(query, { type: QueryTypes.SELECT })
+      return response
     } catch (error) {
       console.error('Error fetching all listings:', error);
       throw new GraphQLError('Error fetching listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
@@ -85,57 +86,110 @@ willSendRequest(request) {
       throw new GraphQLError('You must be logged in to view listings', { extensions: { code: 'UNAUTHENTICATED' } });
     }
     try {
-      const response = await this.get(`listings/${id}`);
+      const query=`SELECT * FROM listings WHERE id=${id}`
+      const response = await this.sequelize.query(query,{type:QueryTypes.SELECT})
+      if (response.data.length > 0) {
       return response.data;
+      } else {
+        throw new GraphQLError('Listing not found', { extensions: { code: 'NOT_FOUND' } });
+      }
     } catch (error) {
       console.error('Error fetching listing by ID:', error);
       throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
-
+  
+  async searchListings({ numOfBeds, reservedDate, page, limit, sortBy }) {
+    const { checkInDate, checkOutDate } = reservedDate;
+    
+    if(!Number.isInteger(numOfBeds) || numOfBeds <= 0) {
+      throw new Error('Number of beds must be a positive integer');
+    }
+  
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    if(checkIn > checkOut) {
+      throw new Error('Check-in date must be before check-out date');
+    }
+  
+    const checkInISO = checkIn.toISOString().slice(0, 10);
+    const checkOutISO = checkOut.toISOString().slice(0, 10);
+  
+    try {
+      const query = `
+        SELECT * FROM listings 
+        WHERE numOfBeds = :numOfBeds 
+          AND checkInDate = :checkInDate 
+          AND checkOutDate = :checkOutDate
+        LIMIT :limit OFFSET :offset
+      `;
+      
+      const response = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: {
+          numOfBeds,
+          checkInDate: checkInISO,
+          checkOutDate: checkOutISO,
+          limit: parseInt(limit, 10),
+          offset: (parseInt(page, 10) - 1) * parseInt(limit, 10),
+        }
+      });
+  
+      return response;
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      throw new Error('Error fetching listings');
+    }
+  }
+  
   async getListings({ numOfBeds, page, limit, sortBy }) {
-    // const { page = 1, limit = 5, sortBy, numOfBeds: minNumOfBeds } = req.query;
-    const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10); 
+    const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10);
     let sortOrder = { costPerNight: -1 }; // default descending cost
-    if (sortBy === "COST_ASC") {
+    if (sortBy === 'COST_ASC') {
       sortOrder = { costPerNight: 1 };
     }
+
     try {
-      const response = await this.get(
-        `listings?numOfBeds=${numOfBeds}&page=${page}&limit=${limit}&sortBy=${sortBy}`
-      ).sort(sortOrder)
-      .skip(skipValue)
-      .limit(parseInt(limit, 10))
-      .toArray();
+      const response = await this.get('listings', {
+        numOfBeds,
+        page,
+        limit,
+        sortBy,
+      });
       return response.data;
     } catch (error) {
       console.error('Error fetching listings:', error);
-      throw new GraphQLError('Error fetching listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      throw new Error('Failed to fetch listings');
     }
   }
+
 
   async getFeaturedListings(limit) {  
     if(!Number.isInteger(limit) || limit <= 0) {
       throw new Error('Limit must be a positive integer');
     }
     try {
-      const response = await this.get(`featured-listings?limit=${limit}`);
-      console.log('API Response:', response);
-      if (!response || !response.data) {
-        throw new Error('Invalid response from API');
-      }
-      return response.data;
+      const query=`select * from listings where isFeatured=1 LIMIT ${limit}`
+      const response = await this.sequelize.query(query, { type: QueryTypes.SELECT });    
+    
+      return response;
     } catch (error) {
       console.error('Error fetching featured listings:', error);
       throw new GraphQLError('Error fetching featured listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
-  
+    } 
   }
 
   async getListing(id) {  // Updated to match the resolver method name
     try {
-      const listingData = await this.get(`listing/${id}`);
-      return listingData;
+      const query= `SELECT * FROM listings WHERE id = :id LIMIT 1`
+      const [listing] = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { id } // Using replacements to safely insert the id into the query
+      });
+      if (!listing) {
+        throw new Error('Listing not found');
+      }
+      return listing;
     } catch (error) {
       console.error('Error fetching listing:', error);
       throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
@@ -144,8 +198,23 @@ willSendRequest(request) {
 
   async getAllAmenities() {
     try {
-      const amenities = await this.get(`listing/amenities`);
-      console.log('amenities:',+ amenities);
+      const query = `SELECT * FROM AMENITIES`;
+      const response = await this.sequelize.query(query, { type: QueryTypes.SELECT });
+      console.log('Raw database response:', response);
+      // Ensure the response contains data
+      if (!response|| !Array.isArray(response)) {
+        throw new Error('Invalid response from the database');
+      }
+
+       // Map the amenities and provide default values for non-nullable fields
+      const amenities = response.map(amenity => ({
+        ...amenity,
+        id: amenity.id,
+        name: amenity.name,
+        // Provide a default value if category is null
+        category: amenity.category ? amenity.category.replace(' ', '_').toUpperCase() : 'UNKNOWN',
+      })).filter(amenity => amenity.name && amenity.category); // Filter out amenities without name or category;
+      console.log('Processed amenities:', amenities);
       return amenities;
     } catch (error) {
       console.error('Error fetching amenities:', error);
@@ -211,6 +280,36 @@ willSendRequest(request) {
       throw new GraphQLError('Error updating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
+
+
+
+   async hotListingsByMoneyBookingTop5() {
+    const query = `
+      SELECT saleAmount FROM listings ORDER BY saleAmount DESC LIMIT 5
+    `;
+    const listings = await this.sequelize.query(query, { type: QueryTypes.SELECT });
+    return listings.map(listing => ({
+      ...listing,
+      saleAmount: parseFloat(listing.saleAmount.toFixed(2))
+    }));
+  }
+
+  async getListings({ numOfBeds, page, limit, sortBy }) {
+    const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    let sortOrder = { costPerNight: -1 }; // default descending cost
+    if (sortBy === 'COST_ASC') {
+      sortOrder = { costPerNight: 1 };
+    }
+    try {
+      const response = await this.get(
+        `listings?numOfBeds=${numOfBeds}&page=${page}&limit=${limit}&sortBy=${sortBy}`
+      ); // Using this.get() method to fetch data
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      throw new Error('Failed to fetch listings');
+    }
+  } 
 }
 
 export default ListingService;

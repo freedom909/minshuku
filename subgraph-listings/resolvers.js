@@ -2,14 +2,12 @@ import { AuthenticationError, ForbiddenError} from '../infrastructure/utils/erro
 
 const resolvers = {
   Query: {
-    hostListings: async (_, __, { dataSources }) => {
+    hostListings: async (_, args, { dataSources }) => {
       const {listingService} = dataSources
-        const listings = await listingService.getListingsWithCoordinates();
+        const listings = await listingService.getListings(args);
         return listings;
       },
       
-  
-
     hotListingsByMoney: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       try {
@@ -29,6 +27,10 @@ const resolvers = {
       }
     },
     
+    listings: async(_, args, { dataSources }) => {
+      const { listingService } = dataSources;
+      return await listingService.getListings(args);
+    },
     listing: async (_, { id }, { dataSources }) => {
       const { listingService } = dataSources;
       return await listingService.getListing(id);

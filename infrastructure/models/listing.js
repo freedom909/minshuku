@@ -18,6 +18,10 @@ Listing.init({
   isFeatured: DataTypes.BOOLEAN,
   saleAmount: DataTypes.FLOAT,
   bookingNumber: DataTypes.INTEGER,
+  createdAt: DataTypes.DATE,
+  updatedAt: DataTypes.DATE,
+  checkInDate: DataTypes.DATE,
+  checkOutDate:DataTypes.DATE,
   latitude: {
     type: DataTypes.FLOAT,
     allowNull: true,

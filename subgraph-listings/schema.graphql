@@ -13,7 +13,7 @@ extend type Query {
   "Returns all possible amenities for a listing"
   listingAmenities: [Amenity!]! @shareable
   "Search results for listings that fit the criteria provided"
-  searchListings(criteria: SearchListingsInput!): [Listing]! @shareable
+  searchListings(criteria: SearchListingsInput!): [Listing] @shareable
   "Returns the listings that match the criteria provided"
   listings: [Listing] 
   "according to sale amount to sort"
@@ -41,6 +41,11 @@ interface Response {
   success: Boolean!
   "Human-readable message for the UI"
   message: String!
+}
+
+input ReservedDateInput {
+  checkInDate: String!
+  checkOutDate: String!
 }
 
 # Input type for creating a listing
@@ -95,12 +100,6 @@ type UpdateListingResponse implements Response {
   listing: Listing @shareable
 }
 
-# Type representing a reserved date for a booking
-type ReservedDate {
-  checkInDate: String! @shareable
-  checkOutDate: String! @shareable
-}
-
 # Type representing an amenity
 type Amenity @key(fields: "id") {
   id: ID!
@@ -113,6 +112,7 @@ enum AmenityCategory {
   ACCOMMODATION_DETAILS
   SPACE_SURVIVAL
   OUTDOORS
+  UNKNOWN
 }
 
 # Enum representing the type of a listing location
@@ -124,6 +124,10 @@ enum LocationType {
   ROOM
 }
 
+type ReservedDate @shareable{
+  checkInDate: String! 
+  checkOutDate: String!
+}
 # Enum representing sorting criteria for listings
 enum SortByCriteria {
   COST_ASC
@@ -132,8 +136,7 @@ enum SortByCriteria {
 
 # Input type for searching listings
 input SearchListingsInput {
-  checkInDate: String!
-  checkOutDate: String!
+reservedDate: ReservedDateInput!
   numOfBeds: Int
   page: Int
   limit: Int
@@ -168,7 +171,7 @@ type GalacticCoordinates @shareable {
 # Type representing a host
 type Host @key(fields: "id") {
   id: ID! @external
-  listings: [Listing]
+  listings: [Listing] @shareable
 }
 
 # Type representing a booking
@@ -187,5 +190,5 @@ type Review @key(fields: "id") {
 # Type representing a guest
 type Guest @key(fields: "id") {
   id: ID!
-  name: String!
+  name: String! @shareable
 }

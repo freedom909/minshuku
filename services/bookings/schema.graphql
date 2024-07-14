@@ -131,5 +131,5 @@ type CreateBookingResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String!
   "The newly-created booking"
-  booking: NewBookingResponse
+  booking: NewBookingResponse 
 }

@@ -2,22 +2,15 @@ import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { readFileSync } from 'fs';
-import axios from 'axios';
 import gql from 'graphql-tag';
 import express from 'express';
-import { AuthenticationError } from '../infrastructure/utils/errors.js';
-import http from 'http';
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-import resolvers from './resolvers.js';
-import bookingService from '../infrastructure/services/bookingService.js';
-import ListingService from '../infrastructure/services/listingService.js';
-import userService from '../infrastructure/services/userService.js';
 import { initializeContainer, container } from '../infrastructure/DB/container.js';
-import UserService from '../infrastructure/services/userService.js';
+import resolvers from './resolvers.js';
+import http from 'http';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { expressMiddleware } from '@apollo/server/express4';
 import cors from 'cors';
-import router from './router.js'
+import router from './router.js'; // Ensure this is correctly imported
 
 async function startApolloServer() {
   try {
@@ -35,7 +28,7 @@ async function startApolloServer() {
           async serverWillStart() {
             return {
               async drainServer() {
-                await container.resolve('pool').client.close();
+                await container.resolve('db').close();
               }
             };
           }
@@ -43,15 +36,13 @@ async function startApolloServer() {
       ],
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
-        user: req.headers.user || null,
-        dataSources: {        
+        dataSources: {
           listingService: container.resolve('listingService'),
-          bookingService: container.resolve('bookingService'),
-          userService: container.resolve('userService'),
         }
       })
     });
 
+    app.use(router); // Use router here
     await server.start();
 
     app.use(
@@ -63,13 +54,11 @@ async function startApolloServer() {
           token: req.headers.authorization || '',
           dataSources: {
             listingService: container.resolve('listingService'),
-            bookingService: container.resolve('bookingService'),
-            userService: container.resolve('userService'),
           }
         })
       })
     );
-    app.use(router)
+
     await new Promise((resolve) => httpServer.listen({ port: 4013 }, resolve));
     console.log(`🚀 Server ready at http://localhost:4013/graphql`);
   } catch (error) {

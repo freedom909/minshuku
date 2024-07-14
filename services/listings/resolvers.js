@@ -39,21 +39,23 @@ const resolvers = {
     listingAmenities: async (_, __, { dataSources }) => {
       return dataSources.listingService.getAllAmenities()
     },
-    searchListings: async (parent, { criteria }, { dataSources }) => {
-      const {listingService}=dataSources
-      const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } = criteria;
-      const listings = await listingService.getListings({
-        numOfBeds, checkInDate, checkOutDate
+    searchListings: async (_, { criteria }, { dataSources }) => {
+      const { listingService } = dataSources;
+      const { numOfBeds, reservedDate, page, limit, sortBy } = criteria;
+      const listings = await listingService.searchListings({
+        numOfBeds, reservedDate, page, limit, sortBy
       });
       if (sortBy) {
-        let sortedlistings = [];
-        for (let i of Object.keys(listings)) {
-          console.log("i", i, "listings[i]", JSON.stringify(listings));
-          sortedlistings = [...sortedlistings, ...sortedlistings(listings[i], sortBy)];
-        };
+        listings.sort((a, b) => {
+          if (sortBy === 'COST_ASC') {
+            return a.costPerNight - b.costPerNight;
+          }
+          return b.costPerNight - a.costPerNight;
+        });
       }
-      return listings
+      return listings;
     },
+    
   },
 
   Mutation: {
