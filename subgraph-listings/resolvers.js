@@ -52,7 +52,14 @@ const resolvers = {
     searchListings: async (_, { criteria }, { dataSources }) => {
       const { listingService, bookingService } = dataSources;
       const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } = criteria;
-      const listings = await listingService.getListings({ numOfBeds, page, limit, sortBy });
+      const listings = await listingService.searchListings({
+        numOfBeds,
+        checkInDate: reservedDate.checkInDate,
+        checkOutDate: reservedDate.checkOutDate,
+        page,
+        limit,
+        sortBy
+      });
       const listingAvailability = await Promise.all(
         listings.map(listing =>
           bookingService.isListingAvailable({ listingId: listing.id, checkInDate, checkOutDate })

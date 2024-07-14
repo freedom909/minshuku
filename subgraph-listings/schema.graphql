@@ -160,6 +160,8 @@ type Listing @key(fields: "id") {
   coordinates: GalacticCoordinates @shareable
   saleAmount: Float
   bookingNumber: Int
+  checkInDate: String!
+  checkOutDate: String!
 }
 
 # Type representing galactic coordinates for a listing

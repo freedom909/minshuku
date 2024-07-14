@@ -22,10 +22,10 @@ const permissionsMiddleware = shield({
   },
 });
 
-class ListingService extends RESTDataSource {
-  constructor() {
-    super();
-    this.baseURL = 'http://localhost:4013';
+class ListingService {
+  constructor(listingRepository) {
+    this.listingRepository = listingRepository;
+    this.sequelize = sequelize;
   }
 willSendRequest(request) {
   if (this.context && this.context.user) {
