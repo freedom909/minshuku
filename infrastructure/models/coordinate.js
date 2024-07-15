@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js'; // Correct path to seq.js
+import sequelize from './seq.js'; // Ensure this path is correct
 import Listing from './listing.js';
 
 class Coordinate extends Model {}
@@ -18,11 +18,15 @@ Coordinate.init({
     type: DataTypes.FLOAT,
     allowNull: true,
   },
-}, {
+
+  },
+{
   sequelize,
   modelName: 'Coordinate',
   timestamps: true,
 });
-Coordinate.belongsTo(Listing, { foreignKey: 'listingId', constraints:false });
-Listing.hasOne(Coordinate, { foreignKey: 'listingId', constraints:false });
+
+Listing.Coordinate=Listing.belongsTo(Coordinate)
+
+
 export default Coordinate;

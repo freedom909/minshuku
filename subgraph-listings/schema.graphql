@@ -15,7 +15,7 @@ extend type Query {
   "Search results for listings that fit the criteria provided"
   searchListings(criteria: SearchListingsInput!): [Listing] @shareable
   "Returns the listings that match the criteria provided"
-  listings: [Listing] 
+  listings(numOfBeds: Int, page: Int, limit: Int, sortBy: String): [Listing]
   "according to sale amount to sort"
   hotListingsByMoney: [Listing]
   "according to the number of bookings"

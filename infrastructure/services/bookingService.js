@@ -12,8 +12,8 @@ class BookingService extends RESTDataSource {
     return bookingRepoById;
   }
 
-  async getBookingsForListing(id) {
-    const bookingRepoForListing = await this.bookingRepository.getBookingsForListing(id);
+  async getBookingsForListing({listingId, status}) {
+    const bookingRepoForListing = await this.bookingRepository.getBookingsForListing({listingId, status});
     return bookingRepoForListing;
   }
 
@@ -28,8 +28,8 @@ class BookingService extends RESTDataSource {
     return bookings.length === 0;
   }
 
-  async getBookingsForUser(userId) {
-    const bookingRepoForUser = await this.bookingRepository.getBookingsForUser(userId);
+  async getBookingsForUser(userId, status) {
+    const bookingRepoForUser = await this.bookingRepository.getBookingsForUser(userId,status);
     return bookingRepoForUser;
   }
 

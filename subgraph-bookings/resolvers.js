@@ -1,10 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
-import {AuthenticationError, ForbiddenError} from '../infrastructure/utils/errors.js';
+import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
 import { requireAuth, requireRole } from '../infrastructure/auth/authAndRole.js';
-import { Prisma } from '@prisma/client';
 import { permissions } from '../infrastructure/auth/permission.js';
+import { sequelize, Listing, Booking, User } from '../infrastructure/models/booking.js'; // Assuming you have defined your Sequelize models in ../models
+import { User } from '../infrastructure/models/user.js';
+import {Listing} from '../infrastructure/models/listing.js';
+import {sequelize} from '../infrastructure/models/seq.js';
+import { getDateFromISOString } from '../infrastructure/helpers/getDateFromISOString.js';
 const { bookingsWithPermission } = permissions;
-
 
 const resolvers = {
   Query: {
@@ -13,7 +16,7 @@ const resolvers = {
         throw new ForbiddenError('No such booking', { extension: { code: 'forbidden' } });
       }
       if (bookingsWithPermission) {
-        const existingListing = await Prisma.Listing.findUnique({
+        const existingListing = await Listing.findOne({
           where: { id: context.listingId },
         });
         if (!existingListing) {
@@ -28,12 +31,12 @@ const resolvers = {
       if (!userId) {
         throw new AuthenticationError('You need to be logged in to view bookings');
       }
-      const existingUser = await userService.find({ userId });
+      const existingUser = await User.findOne({ where: { id: userId } });
       if (!existingUser) {
         throw new ForbiddenError('User not found', { extension: { code: 'forbidden' } });
       }
       if (existingUser.role === 'GUEST') {
-        const bookings = await bookingService.find({ where: { id: context.bookingsId } });
+        const bookings = await Booking.findAll({ where: { id: context.bookingsId } });
         return bookings;
       }
       return await bookingService.getBookingsForUser(userId);
@@ -80,7 +83,7 @@ const resolvers = {
         throw new ForbiddenError('Insufficient funds', { extension: { code: 'forbidden' } });
       }
       try {
-        const booking = await bookingService.createBooking({
+        const booking = await Booking.create({
           id: uuidv4(),
           listingId,
           checkInDate,

@@ -9,13 +9,13 @@ type Query {
   "All bookings for the given listing, optionally filtered by a BookingStatus"
   bookingsForListing(listingId: ID!, status: BookingStatus): [Booking]!
   "Current booking for guest based on current date"
-  currentGuestBooking: Booking
+  currentGuestBooking: Booking @shareable
   "Upcoming and current bookings for guest based on current date"
-  upcomingGuestBookings: [Booking]!
+  upcomingGuestBookings: [Booking]! @shareable
   "Past bookings for guest based on current date"
-  pastGuestBookings: [Booking]!
+  pastGuestBookings: [Booking]! @shareable
   "A list of bookings for the guest - must be authenticated as guest"
-  guestBookings: [Booking]!
+  guestBookings: [Booking]! @shareable 
   "Query type for fetching booking information"
   booking(id: ID!): Booking
   "Query type for fetching booking information"
@@ -24,10 +24,10 @@ type Query {
 
 type Mutation {
   ### Bookings
-  createBooking(createBookingInput: CreateBookingInput): CreateBookingResponse!
-  cancelBooking(id: ID!): Booking
-  confirmBooking(id: ID!): Booking
-  addFundsToWallet(amount: Float!): AddFundsToWalletResponse!
+  createBooking(createBookingInput: CreateBookingInput): CreateBookingResponse! @shareable
+  cancelBooking(id: ID!): Booking @shareable
+  confirmBooking(id: ID!): Booking @shareable 
+  addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
 }
 
 type AddFundsToWalletResponse implements MutationResponse {
@@ -38,7 +38,7 @@ type AddFundsToWalletResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String!
   "Updated wallet amount"
-  amount: Float
+  amount: Float @shareable
 }
 
 "The status of a booking"
@@ -52,15 +52,15 @@ enum BookingStatus {
 type Booking @key(fields: "id") {
   id: ID!
   "The listing associated with the reservation"
-  listing: Listing!
+  listing: Listing! @shareable
   "The guest that reserved the location"
-  guest: Guest!
+  guest: Guest! @shareable
   "The review associated with the reservation"
-  review: Review
+  review: Review @shareable
   "The guest that reserved the location"
-  checkInDate: DateTime!
+  checkInDate: DateTime! @shareable
   "Check-out date for the reservation"
-  checkOutDate: DateTime!
+  checkOutDate: DateTime! @shareable
   "Total price paid, calculated using the listing's costPerNight and the check-in check-out dates"
   totalPrice: Float!
   "The status of the booking - check BookingStatus type for all possibilities"
@@ -72,9 +72,9 @@ type Booking @key(fields: "id") {
 }
 
 "A booking is reserved for a certain date range, marked by the checkInDate and checkOutDate fields"
-type ReservedDate {
+type ReservedDate @shareable{
   "Date the guest checks in"
-  checkInDate: String!
+  checkInDate: String! 
   "Date the guest checks out"
   checkOutDate: String!
 }

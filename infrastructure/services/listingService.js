@@ -1,4 +1,4 @@
- import { RESTDataSource } from '@apollo/datasource-rest';
+import { RESTDataSource } from '@apollo/datasource-rest';
 import { GraphQLError } from 'graphql';
 import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
@@ -9,6 +9,8 @@ import mysql from 'mysql2/promise';
 import { Sequelize , QueryTypes} from 'sequelize';
 import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
+import Listing from '../models/listing.js';
+import Coordinate from '../models/coordinate.js'
 
 dotenv.config();
 
@@ -141,28 +143,6 @@ async hotListingsByMoneyBookingTop5() {
       throw new Error('Error fetching listings');
     }
   }
-  
-  async getListings({ numOfBeds, page, limit, sortBy }) {
-    const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-    let sortOrder = { costPerNight: -1 }; // default descending cost
-    if (sortBy === 'COST_ASC') {
-      sortOrder = { costPerNight: 1 };
-    }
-
-    try {
-      const response = await this.get('listings', {
-        numOfBeds,
-        page,
-        limit,
-        sortBy,
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching listings:', error);
-      throw new Error('Failed to fetch listings');
-    }
-  }
-
 
   async getFeaturedListings(limit) {  
     if(!Number.isInteger(limit) || limit <= 0) {
@@ -224,25 +204,38 @@ async hotListingsByMoneyBookingTop5() {
 
   async getTotalCost({ id, checkInDate, checkOutDate }) {
     try {
-      const response = await this.get(
-        `listings/${id}/totalCost?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`
-      );
-      return response.data;
+      const checkIn = new Date(checkInDate);
+      const checkOut = new Date(checkOutDate);
+      if(checkIn > checkOut) {
+        throw new Error('Check-in date must be before check-out date');
+      }
+      const listingInstance = await Listing.findOne({
+        where: { id: id },
+        attributes: ['costPerNight']
+      });
+      if (!listingInstance) {
+        throw new Error('Listing not found');
+      }
+      const diffInDays = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+     
+      const totalCost=listingInstance.costPerNight*diffInDays
+      return {cost:totalCost}
     } catch (error) {
       console.error('Error fetching total cost:', error);
       throw new GraphQLError('Error fetching total cost', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
-  }
+  } 
 
-  async getListingsWithCoordinates() {
+  async getCoordinates(id) {
     try {
-      const listings = await this.listingRepository.findAll({
+      const listing = await Listing.findOne({
+        where:({id:id}),
         include: {
           model: Coordinate,
           as: 'coordinates'
         }
       });
-      return listings;
+      return listing;
     } catch (error) {
       console.error('Error fetching listings with coordinates:', error);
       throw new GraphQLError('Error fetching listings with coordinates', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
@@ -295,21 +288,39 @@ async hotListingsByMoneyBookingTop5() {
   }
 
   async getListings({ numOfBeds, page, limit, sortBy }) {
-    const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-    let sortOrder = { costPerNight: -1 }; // default descending cost
-    if (sortBy === 'COST_ASC') {
-      sortOrder = { costPerNight: 1 };
+    console.log('getListings called with:', { numOfBeds, page, limit, sortBy }); 
+    if (numOfBeds === undefined || page === undefined || limit === undefined) {
+      throw new Error('Missing required parameters');
     }
+    const skipValue = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    let sortOrder = 'DESC'; // default descending cost
+  
+    if (sortBy === 'COST_ASC') {
+      sortOrder = 'ASC';
+    }
+  
     try {
-      const response = await this.get(
-        `listings?numOfBeds=${numOfBeds}&page=${page}&limit=${limit}&sortBy=${sortBy}`
-      ); // Using this.get() method to fetch data
-      return response.data;
+      const query = `
+      SELECT * 
+      FROM listings 
+      WHERE numOfBeds = :numOfBeds 
+      ORDER BY costPerNight ${sortOrder}
+      LIMIT :limit OFFSET :skipValue
+    `;
+      
+    const response = await this.sequelize.query(query, {
+      type: QueryTypes.SELECT,
+      replacements: { numOfBeds, limit: parseInt(limit, 10), skipValue },
+    });
+    console.log('Listings fetched:', response); // Debugging line
+    return response; // directly return the response array
+    
     } catch (error) {
       console.error('Error fetching listings:', error);
       throw new Error('Failed to fetch listings');
     }
-  } 
+  }
+  
 }
 
 export default ListingService;

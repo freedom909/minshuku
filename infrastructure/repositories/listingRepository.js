@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { AuthenticationError, ForbiddenError } from '../utils/errors.js';
 import connectToDB from '../DB/mysqlDB.js'
+import Listing from '../models/listing.js';
 class ListingRepository {
     constructor() {
         this.db = null;
@@ -45,12 +46,14 @@ class ListingRepository {
             throw new Error('Error fetching listings from the database');
         }
     }
-    async findOne(query) {
+
+
+    async findOne({id}){
         try {
-            console.log('query:', query);
-            return await this.collection.findOne(query);
-        } catch (error) {
-            console.error('Error in findOne:', error);
+            const listing=await Listing.findOne({ where: { id: id } })
+            return listing;
+        }catch (error) {
+            console.error('Error fetching listing:', error);
             throw error;
         }
     }
@@ -95,17 +98,7 @@ class ListingRepository {
         }
     }
 
-    async getTotalCost({ id, checkInDate, checkOutDate }) {
-        try {
-            const response = await this.httpClient.get(
-                `listings/${id}/totalCost?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`
-            );
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching total cost:', error);
-            throw error;
-        }
-    }
+
 
     async getAmenities(id) {
         try {

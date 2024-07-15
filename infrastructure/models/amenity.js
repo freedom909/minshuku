@@ -33,6 +33,3 @@ Amenity.init({
 
 export default Amenity;
 
-// Repeat similar setup for Listing and ListingAmenities models
-
-// Repeat similar setup for Listing and ListingAmenities models

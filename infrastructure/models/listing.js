@@ -1,6 +1,7 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from './seq.js'; // Correct path to seq.js
 
+
 class Listing extends Model {}
 
 Listing.init({
@@ -35,5 +36,6 @@ Listing.init({
   modelName: 'Listing',
   timestamps: true,
 });
+
 
 export default Listing;

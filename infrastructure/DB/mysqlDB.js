@@ -3,13 +3,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 let pool;
+const db=process.env.DB_NAME
+const user=process.env.DB_USER
+const password=process.env.DB_PASSWORD
+
 export const connectToDB = async () => {
     if (!pool) {
       pool = mysql.createPool({
         host: '127.0.0.1',
-        user: 'root',
-        password: "princess",
-        database: 'air',
+        user: "user",
+        password: "password",
+        database: "db",
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,

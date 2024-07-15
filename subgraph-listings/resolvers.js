@@ -27,13 +27,23 @@ const resolvers = {
       }
     },
     
-    listings: async(_, args, { dataSources }) => {
+    listings: async (_, args, { dataSources }) => {
       const { listingService } = dataSources;
-      return await listingService.getListings(args);
+      try {
+        return await listingService.getListings(args);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+        throw new Error('Failed to fetch listings');
+      }
     },
-    listing: async (_, { id }, { dataSources }) => {
+    listing: async (_, {id}, { dataSources }) => {
       const { listingService } = dataSources;
-      return await listingService.getListing(id);
+      try {
+        return await listingService.getListing(id);
+      } catch (error) {
+        console.error('Error fetching listing:', error);
+        throw new Error('Failed to fetch listing');
+      }
     },
     featuredListings: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
@@ -154,7 +164,7 @@ const resolvers = {
     },
     coordinates: ({ id }, _, { dataSources }) => {
       const { listingService } = dataSources;
-      return listingService.getListingCoordinates(id);
+      return listingService.getCoordinates(id);
     }
   },
 
