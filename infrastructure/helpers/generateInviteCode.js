@@ -10,8 +10,8 @@ const driver = neo4j.driver(
   process.env.NEO4J_URI,
   neo4j.auth.basic(process.env.NEO4J_USERNAME, process.env.NEO4J_PASSWORD)
 );
-  
-  
+
+
   async function generateInviteCode(userId) {
     const session = driver.session();
     const inviteCode = generateUniqueCode(); // Assuming this is a function you have defined

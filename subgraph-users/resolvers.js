@@ -3,6 +3,8 @@ import { loginValidate } from '../infrastructure/helpers/loginValidator.js';
 import { passwordValidate } from '../infrastructure/helpers/RegPassValidator.js';
 import runValidations from '../infrastructure/helpers/runValidations.js';
 import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
+import jwt from 'jsonwebtoken';
+import driver from '../infrastructure/helpers/driver.js';
 import bcrypt from 'bcrypt';
 const resolvers = {
   Mutation: {
@@ -175,49 +177,33 @@ const resolvers = {
       const updatedUser = await userService.editPassword(userId, hashedNewPassword);
       console.log('User after password update:', updatedUser);
       return updatedUser;
+    },
 
+    generateInviteCode: async (_, { }, { dataSources, user }) => {
+      // Ensure that only hosts can generate invite codes
+      if (user.role !== 'HOST') {
+        throw new GraphQLError("Only hosts can generate invite codes", {
+          extensions: { code: "FORBIDDEN" },
+        });
+      }
+      const { userService } = dataSources;
+      const inviteCode = await userService.generateInviteCode(email, user);
+      return { inviteCode };
+    },
+
+    sendInviteCode: async (_, { email }, { dataSources }) => {
+      if (user.role !== 'HOST') {
+        throw new GraphQLError("Only hosts can send invite codes", {
+          extensions: { code: "FORBIDDEN" },
+        });
+      }
+      const { userService } = dataSources;
+      const inviteCode= await userService.generateInviteCode(email);
+      await userService.sendInviteCode(email,inviteCode)
+      return { success: true };
+     
     },
     
-    sendInviteCode: async (_, { email }, { dataSources }) => {
-      const { userService } = dataSources;
-      const user = await userService.getUserByEmailFromDb(email);
-      if (!user) {
-        throw new GraphQLError("User not found", {
-          extensions: { code: "BAD_USER_INPUT" },
-        });
-      }
-
-      const driver = neo4j.driver(
-        'bolt://localhost:7687',
-        neo4j.auth.basic('username', 'password')
-      );
-
-      const session = driver.session();
-
-      try {
-        const inviteCodeValid = await validateInviteCode(session, user.invite_code);
-        if (!inviteCodeValid) {
-          throw new GraphQLError("Invalid invite code", {
-            extensions: { code: "BAD_USER_INPUT" },
-          });
-        }
-
-        return {
-          code: 200,
-          success: true,
-          message: "Invite code sent successfully!",
-          email: user.email,
-        };
-      } catch (error) {
-        console.error('Error in sendInviteCode resolver:', error);
-        throw new GraphQLError('Internal Server Error', {
-          extensions: { code: 'INTERNAL_SERVER_ERROR' },
-        });
-      } finally {
-        await session.close();
-      }
-    },
-
     requestResetPassword: async (_, { email }, { dataSources }) => {
       const { userService } = dataSources
       // Validate the email input (optional step)

@@ -109,11 +109,6 @@ app.get('/profile', requireAuth, async (req, res) => {
   }
 });
 
-// Start your server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
 // Update password
 app.get('/updatePassword', requireAuth, (req, res) => {
@@ -123,5 +118,10 @@ app.get('/updatePassword', requireAuth, (req, res) => {
     return res.redirect('/updatePasswordForm'); // Change the destination as needed
   }
   res.redirect('/login');
+});
+// Start your server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 

@@ -69,9 +69,14 @@ async findByIdAndUpdate(id, update) {
   }
 
   async getUserByEmailFromDb(email) {
-    return await this.db.collection('users').findOne({ email: email });// "message": "this.collection is not a function",
+    try {
+      const user=await this.collection.findOne({ email: email });
+      return user
+    } catch (error) {
+      console.error('Error during findOne:', error);
+      throw error;
+    }
   }
-
 
   // Password methods
   async checkPassword(password, hashedPassword) {
@@ -99,11 +104,11 @@ async findByIdAndUpdate(id, update) {
 
   async findById(id) {
     const query = { _id: ObjectId.createFromHexString(id) };
-    return await this.db.collection('users').findOne(query);
+    return await this.collection.findOne(query);
   }
 
   async updatePassword(id, hashedPassword) {
-    return await this.db.collection('users').updateOne(
+    return await this.collection.updateOne(
       { _id: new ObjectId(id) },
       { $set: { password: hashedPassword } }
     );

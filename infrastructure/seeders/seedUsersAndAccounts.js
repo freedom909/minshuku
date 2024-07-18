@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import User from '../models/user.js';
 import Account from '../models/account.js';
 import sequelize from '../models/seq.js';
 

@@ -1,6 +1,6 @@
 // File: infrastructure/auth/auth.js
 import jwt from 'jsonwebtoken';
-import User from '../models/user.js';
+
 
 // Middleware to check if the user is authenticated and set the user in the request context
 export const authenticateJWT = (req, res, next) => {
