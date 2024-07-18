@@ -1,40 +1,41 @@
 {
-  "name": "air",
+  "name": "infrastructure",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "auth.js",
   "type": "module",
   "scripts": {
-    "launch": "node utils/launch.js",
-    "install-services": "node utils/install.js",
-    "db:reset": "node utils/reset.js",
-    "launch:accounts": "rover subgraph publish airlock-uatwf@current  --schema ./subgraph-accounts/schema.graphql --name accounts --routing-url http://localhost:4002",
-    "launch:listings": "rover subgraph publish airlock-uatwf@current  --schema ./subgraph-listings/schema.graphql --name listings --routing-url http://localhost:4003",
-    "launch:bookings": "rover subgraph publish airlock-uatwf@current  --schema ./subgraph-bookings/schema.graphql --name bookings --routing-url http://localhost:4004",
-    "launch:reviews": "rover subgraph publish airlock-uatwf@current  --schema ./subgraph-reviews/schema.graphql --name reviews --routing-url http://localhost:4005",
-    "launch:payments": "rover subgraph publish airlock-uatwf@current  --schema ./subgraph-payments/schema.graphql --name payments --routing-url http://localhost:4006",
-    "launch:delete-subgraph": "rover subgraph delete my-graph@my-variant --name subgraph-to-delete",
-    "launch:listings-check-current": "rover subgraph check airlock-uatwf@current  --schema ./subgraph-listings/schema.graphql --name listings"
+    "migrate": "npx migrate-mongoose up",
+    "start": "babel-node models/seq.js"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
-    "@prisma/client": "^5.10.2",
+    "@apollo/datasource-rest": "^6.3.0",
+    "awilix": "^10.0.2",
     "axios": "^1.7.2",
-    "cors": "^2.8.5",
-    "fs": "^0.0.1-security",
-    "graphql": "^16.8.0",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "express-validator": "^7.1.0",
+    "google-auth-library": "^9.10.0",
     "graphql-shield": "^7.6.5",
-    "graphql-tag": "^2.12.6",
-    "http": "^0.0.1-security",
+    "hashids": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.7",
-    "paseto": "^3.1.4",
-    "path": "^0.12.7",
-    "url": "^0.11.3"
+    "migrate-mongoose": "^4.0.0",
+    "mongoose": "^8.4.1",
+    "mysql2": "^3.10.1",
+    "neo4j-driver": "^5.22.0",
+    "nodemailer": "^6.9.14",
+    "sequelize": "^6.37.3",
+    "url": "^0.11.3",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "prisma": "^5.10.2"
+    "@babel/cli": "^7.24.7",
+    "@babel/core": "^7.24.7",
+    "@babel/node": "^7.24.7",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-decorators": "^7.24.7",
+    "@babel/preset-env": "^7.24.7"
   }
 }
