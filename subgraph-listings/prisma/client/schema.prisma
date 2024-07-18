@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../../../subgraph-listings/node_modules/../prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Amenity {
+  id       String @id
+  category String
+  name     String
+  listing  ListingAmenities[]
+}
+
+model Listing {
+  id              String              @id 
+  title           String
+  description     String
+  costPerNight    Float
+  hostId          String
+  locationType    String
+  numOfBeds       Int
+  photoThumbnail  String
+  isFeatured      Boolean?
+  amenities       ListingAmenities[]
+  latitude        Float
+  longitude       Float
+}
+
+model ListingAmenities {
+  id        String   @id 
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  listingId String
+  amenity   Amenity  @relation(fields: [amenityId], references: [id])
+  amenityId String
+}
+
+// model GalacticCoordinates {
+//   id        String   @id 
+//   latitude  Float
+//   longitude Float
+//   listing   Listing? 
+// }

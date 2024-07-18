@@ -1,0 +1,31 @@
+{
+  "name": "template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "engines": {
+    "npm": ">=6.0.0",
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "nodemonConfig": {
+    "ext": "*.js, *.graphql"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "dependencies": {
+    "@apollo/datasource-rest": "^6.1.0",
+    "@apollo/server": "^4.9.2",
+    "@apollo/subgraph": "^2.5.3",
+    "axios": "^1.7.2",
+    "graphql": "^16.8.0",
+    "graphql-tag": "^2.12.6"
+  }
+}

@@ -1,0 +1,10 @@
+[
+    {
+      "id": "reviewOfGuest-1",
+      "guestId": "user-2",
+      "listingId": "listing-1",
+      "content": "Had a great time here.",
+      "rating": 4
+    }
+  ]
+  

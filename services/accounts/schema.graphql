@@ -1,0 +1,95 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.7", 
+        import: ["@key", "@shareable"])
+
+# SCALARS
+scalar DateTime
+
+# OBJECTS
+
+type Account @key(fields: "id") {
+  "The unique ID associated with the account."
+  id: ID!
+  "The date and time the account was created."
+  createdAt: DateTime!
+  "The email associated with the account (must be unique)."
+  email: String!
+}
+
+enum Role {
+  ADMIN
+  GUEST
+  HOST
+}
+
+interface MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+}
+
+
+
+"""
+Provides data to update an existing account's email.
+"""
+input UpdateAccountEmailInput {
+  id: ID!
+  email: String!
+}
+
+"""
+Provides data to update an existing account's password.
+"""
+input UpdateAccountPasswordInput {
+  id: ID!
+  newPassword: String!
+  password: String!
+}
+
+"Fields that can be updated"
+input UpdateProfileInput {
+  name: String
+  picture: String
+  description: String
+}
+
+"""
+Provides data to create a new account.
+"""
+input CreateAccountInput {
+  email: String!
+  password: String!
+}
+
+type UserId {
+  id: ID!
+}
+
+interface Node {
+  id: ID!
+}
+
+type _Service {
+  sdl: String
+}
+
+scalar _Any
+
+union _Entity = Account
+
+type Query {
+  viewer: Account
+  account(id: ID!): Account @shareable
+  accounts: [Account] @shareable
+}
+
+extend type Mutation {
+  createAccount(input: CreateAccountInput!): Account!
+  deleteAccount(id: ID!): Boolean!
+  updateAccountEmail(input: UpdateAccountEmailInput!): Account!
+  updateAccountPassword(input: UpdateAccountPasswordInput!): Account!
+}

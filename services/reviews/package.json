@@ -1,0 +1,24 @@
+{
+  "name": "reviews",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "seed": "node prisma/seeders/seed.js",
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/datasource-rest": "^6.3.0",
+    "@prisma/client": "^5.4.2",
+    "axios": "^1.7.2",
+    "path": "^0.12.7",
+    "prisma": "^5.4.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.3"
+  }
+}

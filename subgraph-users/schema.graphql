@@ -1,0 +1,195 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.7",
+  import: ["@key","@shareable"])
+
+enum Role {
+  ADMIN
+  HOST
+  GUEST
+}
+
+# SCALARS
+scalar DateTime
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
+input SignUpInput {
+  email: String!
+  password: String!
+  name: String!
+  nickname: String!
+  role: Role = GUEST
+  picture: String
+  inviteCode: String
+}
+
+input UpdatePasswordInput {
+  userId: ID!
+  newPassword: String!
+  password: String!
+}
+
+interface Node {
+  id: ID!
+}
+
+"The response after updating a profile"
+type UpdateProfileResponse implements Response {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+  "Updated user"
+  user: User 
+}
+
+"Fields that can be updated"
+input UpdateProfileInput {
+  "The user's first and last name"
+  name: String
+  "The user's profile photo URL"
+  picture: String
+  "The host's profile bio description, will be shown in the listing"
+  description: String
+}
+
+interface Response {
+  "Similar to HTTP status code, represents the status of the response"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+}
+
+interface User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String!
+  "The user's role"
+  role: Role!
+  "The user's profile photo URL"
+  picture: String
+  "The nickname of the user"
+  nickname: String!
+}
+
+type SignInResponse  implements Response {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+  "The user's JWT"
+  token: String!
+  "The user's ID"
+  userId: ID!
+  "The user's role"
+  role: Role!
+}
+
+type AuthPayload {
+  "The user's JWT"
+  token: String!
+  "The user's ID"
+  userId: ID!
+  "The user's role"
+  role: Role
+}
+
+type Host implements User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String! @shareable
+  "The user's profile photo URL"
+  picture: String @shareable
+  "The host's profile bio description, will be shown in the listing"
+  description: String @shareable
+  "The user's chosen nickname (must be unique)"
+  nickname: String!
+  "The role of the user"
+  role: Role!
+}
+
+type Guest implements User @key(fields: "id") {
+  id: ID!
+  "The user's first and last name"
+  name: String! @shareable
+  "The user's profile photo URL"
+  picture: String @shareable
+  "The user's chosen nickname (must be unique)"
+  nickname: String!
+  "The role of the user"
+  role: Role!
+}
+
+type _Service {
+  sdl: String
+}
+
+type UserId {
+  id: ID!
+}
+
+scalar _Any
+
+union _Entity = Host | Guest | Generator
+
+type Query {
+  getUser(id: ID!): User
+}
+
+type Generator {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  createdBy: User!
+  isActive: Boolean!
+}
+
+type ReqResetPwdResponse implements Response {
+  message: String!
+  code: Int!
+  success: Boolean!
+  link: String!
+  authPayload: AuthPayload!
+}
+
+type ForgotPasswordResponse implements Response {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+  "The user's email address"
+  email: String!
+}
+
+type InviteCodeResponse implements Response{
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+}
+
+type Mutation {
+  signUp(input: SignUpInput!):AuthPayload!
+  signIn(input: SignInInput!): SignInResponse!
+  requestResetPassword(email: String!): ReqResetPwdResponse!
+  logout: Boolean!
+  forgotPassword(email: String!):ForgotPasswordResponse!
+  updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
+  sendInviteCode(email: String!): InviteCodeResponse!
+   "Updates the logged-in user's profile information"
+  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
+}
