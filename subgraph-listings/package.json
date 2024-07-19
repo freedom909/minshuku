@@ -28,18 +28,17 @@
     "@apollo/datasource-rest": "^6.0.1",
     "@apollo/server": "^4.9.1",
     "@apollo/subgraph": "^2.8.0",
-    "@prisma/client": "^5.4.2",
     "@sequelize/core": "^7.0.0-alpha.37",
     "awilix": "^10.0.2",
     "axios": "^1.7.2",
     "date-fns": "^2.30.0",
+    "dotenv": "^16.4.5",
     "esm": "^3.2.25",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "http": "^0.0.1-security",
     "mysql2": "^3.6.0",
-    "postinstall": "^0.8.0",
-    "prisma": "^5.4.2"
+    "postinstall": "^0.8.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",

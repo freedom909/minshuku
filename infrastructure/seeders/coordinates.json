@@ -1,5 +1,13 @@
 [
-    { "listingId": "listingId-1", "latitude": 58.130, "longitude": 125.360 },
-    { "listingId": "listingId-2", "latitude": 40.7128, "longitude": -74.0060 },
-    { "listingId": "listingId-3", "latitude": 34.0194, "longitude": -118.4912 }
-]
+    { "coordinateId": 1, "listingId": "listingId-1", "latitude": 58.130, "longitude": 125.0360 },
+    { "coordinateId": 2, "listingId": "listingId-1", "latitude": 58.130, "longitude": 125.0360 },
+    { "coordinateId": 3, "listingId": "listingId-2", "latitude": 40.7128, "longitude": -74.060 },
+    { "coordinateId": 4, "listingId": "listingId-3", "latitude": 34.0194, "longitude": -118.14912 },
+    { "coordinateId": 5, "listingId": "listingId-4", "latitude": 58.1130, "longitude": 125.3260 },
+    { "coordinateId": 6, "listingId": "listingId-5", "latitude": 40.71128, "longitude": -74.30060 },
+    { "coordinateId": 7, "listingId": "listingId-6", "latitude": 34.02194, "longitude": -118.34912 },
+    { "coordinateId": 8, "listingId": "listingId-7", "latitude": 58.14230, "longitude": 125.4360 },
+    { "coordinateId": 9, "listingId": "listingId-8", "latitude": 40.71128, "longitude": -74.50060 },
+    { "coordinateId": 10, "listingId": "listingId-10", "latitude": 34.40194, "longitude": -118.54912 }
+  ]
+  

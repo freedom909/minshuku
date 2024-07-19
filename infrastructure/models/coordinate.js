@@ -1,32 +1,24 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js'; // Ensure this path is correct
-import Listing from './listing.js';
+import sequelize from './seq.js'; // Correct path to seq.js
 
-class Coordinate extends Model {}
+class Coordinates extends Model {}
 
-Coordinate.init({
+Coordinates.init({
   coordinateId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     primaryKey: true,
-    autoIncrement: true,
   },
-  latitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
+  latitude: DataTypes.FLOAT,
+  longitude: DataTypes.FLOAT,
+  listingId: {
+    type: DataTypes.STRING, 
   },
-  longitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
-  },
-
-  },
-{
+  createdAt: DataTypes.DATE,
+  updatedAt: DataTypes.DATE,
+}, {
   sequelize,
-  modelName: 'Coordinate',
+  modelName: 'Coordinates',
   timestamps: true,
 });
 
-Listing.Coordinate=Listing.belongsTo(Coordinate)
-
-
-export default Coordinate;
+export default Coordinates;

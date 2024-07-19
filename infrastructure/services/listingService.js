@@ -1,4 +1,5 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
+import { QueryTypes } from 'sequelize'; // Ensure this is imported
 import { GraphQLError } from 'graphql';
 import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
@@ -6,7 +7,7 @@ import ListingRepository from '../repositories/listingRepository.js';
 import dotenv from 'dotenv';
 import connectToDB from '../DB/connectMysqlDB.js';
 import mysql from 'mysql2/promise';
-import { Sequelize , QueryTypes} from 'sequelize';
+
 import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
 import Listing from '../models/listing.js';
@@ -25,7 +26,7 @@ const permissionsMiddleware = shield({
 });
 
 class ListingService {
-  constructor(listingRepository) {
+  constructor(listingRepository,sequelize) {
     this.listingRepository = listingRepository;
     this.sequelize = sequelize;
   }
@@ -159,12 +160,12 @@ async hotListingsByMoneyBookingTop5() {
     } 
   }
 
-  async getListing(id) {  // Updated to match the resolver method name
+  async getListing(id) {
     try {
-      const query= `SELECT * FROM listings WHERE id = :id LIMIT 1`
+      const query = `SELECT * FROM listings WHERE id = :id LIMIT 1`;
       const [listing] = await this.sequelize.query(query, {
         type: QueryTypes.SELECT,
-        replacements: { id } // Using replacements to safely insert the id into the query
+        replacements: { id },
       });
       if (!listing) {
         throw new Error('Listing not found');
@@ -172,9 +173,29 @@ async hotListingsByMoneyBookingTop5() {
       return listing;
     } catch (error) {
       console.error('Error fetching listing:', error);
-      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      throw new GraphQLError('Error fetching listing', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
     }
   }
+
+  async getCoordinates(id) {
+    try {
+      const query = `SELECT * FROM coordinates WHERE listingId = :id`;
+      const coordinates = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { id } // Using replacements to safely insert the id into the query
+      });
+      if (!coordinates || coordinates.length === 0) {
+        throw new Error('Coordinates not found');
+      }
+      return coordinates;
+    } catch (error) {
+      console.error('Error fetching coordinates:', error);
+      throw new GraphQLError('Error fetching coordinates', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+  
 
   async getAllAmenities() {
     try {
@@ -226,21 +247,7 @@ async hotListingsByMoneyBookingTop5() {
     }
   } 
 
-  async getCoordinates(id) {
-    try {
-      const listing = await Listing.findOne({
-        where:({id:id}),
-        include: {
-          model: Coordinate,
-          as: 'coordinates'
-        }
-      });
-      return listing;
-    } catch (error) {
-      console.error('Error fetching listings with coordinates:', error);
-      throw new GraphQLError('Error fetching listings with coordinates', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
-  }
+
 
   async createListing({ title, description, price, locationId, hostId }) {
     if (!this.context.user) {

@@ -1,7 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from './seq.js'; // Correct path to seq.js
 
-
 class Listing extends Model {}
 
 Listing.init({
@@ -22,20 +21,11 @@ Listing.init({
   createdAt: DataTypes.DATE,
   updatedAt: DataTypes.DATE,
   checkInDate: DataTypes.DATE,
-  checkOutDate:DataTypes.DATE,
-  latitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
-  },
-  longitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
-  },
+  checkOutDate: DataTypes.DATE,
 }, {
   sequelize,
   modelName: 'Listing',
   timestamps: true,
 });
-
 
 export default Listing;
