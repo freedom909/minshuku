@@ -7,7 +7,6 @@ import ListingRepository from '../repositories/listingRepository.js';
 import dotenv from 'dotenv';
 import connectToDB from '../DB/connectMysqlDB.js';
 import mysql from 'mysql2/promise';
-
 import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
 import Listing from '../models/listing.js';
@@ -26,7 +25,7 @@ const permissionsMiddleware = shield({
 });
 
 class ListingService {
-  constructor(listingRepository,sequelize) {
+  constructor(listingRepository) {
     this.listingRepository = listingRepository;
     this.sequelize = sequelize;
   }
@@ -160,12 +159,12 @@ async hotListingsByMoneyBookingTop5() {
     } 
   }
 
-  async getListing(id) {
+  async getListing(id) {  // Updated to match the resolver method name
     try {
-      const query = `SELECT * FROM listings WHERE id = :id LIMIT 1`;
+      const query= `SELECT * FROM listings WHERE id = :id LIMIT 1`
       const [listing] = await this.sequelize.query(query, {
         type: QueryTypes.SELECT,
-        replacements: { id },
+        replacements: { id } // Using replacements to safely insert the id into the query
       });
       if (!listing) {
         throw new Error('Listing not found');
@@ -173,30 +172,38 @@ async hotListingsByMoneyBookingTop5() {
       return listing;
     } catch (error) {
       console.error('Error fetching listing:', error);
-      throw new GraphQLError('Error fetching listing', {
+      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
+  async getCoordinates(listingId) {
+    try {
+      console.log('Fetching coordinates for listingId:', listingId); // Log the listingId being queried
+
+      const query = `
+        SELECT c.* FROM coordinates AS c
+        JOIN listings AS l ON l.id = c.listingId
+        WHERE l.id = :listingId
+      `;
+      const coordinates = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { listingId },
+      });
+
+      console.log('Coordinates result:', coordinates); // Log the result of the query
+
+      if (!coordinates || coordinates.length === 0) {
+        throw new Error('Coordinates not found');
+      }
+
+      return coordinates[0]; // Return the first coordinate object
+    } catch (error) {
+      console.error('Error fetching coordinates:', error);
+      throw new GraphQLError('Error fetching coordinates', {
         extensions: { code: 'INTERNAL_SERVER_ERROR' },
       });
     }
   }
-
-  async getCoordinates(id) {
-    try {
-      const query = `SELECT * FROM coordinates WHERE listingId = :id`;
-      const coordinates = await this.sequelize.query(query, {
-        type: QueryTypes.SELECT,
-        replacements: { id } // Using replacements to safely insert the id into the query
-      });
-      if (!coordinates || coordinates.length === 0) {
-        throw new Error('Coordinates not found');
-      }
-      return coordinates;
-    } catch (error) {
-      console.error('Error fetching coordinates:', error);
-      throw new GraphQLError('Error fetching coordinates', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
-  }
-  
-
   async getAllAmenities() {
     try {
       const query = `SELECT * FROM AMENITIES`;

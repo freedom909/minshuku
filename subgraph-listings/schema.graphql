@@ -157,7 +157,7 @@ type Listing @key(fields: "id") {
   numberOfUpcomingBookings: Int!
   currentlyBookedDates: [ReservedDate]! @shareable
   totalCost(checkInDate: String!, checkOutDate: String!): Float!
-  coordinates: GalacticCoordinates @shareable
+  coordinates: Coordinates @shareable
   saleAmount: Float
   bookingNumber: Int
   checkInDate: String!
@@ -165,7 +165,7 @@ type Listing @key(fields: "id") {
 }
 
 # Type representing galactic coordinates for a listing
-type GalacticCoordinates @shareable {
+type Coordinates @shareable {
   latitude: Float!
   longitude: Float!
 }

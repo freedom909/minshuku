@@ -2,7 +2,7 @@ import pkg from 'jsonwebtoken';
 const { sign } = pkg;
 
 // Secret key for signing tokens (replace this with your actual secret)
-const JWT_SECRET = 'your_jwt_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET || 'good';
 
 // Function to generate JWT token
 function generateToken(user) {

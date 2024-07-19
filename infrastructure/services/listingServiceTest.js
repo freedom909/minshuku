@@ -23,3 +23,14 @@ listingService.getCoordinates(testId).then(coordinates => {
 }).catch(error => {
   console.error('Error:', error);
 });
+
+// async function fetchListing(listingId) {
+//   try {
+//     const listing = await listingService.getListing(listingId);
+//     console.log('Fetched listing:', listing);
+//   } catch (error) {
+//     console.error('Error:', error);
+//   }
+// }
+
+// fetchListing('listing-1');

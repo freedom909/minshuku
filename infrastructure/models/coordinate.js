@@ -8,8 +8,14 @@ Coordinates.init({
     type: DataTypes.STRING,
     primaryKey: true,
   },
-  latitude: DataTypes.FLOAT,
-  longitude: DataTypes.FLOAT,
+  latitude:{
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  } ,
+  longitude: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  } ,
   listingId: {
     type: DataTypes.STRING, 
   },
