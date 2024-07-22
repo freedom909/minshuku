@@ -1,4 +1,3 @@
-const { asClass, asValue, asFunction } = require('awilix');
 import { ApolloServer } from '@apollo/server';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { gql } from 'graphql-tag';
@@ -7,34 +6,35 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import initMysqlContainer from '../infrastructure/DB/initMysqlContainer.js';
-import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
+
+import initializeBookingContainer from '../infrastructure/DB/initBookingContainer.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-
+import ListingService from '../infrastructure/services/listingService.js'; 
+import BookingService from '../infrastructure/services/bookingService.js';  
+import UserService from '../infrastructure/services/userService.js';
+import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 
 dotenv.config();
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+
 const startApolloServer = async () => {
   try {
     // Initialize MySQL and MongoDB containers
-    const mysqlContainer = await initMysqlContainer({ services: [
-      ListingService,
-      BookingService,
-      PaymentService,  // Add payment service here if needed
-    ] });
+    const mysqlContainer = await initializeBookingContainer({
+      services: [ListingService, BookingService]
+    });
 
-    const mongoContainer = await initMongoContainer({ services: [
-      UserService,
-    ]});
+    const mongoContainer = await initMongoContainer({
+      services: [UserService]
+    });
 
     const app = express();
     const httpServer = http.createServer(app);
 
     const server = new ApolloServer({
-      
       schema: buildSubgraphSchema({ typeDefs, resolvers }),
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -49,14 +49,13 @@ const startApolloServer = async () => {
           }
         }
       ],
+      introspection: true,  // Enable introspection for GraphQL Playground
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
-        Introspection:true,  // Enable introspection for GraphQL Playground
         dataSources: {
-          listingService: mysqlContainer.resolve('ListingService'),
-          bookingService: mysqlContainer.resolve('BookingService'),
-          paymentService: mysqlContainer.resolve('PaymentService'),
-          userService: mongoContainer.resolve('UserService'),  // Ensure correct resolution of services
+          listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
+          bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services
+          userService: mongoContainer.resolve('userService'),  // Ensure correct resolution of services
         }
       })
     });
@@ -67,17 +66,7 @@ const startApolloServer = async () => {
       '/graphql',
       cors(),
       express.json(),
-      expressMiddleware(server, {
-        context: async ({ req }) => ({
-          token: req.headers.authorization || '',
-          Introspection:true, 
-          dataSources: {
-            listingService: mysqlContainer.resolve('ListingService'),
-            bookingService: mysqlContainer.resolve('BookingService'),
-            userService: mongoContainer.resolve('UserService'),  // Ensure correct resolution of services
-          }
-        })
-      })
+      expressMiddleware(server)
     );
 
     httpServer.listen({ port: 4012 }, () => {

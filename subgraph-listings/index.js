@@ -6,8 +6,8 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import initMysqlContainerListing from '../infrastructure/DB/initMysqlContainerListing.js';
-import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
+import initializeListingContainer from '../infrastructure/DB/initListingContainer.js';
+
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
@@ -18,8 +18,8 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    const mysqlContainer = await initMysqlContainerListing({ services: [] }); 
-    const mongoContainer = await initMongoContainer({ services: ['user'] }); 
+    const mysqlContainer = await initializeListingContainer({ services: [] }); 
+  
 
     const app = express();
     const httpServer = http.createServer(app);
