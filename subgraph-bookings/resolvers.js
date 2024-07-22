@@ -2,85 +2,73 @@ import { v4 as uuidv4 } from 'uuid';
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
 import { requireAuth, requireRole } from '../infrastructure/auth/authAndRole.js';
 import { permissions } from '../infrastructure/auth/permission.js';
-import { sequelize, Listing, Booking, User } from '../infrastructure/models/booking.js'; // Assuming you have defined your Sequelize models in ../models
-import { User } from '../infrastructure/models/user.js';
-import {Listing} from '../infrastructure/models/listing.js';
-import {sequelize} from '../infrastructure/models/seq.js';
-import { getDateFromISOString } from '../infrastructure/helpers/getDateFromISOString.js';
+import Booking from '../infrastructure/models/booking.js';
+import User from '../infrastructure/models/user.js';
+import Listing from '../infrastructure/models/listing.js';
+
 const { bookingsWithPermission } = permissions;
 
 const resolvers = {
   Query: {
-    booking: requireAuth(async (_, { id }, { dataSources, context }) => {
-      if (!(context.listingId || context.guestId)) {
-        throw new ForbiddenError('No such booking', { extension: { code: 'forbidden' } });
+    users: async (parent, args, { dataSources }) => {
+      return dataSources.userService.getUsers();
+    },
+    booking: requireAuth(async (_, { id }, { dataSources, userId, listingId, guestId }) => {
+      if (!listingId && !guestId) {
+        throw new ForbiddenError('No such booking', { extensions: { code: 'FORBIDDEN' } });
       }
       if (bookingsWithPermission) {
         const existingListing = await Listing.findOne({
-          where: { id: context.listingId },
+          where: { id: listingId },
         });
         if (!existingListing) {
-          throw new ForbiddenError('Listing not found', { extension: { code: 'forbidden' } });
+          throw new ForbiddenError('Listing not found', { extensions: { code: 'FORBIDDEN' } });
         }
       }
-      const { bookingService } = dataSources;
-      return await bookingService.getBooking(id);
+      return dataSources.bookingService.getBooking(id);
     }),
     bookingsForUser: requireAuth(async (_, { userId }, { dataSources, context }) => {
-      const { bookingService, userService } = dataSources;
       if (!userId) {
         throw new AuthenticationError('You need to be logged in to view bookings');
       }
       const existingUser = await User.findOne({ where: { id: userId } });
       if (!existingUser) {
-        throw new ForbiddenError('User not found', { extension: { code: 'forbidden' } });
+        throw new ForbiddenError('User not found', { extensions: { code: 'FORBIDDEN' } });
       }
       if (existingUser.role === 'GUEST') {
-        const bookings = await Booking.findAll({ where: { id: context.bookingsId } });
-        return bookings;
+        return Booking.findAll({ where: { guestId: context.userId } });
       }
-      return await bookingService.getBookingsForUser(userId);
+      return dataSources.bookingService.getBookingsForUser(userId);
     }),
-    bookingsForListing: requireRole('Host', async (_, { listingId, status }, { dataSources, userId }) => {
-      const { bookingService, listingService } = dataSources;
-      const listings = await listingService.getListingsForUser(userId);
+    bookingsForListing: requireRole('HOST', async (_, { listingId, status }, { dataSources, userId }) => {
+      const listings = await dataSources.listingService.getListingsForUser(userId);
       if (!listings.find(listing => listing.id === listingId)) {
-        throw new ForbiddenError('Listing does not belong to host', { extension: { code: 'forbidden' } });
+        throw new ForbiddenError('Listing does not belong to host', { extensions: { code: 'FORBIDDEN' } });
       }
-      const bookings = await bookingService.getBookingsForListing(listingId, status) || [];
-      return bookings;
+      return dataSources.bookingService.getBookingsForListing(listingId, status) || [];
     }),
-    currentGuestBooking: requireRole('Guest', async (_, __, { dataSources, userId }) => {
-      const { bookingService } = dataSources;
-      const booking = await bookingService.getCurrentGuestBooking(userId);
-      return booking;
+    currentGuestBooking: requireRole('GUEST', async (_, __, { dataSources, userId }) => {
+      return dataSources.bookingService.getCurrentGuestBooking(userId);
     }),
-    guestBookings: requireRole('Guest', async (_, __, { dataSources, userId }) => {
-      const { bookingService } = dataSources;
-      const bookings = await bookingService.getBookingsForUser(userId);
-      return bookings;
+    guestBookings: requireRole('GUEST', async (_, __, { dataSources, userId }) => {
+      return dataSources.bookingService.getBookingsForUser(userId);
     }),
-    pastGuestBookings: requireRole('Guest', async (_, __, { dataSources, userId }) => {
-      const { bookingService } = dataSources;
-      const bookings = await bookingService.getBookingsForUser(userId, 'COMPLETED');
-      return bookings;
+    pastGuestBookings: requireRole('GUEST', async (_, __, { dataSources, userId }) => {
+      return dataSources.bookingService.getBookingsForUser(userId, 'COMPLETED');
     }),
-    upcomingGuestBookings: requireRole('Guest', async (_, __, { dataSources, userId }) => {
-      const { bookingService } = dataSources;
-      const bookings = await bookingService.getBookingsForUser(userId, 'UPCOMING');
-      return bookings;
+    upcomingGuestBookings: requireRole('GUEST', async (_, __, { dataSources, userId }) => {
+      return dataSources.bookingService.getBookingsForUser(userId, 'UPCOMING');
     }),
   },
 
   Mutation: {
     createBooking: requireAuth(async (_, { createBookingInput }, { dataSources, userId }) => {
-      const { bookingService, listingService, paymentService } = dataSources;
       const { listingId, checkInDate, checkOutDate } = createBookingInput;
-      const { totalCost } = await listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
+      const { totalCost } = await dataSources.listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
       try {
-        await paymentService.subtractFunds({ userId, amount: totalCost });
+        await dataSources.paymentService.subtractFunds({ userId, amount: totalCost });
       } catch (error) {
-        throw new ForbiddenError('Insufficient funds', { extension: { code: 'forbidden' } });
+        throw new ForbiddenError('Insufficient funds', { extensions: { code: 'FORBIDDEN' } });
       }
       try {
         const booking = await Booking.create({
@@ -99,42 +87,39 @@ const resolvers = {
           booking,
         };
       } catch (error) {
-        throw new ForbiddenError('Unable to create booking', { extension: { code: 'forbidden' } });
+        throw new ForbiddenError('Unable to create booking', { extensions: { code: 'FORBIDDEN' } });
       }
     }),
 
     confirmBooking: requireAuth(async (_, { id }, { dataSources }) => {
-      const { bookingService } = dataSources;
       try {
-        const booking = await bookingService.updateBookingStatus({
+        const booking = await dataSources.bookingService.updateBookingStatus({
           id,
           status: 'COMPLETED',
           confirmedAt: new Date().toISOString(),
         });
         return booking;
       } catch (error) {
-        throw new ForbiddenError('Unable to confirm booking', { extension: { code: 'forbidden' } });
+        throw new ForbiddenError('Unable to confirm booking', { extensions: { code: 'FORBIDDEN' } });
       }
     }),
 
     cancelBooking: requireAuth(async (_, { id }, { dataSources }) => {
-      const { bookingService } = dataSources;
       try {
-        const booking = await bookingService.updateBookingStatus({
+        const booking = await dataSources.bookingService.updateBookingStatus({
           id,
           status: 'CANCELLED',
           cancelledAt: new Date().toISOString(),
         });
         return booking;
       } catch (error) {
-        throw new ForbiddenError('Unable to cancel booking', { extension: { code: 'forbidden' } });
+        throw new ForbiddenError('Unable to cancel booking', { extensions: { code: 'FORBIDDEN' } });
       }
     }),
 
     addFundsToWallet: requireAuth(async (_, { amount }, { dataSources, userId }) => {
-      const { paymentService } = dataSources;
       try {
-        const updateWallet = await paymentService.addFunds({ userId, amount });
+        const updateWallet = await dataSources.paymentService.addFunds({ userId, amount });
         return {
           code: 200,
           success: true,
@@ -153,48 +138,40 @@ const resolvers = {
 
   Booking: {
     listing: async ({ listingId }, _, { dataSources }) => {
-      const { listingService } = dataSources;
-      return await listingService.getListing(listingId);
+      return dataSources.listingService.getListing(listingId);
     },
     guest: async ({ guestId }, _, { dataSources }) => {
-      const { userService } = dataSources;
-      return await userService.getUser(guestId);
+      return dataSources.userService.getUser(guestId);
     },
     checkInDate: ({ checkInDate }) => new Date(checkInDate).toISOString(),
     checkOutDate: ({ checkOutDate }) => new Date(checkOutDate).toISOString(),
     status: async ({ id }, _, { dataSources }) => {
-      const { bookingService } = dataSources;
-      const booking = await bookingService.getBooking(id);
+      const booking = await dataSources.bookingService.getBooking(id);
       return booking.status;
     },
     confirmedAt: ({ confirmedAt }) => confirmedAt ? new Date(confirmedAt).toISOString() : null,
     cancelledAt: ({ cancelledAt }) => cancelledAt ? new Date(cancelledAt).toISOString() : null,
     totalPrice: async ({ listingId, checkInDate, checkOutDate }, _, { dataSources }) => {
-      const { listingService } = dataSources;
-      const { totalCost } = await listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
+      const { totalCost } = await dataSources.listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
       return totalCost;
     },
     __resolveReference: async (booking, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return await bookingService.getBooking(booking.id);
+      return dataSources.bookingService.getBooking(booking.id);
     },
   },
 
   Guest: {
-    __resolveReference: (user, { dataSources }) => {
-      const { userService } = dataSources;
-      return userService.getUser(user.id);
+    __resolveReference: async (user, { dataSources }) => {
+      return dataSources.userService.getUser(user.id);
     },
   },
 
   Listing: {
     bookings: async ({ id }, _, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return bookingService.getBookingsForListing(id);
+      return dataSources.bookingService.getBookingsForListing(id);
     },
-    __resolveReference: (listing, { dataSources }) => {
-      const { listingService } = dataSources;
-      return listingService.getListing(listing.id);
+    __resolveReference: async (listing, { dataSources }) => {
+      return dataSources.listingService.getListing(listing.id);
     },
   },
 };

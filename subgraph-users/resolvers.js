@@ -4,6 +4,7 @@ import { passwordValidate } from '../infrastructure/helpers/RegPassValidator.js'
 import runValidations from '../infrastructure/helpers/runValidations.js';
 import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
 import jwt from 'jsonwebtoken';
+import generateToken from '../infrastructure/auth/generateToken.js';
 import driver from '../infrastructure/helpers/driver.js';
 import bcrypt from 'bcrypt';
 const resolvers = {
@@ -109,22 +110,15 @@ const resolvers = {
             extensions: { code: "BAD_USER_INPUT" },
           });
         }
-
         // Retrieve the user by email from the database
         const user = await userService.getUserByEmailFromDb(email);
-
         if (!user) {
           throw new GraphQLError("User not found", {
             extensions: { code: "BAD_USER_INPUT" },
           });
         }
-
         // Generate a reset password token
-        const token = jwt.sign(
-          { id: user._id.toString() },
-          "good",
-          { expiresIn: '15m' }
-        );
+        const token = generateToken(user);
         console.log('Generated token:', token); // Debugging line
         await userService.sendLinkToUser(user.email, token);
         console.log('Email sent to user:', user.email); // Debugging line
@@ -150,9 +144,7 @@ const resolvers = {
       if (!userId) {
         return new GraphQLError("User ID is required", { extensions: { code: "USER_ID_REQUIRED" } });
       }
-
       const { userService } = dataSources;
-
       const user = await userService.findById(userId);// "message": "User not found",
       console.log('User retrieved from DB:', user);
       if (!user) {

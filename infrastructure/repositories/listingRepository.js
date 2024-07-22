@@ -9,7 +9,7 @@ class ListingRepository {
     }
 
     async init() {
-        this.db = await connectToDB()
+        this.db = await connectMysql()
     }
        
     

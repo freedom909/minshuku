@@ -5,7 +5,7 @@ import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
 import ListingRepository from '../repositories/listingRepository.js';
 import dotenv from 'dotenv';
-import connectToDB from '../DB/connectMysqlDB.js';
+import connectMysqlDB from '../DB/connectMysqlDb.js';
 import mysql from 'mysql2/promise';
 import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'

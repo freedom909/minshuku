@@ -1,22 +1,101 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 class BookingService extends RESTDataSource {
-  constructor(bookingRepository) {
+  constructor({ bookingRepository, paymentRepository, listingRepository }) {
     super();
     this.bookingRepository = bookingRepository;
+    this.paymentRepository = paymentRepository;
+    this.listingRepository = listingRepository;
     this.baseURL = 'http://localhost:4012/';
   }
 
   async getBooking(id) {
-    const bookingRepoById = await this.bookingRepository.getBooking(id);
-    return bookingRepoById;
+    try {
+      const booking = await this.bookingRepository.findOne({ id });
+      if (!booking) {
+        throw new ForbiddenError('Booking not found', { extension: { code: 'forbidden' } });
+      }
+      return booking;
+    } catch (error) {
+      console.error('Error fetching booking:', error);
+      throw new ForbiddenError('Unable to fetch booking', { extension: { code: 'forbidden' } });
+    }
   }
 
-  async getBookingsForListing({listingId, status}) {
-    const bookingRepoForListing = await this.bookingRepository.getBookingsForListing({listingId, status});
-    return bookingRepoForListing;
+  async getBookingsForListing(listingId, status) {
+    try {
+      const bookings = await this.bookingRepository.findAll({
+        where: { listingId, status },
+      });
+      return bookings;
+    } catch (error) {
+      console.error('Error fetching bookings for listing:', error);
+      throw new ForbiddenError('Unable to fetch bookings for listing', { extension: { code: 'forbidden' } });
+    }
   }
 
+  async getBookingsForUser(userId, status) {
+    try {
+      const bookings = await this.bookingRepository.findAll({
+        where: { guestId: userId, status },
+      });
+      return bookings;
+    } catch (error) {
+      console.error('Error fetching bookings for user:', error);
+      throw new ForbiddenError('Unable to fetch bookings for user', { extension: { code: 'forbidden' } });
+    }
+  }
+
+  async getCurrentGuestBooking(userId) {
+    try {
+      const bookings = await this.bookingRepository.findAll({
+        where: { guestId: userId, status: 'UPCOMING' },
+      });
+      const currentBooking = bookings.find(booking => new Date(booking.checkInDate) <= new Date() && new Date(booking.checkOutDate) >= new Date());
+      return currentBooking || null;
+    } catch (error) {
+      console.error('Error fetching current guest booking:', error);
+      throw new ForbiddenError('Unable to fetch current guest booking', { extension: { code: 'forbidden' } });
+    }
+  }
+
+  async createBooking({ id, listingId, checkInDate, checkOutDate, totalCost, guestId, status = 'UPCOMING' }) {
+    try {
+      const booking = await this.bookingRepository.create({
+        id,
+        listingId,
+        checkInDate,
+        checkOutDate,
+        totalCost,
+        guestId,
+        status,
+      });
+      return booking;
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      throw new ForbiddenError('Unable to create booking', { extension: { code: 'forbidden' } });
+    }
+  }
+
+  async updateBookingStatus({ id, status, confirmedAt = null, cancelledAt = null }) {
+    try {
+      const booking = await this.bookingRepository.update({ id, status, confirmedAt, cancelledAt });
+      return booking;
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      throw new ForbiddenError('Unable to update booking status', { extension: { code: 'forbidden' } });
+    }
+  }
+
+  async addFunds({ userId, amount }) {
+    try {
+      const result = await this.paymentRepository.addFunds({ userId, amount });
+      return result;
+    } catch (error) {
+      console.error('Error adding funds:', error);
+      throw new ForbiddenError('Unable to add funds', { extension: { code: 'forbidden' } });
+    }
+  }
   async getCurrentlyBookedDateRangesForListing(id) {
     const currentlyBookingRepoForListing = await this.bookingRepository.getCurrentlyBookedDateRangesForListing(id);
     return currentlyBookingRepoForListing;
@@ -43,15 +122,7 @@ class BookingService extends RESTDataSource {
     return bookingRepoForGuest;
   }
 
-  async createBooking({ id, listingId, checkInDate, checkOutDate, totalCost, guestId, status = 'UPCOMING' }) {
-    try {
-      const booking = { id, listingId, checkInDate, checkOutDate, totalCost, guestId, status };
-      const bookingRepo = await this.bookingRepository.createBooking(booking);
-      return bookingRepo;
-    } catch (error) {
-      throw new ForbiddenError('Unable to create booking', { extension: { code: 'forbidden' } });
-    }
-  }
+
 
   async updateBookingStatus({ id, status, confirmedAt }) {
     try {
@@ -71,12 +142,14 @@ class BookingService extends RESTDataSource {
     }
   }
 
+
   async getListing(listingId) {
     try {
-      const listingRepo = await this.listingRepository.getListing(listingId);
-      return listingRepo;
+      const listing = await this.listingRepository.findOne({ where: { id: listingId } });
+      return listing;
     } catch (error) {
-      throw new ForbiddenError('Unable to get listing', { extension: { code: 'forbidden' } });
+      console.error('Error fetching listing:', error);
+      throw new ForbiddenError('Unable to fetch listing', { extension: { code: 'forbidden' } });
     }
   }
 }

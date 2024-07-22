@@ -5,31 +5,24 @@ import { createContainer, asClass, asValue } from 'awilix';
 import dotenv from 'dotenv';
 import UserRepository from '../repositories/userRepository.js';
 import UserService from '../services/userService.js';
+import connectMongoDB from './connectMongoDb.js';
 
 dotenv.config();
 
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.DB_NAME;
-
-export async function connectMongoDB() {
-  const client = new MongoClient(uri);
-  await client.connect();
-  const db = client.db(dbName);
-  return db;
-}
-
 const initMongoContainer = async () => {
-  const mongoDB = await connectMongoDB();
-
+  try {
+  const mongodb = await connectMongoDB();
+  console.log('MongoDB Database connected');
   const container = createContainer();
   container.register({
-    mongoDB: asValue(mongoDB),
+    mongodb: asValue(mongodb),
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton()
   });
-
-  console.log('MongoDB Database connected');
   return container;
+}catch (err){
+  console.error('Error connecting to MongoDB:', err);
+ }
 };
 
 export default initMongoContainer;

@@ -31,7 +31,7 @@ const startApolloServer = async () => {
           async serverWillStart() {
             return {
               async drainServer() {
-                await container.resolve('mongoDB').end();
+                await container.resolve('mongodb').end();
               }
             };
           }

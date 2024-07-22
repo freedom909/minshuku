@@ -13,12 +13,6 @@ const userSchema = new Schema({
   picture: { type: String },
   description: { type: String },
   nickname: { type: String, unique: true },
-  invite_code: {
-    type: String,
-    required: function() {
-      return this.role === 'HOST';
-    }
-  }
 });
 
 const User = mongoose.model('User', userSchema);

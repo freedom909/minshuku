@@ -6,11 +6,11 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import initMysqlContainer from '../infrastructure/DB/initMysqlContainer.js';
+import initMysqlContainerListing from '../infrastructure/DB/initMysqlContainerListing.js';
+import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import ListingService from '../infrastructure/services/listingService.js'; // Import necessary services
 
 dotenv.config();
 
@@ -18,21 +18,22 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    // Pass the required services
-    const container = await initMysqlContainer({ services: [ListingService] });
+    const mysqlContainer = await initMysqlContainerListing({ services: [] }); 
+    const mongoContainer = await initMongoContainer({ services: ['user'] }); 
 
     const app = express();
     const httpServer = http.createServer(app);
 
     const server = new ApolloServer({
       schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      introspection: true, // Enable introspection
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),
         {
           async serverWillStart() {
             return {
-              async drainServer() {
-                await container.resolve('mysqlDB').close();
+              async drainServer() {   
+                await mysqlContainer.resolve('mysqldb').end();
               }
             };
           }
@@ -41,8 +42,8 @@ const startApolloServer = async () => {
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          listingService: container.resolve('ListingService'),
-        }
+          listingService:mysqlContainer.resolve('listingService')
+        },
       })
     });
 
@@ -56,17 +57,17 @@ const startApolloServer = async () => {
         context: async ({ req }) => ({
           token: req.headers.authorization || '',
           dataSources: {
-            listingService: container.resolve('ListingService'),
-          }
+            listingService:mysqlContainer.resolve('listingService')
+          },
         })
       })
     );
 
-    httpServer.listen({ port: 4003 }, () => {
-      console.log(`🚀 Server ready at http://localhost:4003/graphql`);
-    });
+    httpServer.listen({ port: 4013 }, () =>
+      console.log('Server is running on http://localhost:4013/graphql')
+    );
   } catch (error) {
-    console.error('Error starting server:', error);
+    console.error('Error starting Apollo Server:', error);
   }
 };
 

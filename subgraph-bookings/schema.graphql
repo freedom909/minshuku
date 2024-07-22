@@ -1,6 +1,6 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7", 
-  import: ["@key", "@shareable"])
+  @link(url: "https://specs.apollo.dev/federation/v2.5", 
+        import: ["@key", "@shareable"])
 
 scalar DateTime
 
@@ -65,18 +65,18 @@ type Booking @key(fields: "id") {
   totalPrice: Float!
   "The status of the booking - check BookingStatus type for all possibilities"
   status: BookingStatus!
-  "the booking was cancelled time"
+  "The booking was cancelled time"
   cancelledAt: DateTime
-  "the booking was confirmed time"
+  "The booking was confirmed time"
   confirmedAt: DateTime
 }
 
 "A booking is reserved for a certain date range, marked by the checkInDate and checkOutDate fields"
-type ReservedDate @shareable{
+type ReservedDate @shareable {
   "Date the guest checks in"
-  checkInDate: String! 
+  checkInDate: DateTime!
   "Date the guest checks out"
-  checkOutDate: String!
+  checkOutDate: DateTime!
 }
 
 "A listing is a location owned by a host. A listing has a list of amenities it offers. Listings have a fixed cost per night value."
@@ -110,16 +110,16 @@ input CreateBookingInput {
   "ID of the listing associated with the booking"
   listingId: ID!
   "Date of check-in"
-  checkInDate: String!
+  checkInDate: DateTime!
   "Date of check-out"
-  checkOutDate: String!
+  checkOutDate: DateTime!
 }
 
 "Minimum details needed for a newly created booking"
 type NewBookingResponse {
   id: ID!
-  checkInDate: String!
-  checkOutDate: String!
+  checkInDate: DateTime!
+  checkOutDate: DateTime!
 }
 
 "The response after creating a booking."

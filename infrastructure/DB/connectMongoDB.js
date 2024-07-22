@@ -2,19 +2,19 @@ import pkg from 'mongodb';
 const { MongoClient } = pkg;
 import dotenv from 'dotenv';
 
-dotenv.config();
 
-const uri=process.env.MONGODB_URI; ;
+const mongoUrl=process.env.MONGODB_URL||'mongodb://localhost:27017/';
 const dbName=process.env.DB_NAME;
 
-let  mongoDB;
-
-export async function connectMongoDB() {
-  if (!mongoDB) {
-    const client = new MongoClient(uri);
-    await client.connect();
-    mongoDB = client.db(dbName);
-  }
-  return mongoDB;
+const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+let mongodb;
+async function connectToMongoDB() {
+ if (!mongodb) {
+  await client.connect();
+  mongodb= client.db(dbName);
+  console.log('Connected to MongoDB')
+ }
+ return mongodb;
 }
 
+export default connectToMongoDB;
