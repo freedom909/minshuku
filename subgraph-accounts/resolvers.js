@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 import DateTimeType from '../infrastructure/scalar/DateTimeType.js';
 import { authenticateJWT, checkPermissions } from '../infrastructure/middleware/auth.js';
 import { permissions } from '../infrastructure/auth/permission.js';
-import  validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
+import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
 
 const { isAdmin, isHost } = permissions;
 
@@ -58,20 +58,20 @@ const resolvers = {
       return null;
     },
     bookings: async (_, __, { ctx, dataSources }) => {
-      const { bookingService } = dataSources;
+      const { cartService } = dataSources;
       const { user } = ctx;
       if (!user) {
         throw new GraphQLError('No user found', { extensions: { code: 'NO_USER_FOUND' } });
       }
-      return bookingService.getBookingsForUser(user);
+      return cartService.getBookingsForUser(user);
     },
     bookingsByUser: async (_, { userId }, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return bookingService.getBookingsByUserId(userId);
+      const { cartService } = dataSources;
+      return cartService.getBookingsByUserId(userId);
     },
     bookingById: async (_, { id }, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return bookingsAPI.getBookingById(id);
+      const { cartService } = dataSources;
+      return cartService.getBookingById(id);
     },
     listings: async (_, __, { ctx, dataSources }) => {
       const { listingsAPI } = dataSources;
@@ -167,19 +167,19 @@ const resolvers = {
 
     researchListing: async (_, { hostId }, { dataSources }) => {
       const { listingService } = dataSources;
-      return listingService.getListingsByHost(hostId);
+      return listingService.getListingsByHost(hostId)
     },
     researchBooking: async (_, { guestId }, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return bookingService.getBookingsByGuest(guestId);
+      const { cartService } = dataSources;
+      return cartService.getBookingsByGuest(guestId);
     },
     confirmBooking: async (_, { id }, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return bookingService.updateBookingStatus(id, 'CONFIRMED');
+      const { cartService } = dataSources;
+      return cartService.confirmBooking(id);
     },
     cancelBooking: async (_, { id }, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return bookingService.updateBookingStatus(id, 'CANCELLED');
+      const { cartService } = dataSources;
+      return cartService.cancelBooking(id);
     },
     confirmListing: async (_, { id }, { dataSources }) => {
       const { listingService } = dataSources;
@@ -226,3 +226,4 @@ const resolvers = {
 };
 
 export default resolvers;
+

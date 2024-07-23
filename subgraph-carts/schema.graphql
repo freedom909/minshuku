@@ -1,0 +1,21 @@
+
+scalar DateTime
+
+type Booking @key(fields: "id") {
+  id: ID!
+  guestId: ID!
+  listingId: ID!
+  createdAt: DateTime
+  cancelledAt: DateTime
+  confirmedAt: DateTime
+}
+
+type Mutation {
+  confirmBooking(id: ID!): Boolean!
+  cancelBooking(id: ID!): Boolean!
+}
+
+type Query {
+  getBookingsByUser(userId: ID!): [Booking]
+  getBookingById(id: ID!): Booking
+}

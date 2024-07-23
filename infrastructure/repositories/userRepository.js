@@ -185,6 +185,42 @@ async findByIdAndUpdate(id, update) {
   async findByIdAndDelete(id) {
     return await this.collection.findOneAndDelete({ _id: id });
   }
+
+  async getUserById(id) {
+    return this.db.users.findOne({ where: { id } });
+  }
+
+  async getAccountById(id) {
+    return this.db.accounts.findOne({ where: { id } });
+  }
+
+  async getAllAccounts() {
+    return this.db.accounts.findAll();
+  }
+
+  async createUser(user) {
+    return this.db.users.create(user);
+  }
+
+  async createAccount(account) {
+    return this.db.accounts.create(account);
+  }
+
+  async deleteAccount(id) {
+    return this.db.accounts.destroy({ where: { id } });
+  }
+
+  async updateAccountEmail(id, email) {
+    return this.db.accounts.update({ email }, { where: { id } });
+  }
+
+  async updateAccountPassword(id, password) {
+    return this.db.accounts.update({ password }, { where: { id } });
+  }
+
+  async updateUser(userId, userInfo) {
+    return this.db.users.update(userInfo, { where: { id: userId } });
+  }
 }
 
 export default UserRepository;
