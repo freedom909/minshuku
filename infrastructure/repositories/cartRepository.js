@@ -1,75 +1,107 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
+import Cart from '../models/Cart.js';
 
 class CartRepository extends RESTDataSource {
-    constructor() {
-        super();
-        this.baseURL = 'http://localhost:4016/';
+  constructor() {
+    super();
+  }
+
+  async getCartItems(userId) {
+    return await Cart.findAll({ where: { userId } });
+  }
+
+  async addToCart(userId, listingId, quantity) {
+    return await Cart.create({ userId, listingId, quantity });
+  }
+
+  async updateCartItemQuantity(userId, itemId, quantity) {
+    const cartItem = await Cart.findOne({ where: { id: itemId, userId } });
+    if (cartItem) {
+      cartItem.quantity = quantity;
+      return await cartItem.save();
     }
-    async getCartItems(userId) {
-        return await this.get(`cart/${userId}`);
+    return null;
+  }
+
+  async removeCartItem(userId, itemId) {
+    const cartItem = await Cart.findOne({ where: { id: itemId, userId } });
+    if (cartItem) {
+      return await cartItem.destroy();
     }
-    async addToCart(userId, listingId, quantity) {
-        return await this.post(`cart/${userId}`, { listingId, quantity });
+    return null;
+  }
+
+  async checkoutCart(userId) {
+    // Assuming you have some logic to checkout
+    return await Cart.update({ status: 'CHECKED_OUT' }, { where: { userId } });
+  }
+
+  async getBookingHistory(userId) {
+    // Assuming you have a Bookings model or relevant method
+    return await Booking.findAll({ where: { userId } });
+  }
+
+  async placeBooking(userId, cartItems, paymentMethod) {
+    // Implement booking logic here
+  }
+
+  async getBookingDetails(bookingId) {
+    return await Booking.findByPk(bookingId);
+  }
+
+  async cancelBooking(bookingId) {
+    const booking = await Booking.findByPk(bookingId);
+    if (booking) {
+      booking.status = 'CANCELLED';
+      return await booking.save();
     }
-    async updateCartItemQuantity(userId, itemId, quantity) {
-        return await this.put(`cart/${userId}/items/${itemId}`, { quantity });
+    return null;
+  }
+
+  async returnBookingItem(bookingId, itemId) {
+    // Implement return item logic
+  }
+
+  async getBookingItems(bookingId) {
+    return await BookingItem.findAll({ where: { bookingId } });
+  }
+
+  async updateBookingItemQuantity(bookingId, itemId, quantity) {
+    const bookingItem = await BookingItem.findOne({ where: { id: itemId, bookingId } });
+    if (bookingItem) {
+      bookingItem.quantity = quantity;
+      return await bookingItem.save();
     }
-    async removeCartItem(userId, itemId) {
-        return await this.delete(`cart/${userId}/items/${itemId}`);
-    }
-    async checkoutCart(userId) {
-        return await this.post(`cart/${userId}/checkout`);
-    }
-    async getBookingHistory(userId) {
-        return await this.get(`bookings/${userId}`);
-    }
-    async placeBooking(userId, cartItems, paymentMethod) {
-        return await this.post(`bookings/${userId}`, { cartItems, paymentMethod });
-    }
-    async getBookingDetails(bookingId) {
-        return await this.get(`bookings/${bookingId}`);
-    }
-    async cancelBooking(bookingId) {
-        return await this.put(`bookings/${bookingId}/cancel`);
-    }
-    async returnBookingItem(bookingId, itemId) {
-        return await this.put(`bookings/${bookingId}/items/${itemId}/return`);
-    }
-    async getBookingItems(bookingId) {
-        return await this.get(`bookings/${bookingId}/items`);
-    }
-    async updateBookingItemQuantity(bookingId, itemId, quantity) {
-        return await this.put(`bookings/${bookingId}/items/${itemId}`, { quantity });
-    }
-    async getBookingItemsWithStatus(bookingId, status) {
-        return await this.get(`bookings/${bookingId}/items?status=${status}`);
-    }
-    async getBookingItemsWithReturnStatus(bookingId) {
-        return await this.get(`bookings/${bookingId}/items?returnStatus=true`);
-    }
-    async getBookingItemsWithReturnRequestStatus(bookingId) {
-        return await this.get(`bookings/${bookingId}/items?returnRequestStatus=true`);
-    }
-    async getBookingItemsWithRefundStatus(bookingId) {
-        return await this.get(`bookings/${bookingId}/items?refundStatus=true`);
-    }
-    async find(query) {
-        return await this.get(`search`, { query });
-    }
-    async find({guestId: userId, listingId, status }) {
-        return await this.get(`search`, { userId, listingId, status });
-    }
-    async findOne({ id }) {
-        return await this.get(`items/${id}`);
-    }
-    async find({guestId:userId}){
-        return await this.get(`items?userId=${user.id}`);
-    }
-    async find({listingId}){
-        return await this.get(`items?listingId=${listingId}`);
-    }
-    async findById(id) {
-        return await this.get(`items/${id}`);
-    }
+    return null;
+  }
+
+  async getBookingItemsWithStatus(bookingId, status) {
+    return await BookingItem.findAll({ where: { bookingId, status } });
+  }
+
+  async getBookingItemsWithReturnStatus(bookingId) {
+    return await BookingItem.findAll({ where: { bookingId, returnStatus: true } });
+  }
+
+  async getBookingItemsWithReturnRequestStatus(bookingId) {
+    return await BookingItem.findAll({ where: { bookingId, returnRequestStatus: true } });
+  }
+
+  async getBookingItemsWithRefundStatus(bookingId) {
+    return await BookingItem.findAll({ where: { bookingId, refundStatus: true } });
+  }
+
+  async find(query) {
+    return await Cart.findAll({ where: query });
+  }
+
+  async findOne(query) {
+    return await Cart.findOne({ where: query });
+  }
+
+  async findById(id) {
+    return await Cart.findByPk(id);
+  }
 }
-export default CartRepository
+
+export default CartRepository;

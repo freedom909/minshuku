@@ -9,6 +9,8 @@ import BookingService from '../services/bookingService.js';
 import BookingRepository from '../repositories/bookingRepository.js';
 import CartService from '../services/cartService.js';
 import CartRepository from '../repositories/cartRepository.js';
+import PaymentService from '../services/paymentService.js';
+import PaymentRepository from '../repositories/paymentRepository.js';
 
 const initializeCartContainer = async ({ services = [] } = {}) => {
   let mysqldb;
@@ -45,6 +47,9 @@ const initializeCartContainer = async ({ services = [] } = {}) => {
     listingService: asClass(ListingService).singleton(),
     cartRepository: asClass(CartRepository).singleton(),
     cartService: asClass(CartService).singleton(),
+    paymentRepository: asClass(PaymentRepository).singleton(),
+    paymentService: asClass(PaymentService).singleton(),
+
   });
 
   // Register services dynamically

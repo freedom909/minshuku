@@ -13,7 +13,7 @@ const resolvers = {
     users: async (parent, args, { dataSources }) => {
       return dataSources.userService.getUsers();
     },
-    booking: requireAuth(async (_, { id }, { dataSources, userId, listingId, guestId }) => {
+    booking: requireAuth(async (_, { id }, { dataSources,  listingId, guestId }) => {
       if (!listingId && !guestId) {
         throw new ForbiddenError('No such booking', { extensions: { code: 'FORBIDDEN' } });
       }
@@ -62,14 +62,30 @@ const resolvers = {
   },
 
   Mutation: {
-    createBooking: requireAuth(async (_, { createBookingInput }, { dataSources, userId }) => {
+   createBooking :requireAuth(async (_, { createBookingInput }, { dataSources, userId }) => {
+      if (!userId) {
+        throw new AuthenticationError('You need to be logged in to create a booking');
+      }
+    
       const { listingId, checkInDate, checkOutDate } = createBookingInput;
+    
+      // Validate input data
+      if (!listingId || !checkInDate || !checkOutDate) {
+        throw new UserInputError('All booking details must be provided');
+      }
+    
+      // Fetch total cost from listing service
       const { totalCost } = await dataSources.listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
+    
+      // Subtract funds from user's account
       try {
         await dataSources.paymentService.subtractFunds({ userId, amount: totalCost });
       } catch (error) {
+        console.error('Payment Error:', error);
         throw new ForbiddenError('Insufficient funds', { extensions: { code: 'FORBIDDEN' } });
       }
+    
+      // Create booking
       try {
         const booking = await Booking.create({
           id: uuidv4(),
@@ -80,6 +96,7 @@ const resolvers = {
           guestId: userId,
           status: 'UPCOMING',
         });
+    
         return {
           code: 200,
           success: true,
@@ -87,6 +104,7 @@ const resolvers = {
           booking,
         };
       } catch (error) {
+        console.error('Booking Error:', error);
         throw new ForbiddenError('Unable to create booking', { extensions: { code: 'FORBIDDEN' } });
       }
     }),

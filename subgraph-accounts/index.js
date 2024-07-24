@@ -7,12 +7,17 @@ import { readFileSync } from 'fs';
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
-import { initializeContainer, container } from '../infrastructure/DB/container.js';
+import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
+import initListingContainer from '../infrastructure/DB/initListingContainer.js';
+import initCartContainer from '../infrastructure/DB/initCartContainer.js';
+import initReviewContainer from '../infrastructure/DB/initReviewContainer.js';
+import initProfileContainer from '../infrastructure/DB/initProfileContainer.js';
+import initBookingContainer from '../infrastructure/DB/initBookingContainer.js';
 import resolvers from './resolvers.js';
 
 async function startApolloServer() {
   try {
-    await initializeContainer();
+    await initMongoContainer();
 
     const app = express();
     const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -26,8 +31,14 @@ async function startApolloServer() {
           async serverWillStart() {
             return {
               async drainServer() {
-                await container.resolve('db').client.close();
+                await initListingContainer.resolve('db').client.close();
+                await initBookingContainer.resolve('db').client.close();  // Ensure MongoDB client is closed properly
+                await initCartContainer.resolve('db').client.close();  // Ensure MongoDB client is closed properly
+                await initReviewContainer.resolve('mongodb').client.close();
+                await initProfileContainer.resolve('mongodb')  // Ensure MongoDB client is closed properly
+                await initMongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
               }
+
             };
           }
         }
@@ -37,8 +48,8 @@ async function startApolloServer() {
         user: req.headers.user || null,
         dataSources: {
           accountService: container.resolve('accountService'),
-          listingService: container.resolve('listingService'),
-          bookingService: container.resolve('bookingService')
+          // listingService: container.resolve('listingService'),
+          // bookingService: container.resolve('bookingService')
         }
       })
     });

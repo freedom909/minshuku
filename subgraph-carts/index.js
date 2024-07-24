@@ -56,9 +56,9 @@ const startApolloServer = async () => {
         token: req.headers.authorization || '',
         dataSources: {
           listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
-          bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services
-          userService: mongoContainer.resolve('userService'),  // Ensure correct resolution of services
-          cartService:mysqlContainer.resolve('cartService')
+          bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services 
+          cartService:mysqlContainer.resolve('cartService'), 
+          userService: mongoContainer.resolve('userService') // Ensure correct resolution of services
         }
       })
     });
@@ -72,7 +72,7 @@ const startApolloServer = async () => {
       expressMiddleware(server)
     );
 
-    httpServer.listen({ port: 4012 }, () => {
+    httpServer.listen({ port: 4016 }, () => {
       console.log(`🚀 Server ready at http://localhost:4016/graphql`);
     });
   } catch (error) {

@@ -25,8 +25,9 @@ const permissionsMiddleware = shield({
 });
 
 class ListingService {
-  constructor(listingRepository) {
+  constructor(listingRepository,httpClient) {
     this.listingRepository = listingRepository;
+    this.httpClient=httpClient
     this.sequelize = sequelize;
   }
 willSendRequest(request) {
@@ -159,6 +160,8 @@ async hotListingsByMoneyBookingTop5() {
     } 
   }
 
+
+
   async getListing(id) {  // Updated to match the resolver method name
     try {
       const query= `SELECT * FROM listings WHERE id = :id LIMIT 1`
@@ -253,7 +256,6 @@ async hotListingsByMoneyBookingTop5() {
       throw new GraphQLError('Error fetching total cost', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   } 
-
 
 
   async createListing({ title, description, price, locationId, hostId }) {

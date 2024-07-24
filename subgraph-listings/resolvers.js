@@ -1,13 +1,8 @@
-import { AuthenticationError, ForbiddenError} from '../infrastructure/utils/errors.js';
-
+import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
+import { permissions } from '../infrastructure/auth/permission.js';
+const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 const resolvers = {
   Query: {
-    hostListings: async (_, args, { dataSources }) => {
-      const {listingService} = dataSources
-        const listings = await listingService.getListings(args);
-        return listings;
-      },
-      
     hotListingsByMoney: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       try {
@@ -18,15 +13,15 @@ const resolvers = {
       }
     },
 
-    hotListingsByBookingNumber: async (_,__,{dataSources}) => {
-      const {listingService} =dataSources
+    hotListingsByBookingNumber: async (_, __, { dataSources }) => {
+      const { listingService } = dataSources
       try {
-      return listingService.hotListingsByNumberBookingTop5();
+        return listingService.hotListingsByNumberBookingTop5();
       } catch (error) {
         throw new Error('Failed to fetch hot listings by booking number');
       }
     },
-    
+
     listings: async (_, args, { dataSources }) => {
       const { listingService } = dataSources;
       try {
@@ -36,7 +31,7 @@ const resolvers = {
         throw new Error('Failed to fetch listings');
       }
     },
-    listing: async (_, {id}, { dataSources }) => {
+    listing: async (_, { id }, { dataSources }) => {
       const { listingService } = dataSources;
       try {
         return await listingService.getListing(id);
@@ -51,8 +46,8 @@ const resolvers = {
       return await listingService.getFeaturedListings(limit);
     },
     hotListings: async (_, __, { dataSources }) => {
-      const { listingService } = dataSources;      
-        return listingService.getTop5Listings();
+      const { listingService } = dataSources;
+      return listingService.getTop5Listings();
     },
 
     listingAmenities: (_, __, { dataSources }) => {
@@ -80,14 +75,22 @@ const resolvers = {
   },
 
   Mutation: {
-    createListing: async (_, { listing }, { dataSources, userId, userRole }) => {
-      const { listingService } = dataSources;
+    createListing: async (_, { listing }, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError('User not authenticated');
-      if (userRole === 'Guest') {
-        throw new ForbiddenError('You do not have the right to create a listing');
+      if (!listingWithPermissions) {
+        throw new AuthenticationError('User does not have permissions to create a listing');
       }
+
+      const { listingService, amenityService } = dataSources;
+      const { amenities } = listing;
+      if (!amenities || !amenities.length) {
+        throw new Error('Listing must have at least one amenity');
+      }
+      const amenityIds = await amenityService.getAmenityIds(amenities);
+      listing.amenities = amenityIds;
       try {
         const newListing = await listingService.createListing({ ...listing, hostId: userId });
+        await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
         return {
           code: 200,
           success: true,
@@ -101,11 +104,16 @@ const resolvers = {
           success: false,
           message: err.message
         };
+
       }
     },
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
-      const { listingService } = dataSources;
       if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHostOfListing || !isAdmin) {
+        throw new AuthenticationError(`you don't have right to update this list`)
+      }
+      const { listingService } = dataSources;
+
       if (!listingId) throw new Error('Listing ID not provided');
       try {
         const updatedListing = await listingService.updateListing({ ...listing, id: listingId });
@@ -123,9 +131,31 @@ const resolvers = {
           message: error.message
         };
       }
-    }
+    },
+    deleteListing: async (_, { listingId }, { dataSources, userId }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHostOfListing || !isAdmin) {
+        throw new AuthenticationError(`you don't have right to delete this list`)
+      }
+      const { listingService } = dataSources;
+      if (!listingId) throw new Error('Listing ID not provided');
+      try {
+        await listingService.deleteListing(listingId);
+        return {
+          code: 200,
+          success: true,
+          message: 'Listing successfully deleted'
+        };
+      } catch (error) {
+        console.error(error);
+        return {
+          code: 500,
+          success: false,
+          message: error.message
+        };
+      }
+    },
   },
-
   Listing: {
     __resolveReference: async ({ id }, { dataSources }) => {
       const { listingService } = dataSources;
@@ -141,13 +171,19 @@ const resolvers = {
     },
     amenities: async ({ id }, _, { dataSources }) => {
       const { listingService } = dataSources;
-      const listing = await listingService.getListing(id);
-      if (!listing) throw new Error('Listing not found');
-      return listing.amenities.map(amenity => ({
-        ...amenity,
-        category: amenity.category.replace(' ', '_').toUpperCase(),
-        name: amenity.name.replace(' ', '_').toUpperCase()
-      }));
+      try {
+        const listing = await listingService.getListing(id);
+        if (!listing) throw new Error('Listing not found');
+        const amenities = listing.amenities || [];
+        return amenities.map(amenity => ({
+          ...amenity,
+          category: amenity.category.replace(' ', '_').toUpperCase(),
+          name: amenity.name.replace(' ', '_').toUpperCase()
+        }));
+      } catch (error) {
+        console.error(`Error fetching amenities for listing ${id}:`, error);
+        throw new Error('Failed to fetch amenities');
+      }
     },
     currentlyBookedDates: ({ id }, _, { dataSources }) => {
       const { bookingService } = dataSources;

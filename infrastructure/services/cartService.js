@@ -1,13 +1,20 @@
 import { GraphQLError } from 'graphql';
+import { RESTDataSource } from '@apollo/datasource-rest';
 
-class CartService {
-  constructor({ bookingRepository }) {
+class CartService extends RESTDataSource {
+  constructor({ bookingRepository, paymentRepository, listingRepository, cartRepository, userRepository }) {
+    super();
     this.bookingRepository = bookingRepository;
+    this.paymentRepository = paymentRepository;
+    this.listingRepository = listingRepository;
+    this.cartRepository = cartRepository;
+    this.userRepository = userRepository;
+    this.baseURL = 'http://localhost:4016/';
   }
 
   async getBookingsForUser(user) {
     try {
-      return await this.bookingRepository.find({ guestId: user.id });
+      return await this.cartRepository.find({ where: { guestId: user.id } });
     } catch (error) {
       throw new GraphQLError('Failed to fetch bookings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
@@ -15,7 +22,7 @@ class CartService {
 
   async getBookingsByUserId(userId) {
     try {
-      return await this.bookingRepository.find({ guestId: userId });
+      return await this.cartRepository.find({ where: { guestId: userId } });
     } catch (error) {
       throw new GraphQLError('Failed to fetch bookings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }

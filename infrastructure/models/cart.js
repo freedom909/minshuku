@@ -13,10 +13,13 @@ Cart.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
-  items: {
-    type: DataTypes.JSON, // assuming items are stored as JSON objects
+  checkInDate: {
+    type: DataTypes.DATE,
     allowNull: false,
-    defaultValue: [],
+  },
+  checkOutDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
   },
   totalPrice: {
     type: DataTypes.FLOAT,

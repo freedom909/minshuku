@@ -3,9 +3,10 @@ import { AuthenticationError, ForbiddenError } from '../utils/errors.js';
 import connectMysql from '../DB/connectMysqlDB.js'
 import Listing from '../models/listing.js';
 class ListingRepository {
-    constructor() {
+    constructor(httpClient) {
         this.db = null;
         this.initPromise = this.init();
+        this.httpClient = httpClient;
     }
 
     async init() {
