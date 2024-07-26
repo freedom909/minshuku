@@ -5,8 +5,8 @@ import { readFileSync } from 'fs';
 import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import initializeBookingContainer from '../infrastructure/DB/initBookingContainer.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -15,6 +15,7 @@ import ListingService from '../infrastructure/services/listingService.js';
 import BookingService from '../infrastructure/services/bookingService.js';  
 import UserService from '../infrastructure/services/userService.js';
 import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
+import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
 
 dotenv.config();
 
@@ -50,14 +51,18 @@ const startApolloServer = async () => {
         }
       ],
       introspection: true,  // Enable introspection for GraphQL Playground
-      context: async ({ req }) => ({
-        token: req.headers.authorization || '',
-        dataSources: {
-          listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
-          bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services
-          userService: mongoContainer.resolve('userService'),  // Ensure correct resolution of services
-        }
-      })
+      context: async ({ req }) => {
+        const token = req.headers.authorization || '';
+        const user = getUserFromToken(token);
+        return { 
+          user,
+          dataSources: {
+            listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
+            bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services
+            userService: mongoContainer.resolve('userService')  // Ensure correct resolution of services
+          }
+        };
+      }
     });
 
     await server.start();
@@ -69,8 +74,8 @@ const startApolloServer = async () => {
       expressMiddleware(server)
     );
 
-    httpServer.listen({ port: 4012 }, () => {
-      console.log(`🚀 Server ready at http://localhost:4012/graphql`);
+    httpServer.listen({ port: 4014 }, () => {
+      console.log(`🚀 Server ready at http://localhost:4014/graphql`);
     });
   } catch (error) {
     console.error('Error starting server:', error);

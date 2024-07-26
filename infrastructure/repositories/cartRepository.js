@@ -1,5 +1,6 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
 import Cart from '../models/Cart.js';
+import Booking from '../models/Booking.js';
 
 class CartRepository extends RESTDataSource {
   constructor() {
@@ -60,6 +61,8 @@ class CartRepository extends RESTDataSource {
 
   async returnBookingItem(bookingId, itemId) {
     // Implement return item logic
+    // Implement return request logic
+    // Implement refund logic
   }
 
   async getBookingItems(bookingId) {

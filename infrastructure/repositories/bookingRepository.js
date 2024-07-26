@@ -8,7 +8,7 @@ class BookingRepository {
     }
     this.dbConfig = dbConfig;
     this.httpClient = axios.create({
-      baseURL: 'http://localhost:4012', // Adjust as needed
+      baseURL: 'http://localhost:4014', // Adjust as needed
     });
   }
 

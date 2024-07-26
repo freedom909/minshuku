@@ -1,0 +1,33 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.7", 
+        import: ["@key", "@shareable"])
+
+
+# SCALARS
+scalar DateTime
+
+
+
+type Listing {
+  id: ID!
+  name: String!
+  amenities: [Amenity!]!
+}
+
+type Amenity {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  listings: [Listing!]!
+  listing(id: ID!): Listing
+  amenities: [Amenity!]!
+  amenity(id: ID!): Amenity
+}
+
+type Mutation {
+  addAmenity(name: String!): Amenity!
+  addAmenityToListing(listingId: ID!, amenityId: ID!): Listing!
+}
+
