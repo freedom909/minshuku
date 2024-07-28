@@ -11,9 +11,9 @@ dotenv.config()
 
 import { GraphQLError } from 'graphql';
 class UserRepository extends BaseRepository {
-  constructor({ mongoDB }) {
+  constructor({ mongodb }) {
     super();
-    this.collection = mongoDB.collection('users');
+    this.collection = mongodb.collection('users');
     this.emailVerification = new EmailVerification();
   }
 

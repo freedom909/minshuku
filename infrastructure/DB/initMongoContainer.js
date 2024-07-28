@@ -2,12 +2,9 @@
 import pkg from 'mongodb';
 const { MongoClient } = pkg;
 import { createContainer, asClass, asValue } from 'awilix';
-import dotenv from 'dotenv';
 import UserRepository from '../repositories/userRepository.js';
 import UserService from '../services/userService.js';
 import connectMongoDB from './connectMongoDb.js';
-
-dotenv.config();
 
 const initMongoContainer = async () => {
   try {

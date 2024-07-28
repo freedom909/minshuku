@@ -10,7 +10,7 @@ import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import UserService from '../infrastructure/services/userService.js'; // Adjust this import based on your services
+
 
 dotenv.config();
 
