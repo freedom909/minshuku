@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
+    "start": "node infrastructure/utils/launch.js",
     "launch": "node infrastructure/utils/launch.js",
     "install-services": "node utils/install.js",
     "db:reset": "node utils/reset.js",

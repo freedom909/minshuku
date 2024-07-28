@@ -16,22 +16,34 @@ class PaymentService {
     if (!userId) {
       throw new Error('User ID is required to add funds');
     }
-    // Add funds to the user's wallet
-    const updatedAmount = await this.paymentRepository.addFunds(userId, amount);
-    return {
-      amount: updatedAmount,
-    };
+    try {
+      const updatedFunds = await this.paymentRepository.addFundsToUserWallet(userId, amount);
+      if (!updatedFunds) {
+        throw new Error('Failed to add funds');
+      }
+      return updatedFunds;
+    } catch (error) {
+      console.error('Error adding funds:', error);
+      throw new Error('Error adding funds');
+    }
+
   }
 
   async subtractFunds({ userId, amount }) {
     if (!userId) {
       throw new Error('User ID is required to subtract funds');
     }
-    // Subtract funds from the user's wallet
-    const updatedAmount = await this.paymentRepository.subtractFunds(userId, amount);
-    return {
-      amount: updatedAmount,
-    };
+    try {
+      const updatedFunds = await this.paymentRepository.addFundsToUserWallet(userId, amount);
+      if (!updatedFunds) {
+        throw new Error('Failed to add funds');
+      }
+      return updatedFunds;
+    } catch (error) {
+      console.error('Error adding funds:', error);
+      throw new Error('Error adding funds');
+    }
+
   }
 }
 

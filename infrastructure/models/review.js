@@ -15,7 +15,7 @@
 
 // export default Review;
 
-import { DataTypes, Model } from '@sequelize/core';
+import { DataTypes, Model } from 'sequelize';
 import sequelize from './seq.js';
 
 export class Review extends Model {}

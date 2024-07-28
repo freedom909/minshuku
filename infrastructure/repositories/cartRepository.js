@@ -1,109 +1,194 @@
-import { RESTDataSource } from '@apollo/datasource-rest';
-import Cart from '../models/Cart.js';
-import Booking from '../models/Booking.js';
 
-class CartRepository extends RESTDataSource {
-  constructor() {
-    super();
+import Cart from '../models/cart.js'; // Ensure you import your Cart model
+import Booking from '../models/booking.js'; // Ensure you import your Booking model
+import BookingItem from '../models/bookingItem.js'; // Ensure you import your Book
+import BookingRepository from './bookingRepository.js';
+
+class CartRepository {
+  constructor(bookingRepository) {
+    this.bookingRepository = bookingRepository;
   }
 
   async getCartItems(userId) {
-    return await Cart.findAll({ where: { userId } });
+    try {
+      return await Cart.findAll({ where: { userId } });
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
+      throw new Error('Error fetching cart items');
+    }
   }
 
   async addToCart(userId, listingId, quantity) {
-    return await Cart.create({ userId, listingId, quantity });
+    try {
+      return await Cart.create({ userId, listingId, quantity });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      throw new Error('Error adding to cart');
+    }
   }
 
   async updateCartItemQuantity(userId, itemId, quantity) {
-    const cartItem = await Cart.findOne({ where: { id: itemId, userId } });
-    if (cartItem) {
-      cartItem.quantity = quantity;
-      return await cartItem.save();
+    try {
+      const cartItem = await Cart.findOne({ where: { id: itemId, userId } });
+      if (cartItem) {
+        cartItem.quantity = quantity;
+        return await cartItem.save();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error updating cart item quantity:', error);
+      throw new Error('Error updating cart item quantity');
     }
-    return null;
   }
 
   async removeCartItem(userId, itemId) {
-    const cartItem = await Cart.findOne({ where: { id: itemId, userId } });
-    if (cartItem) {
-      return await cartItem.destroy();
+    try {
+      const cartItem = await Cart.findOne({ where: { id: itemId, userId } });
+      if (cartItem) {
+        return await cartItem.destroy();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error removing cart item:', error);
+      throw new Error('Error removing cart item');
     }
-    return null;
   }
 
   async checkoutCart(userId) {
-    // Assuming you have some logic to checkout
-    return await Cart.update({ status: 'CHECKED_OUT' }, { where: { userId } });
+    try {
+      return await Cart.update({ status: 'CHECKED_OUT' }, { where: { userId } });
+    } catch (error) {
+      console.error('Error checking out cart:', error);
+      throw new Error('Error checking out cart');
+    }
   }
 
   async getBookingHistory(userId) {
-    // Assuming you have a Bookings model or relevant method
-    return await Booking.findAll({ where: { userId } });
+    try {
+      return await Booking.findAll({ where: { userId } });
+    } catch (error) {
+      console.error('Error fetching booking history:', error);
+      throw new Error('Error fetching booking history');
+    }
   }
 
   async placeBooking(userId, cartItems, paymentMethod) {
     // Implement booking logic here
+    // Make sure to handle the booking transaction, update inventory, and process payment
   }
 
   async getBookingDetails(bookingId) {
-    return await Booking.findByPk(bookingId);
+    try {
+      return await Booking.findByPk(bookingId);
+    } catch (error) {
+      console.error('Error fetching booking details:', error);
+      throw new Error('Error fetching booking details');
+    }
   }
 
   async cancelBooking(bookingId) {
-    const booking = await Booking.findByPk(bookingId);
-    if (booking) {
-      booking.status = 'CANCELLED';
-      return await booking.save();
+    try {
+      const booking = await Booking.findByPk(bookingId);
+      if (booking) {
+        booking.status = 'CANCELLED';
+        return await booking.save();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      throw new Error('Error cancelling booking');
     }
-    return null;
   }
 
   async returnBookingItem(bookingId, itemId) {
     // Implement return item logic
-    // Implement return request logic
-    // Implement refund logic
+    // Ensure to update the booking item status, process the return, and handle refunds
   }
 
   async getBookingItems(bookingId) {
-    return await BookingItem.findAll({ where: { bookingId } });
+    try {
+      return await BookingItem.findAll({ where: { bookingId } });
+    } catch (error) {
+      console.error('Error fetching booking items:', error);
+      throw new Error('Error fetching booking items');
+    }
   }
 
   async updateBookingItemQuantity(bookingId, itemId, quantity) {
-    const bookingItem = await BookingItem.findOne({ where: { id: itemId, bookingId } });
-    if (bookingItem) {
-      bookingItem.quantity = quantity;
-      return await bookingItem.save();
+    try {
+      const bookingItem = await BookingItem.findOne({ where: { id: itemId, bookingId } });
+      if (bookingItem) {
+        bookingItem.quantity = quantity;
+        return await bookingItem.save();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error updating booking item quantity:', error);
+      throw new Error('Error updating booking item quantity');
     }
-    return null;
   }
 
   async getBookingItemsWithStatus(bookingId, status) {
-    return await BookingItem.findAll({ where: { bookingId, status } });
+    try {
+      return await BookingItem.findAll({ where: { bookingId, status } });
+    } catch (error) {
+      console.error('Error fetching booking items with status:', error);
+      throw new Error('Error fetching booking items with status');
+    }
   }
 
   async getBookingItemsWithReturnStatus(bookingId) {
-    return await BookingItem.findAll({ where: { bookingId, returnStatus: true } });
+    try {
+      return await BookingItem.findAll({ where: { bookingId, returnStatus: true } });
+    } catch (error) {
+      console.error('Error fetching booking items with return status:', error);
+      throw new Error('Error fetching booking items with return status');
+    }
   }
 
   async getBookingItemsWithReturnRequestStatus(bookingId) {
-    return await BookingItem.findAll({ where: { bookingId, returnRequestStatus: true } });
+    try {
+      return await BookingItem.findAll({ where: { bookingId, returnRequestStatus: true } });
+    } catch (error) {
+      console.error('Error fetching booking items with return request status:', error);
+      throw new Error('Error fetching booking items with return request status');
+    }
   }
 
   async getBookingItemsWithRefundStatus(bookingId) {
-    return await BookingItem.findAll({ where: { bookingId, refundStatus: true } });
+    try {
+      return await BookingItem.findAll({ where: { bookingId, refundStatus: true } });
+    } catch (error) {
+      console.error('Error fetching booking items with refund status:', error);
+      throw new Error('Error fetching booking items with refund status');
+    }
   }
 
   async find(query) {
-    return await Cart.findAll({ where: query });
+    try {
+      return await Cart.findAll({ where: query });
+    } catch (error) {
+      console.error('Error finding cart items:', error);
+      throw new Error('Error finding cart items');
+    }
   }
 
   async findOne(query) {
-    return await Cart.findOne({ where: query });
+    try {
+      return await Cart.findOne({ where: query });
+    } catch (error) {
+      console.error('Error finding cart item:', error);
+      throw new Error('Error finding cart item');
+    }
   }
 
   async findById(id) {
-    return await Cart.findByPk(id);
+    try {
+      return await Cart.findByPk(id);
+    } catch (error) {
+      console.error('Error finding cart item by ID:', error);
+      throw new Error('Error finding cart item by ID');
+    }
   }
 }
 

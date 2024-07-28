@@ -1,35 +1,12 @@
+// services/amenityService.js
 import { QueryTypes } from 'sequelize';
-import httpClient from '../middleware/httpClient.js';
-
+import Amenity from '../models/amenity.js'; // Assuming you have an Amenity model
 
 class AmenityService {
   constructor(sequelize, httpClient) {
     this.sequelize = sequelize;
     this.httpClient = httpClient;
-  }
-
-  async getAmenityIds(amenities) {
-    try {
-      const response = await this.httpClient.get('/amenities', {
-        params: { names: amenities },
-      });
-      return response.data.map((amenity) => amenity.id);
-    } catch (error) {
-      console.error('Error fetching amenity IDs:', error);
-      throw error;
-    }
-  }
-
-  async linkAmenitiesToListing(listingId, amenityIds) {
-    try {
-      const response = await this.httpClient.post(`/listings/${listingId}/amenities`, {
-        amenities: amenityIds,
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error linking amenities to listing:', error);
-      throw error;
-    }
+    this.Amenity = Amenity;
   }
 
   async getAllAmenities() {
@@ -39,14 +16,12 @@ class AmenityService {
       if (!response || !Array.isArray(response)) {
         throw new Error('Invalid response from the database');
       }
-      const amenities = response
-        .map((amenity) => ({
-          ...amenity,
-          id: amenity.id,
-          name: amenity.name,
-          category: amenity.category ? amenity.category.replace(' ', '_').toUpperCase() : 'UNKNOWN',
-        }))
-        .filter((amenity) => amenity.name && amenity.category);
+      const amenities = response.map((amenity) => ({
+        ...amenity,
+        id: amenity.id,
+        name: amenity.name,
+        category: amenity.category ? amenity.category.replace(' ', '_').toUpperCase() : 'UNKNOWN',
+      })).filter((amenity) => amenity.name && amenity.category);
       return amenities;
     } catch (error) {
       console.error('Error fetching amenities:', error);
@@ -54,26 +29,13 @@ class AmenityService {
     }
   }
 
-  async getAmenityById(amenitiesId) {
-    const { id } = amenitiesId;
-    if (!id) {
-      throw new Error('Amenity ID is required');
-    }
+  async getAmenityById(id) {
     try {
-      const query = 'SELECT * FROM AMENITIES WHERE id = :id';
-      const response = await this.sequelize.query(query, {
-        type: QueryTypes.SELECT,
-        replacements: { id },
-      });
-      if (!response || !Array.isArray(response) || response.length === 0) {
+      const amenity = await this.Amenity.findByPk(id);
+      if (!amenity) {
         throw new Error('Amenity not found');
       }
-      const amenity = response[0];
-      return {
-        id: amenity.id,
-        name: amenity.name,
-        category: amenity.category ? amenity.category.replace(' ', '_').toUpperCase() : 'UNKNOWN',
-      };
+      return amenity;
     } catch (error) {
       console.error('Error fetching amenity:', error);
       throw new Error('Error fetching amenity');

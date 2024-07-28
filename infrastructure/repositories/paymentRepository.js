@@ -90,6 +90,37 @@ class PaymentRepository extends RESTDataSource {
         }
         return payment;
     }
+
+    async addFundsToUserWallet(userId, amount) {
+        // Implement database update to add funds to user's wallet
+        try {
+          const user = await this.db.User.findOne({ where: { id: userId } });
+          if (!user) {
+            throw new Error('User not found');
+          }
+          user.funds += amount;
+          await user.save();
+          return user.funds;
+        } catch (error) {
+          console.error('Error adding funds to wallet:', error);
+          throw new Error('Error adding funds to wallet');
+        }
+      }
+    async subtractFundsFromUserWallet(userId, amount) {
+        // Implement database update to subtract funds from user's wallet
+        try {
+          const user = await this.db.User.findOne({ where: { id: userId } });
+          if (!user) {
+            throw new Error('User not found');
+          }
+          user.funds -= amount;
+          await user.save();
+          return user.funds;
+        } catch (error) {
+          console.error('Error subtracting funds from wallet:', error);
+          throw new Error('Error subtracting funds from wallet');
+        }
+      }
 }
 
 export default PaymentRepository;

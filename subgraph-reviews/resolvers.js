@@ -1,7 +1,5 @@
-import errors from "../utils/errors.js";
-const { AuthenticationError, ForbiddenError } = errors;
+import { AuthenticationError, ForbiddenError } from "../infrastructure/utils/errors.js";
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
-import { extensions } from "sequelize/lib/utils/validator-extras";
 
 const resolvers = {
   Mutation: {
@@ -10,11 +8,19 @@ const resolvers = {
       { guestReview: guestReviewInput, bookingId },
       { dataSources, userId }
     ) => {
-      const guestId = await dataSources.bookingsAPI.getGuestIdForBooking(bookingId);
-      if (bookingId.Booking,statusbar!=='complete') {
-        throw new ForbiddenError("you can't review this Booking now",{extensions:code('unsupported')})
+      const { reviewService, bookingService } = dataSources;
+      const booking = await bookingService.getBooking(bookingId);
+
+      if (!booking) {
+        throw new ForbiddenError("Booking not found", { extensions: { code: 'NOT_FOUND' } });
       }
-      const createGuestReview = await dataSources.reviewsAPI.postReview({
+
+      if (booking.status !== 'complete') {
+        throw new ForbiddenError("You can't review this booking now", { extensions: { code: 'UNSUPPORTED' } });
+      }
+
+      const guestId = booking.guestId;
+      const createGuestReview = await reviewService.postReview({
         ...guestReviewInput,
         guestId,
         authorId: userId,
@@ -33,16 +39,23 @@ const resolvers = {
       { hostReview: hostReviewInput, bookingId, locationReview: locationReviewInput },
       { dataSources, userId }
     ) => {
-      const listingId = await dataSources.listingsAPI.getListingIdForBooking(bookingId);
-      const locationReview = await dataSources.reviewsAPI.createReviewForListing({
+      const { listingService, bookingService, reviewService } = dataSources;
+      const booking = await bookingService.getBooking(bookingId);
+
+      if (!booking) {
+        throw new ForbiddenError("Booking not found", { extensions: { code: 'NOT_FOUND' } });
+      }
+
+      const listingId = await listingService.getListingIdForBooking(bookingId);
+      const locationReview = await reviewService.createReviewForListing({
         ...locationReviewInput,
         listingId,
         authorId: userId,
         bookingId,
       });
 
-      const { hostId } = await dataSources.listingsAPI.getListing(listingId);
-      const createdHostReview = await dataSources.reviewsAPI.createReviewForHost({
+      const { hostId } = await listingService.getListing(listingId);
+      const createdHostReview = await reviewService.createReviewForHost({
         ...hostReviewInput,
         authorId: userId,
         hostId,
@@ -59,40 +72,47 @@ const resolvers = {
     }),
   },
 
-  
   Listing: {
     overallRating: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getOverallRatingForListing(id);
+      const { reviewService } = dataSources;
+      return reviewService.getOverallRatingForListing(id);
     },
     reviews: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getReviewsForListing(id);
+      const { reviewService } = dataSources;
+      return reviewService.getReviewsForListing(id);
     },
   },
 
   Booking: {
     guestReview: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getReviewForBooking("GUEST", id);
+      const { reviewService } = dataSources;
+      return reviewService.getReviewForBooking("GUEST", id);
     },
     hostReview: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getReviewForBooking("HOST", id);
+      const { reviewService } = dataSources;
+      return reviewService.getReviewForBooking("HOST", id);
     },
     locationReview: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getReviewForBooking("LISTING", id);
+      const { reviewService } = dataSources;
+      return reviewService.getReviewForBooking("LISTING", id);
     },
   },
 
   Host: {
     overallRating: ({ id }, _, { dataSources }) => {
-      return dataSources.reviewsAPI.getOverallRatingForHost(id);
+      const { reviewService } = dataSources;
+      return reviewService.getOverallRatingForHost(id);
     },
     __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
+      const { reviewService } = dataSources;
+      return reviewService.getUser(user.id);
     },
   },
 
   Guest: {
     __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
+      const { userService } = dataSources;
+      return userService.getUser(user.id);
     },
   },
 

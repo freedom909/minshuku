@@ -1,7 +1,6 @@
 import express, { json } from 'express';
 import db from './models/index.js';
 import jwt from 'jsonwebtoken';
-import { Op } from '@sequelize/core';
 import help from './helpers.js';
 import { readFileSync } from 'fs';
 import { authenticate,authorize } from '../../infrastructure/auth/authenticateAndAuthorize.js';

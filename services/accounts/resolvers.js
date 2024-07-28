@@ -3,7 +3,7 @@ import DateTimeType from '../../infrastructure/scalar/DateTimeType.js';
 import AccountsAPI from './datasources/accountsApi.js';
 import AccountService from '../../infrastructure/services/accountService.js';
 import AccountRepository from '../../infrastructure/repositories/accountRepository.js';
-import {connectToDatabase } from '../../infrastructure/DB/connectDB.js';
+import connectMongoDb from '../../infrastructure/DB/connectMongoDb.js';
 
 
 async function initializeRepositories() {
