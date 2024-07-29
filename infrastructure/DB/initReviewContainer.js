@@ -6,11 +6,15 @@ import ListingRepository from '../repositories/listingRepository.js';
 import UserService from '../services/userService.js';
 import UserRepository from '../repositories/userRepository.js';
 import AmenityService from '../services/amenityService.js';
-import ReviewService from '../services/reviewService.js/index.js';
+import ReviewService from '../services/reviewService.js';
 import ReviewRepository from '../repositories/reviewRepository.js';
+import BookingService from '../services/bookingService.js';
+import BookingRepository from '../repositories/bookingRepository.js';
+
+
 import axios from 'axios';
 
-const initializeAmenityContainer = async () => {
+const initializeReviewContainer = async () => {
   const mysqldb = await dbconfig.mysql();
   const mongodb = await dbconfig.mongo();
 
@@ -26,6 +30,10 @@ const initializeAmenityContainer = async () => {
     amenityRepository: asClass(AmenityRepository).singleton(),
     reviewService: asClass(ReviewService).singleton(),
     reviewRepository: asClass(ReviewRepository).singleton(),
+    bookingService: asClass(BookingService).singleton(),
+    bookingRepository: asClass(BookingRepository).singleton(),
+    // Add other dependencies here...
+
     axios: asValue(axios),
     // Add other dependencies here...
   });
@@ -34,4 +42,4 @@ const initializeAmenityContainer = async () => {
   return container;
 };
 
-export default initializeAmenityContainer;
+export default initializeReviewContainer;

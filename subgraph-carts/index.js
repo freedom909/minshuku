@@ -9,7 +9,7 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 
 import initializeBookingContainer from '../infrastructure/DB/initBookingContainer.js';
 import cors from 'cors';
-import dotenv from 'dotenv';
+
 import resolvers from './resolvers.js';
 import ListingService from '../infrastructure/services/listingService.js'; 
 import BookingService from '../infrastructure/services/bookingService.js';  
@@ -18,7 +18,6 @@ import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 import initializeCartContainer from '../infrastructure/DB/initCartContainer.js';
 import CartService from '../infrastructure/services/cartService.js';
 
-dotenv.config();
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 

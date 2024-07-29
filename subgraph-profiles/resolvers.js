@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
-import DateTimeType from "../../../shared/scalars/DateTimeType.js";
+import DateTimeType from '../infrastructure/scalar/dateTimeType.js';
 
 const resolvers = {
     DateTime: DateTimeType,
@@ -64,11 +64,11 @@ const resolvers = {
         }
     },
     Mutation: {
-        createProfile(root, { input }, { dataSources }) {
+        createProfile(_, { input }, { dataSources }) {
             const { profileService } = dataSources;
             return profileService.createProfile(input);
         },
-        updateProfile(root, { input: { accountId, ...rest } }, { dataSources }) {
+        updateProfile(_, { input: { accountId, ...rest } }, { dataSources }) {
             const { profileService } = dataSources;
             return profileService.updateProfile(accountId, rest);
         },

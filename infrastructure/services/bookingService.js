@@ -6,7 +6,7 @@ class BookingService extends RESTDataSource {
     this.bookingRepository = bookingRepository;
     this.paymentRepository = paymentRepository;
     this.listingRepository = listingRepository;
-    this.baseURL = 'http://localhost:4012/';
+    this.baseURL = 'http://localhost:4014/';
   }
 
   async getBooking(id) {

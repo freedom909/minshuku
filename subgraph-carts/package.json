@@ -13,7 +13,7 @@
   "description": "",
   "dependencies": {
     "@apollo/datasource-rest": "^6.3.0",
-    "@apollo/server": "^4.10.4",
+    "@apollo/server": "^4.10.5",
     "@apollo/subgraph": "^2.8.1",
     "@sequelize/core": "^7.0.0-alpha.37",
     "apollo-server": "^3.13.0",
@@ -21,11 +21,14 @@
     "express-validator": "^7.1.0",
     "fs": "^0.0.1-security",
     "graphql-scalars": "^1.23.0",
+    "graphql-subscriptions": "^2.0.0",
     "graphql-tag": "^2.12.6",
+    "graphql-ws": "^5.16.0",
     "http": "^0.0.1-security",
     "mongodb": "^6.7.0",
     "neo4j": "^2.0.0-RC2",
     "neo4j-driver": "^5.22.0",
+    "nodemon": "^3.1.4",
     "path": "^0.12.7"
   }
 }

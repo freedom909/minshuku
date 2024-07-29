@@ -31,12 +31,13 @@ async function startApolloServer() {
           async serverWillStart() {
             return {
               async drainServer() {
-                await initListingContainer.resolve('db').client.close();
-                await initBookingContainer.resolve('db').client.close();  // Ensure MongoDB client is closed properly
-                await initCartContainer.resolve('db').client.close();  // Ensure MongoDB client is closed properly
-                await initReviewContainer.resolve('mongodb').client.close();
-                await initProfileContainer.resolve('mongodb')  // Ensure MongoDB client is closed properly
+                await initListingContainer.resolve('db').close();
+                await initBookingContainer.resolve('db').close();  // Ensure MongoDB client is closed properly
+                await initCartContainer.resolve('db').close();  // Ensure MongoDB client is closed properly
+                await initReviewContainer.resolve('mongodb').close();// Ensure MongoDB client is closed properly
                 await initMongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
+                await initProfileContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
+              
               }
 
             };
@@ -48,8 +49,11 @@ async function startApolloServer() {
         user: req.headers.user || null,
         dataSources: {
           accountService: container.resolve('accountService'),
-          // listingService: container.resolve('listingService'),
-          // bookingService: container.resolve('bookingService')
+          listingService: container.resolve('listingService'),
+          bookingService: container.resolve('bookingService'),
+          cartService: container.resolve('cartService'),
+          reviewService: container.resolve('reviewService'),
+          profileService: container.resolve('profileService')
         }
       })
     });
@@ -66,7 +70,10 @@ async function startApolloServer() {
           dataSources: {
             accountService: container.resolve('accountService'),
             listingService: container.resolve('listingService'),
-            bookingService: container.resolve('bookingService')
+            bookingService: container.resolve('bookingService'),
+            cartService: container.resolve('cartService'),
+            reviewService: container.resolve('reviewService'),
+            profileService: container.resolve('profileService')
           }
         })
       })

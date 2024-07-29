@@ -1,12 +1,11 @@
-
 import Cart from '../models/cart.js'; // Ensure you import your Cart model
 import Booking from '../models/booking.js'; // Ensure you import your Booking model
-import BookingItem from '../models/bookingItem.js'; // Ensure you import your Book
-import BookingRepository from './bookingRepository.js';
+import BookingItem from '../models/bookingItem.js'; // Ensure you import your BookingItem model
 
 class CartRepository {
-  constructor(bookingRepository) {
+  constructor({ bookingRepository, userRepository }) {
     this.bookingRepository = bookingRepository;
+    this.userRepository = userRepository;
   }
 
   async getCartItems(userId) {
@@ -27,11 +26,12 @@ class CartRepository {
     }
   }
 
-  async updateCartItemQuantity(userId, itemId, quantity) {
+  async updateRentDate(userId, itemId, checkInDate, checkOutDate) {
     try {
       const cartItem = await Cart.findOne({ where: { id: itemId, userId } });
       if (cartItem) {
-        cartItem.quantity = quantity;
+        cartItem.checkInDate = checkInDate;
+        cartItem.checkOutDate = checkOutDate;
         return await cartItem.save();
       }
       return null;
@@ -73,8 +73,29 @@ class CartRepository {
   }
 
   async placeBooking(userId, cartItems, paymentMethod) {
-    // Implement booking logic here
-    // Make sure to handle the booking transaction, update inventory, and process payment
+    try {
+      // Begin transaction
+      const transaction = await Booking.sequelize.transaction();
+
+      // Create booking
+      const booking = await this.bookingRepository.create({ userId }, { transaction });
+
+      // Create booking items
+      for (const item of cartItems) {
+        await BookingItem.create({ bookingId: booking.id, ...item }, { transaction });
+      }
+
+      // Handle payment
+      // Add your payment processing logic here
+
+      // Commit transaction
+      await transaction.commit();
+
+      return booking;
+    } catch (error) {
+      console.error('Error placing booking:', error);
+      throw new Error('Error placing booking');
+    }
   }
 
   async getBookingDetails(bookingId) {
@@ -101,8 +122,17 @@ class CartRepository {
   }
 
   async returnBookingItem(bookingId, itemId) {
-    // Implement return item logic
-    // Ensure to update the booking item status, process the return, and handle refunds
+    try {
+      const bookingItem = await BookingItem.findOne({ where: { id: itemId, bookingId } });
+      if (bookingItem) {
+        bookingItem.returnStatus = true;
+        return await bookingItem.save();
+      }
+      return null;
+    } catch (error) {
+      console.error('Error returning booking item:', error);
+      throw new Error('Error returning booking item');
+    }
   }
 
   async getBookingItems(bookingId) {

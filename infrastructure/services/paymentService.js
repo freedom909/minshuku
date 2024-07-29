@@ -1,6 +1,9 @@
-class PaymentService {
+import { RESTDataSource } from "@apollo/datasource-rest";
+class PaymentService extends RESTDataSource {
   constructor(paymentRepository) {
+    super();
     this.paymentRepository = paymentRepository;
+    this.baseURL = "https://rt-airlock-services-payments.herokuapp.com/";
   }
 
   async getPaymentInfo(userId) {
@@ -9,7 +12,7 @@ class PaymentService {
     }
     // Fetch payment information from the payment repository
     const paymentInfo = await this.paymentRepository.getPaymentInfo(userId);
-    return paymentInfo || 100; // Example return value if no specific info is found
+    return paymentInfo || 0; // Example return value if no specific info is found
   }
 
   async addFunds({ userId, amount }) {
@@ -26,7 +29,6 @@ class PaymentService {
       console.error('Error adding funds:', error);
       throw new Error('Error adding funds');
     }
-
   }
 
   async subtractFunds({ userId, amount }) {
@@ -45,6 +47,10 @@ class PaymentService {
     }
 
   }
+
+
+
+
 }
 
 export default PaymentService;

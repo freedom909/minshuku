@@ -24,6 +24,7 @@ class ReviewService {
     });
   }
 
+  
   async createReviewForHost({ hostId, authorId, bookingId, ...reviewInput }) {
     return await this.reviewRepository.createReview({
       ...reviewInput,

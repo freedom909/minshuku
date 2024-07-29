@@ -49,7 +49,6 @@ const initializeCartContainer = async ({ services = [] } = {}) => {
     cartService: asClass(CartService).singleton(),
     paymentRepository: asClass(PaymentRepository).singleton(),
     paymentService: asClass(PaymentService).singleton(),
-
   });
 
   // Register services dynamically

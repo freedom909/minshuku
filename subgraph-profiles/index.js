@@ -6,38 +6,69 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
+import initProfileContainer from '../infrastructure/DB/initProfileContainer.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import ProfileModel from '../infrastructure/models/profile.js';
-import ProfileRepository from '../infrastructure/repositories/profileRepository.js';
-import ProfileService from '../infrastructure/services/profileService';
 
-// Container function to initialize the subgraph-profile
-const initializeProfileSubgraph = () => {
-    // Initialize repository
-    const profileRepository = new ProfileRepository({ ProfileModel });
-    
-    // Initialize service
-    const profileService = new ProfileService({ profileRepository });
-    
-    // Build federated schema
-    const schema = buildSubgraphSchema({ typeDefs, resolvers });
-    
-    // Create Apollo Server instance with the federated schema
+
+dotenv.config();
+
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+
+const startApolloServer = async () => {
+  try {
+    const container = await initProfileContainer();
+
+    const app = express();
+    const httpServer = http.createServer(app);
+
     const server = new ApolloServer({
-      schema,
-      context: () => ({
-        dataSources,
-      }),
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+                await container.resolve('mongodb').end();
+              }
+            };
+          }
+        }
+      ],
+      context: async ({ req }) => ({
+        token: req.headers.authorization || '',
+        dataSources: {
+          userService: container.resolve('userService'),
+          profileService: container.resolve('profileService'),
+        }
+      })
     });
-    
-    return server;
-  };
 
-const server = initializeProfileSubgraph();
+    await server.start();
 
-server.listen().then(({ url }) => {
-  console.log(`Server ready at ${url}`);
-});
+    app.use(
+      '/graphql',
+      cors(),
+      express.json(),
+      expressMiddleware(server, {
+        context: async ({ req }) => ({
+          token: req.headers.authorization || '',
+          dataSources: {
+            userService: container.resolve('userService'),
+            profileService: container.resolve('profileService'),
+          }
+        })
+      })
+    );
+
+    httpServer.listen({ port: 4002 }, () => {
+      console.log(`🚀 Server ready at http://localhost:4002/graphql`);
+    });
+  } catch (error) {
+    console.error('Error starting server:', error);
+  }
+};
+
+startApolloServer();

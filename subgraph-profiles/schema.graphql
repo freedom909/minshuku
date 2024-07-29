@@ -1,5 +1,6 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7", import: ["@key"])
+  @link(url: "https://specs.apollo.dev/federation/v2.7", 
+        import: ["@key", "@shareable", "@provides", "@external"])
 
 """
 An ISO 8601-encoded UTC date string.
@@ -8,10 +9,10 @@ scalar DateTime
 
 type Query {
   "Retrieves a single profile by username."
-  profile(username: String!): Profile! @private
+  profile(username: String!): Profile!
 
   "Retrieves a list of profiles."
-  profiles: [Profile] @private
+  profiles: [Profile] 
 }
 
 """
@@ -87,18 +88,18 @@ input NetworkMemberInput {
 
 type Mutation {
   "Creates a new profile tied to an Auth0 account."
-  createProfile(input: CreateProfileInput!): Profile! @owner(argumentName: "input.accountId")
+  createProfile(input: CreateProfileInput!): Profile!
   # ...
   
   "Deletes a user profile."
-  deleteProfile(accountId: ID!): Boolean! @owner(argumentName: "accountId")
+  deleteProfile(accountId: ID!): Boolean! 
   # ...
   
   "Adds a user to a network."
-  addToNetwork(input: NetworkMemberInput!): Profile! @owner(argumentName: "input.accountId")
+  addToNetwork(input: NetworkMemberInput!): Profile! 
   # ...
   
   "Removes a user from a network."
-  removeFromNetwork(input: NetworkMemberInput!): Profile! @owner(argumentName: "input.accountId")
+  removeFromNetwork(input: NetworkMemberInput!): Profile! 
   # ...
 }

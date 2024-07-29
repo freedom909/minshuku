@@ -1,30 +1,33 @@
-class ProfileRepository {
-    constructor({ ProfileModel }) {
-      this.ProfileModel = ProfileModel;
+import BaseRepository from './baseRepository.js'
+
+class ProfileRepository extends BaseRepository{
+  constructor({ mongodb }) {
+    super();
+    this.collection = mongodb.collection('profiles');
     }
   
     findOne(query) {
-      return this.ProfileModel.findOne(query).exec();
+      return this.collection.findOne(query).exec();
     }
   
     find(query = {}) {
-      return this.ProfileModel.find(query).exec();
+      return this.collection.find(query).exec();
     }
   
     findById(id) {
-      return this.ProfileModel.findById(id).exec();
+      return this.collection.findById(id).exec();
     }
   
     findOneAndUpdate(query, update, options) {
-      return this.ProfileModel.findOneAndUpdate(query, update, options).exec();
+      return this.collection.findOneAndUpdate(query, update, options).exec();
     }
   
     findOneAndDelete(query) {
-      return this.ProfileModel.findOneAndDelete(query).exec();
+      return this.collection.findOneAndDelete(query).exec();
     }
   
     save(profile) {
-      const newProfile = new this.ProfileModel(profile);
+      const newProfile = new this.collection(profile);
       return newProfile.save();
     }
   }

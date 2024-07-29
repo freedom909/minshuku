@@ -12,6 +12,22 @@ class CartService extends RESTDataSource {
     this.baseURL = 'http://localhost:4016/';
   }
 
+  async createBooking({ guestId, listingId }) {
+    if (!guestId || !listingId) {
+      throw new GraphQLError('Missing required parameters', { extensions: { code: 'INVALID_INPUT' } });
+    }
+    try {
+      const listing = await this.listingRepository.findById(listingId);
+      if (!listing) {
+        throw new GraphQLError('Listing not found', { extensions: { code: 'LISTING_NOT_FOUND' } });
+      }
+      const booking = await this.bookingRepository.create({ guestId, listingId });
+      return booking;
+    } catch (error) {
+      throw new GraphQLError('Failed to create booking', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
   async getBookingsForUser(user) {
     try {
       return await this.cartRepository.find({ where: { guestId: user.id } });
@@ -61,6 +77,30 @@ class CartService extends RESTDataSource {
       return booking;
     } catch (error) {
       throw new GraphQLError('Failed to cancel booking', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
+  async makePayment(bookingId, paymentData) {
+    if (!bookingId || !paymentData) {
+      throw new GraphQLError('Missing required parameters', { extensions: { code: 'INVALID_INPUT' } });
+    }
+    try {
+      const booking = await this.bookingRepository.findById(bookingId);
+      if (!booking) {
+        throw new GraphQLError('Booking not found', { extensions: { code: 'BOOKING_NOT_FOUND' } });
+      }
+      const payment = await this.paymentRepository.create({ bookingId, ...paymentData });
+      return payment;
+    } catch (error) {
+      throw new GraphQLError('Failed to make payment', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
+  async getPaymentByBookingId(bookingId) {
+    try {
+      return await this.paymentRepository.findOne({ where: { bookingId } });
+    } catch (error) {
+      throw new GraphQLError('Failed to fetch payment', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 }
