@@ -22,10 +22,13 @@ Listing.init({
   updatedAt: DataTypes.DATE,
   checkInDate: DataTypes.DATE,
   checkOutDate: DataTypes.DATE,
+<<<<<<< HEAD
   listingStatus: {
     type: DataTypes.ENUM,
     values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED'],
   },
+=======
+>>>>>>> 423c9ada222eec0adc48468d9b684fd46ad7492d
 }, {
   sequelize,
   modelName: 'Listing',

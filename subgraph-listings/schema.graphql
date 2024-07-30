@@ -22,6 +22,7 @@ extend type Query {
   hotListingsByBookingNumber: [Listing]
 }
 
+<<<<<<< HEAD
 input UpdateListingStatusInput {
   id: ID!
   status: ListingStatus!
@@ -42,6 +43,8 @@ enum ListingStatus{
   EXPIRED
 }
 
+=======
+>>>>>>> 423c9ada222eec0adc48468d9b684fd46ad7492d
 # Mutation definitions for creating and updating listing data
 extend type Mutation {
   "Creates a new listing for the currently authenticated host"
@@ -85,8 +88,20 @@ input CreateListingInput {
   locationType: LocationType!
   "The listing's amenities"
   amenities: [ID!]!
+  status: ListingStatus!
 }
 
+<<<<<<< HEAD
+=======
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  CANCELLED
+  DRAFT
+}
+
+>>>>>>> 423c9ada222eec0adc48468d9b684fd46ad7492d
 # Input type for updating a listing
 input UpdateListingInput {
   "The listing's title"
