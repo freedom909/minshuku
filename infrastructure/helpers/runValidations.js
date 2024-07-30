@@ -1,5 +1,6 @@
 import { validationResult } from 'express-validator';
 import {validRegister} from '../helpers/valid.js';
+import { GraphQLError } from 'graphql';
 
 const runValidations = async (input) => {
   // Mock a request object

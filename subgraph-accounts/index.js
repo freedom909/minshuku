@@ -12,7 +12,6 @@ import initListingContainer from '../infrastructure/DB/initListingContainer.js';
 import initCartContainer from '../infrastructure/DB/initCartContainer.js';
 import initReviewContainer from '../infrastructure/DB/initReviewContainer.js';
 import initProfileContainer from '../infrastructure/DB/initProfileContainer.js';
-import initBookingContainer from '../infrastructure/DB/initBookingContainer.js';
 import resolvers from './resolvers.js';
 
 async function startApolloServer() {
@@ -32,7 +31,6 @@ async function startApolloServer() {
             return {
               async drainServer() {
                 await initListingContainer.resolve('db').close();
-                await initBookingContainer.resolve('db').close();  // Ensure MongoDB client is closed properly
                 await initCartContainer.resolve('db').close();  // Ensure MongoDB client is closed properly
                 await initReviewContainer.resolve('mongodb').close();// Ensure MongoDB client is closed properly
                 await initMongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly

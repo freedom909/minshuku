@@ -22,6 +22,10 @@ Listing.init({
   updatedAt: DataTypes.DATE,
   checkInDate: DataTypes.DATE,
   checkOutDate: DataTypes.DATE,
+  listingStatus: {
+    type: DataTypes.ENUM,
+    values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED'],
+  },
 }, {
   sequelize,
   modelName: 'Listing',

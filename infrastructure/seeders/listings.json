@@ -13,7 +13,8 @@
     "saleAmount": 20.1,
     "bookingNumber":109,
     "checkInDate":"2021-09-08 04:00:00",
-    "checkOutDate":"2021-09-17 04:00:00"
+    "checkOutDate":"2021-09-17 04:00:00",
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 592.0,
@@ -26,7 +27,8 @@
     "hostId": "user-1",
     "isFeatured": true,
     "saleAmount": 10.1,
-    "bookingNumber":108
+    "bookingNumber":108,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 313.0,
@@ -38,7 +40,8 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353887/odyssey/federation-course2/illustrations/listings-03.png",
     "hostId": "user-1",
     "saleAmount": 0.91,
-    "bookingNumber":107
+    "bookingNumber":107,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 520.0,
@@ -51,7 +54,8 @@
     "hostId": "user-1",
     "isFeatured": true,
     "saleAmount": 0.81,
-    "bookingNumber":106
+    "bookingNumber":106,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 580.0,
@@ -63,7 +67,8 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353889/odyssey/federation-course2/illustrations/listings-05.png",
     "hostId": "user-1",
     "saleAmount": 0.71,
-    "bookingNumber":105
+    "bookingNumber":105,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 330.0,
@@ -75,7 +80,8 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-06.png",
     "hostId": "user-4",
     "saleAmount": 0.61,
-    "bookingNumber":104
+    "bookingNumber":104,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 430.0,
@@ -87,7 +93,8 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-07.png",
     "hostId": "user-4",
     "saleAmount": 0.51,
-    "bookingNumber":103
+    "bookingNumber":103,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 688.0,
@@ -99,7 +106,8 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-08.png",
     "hostId": "user-5",
     "saleAmount": 0.41,
-    "bookingNumber":102
+    "bookingNumber":102,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 474.0,
@@ -112,7 +120,8 @@
     "hostId": "user-6",
     "isFeatured": true,
     "saleAmount": 0.31,
-    "bookingNumber":101
+    "bookingNumber":101,
+    "listingStatus":"SOLD"
   },
   {
     "costPerNight": 687.0,
@@ -124,6 +133,7 @@
     "photoThumbnail": "https://res.cloudinary.com/apollographql/image/upload/v1644353890/odyssey/federation-course2/illustrations/listings-10.png",
     "hostId": "user-6",
     "saleAmount": 0.21,
-    "bookingNumber":100
+    "bookingNumber":100,
+    "listingStatus":"SOLD"
   }
 ]

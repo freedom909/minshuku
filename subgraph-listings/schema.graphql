@@ -22,6 +22,26 @@ extend type Query {
   hotListingsByBookingNumber: [Listing]
 }
 
+input UpdateListingStatusInput {
+  id: ID!
+  status: ListingStatus!
+}
+
+type UpdateListingStatusResponse {
+  success: Boolean!
+  message: String
+}
+
+enum ListingStatus{
+  ACTIVE,
+  PENDING,
+  SOLD,
+  DELETED,
+  REJECT,
+  CANCELLED,
+  EXPIRED
+}
+
 # Mutation definitions for creating and updating listing data
 extend type Mutation {
   "Creates a new listing for the currently authenticated host"
@@ -65,15 +85,6 @@ input CreateListingInput {
   locationType: LocationType!
   "The listing's amenities"
   amenities: [ID!]!
-  status: ListingStatus!
-}
-
-enum ListingStatus {
-  ACTIVE
-  INACTIVE
-  PENDING
-  CANCELLED
-  DRAFT
 }
 
 # Input type for updating a listing

@@ -10,6 +10,7 @@ const password = process.env.DB_PASSWORD;
 const sequelize = new Sequelize('air','root','princess', {
   host: 'localhost', // Make sure to also include the host
   dialect: 'mysql', 
+  port:3306
 });
 
 console.log('db:', db, 'user:', user, 'password:', password);
