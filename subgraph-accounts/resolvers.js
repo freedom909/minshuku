@@ -169,22 +169,13 @@ const resolvers = {
       const { listingService } = dataSources;
       return listingService.getListingsByHost(hostId)
     },
-    researchBooking: async (_, { guestId }, { dataSources }) => {
-      const { cartService } = dataSources;
-      return cartService.getBookingsByGuest(guestId);
+ 
+    async updateListingStatus(id, status) {
+      // Update the status of a listing in the database
+      
+      // Implement the logic here
     },
-    confirmBooking: async (_, { id }, { dataSources }) => {
-      const { cartService } = dataSources;
-      return cartService.confirmBooking(id);
-    },
-    cancelBooking: async (_, { id }, { dataSources }) => {
-      const { cartService } = dataSources;
-      return cartService.cancelBooking(id);
-    },
-    confirmListing: async (_, { id }, { dataSources }) => {
-      const { listingService } = dataSources;
-      return listingService.updateListingStatus(id, 'CONFIRMED');
-    },
+  
     cancelListing: async (_, { id }, { dataSources }) => {
       const { listingService } = dataSources;
       return listingService.updateListingStatus(id, 'CANCELLED');

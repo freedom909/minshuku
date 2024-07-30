@@ -10,8 +10,13 @@ type Booking @key(fields: "id") {
 }
 
 type Mutation {
-  createBooking(guestId: ID!, listingId: ID!): Booking!
+  "Research booking information according to guestId."
+  researchBooking(guestId: ID!): [Booking!]!
+
+  "Guest confirms the status of booking."
   confirmBooking(id: ID!): Boolean!
+
+  "Guest cancels the status of booking."
   cancelBooking(id: ID!): Boolean!
 }
 
@@ -22,4 +27,5 @@ type Subscription {
 type Query {
   getBookingsByUser(userId: ID!): [Booking]
   getBookingById(id: ID!): Booking
+  
 }

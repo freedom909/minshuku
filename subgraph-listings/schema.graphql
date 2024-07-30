@@ -31,6 +31,7 @@ extend type Mutation {
     listingId: ID!
     listing: UpdateListingInput!
   ): UpdateListingResponse! @shareable
+   updateListingStatus(input: UpdateListingStatusInput!): Listing!
 }
 
 # Common interface for response types
@@ -64,6 +65,15 @@ input CreateListingInput {
   locationType: LocationType!
   "The listing's amenities"
   amenities: [ID!]!
+  status: ListingStatus!
+}
+
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  CANCELLED
+  DRAFT
 }
 
 # Input type for updating a listing

@@ -6,8 +6,6 @@ extend schema
 # SCALARS
 scalar DateTime
 
-
-
 type Listing {
   id: ID!
   name: String!

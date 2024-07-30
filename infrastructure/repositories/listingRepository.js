@@ -131,24 +131,29 @@ class ListingRepository {
         }
     }
 
-    async createListing({ userId, listing }) {
-        if (!userId) {
-            throw new AuthenticationError('You must be logged in to create a listing');
+    async createListing({ title, description, photoThumbnail, numOfBeds, costPerNight, locationType, amenities, hostId }) {
+        // Implementation of the database interaction to create a listing
+        const newListing = await this.database.Listing.create({
+          title,
+          description,
+          photoThumbnail,
+          numOfBeds,
+          costPerNight,
+          locationType,
+          amenities,
+          hostId,
+        });
+    
+        // Assuming amenities is an array of IDs, you might need to handle its association separately.
+        if (amenities && amenities.length > 0) {
+          // Handle association logic here
+          await this.database.ListingAmenities.bulkCreate(
+            amenities.map(amenityId => ({ listingId: newListing.id, amenityId }))
+          );
         }
-        // Check if the user is a host or admin to create a listing.
-        const userService = new UserService();
-        const user = await userService.getUserById(userId);
-        if (user.role !== 'Host' && user.role !== 'Admin') {
-            throw new ForbiddenError('You do not have the right to create a listing');
-        }
-        try {
-            const response = await this.httpClient.post(`/users/${userId}/listings`, listing);
-            return response.data;
-        } catch (error) {
-            console.error('Error creating listing:', error);
-            throw error;
-        }
-    }
+    
+        return newListing;
+      }
 
     async getBookingsForListing(listingId) {
         try {

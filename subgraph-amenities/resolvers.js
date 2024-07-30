@@ -24,31 +24,12 @@ const resolvers = {
       const { amenityService } = dataSources;
       return amenityService.addAmenity(name, categoryId)
     },
-    addAmenityToListing: async (_, { listingId, amenityId }, { dataSources }) => {
-      const { amenityService,listingService } = dataSources;
-      
-      if (listingId && amenityId) {
-        const amenity = await amenityService.getAmenityById(amenityId);
-        if (!amenity) {
-          throw new Error('Amenity not found');
-        }
-        const listing = await listingService.getListingById(listingId);
-        if (!listing) {
-          throw new Error('Listing not found');
-        }
-        listing.amenities.push(amenity);
-        await listing.save();
-        return listing;
-      }
-
-      throw new Error('Both listingId and amenityId are required');
-    }
+    addAmenityToListing: async (_, { listingId, amenityId }, { dataSources }) =>
+      dataSources.listingService.addAmenityToListing(listingId, amenityId),
   },
+
   Listing: {
-    amenities: async (listing, __, { dataSources }) => {
-      const { amenityService } = dataSources;
-      return amenityService.getAmenitiesByListingId(listing.id);
-    }
-  }
+    amenities: async (listing, __, { dataSources }) => dataSources.amenityService.getAmenitiesByListingId(listing.id),
+  },
 };
 export default resolvers;

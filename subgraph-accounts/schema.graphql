@@ -252,26 +252,13 @@ extend type Mutation {
   updateAccountPassword(input: UpdateAccountPasswordInput!): Account!
   "Research listing information according to hostId."
   researchListing(hostId: ID!): [Listing!]!
-
-  "Research booking information according to guestId."
-  researchBooking(guestId: ID!): [Booking!]!
-
-  "Guest confirms the status of booking."
-  confirmBooking(id: ID!): Boolean!
-
-  "Guest cancels the status of booking."
-  cancelBooking(id: ID!): Boolean!
-
   "Host confirms the status of listing."
   confirmListing(id: ID!): Boolean!
-
   "Host cancels the status of listing."
   cancelListing(id: ID!): Boolean!
-
   # Additional mutations for user management
   "Update user information."
   updateUser(id: ID!, input: UpdateUserInput!): User
-
   "Delete a user."
   deleteUser(id: ID!): Boolean!
 
