@@ -1,116 +1,138 @@
+import { AuthenticationError, ForbiddenError } from "../infrastructure/utils/errors.js";
+import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
 
-import errors from "../utils/errors.js";
-const { AuthenticationError, ForbiddenError } =errors
 const resolvers = {
-
-  Mutation:{
-    submitGuestReview: async (
+  Mutation: {
+    submitGuestReview: requireAuth(async (
       _,
-      { GuestReviewInput, bookingsId },
+      { guestReview: guestReviewInput, bookingId },
       { dataSources, userId }
     ) => {
-      if (!userId) throw AuthenticationError();
-  
-      const guestId = await dataSources.bookingsAPI.getGuestIdForBooking(
-        bookingsId
-      );
-      const createGuestReview = await dataSources.reviewsAPI.postReview({
-        ...GuestReviewInput,
+      const { reviewService, bookingService } = dataSources;
+      const booking = await bookingService.getBooking(bookingId);
+
+      if (!booking) {
+        throw new ForbiddenError("Booking not found", { extensions: { code: 'NOT_FOUND' } });
+      }
+
+      if (booking.status !== 'complete') {
+        throw new ForbiddenError("You can't review this booking now", { extensions: { code: 'UNSUPPORTED' } });
+      }
+
+      const guestId = booking.guestId;
+      const createGuestReview = await reviewService.postReview({
+        ...guestReviewInput,
         guestId,
         authorId: userId,
-        bookingsId,
+        bookingId,
       });
+
       return {
         code: 200,
         success: true,
-        message: "review submitted",
+        message: "Review submitted",
         guestReview: createGuestReview,
       };
-    },
-    submitHostAndlocationReviews: async (
+    }),
+    submitHostAndLocationReviews: requireRole('HOST', async (
       _,
-      { hostReviewInput, bookingId, locationReviewInput },
+      { hostReview: hostReviewInput, bookingId, locationReview: locationReviewInput },
       { dataSources, userId }
     ) => {
-      if (!userId) throw AuthenticationError();
-      const listingId = await dataSources.listingsAPI.getListingIdForBooking(
-        bookingId
-      );
-      const locationReview = await dataSources.reviewsAPI.createReviewForListing({
+      const { listingService, bookingService, reviewService } = dataSources;
+      const booking = await bookingService.getBooking(bookingId);
+
+      if (!booking) {
+        throw new ForbiddenError("Booking not found", { extensions: { code: 'NOT_FOUND' } });
+      }
+
+      const listingId = await listingService.getListingIdForBooking(bookingId);
+      const locationReview = await reviewService.createReviewForListing({
         ...locationReviewInput,
         listingId,
         authorId: userId,
         bookingId,
       });
-      const { hostId } = await dataSources.listingsAPI.getListing(listingId);
-      const createdHostReview = await dataSources.reviewsAPI.createReviewForHost({
+
+      const { hostId } = await listingService.getListing(listingId);
+      const createdHostReview = await reviewService.createReviewForHost({
         ...hostReviewInput,
         authorId: userId,
         hostId,
         bookingId,
       });
-  
+
       return {
         code: 200,
         success: true,
-        message: "location Review are successful to create",
-        locationReview: locationReview,
-        createdHostReview: createdHostReview,
+        message: "Location review successfully created",
+        locationReview,
+        hostReview: createdHostReview,
       };
+    }),
+  },
+
+  Listing: {
+    overallRating: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getOverallRatingForListing(id);
     },
-  
-    Listing: {
-      overallRating: ({ id }, _, { dataSources }) => {
-        return dataSources.reviewsAPI.getOverallRatingForListing(id);
-      },
-      reviews: ({ id }, _, { dataSources }) => {
-        return dataSources.reviewsAPI.getReviewForListing(id);
-      },
-    },
-    Booking: {
-      guestReview: ({ id }, _, { dataSources }) => {
-        return dataSources.reviewsAPI.getReviewForBooking("GUEST", id);
-      },
-      hostReview: ({ id }, _, { dataSources }) => {
-        return dataSources.reviewsAPI.getReviewForBooking("HOST", id);
-      },
-      locationReview: ({ id }, _, { dataSources }) => {
-        return dataSources.reviewsAPI.getGuestIdForBooking("LISTING", id);
-      },
-    },
-    Host: {
-      overallRating: ({ id }, _, { dataSources }) => {
-        return dataSources.reviewsAPI.getOverallRatingForHost(id);
-      },
-    },
-    Review: {
-      author: (review) => {
-        let role = "";
-        if (review.targetType === "LISTING" || review.targetType === "HOST") {
-          role = "Guest";
-        } else {
-          role = "Host";
-        }
-        return { __typename: role, id: review.authorId };
-      },
+    reviews: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getReviewsForListing(id);
     },
   },
+
+  Booking: {
+    guestReview: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getReviewForBooking("GUEST", id);
+    },
+    hostReview: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getReviewForBooking("HOST", id);
+    },
+    locationReview: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getReviewForBooking("LISTING", id);
+    },
+  },
+
+  Host: {
+    overallRating: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getOverallRatingForHost(id);
+    },
+    __resolveReference: (user, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getUser(user.id);
+    },
+  },
+
+  Guest: {
+    __resolveReference: (user, { dataSources }) => {
+      const { userService } = dataSources;
+      return userService.getUser(user.id);
+    },
+  },
+
+  Review: {
+    author: (review) => {
+      let role = "";
+      if (review.targetType === "LISTING" || review.targetType === "HOST") {
+        role = "Guest";
+      } else {
+        role = "Host";
+      }
+      return { __typename: role, id: review.authorId };
+    },
+  },
+
   User: {
     __resolveType(user) {
       return user.role;
     },
   },
-  Host: {
-    __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
-    },
-  },
-  Guest: {
-    __resolveReference: (user, { dataSources }) => {
-      return dataSources.accountsAPI.getUser(user.id);
-    },
-  },
-}
-
+};
 
 export default resolvers;

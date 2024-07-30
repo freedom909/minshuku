@@ -1,63 +1,74 @@
 import { ApolloServer } from '@apollo/server';
-import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
+import { gql } from 'graphql-tag';
 import { readFileSync } from 'fs';
-import axios from 'axios';
-import gql from 'graphql-tag';
+import express from 'express';
+import http from 'http';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import initializeListingContainer from '../infrastructure/DB/initListingContainer.js';
 
-import errors from '../utils/errors.js';
-const { AuthenticationError } = errors
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+import cors from 'cors';
+import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import BookingsAPI from './datasources/bookings.js';
-import ListingsAPI from './datasources/listings.js';
 
+dotenv.config();
 
-async function startApolloServer() {
-  const server = new ApolloServer({
-    schema: buildSubgraphSchema({
-      typeDefs,
-      resolvers,
-    }),
-  });
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
-  const port = 4003; // TODO: change port number
-  const subgraphName = 'listings'; // TODO: change to subgraph name
-
+const startApolloServer = async () => {
   try {
-    const { url } = await startStandaloneServer(server, {
-      context: async ({ req }) => {
-        const token = req.headers.authorization || '';
-        const userId = token.split(' ')[1]; // get the user name after 'Bearer '
+    const mysqlContainer = await initializeListingContainer({ services: [] }); 
+  
 
-        let userInfo = {};
-        if (userId) {
-          const { data } = await axios
-          .get(`http://localhost:4011/login/${userId}`)
-            .catch((error) => {
-              throw AuthenticationError();
-            });
+    const app = express();
+    const httpServer = http.createServer(app);
 
-          userInfo = { userId: data.id, userRole: 'GUEST' };
+    const server = new ApolloServer({
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      introspection: true, // Enable introspection
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {   
+                await mysqlContainer.resolve('mysqldb').end();
+              }
+            };
+          }
         }
-
-        return {
-          ...userInfo,
-          dataSources: {
-            listingsAPI: new ListingsAPI(),
-            bookingsAPI: new BookingsAPI(),
-          },
-        };
-      },
-      listen: {
-        port,
-      },
+      ],
+      context: async ({ req }) => ({
+        token: req.headers.authorization || '',
+        dataSources: {
+          listingService:mysqlContainer.resolve('listingService')
+        },
+      })
     });
 
-    console.log(`🚀 Subgraph ${subgraphName} running at ${url}`);
-  } catch (err) {
-    console.error(err);
+    await server.start();
+
+    app.use(
+      '/graphql',
+      cors(),
+      express.json(),
+      expressMiddleware(server, {
+        context: async ({ req }) => ({
+          token: req.headers.authorization || '',
+          dataSources: {
+            listingService:mysqlContainer.resolve('listingService')
+          },
+        })
+      })
+    );
+
+    httpServer.listen({ port: 4013 }, () =>
+      console.log('Server is running on http://localhost:4013/graphql')
+    );
+  } catch (error) {
+    console.error('Error starting Apollo Server:', error);
   }
-}
+};
 
 startApolloServer();

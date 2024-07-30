@@ -1,0 +1,22 @@
+{
+  "name": "air",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "db:init": "sequelize-cli db:migrate && sequelize-cli db:seed:all",
+    "db:reset": "sequelize-cli db:migrate:undo:all && npm run db:init",
+    "launch": "nodemon index.js",
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/datasource-rest": "^6.3.0",
+    "@apollo/server": "^4.10.4",
+    "@apollo/subgraph": "^2.8.0",
+    "axios": "^1.7.2"
+  }
+}

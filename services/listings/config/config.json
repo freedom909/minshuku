@@ -1,0 +1,20 @@
+{
+  "development": {
+    "user": "root",
+    "password": "princess",
+    "database": "air",
+    "host": "127.0.0.1"    
+  },
+  "test": {
+    "username": "root",
+    "password": "princess",
+    "database": "air_test",
+    "host": "127.0.0.1"
+  },
+  "production": {
+    "username": "root",
+    "password": "princess",
+    "database": "air_production",
+    "host": "127.0.0.1"
+  }
+}

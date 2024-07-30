@@ -1,0 +1,101 @@
+[
+    {
+      "id": "cart1",
+      "guestId": "user-3",
+      "items": [
+        {
+          "bookingId": "booking-2",
+          "listingId": "listing-1",
+          "checkInDate": "2025-10-10T05:00:00.000Z",
+          "checkOutDate": "2025-10-11T04:00:00.000Z",
+          "totalCost": 1920
+        },
+        {
+          "bookingId": "booking-6",
+          "listingId": "listing-2",
+          "checkInDate": "2024-02-07T05:00:00.000Z",
+          "checkOutDate": "2024-02-11T05:00:00.000Z",
+          "totalCost": 2368
+        },
+        {
+          "bookingId": "booking-7",
+          "listingId": "listing-2",
+          "checkInDate": "2024-06-06T04:00:00.000Z",
+          "checkOutDate": "2024-06-17T04:00:00.000Z",
+          "totalCost": 6512
+        },
+        {
+          "bookingId": "booking-8",
+          "listingId": "listing-2",
+          "checkInDate": "2021-05-03T04:00:00.000Z",
+          "checkOutDate": "2021-05-05T04:00:00.000Z",
+          "totalCost": 1184
+        }
+      ],
+      "totalPrice": 11984
+    },
+    {
+      "id": "cart2",
+      "guestId": "user-2",
+      "items": [
+        {
+          "bookingId": "booking-5",
+          "listingId": "listing-2",
+          "checkInDate": "2024-01-01T05:00:00.000Z",
+          "checkOutDate": "2024-01-04T05:00:00.000Z",
+          "totalCost": 1776
+        },
+        {
+          "bookingId": "booking-10",
+          "listingId": "listing-3",
+          "checkInDate": "2024-01-01T05:00:00.000Z",
+          "checkOutDate": "2024-02-09T05:00:00.000Z",
+          "totalCost": 12207
+        }
+      ],
+      "totalPrice": 13983
+    },
+    {
+      "id": "cart3",
+      "guestId": "user-7",
+      "items": [
+        {
+          "bookingId": "booking-9",
+          "listingId": "listing-2",
+          "checkInDate": "2024-11-05T04:00:00.000Z",
+          "checkOutDate": "2024-12-01T05:00:00.000Z",
+          "totalCost": 15392
+        },
+        {
+          "bookingId": "booking-12",
+          "listingId": "listing-1",
+          "checkInDate": "2025-10-04T04:00:00.000Z",
+          "checkOutDate": "2025-10-30T04:00:00.000Z",
+          "totalCost": 8138
+        }
+      ],
+      "totalPrice": 23530
+    },
+    {
+      "id": "cart4",
+      "guestId": "user-8",
+      "items": [
+        {
+          "bookingId": "booking-13",
+          "listingId": "listing-1",
+          "checkInDate": "2025-03-04T04:00:00.000Z",
+          "checkOutDate": "2025-03-07T04:00:00.000Z",
+          "totalCost": 360
+        },
+        {
+          "bookingId": "booking-14",
+          "listingId": "listing-3",
+          "checkInDate": "2025-03-04T04:00:00.000Z",
+          "checkOutDate": "2025-03-07T04:00:00.000Z",
+          "totalCost": 939
+        }
+      ],
+      "totalPrice": 1299
+    }
+  ]
+  

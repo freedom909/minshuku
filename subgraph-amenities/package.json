@@ -1,0 +1,38 @@
+{
+  "name": "subgraph-actor",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.4",
+    "@apollo/subgraph": "^2.8.1",
+    "@prisma/client": "^5.10.2",
+    "axios": "^1.7.2",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "fs": "^0.0.1-security",
+    "graphql": "^16.9.0",
+    "graphql-shield": "^7.6.5",
+    "graphql-tag": "^2.12.6",
+    "http": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4",
+    "mongodb": "^6.8.0",
+    "mongoose": "^8.4.3",
+    "nodemailer": "^6.9.7",
+    "nodemon": "^3.1.4",
+    "paseto": "^3.1.4",
+    "path": "^0.12.7",
+    "url": "^0.11.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

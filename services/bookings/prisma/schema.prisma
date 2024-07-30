@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model booking  {
-  id String  @id  @map("_id")
+  id String  @id   @default(cuid())
   guestId String   
   checkInDate DateTime
   checkOutDate DateTime

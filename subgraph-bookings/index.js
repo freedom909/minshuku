@@ -1,76 +1,85 @@
 import { ApolloServer } from '@apollo/server';
-import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
-import {
-  ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginLandingPageProductionDefault 
-} from '@apollo/server/plugin/landingPage/default';
+import { gql } from 'graphql-tag';
 import { readFileSync } from 'fs';
-import axios from 'axios';
-import  get  from 'axios';
-import gql from 'graphql-tag';
+import express from 'express';
+import http from 'http';
+import { expressMiddleware } from '@apollo/server/express4';
+
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import initializeBookingContainer from '../infrastructure/DB/initBookingContainer.js';
+import cors from 'cors';
+import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import BookingsAPI from './datasources/bookings.js';
-import ListingsAPI from './datasources/listings.js';
+import ListingService from '../infrastructure/services/listingService.js'; 
+import BookingService from '../infrastructure/services/bookingService.js';  
+import UserService from '../infrastructure/services/userService.js';
+import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
+import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
 
-import errors from '../utils/errors.js';
+dotenv.config();
 
-const {AuthenticationError} = errors
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
-let plugins = [];
-if (process.env.NODE_ENV === 'production') {
-  plugins = [ApolloServerPluginLandingPageProductionDefault({ embed: true, graphRef: 'myGraph@prod' })]
-} else {
-  plugins = [ApolloServerPluginLandingPageLocalDefault({ embed: true })]
-}
-
-async function startApolloServer() {
-  const server = new ApolloServer({
-    schema: buildSubgraphSchema({
-      typeDefs,
-      resolvers,
-      plugins
-    }),
-  });
-
-  const port = 4004; // TODO: change port number
-  const subgraphName = 'bookings'; // TODO: change to subgraph name
-
+const startApolloServer = async () => {
   try {
-    const { url } = await startStandaloneServer(server, {
-      context: async ({ req }) => {
-        const token = req.headers.authorization || '';
-        const userId = token.split(' ')[1]; // get the user name after 'Bearer '
-
-        let userInfo = {};
-        if (userId) {
-          const { data } = await axios.get(`http://localhost:4011/login/${userId}`)
-            .catch((error) => {
-              throw AuthenticationError();
-            });
-
-          userInfo = { userId: data.id, userRole: data.role };
-        }
-        return {
-          ...userInfo,
-
-          dataSources: {
-            // TODO: add data sources here
-            bookingsAPI:new BookingsAPI(),
-            listingsAPI:new ListingsAPI()
-          },
-        };
-      },
-      listen: {
-        port,
-      },
+    // Initialize MySQL and MongoDB containers
+    const mysqlContainer = await initializeBookingContainer({
+      services: [ListingService, BookingService]
     });
 
-    console.log(`🚀 Subgraph ${subgraphName} running at ${url}`);
-  } catch (err) {
-    console.error(err);
+    const mongoContainer = await initMongoContainer({
+      services: [UserService]
+    });
+
+    const app = express();
+    const httpServer = http.createServer(app);
+
+    const server = new ApolloServer({
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+                await mysqlContainer.resolve('mysqldb').close();
+                await mongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
+              }
+            };
+          }
+        }
+      ],
+      introspection: true,  // Enable introspection for GraphQL Playground
+      context: async ({ req }) => {
+        const token = req.headers.authorization || '';
+        const user = getUserFromToken(token);
+        return { 
+          user,
+          dataSources: {
+            listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
+            bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services
+            userService: mongoContainer.resolve('userService')  // Ensure correct resolution of services
+          }
+        };
+      }
+    });
+
+    await server.start();
+
+    app.use(
+      '/graphql',
+      cors(),
+      express.json(),
+      expressMiddleware(server)
+    );
+
+    httpServer.listen({ port: 4014 }, () => {
+      console.log(`🚀 Server ready at http://localhost:4014/graphql`);
+    });
+  } catch (error) {
+    console.error('Error starting server:', error);
   }
-}
+};
 
 startApolloServer();

@@ -1,0 +1,37 @@
+include_subgraph_errors:
+  all: true # Propagate errors from all subgraphs
+headers:
+  all:
+    request:
+      - propagate:
+          named: "Authorization"
+cors:
+  origins:
+    - http://localhost:3000 # Allows any locally-running client to run against your Router
+    - https://studio.apollographql.com # Allows Apollo Studio to still run queries against your Router
+    - https://your-production-app.com # Add your production app's URL here
+    allowCredentials: true # Enables cookies and other authentication mechanisms
+    maxAge: 3600 # Sets the maximum age for cookies (in seconds)
+    optionsSuccessStatus: 200 # Provides a custom status code for successful OPTIONS requests
+    exposedHeaders:
+      - Content-Type # Exposes the Content-Type header for responses
+      - ETag
+      - Cache-Control
+      - Expires
+      - Set-Cookie
+      - X-RateLimit-Limit
+      - X-RateLimit-Remaining
+      - X-RateLimit-Reset
+      - X-Response-Time
+      - X-Powered-By
+      - X-RateLimit-Reset-After
+
+# Enable subscriptions
+subscription:
+  enabled: true
+  mode:
+    passthrough:
+      all:
+        path: /ws
+
+

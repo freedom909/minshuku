@@ -1,22 +1,29 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.4",
-        import: ["@key","@shareable"])
-        
-type Query {
-   "Returns the details about this listing"
-  listing(id: ID!): Listing  @shareable
+  @link(url: "https://specs.apollo.dev/federation/v2.7", 
+        import: ["@key", "@shareable", "@provides", "@external"])
+
+# Query definitions for retrieving listing data
+extend type Query {
+  "Returns the details about this listing"
+  listing(id: ID!): Listing @shareable
   "A curated array of listings to feature on the homepage"
-  featuredListings : [Listing!]! @shareable
+  featuredListings: [Listing!]! @shareable
   "Return the listings that belong to the currently logged-in host"
-  hostListings : [Listing]! @shareable
+  hostListings: [Listing]! @shareable
   "Returns all possible amenities for a listing"
-  listingAmenities : [Amenity!]! @shareable
+  listingAmenities: [Amenity!]! @shareable
   "Search results for listings that fit the criteria provided"
-  searchListings(criteria: SearchListingsInput!) : [Listing]!@shareable
+  searchListings(criteria: SearchListingsInput!): [Listing] @shareable
+  "Returns the listings that match the criteria provided"
+  listings(numOfBeds: Int, page: Int, limit: Int, sortBy: String): [Listing]
+  "according to sale amount to sort"
+  hotListingsByMoney: [Listing]
+  "according to the number of bookings"
+  hotListingsByBookingNumber: [Listing]
 }
 
-type Mutation {
-  ### Listings
+# Mutation definitions for creating and updating listing data
+extend type Mutation {
   "Creates a new listing for the currently authenticated host"
   createListing(listing: CreateListingInput!): CreateListingResponse! @shareable
   "Updates an existing listing"
@@ -24,9 +31,11 @@ type Mutation {
     listingId: ID!
     listing: UpdateListingInput!
   ): UpdateListingResponse! @shareable
+   updateListingStatus(input: UpdateListingStatusInput!): Listing!
 }
 
-interface MutationResponse {
+# Common interface for response types
+interface Response {
   "Similar to HTTP status code, represents the status of the mutation"
   code: Int!
   "Indicates whether the mutation was successful"
@@ -35,7 +44,12 @@ interface MutationResponse {
   message: String!
 }
 
-"Used to create a listing"
+input ReservedDateInput {
+  checkInDate: String!
+  checkOutDate: String!
+}
+
+# Input type for creating a listing
 input CreateListingInput {
   "The listing's title"
   title: String!
@@ -49,11 +63,20 @@ input CreateListingInput {
   costPerNight: Float!
   "The location type of the listing"
   locationType: LocationType!
-  "The Listing's amenities "
+  "The listing's amenities"
   amenities: [ID!]!
+  status: ListingStatus!
 }
 
-"Updates the properties included. If none are given, don't update anything"
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  CANCELLED
+  DRAFT
+}
+
+# Input type for updating a listing
 input UpdateListingInput {
   "The listing's title"
   title: String
@@ -67,62 +90,42 @@ input UpdateListingInput {
   costPerNight: Float
   "The location type of the listing"
   locationType: LocationType
-  "The Listing's amenities "
-  amenities: [ID] 
+  "The listing's amenities"
+  amenities: [ID]
 }
 
-type CreateListingResponse implements MutationResponse{
-  "Similar to HTTP status code, represents the status of the mutation"
-  code: Int! 
-  "Indicates whether the mutation was successful"
-  success: Boolean! 
-  "Human-readable message for the UI"
-  message: String! 
-  "The newly created listing"
-  listing: Listing @shareable
-  }
-
-"Response after updating a listing"
-type UpdateListingResponse implements MutationResponse {
-  "Similar to HTTP status code, represents the status of the mutation"
-  code: Int! 
-  "Indicates whether the mutation was successful"
-  success: Boolean! 
-  "Human-readable message for the UI"
-  message: String! 
-  "The newly updated listing"
+# Response type for creating a listing
+type CreateListingResponse implements Response {
+  code: Int!
+  success: Boolean!
+  message: String!
   listing: Listing @shareable
 }
 
-"A booking is reserved for a certain date range, marked by the checkInDate and checkOutDate fields"
-type ReservedDate  {
-  "Date the guest checks in"
-  checkInDate: String! @shareable
-  "Date the guest checks out"
-  checkOutDate: String! @shareable
+# Response type for updating a listing
+type UpdateListingResponse implements Response {
+  code: Int!
+  success: Boolean!
+  message: String!
+  listing: Listing @shareable
 }
 
-# type GalacticCoordinates @shareable {
-#   latitude: Float!
-#   longitude: Float!
-# }
+# Type representing an amenity
+type Amenity @key(fields: "id") {
+  id: ID!
+  category: AmenityCategory! @shareable
+  name: String! @shareable
+}
 
-  "What the location provides. An amenity should be tied to a specific category."
- type Amenity @key(fields: "id") {
-    id: ID!,
- "The category for the amenity"
-  category: AmenityCategory!
-    name: String! 
-  }
-
-  "The category an amenity belongs to."
+# Enum representing the category of an amenity
 enum AmenityCategory {
   ACCOMMODATION_DETAILS
   SPACE_SURVIVAL
   OUTDOORS
+  UNKNOWN
 }
 
-"A listing can be one of these types."
+# Enum representing the type of a listing location
 enum LocationType {
   SPACESHIP
   HOUSE
@@ -131,63 +134,73 @@ enum LocationType {
   ROOM
 }
 
-"Listings can be sorted by these options"
+type ReservedDate @shareable{
+  checkInDate: String! 
+  checkOutDate: String!
+}
+# Enum representing sorting criteria for listings
 enum SortByCriteria {
   COST_ASC
   COST_DESC
 }
 
-"To search for a listing, you need these fields."
+# Input type for searching listings
 input SearchListingsInput {
-  checkInDate: String!
-  checkOutDate: String!
+reservedDate: ReservedDateInput!
   numOfBeds: Int
-  "The page in the search results, defaults to 1"
   page: Int
-  "The number of listings you can display in a page, defaults to 5"
   limit: Int
-  "The results sort order, defaults to cost descending"
   sortBy: SortByCriteria
 }
 
-### Listings
- "A listing is a location owned by a host. A listing has a list of amenities it offers. Listings have a fixed cost per night value."
+# Type representing a listing
 type Listing @key(fields: "id") {
   id: ID!
-  "The listing's title"
   title: String!
-  "The listing's description"
   description: String!
-  "The thumbnail image for the listing"
   photoThumbnail: String!
-  "The number of beds available"
   numOfBeds: Int!
-  "The cost per night"
   costPerNight: Float!
-  "The location type of the listing"
   locationType: LocationType!
-  "Owner of the listing"
-  host: Host!
-  "The amenities available for this listing"
-  amenities: [Amenity!]!
-  "The number of current and upcoming bookings for a listing"
+  host: Host! @provides(fields: "id")
+  amenities: [Amenity!]! @shareable
   numberOfUpcomingBookings: Int!
-  "An array of upcoming reserved dates that the listing has been booked for"
   currentlyBookedDates: [ReservedDate]! @shareable
-  "Calculated total cost of the listing with the given arguments"
   totalCost(checkInDate: String!, checkOutDate: String!): Float!
-  # "Where this listing is located in the galaxy"
-  # coordinates: GalacticCoordinates 
-} 
-# Shareable
-type Host @key(fields: "id") {
-  id: ID!
+  coordinates: Coordinates @shareable
+  saleAmount: Float
+  bookingNumber: Int
+  checkInDate: String!
+  checkOutDate: String!
 }
 
+# Type representing galactic coordinates for a listing
+type Coordinates @shareable {
+  latitude: Float!
+  longitude: Float!
+}
+
+# Type representing a host
+type Host @key(fields: "id") {
+  id: ID! @external
+  listings: [Listing] @shareable
+}
+
+# Type representing a booking
 type Booking @key(fields: "id") {
   id: ID!
+  listing: Listing!
+  guest: Guest!
+  review: Review
 }
 
+# Type representing a review
 type Review @key(fields: "id") {
   id: ID!
+}
+
+# Type representing a guest
+type Guest @key(fields: "id") {
+  id: ID!
+  name: String! @shareable
 }

@@ -4,16 +4,12 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/go/dockerfile-reference/
 
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
 ARG NODE_VERSION=21.6.0
 
-# This image makes use of a Node image running on Linux Alpine
 FROM node:${NODE_VERSION}-alpine
 
 # Use production node environment by default.
-# ENV NODE_ENV production
-
+ENV NODE_ENV development
 
 WORKDIR /usr/src/app
 
@@ -25,15 +21,15 @@ WORKDIR /usr/src/app
 #     --mount=type=bind,source=package-lock.json,target=package-lock.json \
 #     --mount=type=cache,target=/root/.npm \
 #     npm ci --omit=dev
+RUN yarn install
+
+CMD ["node", "./index.js"]
 
 # Run the application as a non-root user.
-# USER node
+USER node
 
 # Copy the rest of the source files into the image.
 COPY . .
 
 # Expose the port that the application listens on.
 EXPOSE 4011
-
-# Run the application.
-CMD npm start

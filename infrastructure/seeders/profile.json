@@ -1,0 +1,43 @@
+[
+    {
+      "accountId": "12345",
+      "fullname": "John Doe",
+      "createdAt": "2023-01-01T00:00:00.000Z",
+      "interests": ["reading", "traveling", "music"],
+      "network": ["friend1", "friend2"],
+      "username": "johndoe"
+    },
+    {
+      "accountId": "12346",
+      "fullname": "Jane Smith",
+      "createdAt": "2023-01-02T00:00:00.000Z",
+      "interests": ["cooking", "yoga"],
+      "network": ["friend3", "friend4"],
+      "username": "janesmith"
+    },
+    {
+      "accountId": "12347",
+      "fullname": "Alice Johnson",
+      "createdAt": "2023-01-03T00:00:00.000Z",
+      "interests": ["photography", "running"],
+      "network": ["friend5"],
+      "username": "alicej"
+    },
+    {
+      "accountId": "12348",
+      "fullname": "Bob Brown",
+      "createdAt": "2023-01-04T00:00:00.000Z",
+      "interests": ["gaming", "coding"],
+      "network": ["friend6", "friend7", "friend8"],
+      "username": "bobbrown"
+    },
+    {
+      "accountId": "12349",
+      "fullname": "Charlie Davis",
+      "createdAt": "2023-01-05T00:00:00.000Z",
+      "interests": ["hiking", "movies"],
+      "network": ["friend9"],
+      "username": "charlied"
+    }
+  ]
+  

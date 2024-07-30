@@ -1,102 +1,89 @@
-import { ApolloServer } from '@apollo/server'
-import UniqueDirective from "./UniqueDirective.js";
-import { startStandaloneServer } from '@apollo/server/standalone'
-import { buildSubgraphSchema } from '@apollo/subgraph'
-import { applyMiddleware } from 'graphql-middleware'
-import { readFileSync } from 'fs'
-import axios from 'axios'
-import gql from 'graphql-tag'
-import paseto from 'paseto';
-const { V2 } = paseto;
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { buildSubgraphSchema } from '@apollo/subgraph';
+import { gql } from 'graphql-tag';
+import { readFileSync } from 'fs';
+import http from 'http';
+import express from 'express';
+import cors from 'cors';
+import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
+import initListingContainer from '../infrastructure/DB/initListingContainer.js';
+import initCartContainer from '../infrastructure/DB/initCartContainer.js';
+import initReviewContainer from '../infrastructure/DB/initReviewContainer.js';
+import initProfileContainer from '../infrastructure/DB/initProfileContainer.js';
+import initBookingContainer from '../infrastructure/DB/initBookingContainer.js';
+import resolvers from './resolvers.js';
 
-import express from 'express'
-import cors from 'cors'
-// import authRouter from './auth.route.js'
-import { getToken, handleInvalidToken } from './helpers/tokens.js'
-import errors from '../utils/errors.js'
-const { AuthenticationError } = errors
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }))
-import resolvers from './resolvers.js'
-import AccountsAPI from './datasources/accounts.js'
-
-const httpClient = axios.create({
-  baseURL: 'http://localhost:4011'
-})
-const app = express()
-app.use(express.json())
-// app.use('/api',authRouter)
-// Use paseto as a middleware  
-app.use(async (req, res, next) => {
-  const token = req.headers['authorization']
-  if (token) {
+async function startApolloServer() {
   try {
-    const payload=await V2.verify(token,process.env.PASETO_SECRET)
-    req.user = payload //attach the payload to the request object
+    await initMongoContainer();
+
+    const app = express();
+    const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+    const httpServer = http.createServer(app);
+
+    const server = new ApolloServer({
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+                await initListingContainer.resolve('db').close();
+                await initBookingContainer.resolve('db').close();  // Ensure MongoDB client is closed properly
+                await initCartContainer.resolve('db').close();  // Ensure MongoDB client is closed properly
+                await initReviewContainer.resolve('mongodb').close();// Ensure MongoDB client is closed properly
+                await initMongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
+                await initProfileContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
+              
+              }
+
+            };
+          }
+        }
+      ],
+      context: async ({ req }) => ({
+        token: req.headers.authorization || '',
+        user: req.headers.user || null,
+        dataSources: {
+          accountService: container.resolve('accountService'),
+          listingService: container.resolve('listingService'),
+          bookingService: container.resolve('bookingService'),
+          cartService: container.resolve('cartService'),
+          reviewService: container.resolve('reviewService'),
+          profileService: container.resolve('profileService')
+        }
+      })
+    });
+
+    await server.start();
+
+    app.use(
+      '/graphql',
+      cors(),
+      express.json(),
+      expressMiddleware(server, {
+        context: async ({ req }) => ({
+          token: req.headers.authorization || '',
+          dataSources: {
+            accountService: container.resolve('accountService'),
+            listingService: container.resolve('listingService'),
+            bookingService: container.resolve('bookingService'),
+            cartService: container.resolve('cartService'),
+            reviewService: container.resolve('reviewService'),
+            profileService: container.resolve('profileService')
+          }
+        })
+      })
+    );
+
+    await new Promise((resolve) => httpServer.listen({ port: 4001 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4001/graphql`);
   } catch (error) {
-    console.error('Invalid token:',err.message)
-  }
-  }
-  next();
-})
-
-if (process.env.NODE_ENV === 'development') {
-  app.use(
-    cors({
-      origin: ['https://studio.apollographql.com', 'http://localhost:4011']
-    })
-  )
-}
-
-async function startApolloServer () {
-  const server = new ApolloServer({
-    schema: buildSubgraphSchema({
-      typeDefs,
-      resolvers,
-      schemaDirectives: {
-        unique: UniqueDirective
-      }
-    }),
-    // Other ApolloServer configurations...
-    dataSources: () => ({
-      accountsAPI: new AccountsAPI()
-    })
-  })
-
-  const port = 4002
-  const subgraphName = 'accounts'
-
-  try {
-    const { url } = await startStandaloneServer(server, {
-      context: async ({ req }) => {
-        const token = req.headers.authorization || ''
-
-        const userId = token.split(' ')[1] // get the user name after 'Bearer '
-
-        let userInfo = {}
-        if (userId) {
-          const { data } = await axios
-            .get(`http://localhost:4011/login/${userId}`)
-            .catch(error => {
-              throw AuthenticationError('you can not login with userId')
-            })
-
-          userInfo = { userId: data.id, userRole: data.role }
-        }
-        const { cache } = server
-
-        return {
-          ...userInfo,
-        }
-      },
-      listen: {
-        port
-      }
-    })
-
-    console.log(`🚀 Subgraph ${subgraphName} running at ${url}`)
-  } catch (err) {
-    console.error(err)
+    console.error('Error starting server:', error);
   }
 }
 
-startApolloServer()
+startApolloServer();
