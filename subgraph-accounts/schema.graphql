@@ -261,10 +261,6 @@ extend type Mutation {
   updateUser(id: ID!, input: UpdateUserInput!): User
   "Delete a user."
   deleteUser(id: ID!): Boolean!
-<<<<<<< HEAD
-=======
-
->>>>>>> 423c9ada222eec0adc48468d9b684fd46ad7492d
 }
 
 input CreateUserInput {
