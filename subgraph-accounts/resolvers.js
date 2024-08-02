@@ -2,7 +2,6 @@ import { GraphQLError } from 'graphql';
 import DateTimeType from '../infrastructure/scalar/DateTimeType.js';
 import { authenticateJWT, checkPermissions } from '../infrastructure/middleware/auth.js';
 import { permissions } from '../infrastructure/auth/permission.js';
-import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
 
 const { isAdmin, isHost } = permissions;
 
@@ -28,8 +27,49 @@ const resolvers = {
     }
   },
 
+  User: {
+    __resolveType(user) {
+      if (user.role === 'HOST') {
+        return 'Host';
+      } else if (user.role === 'GUEST') {
+        return 'Guest';
+      }
+      return null;
+    },
+    listings(user, _, { dataSources }) {
+      const { listingService } = dataSources;
+      return listingService.getListingsByUser(user.id);
+    }
+  },
+
+  Host: {
+    __resolveReference: (user, { dataSources }) => {
+      const { accountService } = dataSources;
+      return accountService.getUser(user.id);
+    },
+    listings(user, _, { dataSources }) {
+      const { listingService } = dataSources;
+      return listingService.getListingsByHost(user.id);
+    }
+  },
+
+  Guest: {
+    __resolveReference: (user, { dataSources }) => {
+      const { accountService } = dataSources;
+      return accountService.getUser(user.id);
+    },
+    bookings(user, _, { dataSources }) {
+      const { bookingService } = dataSources;
+      return bookingService.getBookingsByGuest(user.id);
+    },
+    listings(user, _, { dataSources }) {
+      const { listingService } = dataSources;
+      return listingService.getListingsByGuest(user.id);
+    }
+  },
+
   Query: {
-    user: async (_, { id }, { dataSources }) => {
+    getUser: async (_, { id }, { dataSources }) => {
       const { accountService } = dataSources;
       const user = await accountService.getUser(id);
       if (!user) {
@@ -48,7 +88,7 @@ const resolvers = {
     },
     accounts: async (_, __, { dataSources }) => {
       const { accountService } = dataSources;
-      return accountService.getAccounts();
+      return accountService.getAllAccounts();
     },
     viewer: async (_, __, { dataSources, user }) => {
       const { accountService } = dataSources;
@@ -91,61 +131,36 @@ const resolvers = {
   },
 
   Mutation: {
-    createUser: async (_, { CreateUserInput }, { dataSources, userId }) => {
+    createUser: async (_, { name, email, password }, { dataSources, userId }) => {
       const { accountService } = dataSources;
       const user = await accountService.getUser(userId);
       if (user.role !== 'ADMIN') {
         throw new GraphQLError('Only admin can create a user', { extensions: { code: 'UNAUTHORIZED' } });
       }
-      const { name, password, email } = CreateUserInput;
       const newUser = await accountService.createUser({ name, email, password });
-      return {
-        code: 200,
-        success: true,
-        message: 'User successfully created',
-        user: newUser,
-      };
+      return newUser;
     },
 
-    createListing: async (_, { CreateListingInput }, { dataSources, user }) => {
+    createListing: async (_, { title, description, price, locationId, hostId }, { dataSources, user }) => {
       const { listingsAPI } = dataSources;
-      const { title, description, price, locationId } = CreateListingInput;
       if (!user || user.role !== 'HOST') {
         throw new GraphQLError('You do not have the right to create a listing', { extensions: { code: 'UNAUTHORIZED' } });
       }
       if (!locationId) {
         throw new GraphQLError('You must select a location', { extensions: { code: 'LOCATION_REQUIRED' } });
       }
-      const newListing = await listingsAPI.createListing({ title, description, price, locationId, hostId: user.id });
-      return {
-        code: 200,
-        success: true,
-        message: 'Listing successfully created',
-        listing: newListing,
-      };
+      const newListing = await listingsAPI.createListing({ title, description, price, locationId, hostId });
+      return newListing;
     },
 
-    updateProfile: async (_, { updateProfileInput }, { dataSources, userId }) => {
+    updateUser: async (_, { id, input }, { dataSources }) => {
       const { accountService } = dataSources;
-      if (!userId) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
-      const updatedUser = await accountService.updateUser({ userId, userInfo: updateProfileInput });
-      return {
-        code: 200,
-        success: true,
-        message: 'Profile successfully updated',
-        user: updatedUser,
-      };
+      return accountService.updateUser(id, input);
     },
 
-    logout: (_, __, context) => {
-      if (context.session) {
-        context.session.destroy(err => {
-          if (err) {
-            throw new GraphQLError('Failed to terminate the session', { extensions: { code: 'FAILED_TO_TERMINATE_SESSION' } });
-          }
-        });
-      }
-      return true;
+    deleteUser: async (_, { id }, { dataSources }) => {
+      const { accountService } = dataSources;
+      return accountService.deleteUser(id);
     },
 
     createAccount: async (_, { input: { email, password } }, { dataSources }) => {
@@ -169,7 +184,7 @@ const resolvers = {
       const { listingService } = dataSources;
       return listingService.getListingsByHost(hostId)
     },
- 
+
     async updateListingStatus(id, status) {
       // Update the status of a listing in the database
       
@@ -180,41 +195,64 @@ const resolvers = {
       const { listingService } = dataSources;
       return listingService.updateListingStatus(id, 'CANCELLED');
     },
-    updateUser: async (_, { id, input }, { dataSources }) => {
-      const { userService } = dataSources;
-      return userService.updateUser(id, input);
+    updateProfile: async (_, { id, input }, { dataSources }) => {
+      const { accountService } = dataSources;
+      return accountService.updateUser(id, input);
     },
-    deleteUser: async (_, { id }, { dataSources }) => {
-      const { userService } = dataSources;
-      return userService.deleteUser(id);
-    },
-  },
 
-  User: {
-    __resolveType(user) {
-      if (user.role === 'HOST') {
-        return 'Host';
-      } else if (user.role === 'GUEST') {
-        return 'Guest';
+    logout: (_, __, context) => {
+      if (context.session) {
+        context.session.destroy(err => {
+          if (err) {
+            throw new GraphQLError('Failed to terminate the session', { extensions: { code: 'FAILED_TO_TERMINATE_SESSION' } });
+          }
+        });
       }
-      return null;
+      return true;
     },
-  },
-
-  Host: {
-    __resolveReference: (user, { dataSources }) => {
-      const { accountService } = dataSources;
-      return accountService.getUser(user.id);
-    }
-  },
-
-  Guest: {
-    __resolveReference: (user, { dataSources }) => {
-      const { accountService } = dataSources;
-      return accountService.getUser(user.id);
-    }
   }
 };
 
 export default resolvers;
+
+// import AccountService from '../infrastructure/services/accountService.js';
+// import AccountRepository from '../infrastructure/repositories/accountRepository.js';
+// import connectToMongoDB from '../infrastructure/seeders/connectMongo.js';
+
+// let accountService;
+
+// (async () => {
+//   const db = await connectToMongoDB();
+//   const accountRepository = new AccountRepository({ mongodb: db });
+//   accountService = new AccountService(accountRepository);
+// })();
+
+// const resolvers = {
+//   Query: {
+//     async getAccount(_, { id }) {
+//       return await accountService.getAccountById(id);
+//     },
+//     async getAllAccounts() {
+//       return await accountService.getAllAccounts();
+//     },
+//     // Add other query resolvers
+//   },
+//   Mutation: {
+//     async createAccount(_, { account }) {
+//       return await accountService.createAccount(account);
+//     },
+//     async updateAccountEmail(_, { id, email }) {
+//       return await accountService.updateAccountEmail(id, email);
+//     },
+//     async updateAccountPassword(_, { id, password }) {
+//       return await accountService.updateAccountPassword(id, password);
+//     },
+//     async deleteAccount(_, { id }) {
+//       return await accountService.deleteAccount(id);
+//     },
+//     // Add other mutation resolvers
+//   }
+// };
+
+// export default resolvers;
 

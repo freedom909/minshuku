@@ -35,8 +35,8 @@ const initializeCartContainer = async ({ services = [] } = {}) => {
   }
 
   // Initialize the container and register dependencies and services
-  const container = createContainer();
-  container.register({
+  const baseContainer = createContainer();
+  baseContainer.register({
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
     userRepository: asClass(UserRepository).singleton(),
@@ -45,21 +45,26 @@ const initializeCartContainer = async ({ services = [] } = {}) => {
     bookingService: asClass(BookingService).singleton(),
     listingRepository: asClass(ListingRepository).singleton(),
     listingService: asClass(ListingService).singleton(),
+  });
+  
+  const cartContainer = baseContainer.createScope();
+  cartContainer.register({
     cartRepository: asClass(CartRepository).singleton(),
     cartService: asClass(CartService).singleton(),
     paymentRepository: asClass(PaymentRepository).singleton(),
     paymentService: asClass(PaymentService).singleton(),
   });
+  
 
   // Register services dynamically
   services.forEach(service => {
-    container.register({
+    cartContainer.register({
       [service.name]: asClass(service).singleton(),
     });
   });
 
   console.log('Container initialized with registered services');
-  return container;
+  return cartContainer;
 };
 
 export default initializeCartContainer;

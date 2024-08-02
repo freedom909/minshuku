@@ -108,10 +108,10 @@ class BookingRepository {
     }
   }
 
-  async createBooking(booking) {
+  async createBooking({ guestId, listingId }) {
     const connection = await this.getConnection();
     try {
-      const [result] = await connection.query('INSERT INTO bookings SET ?', booking);
+      const [result] = await connection.query('INSERT INTO bookings (guestId, listingId) VALUES (?, ?)', [guestId, listingId]);
       return result.insertId; // Return the inserted booking ID
     } catch (error) {
       console.error('Error creating booking:', error);

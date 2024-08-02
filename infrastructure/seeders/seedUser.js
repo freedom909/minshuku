@@ -5,7 +5,7 @@ import usersData from './users.json' assert { type: "json"};  // Adjust the path
 
 dotenv.config();
 
-const mongoUrl =  'mongodb://localhost:27017/water';
+const mongoUrl =  'mongodb://localhost:27017/air';
 
 const seedDatabase = async () => {
     try {

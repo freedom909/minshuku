@@ -5,12 +5,13 @@ dotenv.config();
 
 
 const mongoUrl=process.env.MONGODB_URL||'mongodb://localhost:27017/';
-const client = new MongoClient(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(mongoUrl);
 const dbName=process.env.DB_NAME;
 let mongodb;
 async function connectToMongoDB() {
  if (!mongodb) {
   await client.connect();
+  console.log('Connected to MongoDB');
   mongodb= client.db(dbName);
   console.log('Connected to MongoDB')
  }

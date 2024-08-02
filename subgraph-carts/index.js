@@ -17,15 +17,16 @@ import UserService from '../infrastructure/services/userService.js';
 import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 import initializeCartContainer from '../infrastructure/DB/initCartContainer.js';
 import CartService from '../infrastructure/services/cartService.js';
+// import PaymentRepository from '../infrastructure/repositories/paymentRepository.js';
+// import PaymentService from '../infrastructure/services/paymentService.js';
 
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-
 const startApolloServer = async () => {
   try {
     // Initialize MySQL and MongoDB containers
     const mysqlContainer = await initializeCartContainer({
-      services: [ListingService, BookingService,CartService]
+      services: [ListingService, BookingService, CartService]
     });
 
     const mongoContainer = await initMongoContainer({
@@ -56,8 +57,10 @@ const startApolloServer = async () => {
         dataSources: {
           listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
           bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services 
-          cartService:mysqlContainer.resolve('cartService'), 
-          userService: mongoContainer.resolve('userService') // Ensure correct resolution of services
+          cartService: mysqlContainer.resolve('cartService'), 
+          // paymentService: mysqlContainer.resolve('paymentService'),
+          userService: mongoContainer.resolve('userService')
+          // Ensure correct resolution of services
         }
       })
     });
@@ -68,8 +71,16 @@ const startApolloServer = async () => {
       '/graphql',
       cors(),
       express.json(),
-      expressMiddleware(server)
-    );
+      expressMiddleware(server,
+        expressMiddleware(server, {
+          context: async ({ req }) => ({
+            token: req.headers.authorization || '',
+            dataSources: {
+              userService: container.resolve('userService'),
+            }
+          })
+        })
+      ));
 
     httpServer.listen({ port: 4016 }, () => {
       console.log(`🚀 Server ready at http://localhost:4016/graphql`);
@@ -80,3 +91,38 @@ const startApolloServer = async () => {
 };
 
 startApolloServer();
+
+// import { ApolloServer } from 'apollo-server';
+// import resolvers from './resolvers.js';
+// import CartService from '../infrastructure/services/cartService.js';
+// import BookingRepository from '../infrastructure/repositories/bookingRepository.js';
+// import PaymentRepository from '../infrastructure/repositories/paymentRepository.js';
+// import ListingRepository from '../infrastructure/repositories/listingRepository.js';
+// import CartRepository from '../infrastructure/repositories/cartRepository.js';
+// import UserRepository from '../infrastructure/repositories/userRepository.js';
+// import { gql } from 'graphql-tag';
+// import { readFileSync } from 'fs';
+// //Assuming you have some configuration for your repositories
+// const dbConfig = { /* your db config */ };
+// const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+// const server = new ApolloServer({
+//   typeDefs,
+//   resolvers,
+//   dataSources: () => ({
+//     cartService: new CartService({
+//       bookingRepository: new BookingRepository(dbConfig),
+//       paymentRepository: new PaymentRepository(dbConfig),
+//       listingRepository: new ListingRepository(dbConfig),
+//       cartRepository: new CartRepository(dbConfig),
+//       userRepository: new UserRepository(dbConfig),
+//     }),
+//     // ... other data sources
+//   }),
+//   context: ({ req }) => {
+//     // Your context setup
+//   },
+// });
+
+// server.listen().then(({ url }) => {
+//   console.log(`🚀 Server ready at ${url}`);
+// });

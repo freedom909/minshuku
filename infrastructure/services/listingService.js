@@ -5,7 +5,7 @@ import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
 import ListingRepository from '../repositories/listingRepository.js';
 import dotenv from 'dotenv';
-import connectMysqlDB from '../DB/connectMysqlDb.js';
+import connectMysql from '../DB/connectMysqlDB.js';
 import mysql from 'mysql2/promise';
 import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
@@ -81,6 +81,36 @@ async hotListingsByMoneyBookingTop5() {
     } catch (error) {
       console.error('Error fetching all listings:', error);
       throw new GraphQLError('Error fetching listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
+
+  async  getListingsByUser(userId){
+    try {
+      const query=`SELECT * FROM listings WHERE userId=${userId}`
+      const response = await this.sequelize.query(query,{type:QueryTypes.SELECT})
+      if (response.data.length > 0) {
+      return response.data;
+      } else {
+        throw new GraphQLError('Listing not found', { extensions: { code: 'NOT_FOUND' } });
+      }
+    }catch(e){
+      console.error('Error fetching listing by ID:', e);
+      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+  async getListingsByHost(userId){
+    try {
+      const query=`SELECT * FROM listings WHERE hostId=${userId}`
+      const response = await this.sequelize.query(query,{type:QueryTypes.SELECT})
+      if (response.data.length > 0) {
+      return response.data;
+      } else {
+        throw new GraphQLError('Listing not found', { extensions: { code: 'NOT_FOUND' } });
+      }
+    }catch(e){
+      console.error('Error fetching listing by ID:', e);
+      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -256,7 +286,39 @@ async hotListingsByMoneyBookingTop5() {
       throw new GraphQLError('Error fetching total cost', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   } 
+ 
+  async getListingsByHost(hostId){
+    try {
+      const query = `
+        SELECT * FROM listings WHERE hostId = :hostId
+      `;
+      const listings = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { hostId },
+      });
+      return listings;
+    } catch (error) {
+      console.error('Error fetching listings by host:', error);
+      throw new GraphQLError('Error fetching listings by host', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+  }
+  }
 
+
+  async updateListingStatus(id, status){
+    try {
+      const query = `
+        UPDATE listings SET status = :status WHERE id = :id
+      `;
+      const listings = await this.sequelize.query(query, {
+        type: QueryTypes.UPDATE,
+        replacements: { id, status },
+      });
+      return listings;
+    } catch (error) {
+      console.error('Error updating listing status:', error);
+      throw new GraphQLError('Error updating listing status', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+  }
+}
 
   async createListing({ title, description, price, locationId, hostId }) {
     if (!this.context.user) {
@@ -337,6 +399,21 @@ async hotListingsByMoneyBookingTop5() {
     }
   }
   
+  async getListingsForHost(userId){
+    try {
+      const query = `
+        SELECT * FROM listings WHERE hostId = :userId
+      `;
+      const listings = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { userId },
+      });
+      return listings;
+    } catch (error) {
+      console.error('Error fetching listings for host:', error);
+      throw new Error('Failed to fetch listings for host');
+    }
+  }
 }
 
 export default ListingService;

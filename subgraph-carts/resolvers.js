@@ -52,7 +52,7 @@ const resolvers = {
   },
   Subscription: {
     bookingCreated: {
-      subscribe: () => pubSub.asyncIterator([BOOKING_CREATED]),
+      subscribe: (_, __, { pubsub }) => pubsub.asyncIterator(BOOKING_CREATED),
     },
   },
 };

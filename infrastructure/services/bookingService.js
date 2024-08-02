@@ -9,6 +9,18 @@ class BookingService extends RESTDataSource {
     this.baseURL = 'http://localhost:4014/';
   }
 
+async getBookingsByGuest(userId){
+  try {
+    const bookings = await this.bookingRepository.findAll({
+      where: { guestId: userId },
+    });
+    return bookings;
+  }catch(e){
+    console.error('Error fetching bookings for guest:', e);
+    throw new ForbiddenError('Unable to fetch bookings for guest', { extension: { code: 'forbidden' } });
+  }
+}
+
   async getBooking(id) {
     try {
       const booking = await this.bookingRepository.findOne({ id });

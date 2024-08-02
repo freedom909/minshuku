@@ -1,42 +1,35 @@
-import { DataTypes, Model } from '@sequelize/core';
-import sequelize from './seq.js'; // Adjust path as necessary
-import User from './user.js'; // Ensure User model is imported
+import mongoose from 'mongoose';
 
- class Account extends Model {}
-
-Account.init({
+const accountSchema = new mongoose.Schema({
   id: {
-    type: DataTypes.STRING,
-    primaryKey: true,
+    type: String,
+    required: true,
+    unique: true,
   },
   email: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
     unique: true,
   },
   password: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   token: {
-    type: DataTypes.STRING,
-    allowNull: true,
+    type: String,
+    required: false,
   },
   refresh_token: {
-    type: DataTypes.STRING,
-    allowNull: true,
+    type: String,
+    required: false,
   },
-}, {
-  sequelize, // Here is where you provide the sequelize instance
-  modelName: 'Account',
-  timestamps: true,
-});
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+}, { timestamps: true });
 
-Account.associate = (models) => {
-  Account.belongsTo(models.User, {
-    foreignKey: 'userId',
-    as: 'user',
-  });
-};
+const Account = mongoose.model('Account', accountSchema);
 
 export default Account;

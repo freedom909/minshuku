@@ -21,7 +21,11 @@ class CartService extends RESTDataSource {
       if (!listing) {
         throw new GraphQLError('Listing not found', { extensions: { code: 'LISTING_NOT_FOUND' } });
       }
-      const booking = await this.bookingRepository.create({ guestId, listingId });
+      const user = await this.userRepository.findById(guestId);
+      if (!user) {
+        throw new GraphQLError('User not found', { extensions: { code: 'USER_NOT_FOUND' } });
+      }
+      const booking = await this.bookingRepository.createBooking({ guestId, listingId });
       return booking;
     } catch (error) {
       throw new GraphQLError('Failed to create booking', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });

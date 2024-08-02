@@ -37,7 +37,7 @@ interface User @key(fields: "id") {
   "The nickname of the user"
   nickname: String!
   "The listings of the user"
-  listings: [Listing]!
+  listings: [Listing]
 }
 
 type Host implements User @key(fields: "id") {
@@ -79,8 +79,27 @@ type Guest implements User @key(fields: "id") {
   role: Role!
   "The bookings of the user"  
   bookings: [Booking]! 
-  "the listings of the user booked"
-  listings: [Listing]! 
+  "The carts of the user"
+  carts: [Cart]! 
+  listings:[Listing]
+}
+
+type Cart @key(fields: "id") {
+  "The unique ID associated with the cart."
+  id: ID!
+  "The items in the cart."
+  items: [CartItem]!
+  "The date and time the cart was created."
+  createdAt: DateTime!
+}
+
+type CartItem @key(fields: "id") {
+  "The unique ID associated with the cart item."
+  id: ID!
+  "The listing associated with the cart item."
+  listing: Listing!
+  "The quantity of the cart item."
+  quantity: Int!
 }
 
 interface Response {
@@ -114,8 +133,6 @@ input UpdateAccountPasswordInput {
   password: String!
 }
 
-
-
 """
 Provides data to create a new account.
 """
@@ -124,20 +141,6 @@ input CreateAccountInput {
   email: String!
   "The new account's password."
   password: String!
-}
-
-type Booking @key(fields: "id") {
-  id: ID!
-  "The unique ID associated with the bookings."
-  guestId: ID!
-  "The date and time the booking was created."
-  createdAt: DateTime
-  "The date and time the booking was cancelled."
-  cancelledAt: DateTime
-  "The date and time the booking was confirmed."
-  confirmedAt: DateTime
-  "The unique ID associated with the listingsId"
-  listingId: ID! 
 }
 
 type Listing @key(fields: "id") {
@@ -191,27 +194,29 @@ type UserId {
 
 scalar _Any
 
-union _Entity = Listing | Host | Guest | Generator | Booking
+union _Entity = Listing | Host | Guest | Generator | Booking | Cart
 
 type Query {
   getUser(id: String!): User
-  listings: [Listing] 
+  listings: [Listing]
   "User accounts"
-  user(id: ID!): User 
+  user(id: ID!): User
   "Currently logged-in user"
   me: User! 
   "Retrieves the account of the currently logged-in user."
   viewer: Account
   "The booking of the currently user"
-  bookings: [Booking] 
+  bookings: [Booking]
   "Retrieves the account of the currently logged-in user."
-  account(id: ID!): Account 
+  account(id: ID!): Account
   "Retrieves the accounts of the currently logged-in user."
-  accounts: [Account] 
+  accounts: [Account]
   "Fetch bookings for a specific user"
   bookingsByUser(userId: ID!): [Booking]
   "Fetch a booking by its ID"
   bookingById(id: ID!): Booking
+  "Fetch carts for a specific guest"
+  cartsByUser(userId: ID!): [Cart]
 }
 
 type Generator @key(fields: "id") {
@@ -228,18 +233,15 @@ type Generator @key(fields: "id") {
 input UpdateUserInput {
   "The user's first and last name"
   name: String
-
   "The user's profile photo URL"
   picture: String
-
   "The email address of the user (must be unique)."
   email: String
-
   "The user's chosen nickname (must be unique)."
   nickname: String
 }
 
-extend type Mutation {
+type Mutation {
   createUser(name: String!, email: String!, password: String!): User
   createListing(title: String!, description: String!, price: Float, locationId: Int, hostId: String): Listing
   "Creates a new Guest user." 
@@ -285,3 +287,16 @@ input CreateListingInput {
   hostId: String!
 }
 
+type Booking @key(fields: "id") {
+  id: ID!
+  "The unique ID associated with the bookings."
+  guestId: ID!
+  "The date and time the booking was created."
+  createdAt: DateTime
+  "The date and time the booking was cancelled."
+  cancelledAt: DateTime
+  "The date and time the booking was confirmed."
+  confirmedAt: DateTime
+  "The unique ID associated with the listingsId"
+  listingId: ID! 
+}
