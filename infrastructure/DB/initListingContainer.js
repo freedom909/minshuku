@@ -1,6 +1,6 @@
 import { createContainer, asValue, asClass } from 'awilix';
-import connectMysql from './connectMysqlDb.js';
-import connectToMongoDB from './connectMongoDb.js';
+import connectMysql from './connectMysqlDB.js';
+import connectToMongoDB from './connectMongoDB.js';
 import ListingService from '../services/listingService.js'; 
 import ListingRepository from '../repositories/listingRepository.js';
 import UserService from '../services/userService.js';

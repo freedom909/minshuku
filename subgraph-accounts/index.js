@@ -12,7 +12,6 @@ import resolvers from './resolvers.js';
 
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-
 const startApolloServer = async () => {
   try {
     const container = await initAccountContainer();
@@ -22,7 +21,7 @@ const startApolloServer = async () => {
 
     const server = new ApolloServer({
       schema: buildSubgraphSchema({ typeDefs, resolvers }),
-      Introspection:true,
+      introspection: true,
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),
         {
@@ -39,6 +38,8 @@ const startApolloServer = async () => {
         token: req.headers.authorization || '',
         dataSources: {
           accountService: container.resolve('accountService'),
+          listingService: container.resolve('listingService'),  // Ensure this is included
+          cartService: container.resolve('cartService'),        // Ensure this is included
         }
       })
     });
@@ -54,6 +55,8 @@ const startApolloServer = async () => {
           token: req.headers.authorization || '',
           dataSources: {
             accountService: container.resolve('accountService'),
+            listingService: container.resolve('listingService'),  // Ensure this is included
+            cartService: container.resolve('cartService'),        // Ensure this is included
           }
         })
       })

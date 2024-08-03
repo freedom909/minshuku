@@ -221,6 +221,18 @@ const resolvers = {
     },
   },
 
+  _Entity: {
+    __resolveType(entity) {
+      if (entity.__typename === 'Host') {
+        return 'Host';
+      }
+      if (entity.__typename === 'Guest') {
+        return 'Guest';
+      }
+      return null; // GraphQLError is thrown
+    },
+  },
+
   User: {
     __resolveType(user) {
       if (user.role === "HOST") {

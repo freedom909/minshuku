@@ -1,5 +1,5 @@
 import { createContainer, asValue, asClass } from 'awilix';
-import connectToMongoDB from './connectMongoDb.js';
+import connectToMongoDB from './connectMongoDB.js';
 
 const baseMongoContainer = async () => {
   const mongodb = await connectToMongoDB(); // Establishing connection to MySQL database

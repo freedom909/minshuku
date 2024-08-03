@@ -9,8 +9,7 @@
   },
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "start": "nodemon .",
-    "postinstall": "npx prisma generate --schema=\"..\\services\\bookings\\prisma\\schema.prisma\" && npx prisma generate --schema=\"..\\services\\listings\\prisma\\schema.prisma\""
+    "start": "nodemon ."
   },
   "type": "module",
   "nodemonConfig": {

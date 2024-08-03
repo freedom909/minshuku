@@ -4,7 +4,7 @@ const { MongoClient } = pkg;
 import { createContainer, asClass, asValue } from 'awilix';
 import UserRepository from '../repositories/userRepository.js';
 import UserService from '../services/userService.js';
-import connectMongoDB from './connectMongoDb.js';
+import connectMongoDB from './connectMongoDB.js';
 
 const initMongoContainer = async () => {
   try {

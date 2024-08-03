@@ -12,6 +12,24 @@ cors:
 supergraph:
   schema: ./supergraph.graphql
 subgraphs:
+  users:
+    routing_url: http://localhost:4000
   accounts:
-    routing_url: http://localhost:4011
+    routing_url: http://localhost:4001
+  profiles:
+    routing_url: http://localhost:4002
+  listings:
+    routing_url: http://localhost:4003
+  bookings:
+    routing_url: http://localhost:4004
+  carts:
+    routing_url: http://localhost:4005
+  payments:
+    routing_url: http://localhost:4006
+  reviews:
+    routing_url: http://localhost:4007
+  inventory:
+    routing_url: http://localhost:4008
+  analytics:
+    routing_url: http://localhost:4009
 

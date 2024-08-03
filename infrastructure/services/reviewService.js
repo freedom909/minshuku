@@ -54,6 +54,11 @@ class ReviewService {
   async getUser(userId) {
     return await this.reviewRepository.getUser(userId);
   }
+
+  async getOverallRatingForListing(id){
+    return await this.reviewRepository.getAverageRating({ targetType: 'LISTING', listingId: id });
+  
+  }
 }
 
 export default ReviewService;

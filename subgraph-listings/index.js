@@ -63,8 +63,8 @@ const startApolloServer = async () => {
       })
     );
 
-    httpServer.listen({ port: 4013 }, () =>
-      console.log('Server is running on http://localhost:4013/graphql')
+    httpServer.listen({ port: 4003 }, () =>
+      console.log('Server is running on http://localhost:4003/graphql')
     );
   } catch (error) {
     console.error('Error starting Apollo Server:', error);

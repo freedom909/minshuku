@@ -1,7 +1,7 @@
 import pkg from 'mongodb';
 const { MongoClient } = pkg;
 import { createContainer, asClass, asValue } from 'awilix';
-import connectToMongoDB from './connectMongoDb.js';
+import connectToMongoDB from './connectMongoDB.js';
 import AccountService from '../services/accountService.js';
 import AccountRepository from '../repositories/accountRepository.js';
 import UserService from '../services/userService.js';

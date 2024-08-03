@@ -8,7 +8,7 @@ import ProfileService from '../services/proflieService.js';
 import ProfileRepository from '../repositories/profileRepository.js';
 import AccountService from '../services/accountService.js';
 
-import connectMongoDB from './connectMongoDb.js';
+import connectMongoDB from './connectMongoDB.js';
 
 const initProfileContainer = async () => {
   try {

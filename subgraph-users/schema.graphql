@@ -1,6 +1,6 @@
 extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7",
-  import: ["@key","@shareable"])
+  import: ["@key", "@shareable", "@external"])
 
 enum Role {
   ADMIN
@@ -39,13 +39,13 @@ interface Node {
 "The response after updating a profile"
 type UpdateProfileResponse implements Response {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int!  @shareable
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean!  @shareable
   "Human-readable message for the UI"
-  message: String!
+  message: String!  @shareable
   "Updated user"
-  user: User 
+  user: User @shareable
 }
 
 "Fields that can be updated"
@@ -60,11 +60,11 @@ input UpdateProfileInput {
 
 interface Response {
   "Similar to HTTP status code, represents the status of the response"
-  code: Int!
+  code: Int! 
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! 
   "Human-readable message for the UI"
-  message: String!
+  message: String! 
 }
 
 interface User @key(fields: "id") {
@@ -79,32 +79,32 @@ interface User @key(fields: "id") {
   nickname: String!
 }
 
-type SignInResponse  implements Response {
+type SignInResponse implements Response {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! @shareable
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! @shareable
   "Human-readable message for the UI"
-  message: String!
+  message: String! @shareable
   "The user's JWT"
-  token: String!
+  token: String! @shareable
   "The user's ID"
-  userId: ID!
+  userId: ID! @shareable
   "The user's role"
-  role: Role!
+  role: Role @shareable
 }
 
 type AuthPayload {
   "The user's JWT"
-  token: String!
+  token: String! @shareable
   "The user's ID"
-  userId: ID!
+  userId: ID! @shareable
   "The user's role"
-  role: Role
+  role: Role @shareable
 }
 
 type Host implements User @key(fields: "id") {
-  id: ID!
+  id: ID! 
   "The user's first and last name"
   name: String! @shareable
   "The user's profile photo URL"
@@ -112,9 +112,9 @@ type Host implements User @key(fields: "id") {
   "The host's profile bio description, will be shown in the listing"
   description: String @shareable
   "The user's chosen nickname (must be unique)"
-  nickname: String!
+  nickname: String! @shareable
   "The role of the user"
-  role: Role!
+  role: Role! @shareable
 }
 
 type Guest implements User @key(fields: "id") {
@@ -124,9 +124,9 @@ type Guest implements User @key(fields: "id") {
   "The user's profile photo URL"
   picture: String @shareable
   "The user's chosen nickname (must be unique)"
-  nickname: String!
+  nickname: String! @shareable
   "The role of the user"
-  role: Role!
+  role: Role! @shareable
 }
 
 type _Service {
@@ -134,7 +134,7 @@ type _Service {
 }
 
 type UserId {
-  id: ID!
+  id: ID! @shareable
 }
 
 scalar _Any
@@ -142,54 +142,54 @@ scalar _Any
 union _Entity = Host | Guest | Generator
 
 type Query {
-  getUser(id: ID!): User
+  getUser(id: ID!): User @shareable
 }
 
 type Generator {
-  id: ID!
-  name: String!
-  description: String
-  createdAt: DateTime!
-  createdBy: User!
-  isActive: Boolean!
+  id: ID! @shareable
+  name: String! @shareable
+  description: String @shareable
+  createdAt: DateTime! @shareable
+  createdBy: User! @shareable
+  isActive: Boolean! @shareable
 }
 
 type ReqResetPwdResponse implements Response {
-  message: String!
-  code: Int!
-  success: Boolean!
-  link: String!
-  authPayload: AuthPayload!
+  message: String! @shareable
+  code: Int! @shareable
+  success: Boolean! @shareable
+  link: String! @shareable
+  authPayload: AuthPayload! @shareable
 }
 
 type ForgotPasswordResponse implements Response {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! @shareable
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! @shareable
   "Human-readable message for the UI"
-  message: String!
+  message: String! @shareable
   "The user's email address"
-  email: String!
+  email: String! @shareable
 }
 
-type InviteCodeResponse implements Response{
+type InviteCodeResponse implements Response {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! @shareable
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! @shareable
   "Human-readable message for the UI"
-  message: String!
+  message: String! @shareable
 }
 
 type Mutation {
-  signUp(input: SignUpInput!):AuthPayload!
-  signIn(input: SignInInput!): SignInResponse!
-  requestResetPassword(email: String!): ReqResetPwdResponse!
-  logout: Boolean!
-  forgotPassword(email: String!):ForgotPasswordResponse!
-  updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
-  sendInviteCode(email: String!): InviteCodeResponse!
-   "Updates the logged-in user's profile information"
+  signUp(input: SignUpInput!): AuthPayload! @shareable
+  signIn(input: SignInInput!): SignInResponse! @shareable
+  requestResetPassword(email: String!): ReqResetPwdResponse! @shareable
+  logout: Boolean! @shareable
+  forgotPassword(email: String!): ForgotPasswordResponse! @shareable
+  updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload! @shareable
+  sendInviteCode(email: String!): InviteCodeResponse! @shareable
+  "Updates the logged-in user's profile information"
   updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @shareable
 }

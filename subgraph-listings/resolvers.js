@@ -2,6 +2,7 @@ import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/err
 import { permissions } from '../infrastructure/auth/permission.js';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 const resolvers = {
+
   Query: {
     hotListingsByMoney: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;

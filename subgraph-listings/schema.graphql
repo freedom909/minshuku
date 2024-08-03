@@ -1,6 +1,6 @@
 extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7", 
-        import: ["@key", "@shareable", "@provides", "@external"])
+        import: ["@key", "@shareable", "@provides"])
 
 # Query definitions for retrieving listing data
 extend type Query {
@@ -15,17 +15,17 @@ extend type Query {
   "Search results for listings that fit the criteria provided"
   searchListings(criteria: SearchListingsInput!): [Listing] @shareable
   "Returns the listings that match the criteria provided"
-  listings(numOfBeds: Int, page: Int, limit: Int, sortBy: String): [Listing]
+  listings(numOfBeds: Int, page: Int, limit: Int, sortBy: String): [Listing] @shareable
   "according to sale amount to sort"
-  hotListingsByMoney: [Listing]
+  hotListingsByMoney: [Listing] @shareable
   "according to the number of bookings"
-  hotListingsByBookingNumber: [Listing]
+  hotListingsByBookingNumber: [Listing] @shareable
 }
 
 
 input UpdateListingStatusInput {
   id: ID!
-  status: ListingStatus!
+  status: ListingStatus! 
 }
 
 type UpdateListingStatusResponse {
@@ -51,7 +51,7 @@ extend type Mutation {
     listingId: ID!
     listing: UpdateListingInput!
   ): UpdateListingResponse! @shareable
-   updateListingStatus(input: UpdateListingStatusInput!): Listing!
+   updateListingStatus(input: UpdateListingStatusInput!): Listing! @shareable
 }
 
 # Common interface for response types
@@ -167,42 +167,42 @@ reservedDate: ReservedDateInput!
 # Type representing a listing
 type Listing @key(fields: "id") {
   id: ID!
-  title: String!
-  description: String!
-  photoThumbnail: String!
-  numOfBeds: Int!
-  costPerNight: Float!
-  locationType: LocationType!
-  host: Host! @provides(fields: "id")
+  title: String! @shareable
+  description: String! @shareable
+  photoThumbnail: String! @shareable
+  numOfBeds: Int! @shareable
+  costPerNight: Float! @shareable
+  locationType: LocationType! @shareable
+  host: Host! 
   amenities: [Amenity!]! @shareable
   numberOfUpcomingBookings: Int!
   currentlyBookedDates: [ReservedDate]! @shareable
   totalCost(checkInDate: String!, checkOutDate: String!): Float!
   coordinates: Coordinates @shareable
-  saleAmount: Float
-  bookingNumber: Int
-  checkInDate: String!
-  checkOutDate: String!
-}
-
-# Type representing galactic coordinates for a listing
-type Coordinates @shareable {
-  latitude: Float!
-  longitude: Float!
+  saleAmount: Float @shareable
+  bookingNumber: Int @shareable
+  checkInDate: String! @shareable
+  checkOutDate: String! @shareable
 }
 
 # Type representing a host
 type Host @key(fields: "id") {
-  id: ID! @external
-  listings: [Listing] @shareable
+  id: ID!
+ listing:[Listing]
 }
 
+
+# Type representing galactic coordinates for a listing
+type Coordinates @shareable {
+  latitude: Float! 
+  longitude: Float! 
+}
 # Type representing a booking
 type Booking @key(fields: "id") {
   id: ID!
-  listing: Listing!
-  guest: Guest!
-  review: Review
+  listing: Listing! @shareable
+  guest: Guest! @shareable
+  review: Review @shareable
 }
 
 # Type representing a review
