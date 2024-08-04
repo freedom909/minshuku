@@ -33,13 +33,23 @@ type CancelBookingResponse implements MutationResponse {
   booking: Booking @shareable 
 }
 
-
 type Mutation {
   ### Bookings
   createBooking(input: CreateBookingInput): CreateBookingResponse! @shareable
   cancelBooking(id: ID!): CancelBookingResponse @shareable
   confirmBooking(id: ID!): Booking @shareable 
   addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
+}
+
+type CreateBookingResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int! @shareable 
+  "Indicates whether the mutation was successful"
+  success: Boolean! @shareable 
+  "Human-readable message for the UI"
+  message: String! @shareable 
+  "The newly-created booking"
+  booking: Booking @shareable
 }
 
 type AddFundsToWalletResponse implements MutationResponse {
@@ -58,6 +68,9 @@ enum BookingStatus {
   CURRENT
   COMPLETED
   UPCOMING
+  PAST
+  CANCELLED
+  CONFIRMED
 }
 
 "A booking is a reservation for a specific listing"
@@ -135,7 +148,7 @@ type NewBookingResponse @shareable {
 }
 
 "The response after creating a booking."
-type CreateBookingResponse implements MutationResponse {
+type CreateBookingResponseResult implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
   code: Int! @shareable 
   "Indicates whether the mutation was successful"
@@ -143,5 +156,35 @@ type CreateBookingResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String! @shareable 
   "The newly-created booking"
-  booking: NewBookingResponse @shareable 
+  booking: NewBookingResponse @shareable  
 }
+
+type Subscription {
+  bookingCreated: CreateBookingResponseResult
+  bookingConfirmed: ConfirmBookingResponseResult
+  bookingCancelled: CancelledBookingResponseResult
+}
+
+type CancelledBookingResponseResult implements MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int! @shareable
+  "Indicates whether the mutation was successful"
+  success: Boolean! @shareable
+  "Human-readable message for the UI"
+  message: String! @shareable
+  "The newly-created booking"
+  booking: Booking @shareable
+}
+
+type ConfirmBookingResponseResult implements MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int! @shareable
+  "Indicates whether the mutation was successful"
+  success: Boolean! @shareable
+  "Human-readable message for the UI"
+  message: String! @shareable
+  "The newly-created booking"
+  booking: NewBookingResponse @shareable
+}
+
+

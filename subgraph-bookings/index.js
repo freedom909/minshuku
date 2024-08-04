@@ -16,7 +16,8 @@ import BookingService from '../infrastructure/services/bookingService.js';
 import UserService from '../infrastructure/services/userService.js';
 import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
-
+import { useServer } from 'graphql-ws/lib/use/ws';
+import { WebSocketServer } from 'ws';
 dotenv.config();
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -34,15 +35,29 @@ const startApolloServer = async () => {
 
     const app = express();
     const httpServer = http.createServer(app);
+    const wsServer=new WebSocketServer({
+      server: httpServer,
+      path: '/graphql',
+    })
 
-    const server = new ApolloServer({
+    const serverCleanup = useServer({
       schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      context: (ctx, msg, args) => {
+        return {
+          ...ctx,
+          subscriptions: {}, // Add subscriptions context here if needed
+        };
+      },
+    }, wsServer);
+    const server = new ApolloServer({
+      schema: buildSubgraphSchema({ typeDefs, resolvers,wsServer }),
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),
         {
           async serverWillStart() {
             return {
               async drainServer() {
+                serverCleanup.dispose();
                 await mysqlContainer.resolve('mysqldb').close();
                 await mongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
               }

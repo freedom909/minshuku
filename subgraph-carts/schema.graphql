@@ -111,9 +111,6 @@ type CancelBookingResponse implements MutationResponse {
   booking: Booking @shareable
 }
 
-type Subscription {
-  bookingCreated: Booking!
-}
 
 type Query {
   "Get all bookings."

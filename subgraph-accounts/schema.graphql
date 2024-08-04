@@ -221,35 +221,35 @@ type Query {
 
 type Mutation {
   "Creates a new account."
-  createAccount(input: CreateAccountInput!): CreateAccountPayload! 
+  createAccount(input: CreateAccountInput!): CreateAccountPayload! @shareable
   "Updates the email of an existing account."
-  updateAccountEmail(input: UpdateAccountEmailInput!): UpdateAccountEmailPayload!
+  updateAccountEmail(input: UpdateAccountEmailInput!): UpdateAccountEmailPayload! @shareable
   "Updates the password of an existing account."
-  updateAccountPassword(input: UpdateAccountPasswordInput!): UpdateAccountPasswordPayload!
+  updateAccountPassword(input: UpdateAccountPasswordInput!): UpdateAccountPasswordPayload! @shareable
   "Creates a new listing."
   createListing(input: CreateListingInput!): CreateListingResponse! @shareable
 }
 
 type CreateAccountPayload implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-  "The created account."
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+  "The created account." 
   account: Account @shareable
 }
 
 type UpdateAccountEmailPayload implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
   "The updated account."
   account: Account @shareable
 }
 
 type UpdateAccountPasswordPayload implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
   "The updated account."
   account: Account @shareable
 }
