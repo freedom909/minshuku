@@ -17,26 +17,38 @@ type Query {
   "A list of bookings for the guest - must be authenticated as guest"
   guestBookings: [Booking]! @shareable 
   "Query type for fetching booking information"
-  booking(id: ID!): Booking
+  booking(id: ID!): Booking @shareable 
   "Query type for fetching booking information"
-  bookingsForUser(userId: ID!): [Booking]
+  bookingsForUser(userId: ID!): [Booking]  @shareable 
 }
+
+type CancelBookingResponse implements MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int! @shareable 
+  "Indicates whether the mutation was successful"
+  success: Boolean! @shareable 
+  "Human-readable message for the UI"
+  message: String! @shareable 
+  "The newly-created booking"
+  booking: Booking @shareable 
+}
+
 
 type Mutation {
   ### Bookings
-  createBooking(createBookingInput: CreateBookingInput): CreateBookingResponse! @shareable
-  cancelBooking(id: ID!): Booking @shareable
+  createBooking(input: CreateBookingInput): CreateBookingResponse! @shareable
+  cancelBooking(id: ID!): CancelBookingResponse @shareable
   confirmBooking(id: ID!): Booking @shareable 
   addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
 }
 
 type AddFundsToWalletResponse implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! @shareable 
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! @shareable 
   "Human-readable message for the UI"
-  message: String!
+  message: String! @shareable 
   "Updated wallet amount"
   amount: Float @shareable
 }
@@ -62,34 +74,34 @@ type Booking @key(fields: "id") {
   "Check-out date for the reservation"
   checkOutDate: DateTime! @shareable
   "Total price paid, calculated using the listing's costPerNight and the check-in check-out dates"
-  totalPrice: Float!
+  totalPrice: Float! @shareable 
   "The status of the booking - check BookingStatus type for all possibilities"
-  status: BookingStatus!
+  status: BookingStatus! @shareable 
   "The booking was cancelled time"
-  cancelledAt: DateTime
+  cancelledAt: DateTime @shareable 
   "The booking was confirmed time"
-  confirmedAt: DateTime
+  confirmedAt: DateTime @shareable 
 }
 
 "A booking is reserved for a certain date range, marked by the checkInDate and checkOutDate fields"
 type ReservedDate @shareable {
   "Date the guest checks in"
-  checkInDate: DateTime!
+  checkInDate: DateTime! 
   "Date the guest checks out"
-  checkOutDate: DateTime!
+  checkOutDate: DateTime! 
 }
 
 "A listing is a location owned by a host. A listing has a list of amenities it offers. Listings have a fixed cost per night value."
 type Listing @key(fields: "id") {
   id: ID!
   "The list of bookings for a listing"
-  bookings: [Booking]!
+  bookings: [Booking]! @shareable 
 }
 
 type Guest @key(fields: "id") {
   id: ID!
   "The list of bookings for a guest"
-  bookings: [Booking]!
+  bookings: [Booking]! @shareable 
 }
 
 type Review @key(fields: "id") {
@@ -116,7 +128,7 @@ input CreateBookingInput {
 }
 
 "Minimum details needed for a newly created booking"
-type NewBookingResponse {
+type NewBookingResponse @shareable {
   id: ID!
   checkInDate: DateTime!
   checkOutDate: DateTime!
@@ -125,11 +137,11 @@ type NewBookingResponse {
 "The response after creating a booking."
 type CreateBookingResponse implements MutationResponse {
   "Similar to HTTP status code, represents the status of the mutation"
-  code: Int!
+  code: Int! @shareable 
   "Indicates whether the mutation was successful"
-  success: Boolean!
+  success: Boolean! @shareable 
   "Human-readable message for the UI"
-  message: String!
+  message: String! @shareable 
   "The newly-created booking"
-  booking: NewBookingResponse
+  booking: NewBookingResponse @shareable 
 }

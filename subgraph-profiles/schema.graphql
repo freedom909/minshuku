@@ -9,10 +9,10 @@ scalar DateTime
 
 type Query {
   "Retrieves a single profile by username."
-  profile(username: String!): Profile!
+  profile(username: String!): Profile! @shareable
 
   "Retrieves a list of profiles."
-  profiles: [Profile] 
+  profiles: [Profile] @shareable
 }
 
 """
@@ -23,30 +23,30 @@ type Profile @key(fields: "id") {
   id: ID!
   
   "The date and time the profile was created."
-  createdAt: DateTime!
+  createdAt: DateTime! @shareable
   
   "The Auth0 account tied to this profile."
-  account: Account!
+  account: Account! @shareable
   
   "The full name of the user."
-  fullName: String
+  fullName: String @shareable
   
   "A tag-like list of topics of interest to the user."
-  interests: [String]
+  interests: [String] @shareable
   
   "The unique username of the user."
-  username: String!
+  username: String! @shareable
   
   # ...
   """
   Whether the currently authenticated user has another user in their network.
   """
-  isInNetwork: Boolean
+  isInNetwork: Boolean @shareable
   
   """
   Other users that have been added to the user's network.
   """
-  network: [Profile]
+  network: [Profile] @shareable
   # ...
 }
 
@@ -55,7 +55,7 @@ An account is a unique Auth0 user.
 """
 type Account @key(fields: "id") {
   id: ID!
-  profile: Profile
+  profile: Profile @shareable
 }
 
 """
@@ -88,18 +88,18 @@ input NetworkMemberInput {
 
 type Mutation {
   "Creates a new profile tied to an Auth0 account."
-  createProfile(input: CreateProfileInput!): Profile!
+  createProfile(input: CreateProfileInput!): Profile! @shareable 
   # ...
   
   "Deletes a user profile."
-  deleteProfile(accountId: ID!): Boolean! 
+  deleteProfile(accountId: ID!): Boolean! @shareable
   # ...
   
   "Adds a user to a network."
-  addToNetwork(input: NetworkMemberInput!): Profile! 
+  addToNetwork(input: NetworkMemberInput!): Profile! @shareable
   # ...
   
   "Removes a user from a network."
-  removeFromNetwork(input: NetworkMemberInput!): Profile! 
+  removeFromNetwork(input: NetworkMemberInput!): Profile! @shareable
   # ...
 }

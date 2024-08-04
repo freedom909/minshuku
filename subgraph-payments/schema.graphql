@@ -9,8 +9,8 @@ type Query {
 
 # Mutation type for wallet operations
 type Mutation {
-  addFundsToWallet(amount: Float!): AddFundsToWalletResponse!
-  cancelBooking(bookingId: ID!): CancelBookingResponse!
+  addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
+  cancelBooking(id: ID!): CancelBookingResponse! @shareable
 }
 
 # User interface with common user fields
@@ -28,30 +28,48 @@ interface MutationResponse {
 
 # Response type for addFundsToWallet mutation
 type AddFundsToWalletResponse implements MutationResponse {
-  code: Int!
-  success: Boolean!
-  message: String!
-  amount: Float
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+  amount: Float @shareable
+}
+
+type Booking @key(fields: "id") {
+  id: ID!
+  listing: Listing! @shareable
+  guest: Guest! @shareable
+}
+
+type Listing @key(fields: "id") {
+  id: ID!
+  "The list of bookings for a listing"
+  bookings: [Booking]! @shareable
 }
 
 # Response type for cancelBooking mutation
 type CancelBookingResponse implements MutationResponse {
-  code: Int!
-  success: Boolean!
-  message: String!
-  refundAmount: Float!
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int! @shareable
+  "Indicates whether the mutation was successful"
+  success: Boolean! @shareable
+  "Human-readable message for the UI"
+  message: String! @shareable
+  "The newly-created booking"
+  booking: Booking @shareable
+  "The amount of money refunded to the guest"
+  refundAmount: Float! @shareable
 }
 
 # Guest type implementing User interface with federated key
 type Guest implements User @key(fields: "id") {
   id: ID!
-  name: String!
-  funds: Float!
+  name: String! @shareable
+  funds: Float! @shareable
 }
 
 # Host type implementing User interface with federated key
 type Host implements User @key(fields: "id") {
   id: ID!
-  name: String!
-  earnings: Float!
+  name: String! @shareable
+  earnings: Float! @shareable
 }

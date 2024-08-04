@@ -2,6 +2,7 @@ extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7", 
         import: ["@key", "@shareable", "@provides"])
 
+scalar DateTime
 # Query definitions for retrieving listing data
 extend type Query {
   "Returns the details about this listing"
@@ -45,7 +46,7 @@ enum ListingStatus{
 
 extend type Mutation {
   "Creates a new listing for the currently authenticated host"
-  createListing(listing: CreateListingInput!): CreateListingResponse! @shareable
+  createListing(input: CreateListingInput!): CreateListingResponse! @shareable
   "Updates an existing listing"
   updateListing(
     listingId: ID!
@@ -71,21 +72,45 @@ input ReservedDateInput {
 
 # Input type for creating a listing
 input CreateListingInput {
-  "The listing's title"
+  "The title of the listing"
   title: String!
-  "The listing's description"
-  description: String!
-  "The thumbnail image for the listing"
+  "The description of the listing"
+  description: String
+  "The price of the listing"
+  price: Float!
+  "The ID of the location"
+  locationId: String!
+  "The ID of the host"
+  hostId: String!
+  "The photo thumbnail of the listing"
   photoThumbnail: String!
-  "The number of beds available"
+  "The number of beds in the listing"
   numOfBeds: Int!
-  "The cost per night"
+  "The cost per night of the listing"
   costPerNight: Float!
-  "The location type of the listing"
+  "The type of location"
   locationType: LocationType!
-  "The listing's amenities"
-  amenities: [ID!]!
-  status: ListingStatus!
+  "The amenities of the listing"
+  amenities: [AmenityInput!]!
+  status: ListingStatus
+}
+
+input AmenityInput {
+  type: String! 
+  description: String 
+}
+
+type Amenity @key(fields: "id") {
+  id: ID!
+  category: AmenityCategory! @shareable
+  name: String! @shareable
+}
+
+enum AmenityCategory {
+  ACCOMMODATION_DETAILS
+  SPACE_SURVIVAL
+  OUTDOORS
+  UNKNOWN
 }
 
 input UpdateListingInput {
@@ -107,9 +132,9 @@ input UpdateListingInput {
 
 # Response type for creating a listing
 type CreateListingResponse implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
   listing: Listing @shareable
 }
 
@@ -122,19 +147,6 @@ type UpdateListingResponse implements Response {
 }
 
 # Type representing an amenity
-type Amenity @key(fields: "id") {
-  id: ID!
-  category: AmenityCategory! @shareable
-  name: String! @shareable
-}
-
-# Enum representing the category of an amenity
-enum AmenityCategory {
-  ACCOMMODATION_DETAILS
-  SPACE_SURVIVAL
-  OUTDOORS
-  UNKNOWN
-}
 
 # Enum representing the type of a listing location
 enum LocationType {
@@ -146,8 +158,8 @@ enum LocationType {
 }
 
 type ReservedDate @shareable{
-  checkInDate: String! 
-  checkOutDate: String!
+  checkInDate: DateTime! 
+  checkOutDate: DateTime!
 }
 # Enum representing sorting criteria for listings
 enum SortByCriteria {
@@ -188,7 +200,7 @@ type Listing @key(fields: "id") {
 # Type representing a host
 type Host @key(fields: "id") {
   id: ID!
- listing:[Listing]
+ listing:[Listing] @shareable
 }
 
 

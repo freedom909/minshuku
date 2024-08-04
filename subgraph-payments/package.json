@@ -25,6 +25,7 @@
     "@apollo/server": "^4.9.2",
     "@apollo/subgraph": "^2.5.3",
     "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
     "graphql": "^16.8.0",
     "graphql-tag": "^2.12.6"
   }

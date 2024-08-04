@@ -20,6 +20,7 @@
     "express": "^4.19.2",
     "express-validator": "^7.1.0",
     "fs": "^0.0.1-security",
+    "graphql": "^16.9.0",
     "graphql-scalars": "^1.23.0",
     "graphql-subscriptions": "^2.0.0",
     "graphql-tag": "^2.12.6",

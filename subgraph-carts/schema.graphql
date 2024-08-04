@@ -1,43 +1,123 @@
+extend schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.5"
+    import: ["@key", "@shareable"]
+  )
+
 scalar DateTime
 
 type Booking @key(fields: "id") {
   id: ID!
-  guestId: ID!
-  listingId: ID!
-  createdAt: DateTime
-  cancelledAt: DateTime
-  confirmedAt: DateTime
+  "The listing associated with the reservation"
+  listing: Listing! @shareable
+  "The guest that reserved the location"
+  guest: Guest! @shareable
+  "The review associated with the reservation"
+  review: Review @shareable
+  "The guest that reserved the location"
+  checkInDate: DateTime! @shareable
+  "Check-out date for the reservation"
+  checkOutDate: DateTime! @shareable
+  "Total price paid, calculated using the listing's costPerNight and the check-in check-out dates"
+  totalPrice: Float! @shareable
+  "The status of the booking - check BookingStatus type for all possibilities"
+  status: BookingStatus! @shareable
+  "The booking was cancelled time"
+  cancelledAt: DateTime @shareable
+  "The booking was confirmed time"
+  confirmedAt: DateTime @shareable
 }
 
-input BookingInput {
-  guestId: ID!
-  listingId: ID!
+type Listing @key(fields: "id") {
+  id: ID!
+  "The list of bookings for a listing"
+  bookings: [Booking]! @shareable
 }
 
+type Guest @key(fields: "id") {
+  id: ID!
+  "The list of bookings for a guest"
+  bookings: [Booking]! @shareable
+}
 
+"The status of a booking"
+enum BookingStatus {
+  CURRENT
+  COMPLETED
+  UPCOMING
+}
+
+"Minimum details needed for a newly created booking"
+type NewBookingResponse @shareable {
+  id: ID!
+  checkInDate: DateTime!
+  checkOutDate: DateTime!
+}
+
+type Review @key(fields: "id") {
+  id: ID!
+}
+
+interface MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int!
+  "Indicates whether the mutation was successful"
+  success: Boolean!
+  "Human-readable message for the UI"
+  message: String!
+}
+
+"The response after creating a booking."
+type CreateBookingResponse implements MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int! @shareable
+  "Indicates whether the mutation was successful"
+  success: Boolean! @shareable
+  "Human-readable message for the UI"
+  message: String! @shareable
+  "The newly-created booking"
+  booking: NewBookingResponse @shareable
+}
+
+"Fields for creating a booking"
+input CreateBookingInput {
+  "ID of the listing associated with the booking"
+  listingId: ID!
+  "Date of check-in"
+  checkInDate: DateTime!
+  "Date of check-out"
+  checkOutDate: DateTime!
+}
 
 type Mutation {
   "Guest create a booking."
- createBooking(input: BookingInput!):Booking!
-
-
+  createBooking(input: CreateBookingInput): CreateBookingResponse! @shareable
   "Research booking information according to guestId."
-  researchBooking(guestId: ID!): [Booking!]!
-
+  researchBooking(guestId: ID!): [Booking!]! @shareable
   "Guest confirms the status of booking."
-  confirmBooking(id: ID!): Boolean!
-
+  confirmBooking(id: ID!): Booking! @shareable
   "Guest cancels the status of booking."
-  cancelBooking(id: ID!): Boolean!
-
+  cancelBooking(id: ID!): CancelBookingResponse! @shareable
 }
+
+type CancelBookingResponse implements MutationResponse {
+  "Similar to HTTP status code, represents the status of the mutation"
+  code: Int! @shareable
+  "Indicates whether the mutation was successful"
+  success: Boolean! @shareable
+  "Human-readable message for the UI"
+  message: String! @shareable
+  "The newly-created booking"
+  booking: Booking @shareable
+}
+
 type Subscription {
   bookingCreated: Booking!
 }
 
 type Query {
   "Get all bookings."
-  bookings: [Booking!]!
-  getBookingsByUser(userId: ID!): [Booking]
-  getBookingById(id: ID!): Booking
+  bookings: [Booking!]! @shareable
+  getBookingsByUser(userId: ID!): [Booking] @shareable
+  getBookingById(id: ID!): Booking @shareable
 }
