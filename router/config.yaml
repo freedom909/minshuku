@@ -28,8 +28,5 @@ subgraphs:
     routing_url: http://localhost:4006
   reviews:
     routing_url: http://localhost:4007
-  inventory:
-    routing_url: http://localhost:4008
-  analytics:
-    routing_url: http://localhost:4009
+ 
 

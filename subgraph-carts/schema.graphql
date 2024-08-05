@@ -45,14 +45,11 @@ enum BookingStatus {
   CURRENT
   COMPLETED
   UPCOMING
+  PAST
+  CANCELLED
+  CONFIRMED
 }
 
-"Minimum details needed for a newly created booking"
-type NewBookingResponse @shareable {
-  id: ID!
-  checkInDate: DateTime!
-  checkOutDate: DateTime!
-}
 
 type Review @key(fields: "id") {
   id: ID!
@@ -76,7 +73,7 @@ type CreateBookingResponse implements MutationResponse {
   "Human-readable message for the UI"
   message: String! @shareable
   "The newly-created booking"
-  booking: NewBookingResponse @shareable
+  booking: Booking @shareable
 }
 
 "Fields for creating a booking"
