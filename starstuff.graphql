@@ -1,0 +1,1226 @@
+schema
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.4", for: EXECUTION)
+{
+  query: Query
+  mutation: Mutation
+}
+
+directive @join__directive(graphs: [join__Graph!], name: String!, args: join__DirectiveArguments) repeatable on SCHEMA | OBJECT | INTERFACE | FIELD_DEFINITION
+
+directive @join__enumValue(graph: join__Graph!) repeatable on ENUM_VALUE
+
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean, overrideLabel: String) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+directive @join__unionMember(graph: join__Graph!, member: String!) repeatable on UNION
+
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
+
+"""An account is a unique Auth0 user."""
+type Account
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: PROFILES, key: "id")
+{
+  """The unique ID associated with the account."""
+  id: ID!
+
+  """The date and time the account was created."""
+  createdAt: DateTime! @join__field(graph: ACCOUNTS)
+
+  """The email associated with the account (must be unique)."""
+  email: String! @join__field(graph: ACCOUNTS)
+  profile: Profile @join__field(graph: PROFILES)
+}
+
+type AddFundsToWalletResponse implements MutationResponse
+  @join__implements(graph: BOOKINGS, interface: "MutationResponse")
+  @join__implements(graph: PAYMENTS, interface: "MutationResponse")
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: PAYMENTS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """Updated wallet amount"""
+  amount: Float
+}
+
+type Amenity
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: LISTINGS, key: "id")
+{
+  id: ID!
+  category: AmenityCategory!
+  name: String!
+}
+
+enum AmenityCategory
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: LISTINGS)
+{
+  ACCOMMODATION_DETAILS @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  SPACE_SURVIVAL @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  OUTDOORS @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  UNKNOWN @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+}
+
+input AmenityInput
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: LISTINGS)
+{
+  type: String!
+  description: String
+}
+
+type AuthPayload
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: USERS)
+{
+  """The user's JWT"""
+  token: String!
+
+  """The user's ID"""
+  userId: ID!
+
+  """The user's role"""
+  role: Role @join__field(graph: USERS)
+}
+
+"""A booking is a reservation for a specific listing"""
+type Booking
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: BOOKINGS, key: "id")
+  @join__type(graph: CARTS, key: "id")
+  @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: PAYMENTS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
+{
+  id: ID!
+
+  """The user who made the booking"""
+  userId: ID! @join__field(graph: ACCOUNTS)
+
+  """The listing booked"""
+  listingId: ID! @join__field(graph: ACCOUNTS)
+
+  """The guest that reserved the location"""
+  checkInDate: DateTime! @join__field(graph: ACCOUNTS) @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """Check-out date for the reservation"""
+  checkOutDate: DateTime! @join__field(graph: ACCOUNTS) @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """
+  Total price paid, calculated using the listing's costPerNight and the check-in check-out dates
+  """
+  totalPrice: Float! @join__field(graph: ACCOUNTS) @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """The listing associated with the reservation"""
+  listing: Listing! @join__field(graph: BOOKINGS) @join__field(graph: CARTS) @join__field(graph: LISTINGS) @join__field(graph: PAYMENTS)
+
+  """The guest that reserved the location"""
+  guest: Guest! @join__field(graph: BOOKINGS) @join__field(graph: CARTS) @join__field(graph: LISTINGS) @join__field(graph: PAYMENTS)
+
+  """The review associated with the reservation"""
+  review: Review @join__field(graph: BOOKINGS) @join__field(graph: CARTS) @join__field(graph: LISTINGS)
+
+  """
+  The status of the booking - check BookingStatus type for all possibilities
+  """
+  status: BookingStatus! @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """The booking was cancelled time"""
+  cancelledAt: DateTime @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """The booking was confirmed time"""
+  confirmedAt: DateTime @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """The guest's review of the location"""
+  locationReview: Review @join__field(graph: REVIEWS)
+
+  """The guest's review about the host"""
+  hostReview: Review @join__field(graph: REVIEWS)
+
+  """The host's review about the guest"""
+  guestReview: Review @join__field(graph: REVIEWS)
+}
+
+"""The status of a booking"""
+enum BookingStatus
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+{
+  CURRENT @join__enumValue(graph: BOOKINGS) @join__enumValue(graph: CARTS)
+  COMPLETED @join__enumValue(graph: BOOKINGS) @join__enumValue(graph: CARTS)
+  UPCOMING @join__enumValue(graph: BOOKINGS) @join__enumValue(graph: CARTS)
+  PAST @join__enumValue(graph: BOOKINGS) @join__enumValue(graph: CARTS)
+  CANCELLED @join__enumValue(graph: BOOKINGS) @join__enumValue(graph: CARTS)
+  CONFIRMED @join__enumValue(graph: BOOKINGS) @join__enumValue(graph: CARTS)
+}
+
+type CancelBookingResponse implements MutationResponse
+  @join__implements(graph: BOOKINGS, interface: "MutationResponse")
+  @join__implements(graph: CARTS, interface: "MutationResponse")
+  @join__implements(graph: PAYMENTS, interface: "MutationResponse")
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+  @join__type(graph: PAYMENTS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """The newly-created booking"""
+  booking: Booking
+
+  """The amount of money refunded to the guest"""
+  refundAmount: Float! @join__field(graph: PAYMENTS)
+}
+
+type Cart
+  @join__type(graph: ACCOUNTS, key: "id")
+{
+  """The unique ID associated with the cart."""
+  id: ID!
+
+  """The items in the cart."""
+  items: [CartItem]!
+
+  """The date and time the cart was created."""
+  createdAt: DateTime!
+}
+
+type CartItem
+  @join__type(graph: ACCOUNTS, key: "id")
+{
+  """The unique ID associated with the cart item."""
+  id: ID!
+
+  """The listing associated with the cart item."""
+  listing: Listing!
+
+  """The quantity of the cart item."""
+  quantity: Int!
+}
+
+type Coordinates
+  @join__type(graph: LISTINGS)
+{
+  latitude: Float!
+  longitude: Float!
+}
+
+"""Provides data to create a new account."""
+input CreateAccountInput
+  @join__type(graph: ACCOUNTS)
+{
+  """The new account's email (must be unique)."""
+  email: String!
+
+  """The new account's password."""
+  password: String!
+}
+
+type CreateAccountPayload implements Response
+  @join__implements(graph: ACCOUNTS, interface: "Response")
+  @join__type(graph: ACCOUNTS)
+{
+  code: Int!
+  success: Boolean!
+  message: String!
+
+  """The created account."""
+  account: Account
+}
+
+"""Fields for creating a booking"""
+input CreateBookingInput
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+{
+  """ID of the listing associated with the booking"""
+  listingId: ID!
+
+  """Date of check-in"""
+  checkInDate: DateTime!
+
+  """Date of check-out"""
+  checkOutDate: DateTime!
+}
+
+"""The response after creating a booking."""
+type CreateBookingResponse implements MutationResponse
+  @join__implements(graph: CARTS, interface: "MutationResponse")
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """The newly-created booking"""
+  booking: Booking
+}
+
+input CreateListingInput
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: LISTINGS)
+{
+  """The title of the listing"""
+  title: String!
+
+  """The description of the listing"""
+  description: String
+
+  """The price of the listing"""
+  price: Float!
+
+  """The ID of the location"""
+  locationId: String!
+
+  """The ID of the host"""
+  hostId: String!
+
+  """The photo thumbnail of the listing"""
+  photoThumbnail: String!
+
+  """The number of beds in the listing"""
+  numOfBeds: Int!
+
+  """The cost per night of the listing"""
+  costPerNight: Float!
+
+  """The type of location"""
+  locationType: LocationType!
+
+  """The amenities of the listing"""
+  amenities: [AmenityInput!]!
+  status: ListingStatus
+}
+
+type CreateListingResponse implements Response
+  @join__implements(graph: ACCOUNTS, interface: "Response")
+  @join__implements(graph: LISTINGS, interface: "Response")
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: LISTINGS)
+{
+  """The code status"""
+  code: Int!
+
+  """The success status"""
+  success: Boolean!
+
+  """The response message"""
+  message: String!
+
+  """The listing that was created"""
+  listing: Listing @join__field(graph: ACCOUNTS, type: "Listing!") @join__field(graph: LISTINGS, type: "Listing")
+
+  """The error that occurred, if any"""
+  error: String @join__field(graph: ACCOUNTS)
+}
+
+"""Provides data to create a new user profile."""
+input CreateProfileInput
+  @join__type(graph: PROFILES)
+{
+  """The new user's unique Auth0 ID."""
+  accountId: ID!
+
+  """The new user's full name."""
+  fullName: String
+
+  """A tag-like list of topics of interest to the user."""
+  interests: [String]
+
+  """The new user's username (must be unique)."""
+  username: String!
+}
+
+"""An ISO 8601-encoded UTC date string."""
+scalar DateTime
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+  @join__type(graph: LISTINGS)
+  @join__type(graph: PROFILES)
+  @join__type(graph: USERS)
+
+type ForgotPasswordResponse implements Response
+  @join__implements(graph: USERS, interface: "Response")
+  @join__type(graph: USERS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """The user's email address"""
+  email: String!
+}
+
+type Generator
+  @join__type(graph: USERS)
+{
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  createdBy: User!
+  isActive: Boolean!
+}
+
+"""A guest is a type of Airlock user. They book places to stay."""
+type Guest implements User
+  @join__implements(graph: ACCOUNTS, interface: "User")
+  @join__implements(graph: PAYMENTS, interface: "User")
+  @join__implements(graph: REVIEWS, interface: "User")
+  @join__implements(graph: USERS, interface: "User")
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: BOOKINGS, key: "id")
+  @join__type(graph: CARTS, key: "id")
+  @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: PAYMENTS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
+  @join__type(graph: USERS, key: "id")
+{
+  """The unique ID associated with the account."""
+  id: ID!
+
+  """The user's first and last name"""
+  name: String! @join__field(graph: ACCOUNTS) @join__field(graph: LISTINGS) @join__field(graph: PAYMENTS) @join__field(graph: REVIEWS) @join__field(graph: USERS)
+
+  """The user's profile photo URL"""
+  picture: String @join__field(graph: ACCOUNTS, type: "String!") @join__field(graph: USERS, type: "String")
+
+  """The email address of the user (must be unique)."""
+  email: String! @join__field(graph: ACCOUNTS)
+
+  """The user's chosen nickname (must be unique)."""
+  nickname: String! @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """The role of the user"""
+  role: Role! @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """The list of bookings for a guest"""
+  bookings: [Booking]! @join__field(graph: ACCOUNTS) @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """The carts of the user"""
+  carts: [Cart]! @join__field(graph: ACCOUNTS)
+  listings: [Listing] @join__field(graph: ACCOUNTS)
+  funds: Float! @join__field(graph: PAYMENTS)
+}
+
+"""A host is a type of Airlock user. They own listings."""
+type Host implements User
+  @join__implements(graph: ACCOUNTS, interface: "User")
+  @join__implements(graph: PAYMENTS, interface: "User")
+  @join__implements(graph: REVIEWS, interface: "User")
+  @join__implements(graph: USERS, interface: "User")
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: PAYMENTS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
+  @join__type(graph: USERS, key: "id")
+{
+  id: ID!
+
+  """The user's first and last name"""
+  name: String! @join__field(graph: ACCOUNTS) @join__field(graph: PAYMENTS) @join__field(graph: REVIEWS) @join__field(graph: USERS)
+
+  """The user's profile photo URL"""
+  picture: String @join__field(graph: ACCOUNTS, type: "String!") @join__field(graph: USERS, type: "String")
+
+  """The host's profile bio description, will be shown in the listing"""
+  description: String @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """The email address of the user (must be unique)."""
+  email: String! @join__field(graph: ACCOUNTS)
+
+  """The user's chosen nickname (must be unique)."""
+  nickname: String! @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """The role of the user"""
+  role: Role! @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """The listings of the user"""
+  listings: [Listing]! @join__field(graph: ACCOUNTS)
+  listing: [Listing] @join__field(graph: LISTINGS)
+  earnings: Float! @join__field(graph: PAYMENTS)
+
+  """The overall calculated rating for the host"""
+  overallRating: Float @join__field(graph: REVIEWS)
+}
+
+type InviteCodeResponse implements Response
+  @join__implements(graph: USERS, interface: "Response")
+  @join__type(graph: USERS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+}
+
+scalar join__DirectiveArguments
+
+scalar join__FieldSet
+
+enum join__Graph {
+  ACCOUNTS @join__graph(name: "accounts", url: "http://localhost:4001")
+  BOOKINGS @join__graph(name: "bookings", url: "http://localhost:4004")
+  CARTS @join__graph(name: "carts", url: "http://localhost:4005")
+  LISTINGS @join__graph(name: "listings", url: "http://localhost:4003")
+  PAYMENTS @join__graph(name: "payments", url: "http://localhost:4006")
+  PROFILES @join__graph(name: "profiles", url: "http://localhost:4002")
+  REVIEWS @join__graph(name: "reviews", url: "http://localhost:4007")
+  USERS @join__graph(name: "users", url: "http://localhost:4010")
+}
+
+scalar link__Import
+
+enum link__Purpose {
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+
+  """
+  `EXECUTION` features provide metadata necessary for operation execution.
+  """
+  EXECUTION
+}
+
+type Listing
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: BOOKINGS, key: "id")
+  @join__type(graph: CARTS, key: "id")
+  @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: PAYMENTS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
+{
+  """The unique ID associated with the listing."""
+  id: ID!
+
+  """The title of the listing."""
+  title: String! @join__field(graph: ACCOUNTS) @join__field(graph: LISTINGS)
+
+  """The description of the listing."""
+  description: String! @join__field(graph: ACCOUNTS) @join__field(graph: LISTINGS)
+
+  """The price of the listing."""
+  price: Float! @join__field(graph: ACCOUNTS)
+
+  """The host of the listing."""
+  hostId: ID! @join__field(graph: ACCOUNTS)
+
+  """The location of the listing."""
+  location: Location! @join__field(graph: ACCOUNTS)
+
+  """The latitude of the listing."""
+  latitude: Float! @join__field(graph: ACCOUNTS)
+
+  """The longitude of the listing."""
+  longitude: Float! @join__field(graph: ACCOUNTS)
+
+  """The list of bookings for a listing"""
+  bookings: [Booking]! @join__field(graph: BOOKINGS) @join__field(graph: CARTS) @join__field(graph: PAYMENTS)
+  photoThumbnail: String! @join__field(graph: LISTINGS)
+  numOfBeds: Int! @join__field(graph: LISTINGS)
+  costPerNight: Float! @join__field(graph: LISTINGS)
+  locationType: LocationType! @join__field(graph: LISTINGS)
+  host: Host! @join__field(graph: LISTINGS)
+  amenities: [Amenity!]! @join__field(graph: LISTINGS)
+  numberOfUpcomingBookings: Int! @join__field(graph: LISTINGS)
+  currentlyBookedDates: [ReservedDate]! @join__field(graph: LISTINGS)
+  totalCost(checkInDate: String!, checkOutDate: String!): Float! @join__field(graph: LISTINGS)
+  coordinates: Coordinates @join__field(graph: LISTINGS)
+  saleAmount: Float @join__field(graph: LISTINGS)
+  bookingNumber: Int @join__field(graph: LISTINGS)
+  checkInDate: String! @join__field(graph: LISTINGS)
+  checkOutDate: String! @join__field(graph: LISTINGS)
+  reviews: [Review]! @join__field(graph: REVIEWS)
+
+  """The overall calculated rating for a listing"""
+  overallRating: Float @join__field(graph: REVIEWS)
+}
+
+enum ListingStatus
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: LISTINGS)
+{
+  ACTIVE @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  PENDING @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  SOLD @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  DELETED @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  REJECT @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  CANCELLED @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  EXPIRED @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+}
+
+type Location
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
+{
+  """The unique ID associated with the location"""
+  id: Int!
+
+  """The name of the address"""
+  name: String!
+
+  """The address of the location"""
+  address: String! @join__field(graph: ACCOUNTS)
+
+  """The city of the location"""
+  city: String! @join__field(graph: ACCOUNTS)
+
+  """The state of the location"""
+  state: String! @join__field(graph: ACCOUNTS)
+
+  """The zip code of the location"""
+  zip: String! @join__field(graph: ACCOUNTS)
+
+  """The listings of the location"""
+  listings: [Listing] @join__field(graph: ACCOUNTS)
+}
+
+enum LocationType
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: LISTINGS)
+{
+  SPACESHIP @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  HOUSE @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  CAMPSITE @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  APARTMENT @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+  ROOM @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: LISTINGS)
+}
+
+type Mutation
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+  @join__type(graph: LISTINGS)
+  @join__type(graph: PAYMENTS)
+  @join__type(graph: PROFILES)
+  @join__type(graph: REVIEWS)
+  @join__type(graph: USERS)
+{
+  """Creates a new account."""
+  createAccount(input: CreateAccountInput!): CreateAccountPayload! @join__field(graph: ACCOUNTS)
+
+  """Updates the email of an existing account."""
+  updateAccountEmail(input: UpdateAccountEmailInput!): UpdateAccountEmailPayload! @join__field(graph: ACCOUNTS)
+
+  """Updates the password of an existing account."""
+  updateAccountPassword(input: UpdateAccountPasswordInput!): UpdateAccountPasswordPayload! @join__field(graph: ACCOUNTS)
+
+  """Creates a new listing."""
+  createListing(input: CreateListingInput!): CreateListingResponse! @join__field(graph: ACCOUNTS) @join__field(graph: LISTINGS)
+
+  """Guest create a booking."""
+  createBooking(input: CreateBookingInput!): CreateBookingResponse! @join__field(graph: BOOKINGS) @join__field(graph: CARTS)
+
+  """Guest cancels the status of booking."""
+  cancelBooking(id: ID!): CancelBookingResponse @join__field(graph: BOOKINGS, type: "CancelBookingResponse") @join__field(graph: CARTS, type: "CancelBookingResponse!") @join__field(graph: PAYMENTS, type: "CancelBookingResponse!")
+
+  """Guest confirms the status of booking."""
+  confirmBooking(id: ID!): Booking @join__field(graph: BOOKINGS, type: "Booking") @join__field(graph: CARTS, type: "Booking!")
+  addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @join__field(graph: BOOKINGS) @join__field(graph: PAYMENTS)
+
+  """Research booking information according to guestId."""
+  researchBooking(guestId: ID!): [Booking!]! @join__field(graph: CARTS)
+
+  """Updates an existing listing"""
+  updateListing(listingId: ID!, listing: UpdateListingInput!): UpdateListingResponse! @join__field(graph: LISTINGS)
+  updateListingStatus(input: UpdateListingStatusInput!): Listing! @join__field(graph: LISTINGS)
+
+  """Creates a new profile tied to an Auth0 account."""
+  createProfile(input: CreateProfileInput!): Profile! @join__field(graph: PROFILES)
+
+  """Deletes a user profile."""
+  deleteProfile(accountId: ID!): Boolean! @join__field(graph: PROFILES)
+
+  """Adds a user to a network."""
+  addToNetwork(input: NetworkMemberInput!): Profile! @join__field(graph: PROFILES)
+
+  """Removes a user from a network."""
+  removeFromNetwork(input: NetworkMemberInput!): Profile! @join__field(graph: PROFILES)
+
+  """
+  Creates a review for the guest - must be authored by host of past booking
+  """
+  submitGuestReview(guestReview: ReviewInput!, bookingId: ID!): SubmitGuestReviewResponse! @join__field(graph: REVIEWS)
+  submitHostAndLocationReviews(bookingId: ID!, hostReview: ReviewInput!, locationReview: ReviewInput!): SubmitHostAndLocationReviewsResponse! @join__field(graph: REVIEWS)
+  signUp(input: SignUpInput!): AuthPayload! @join__field(graph: USERS)
+  signIn(input: SignInInput!): SignInResponse! @join__field(graph: USERS)
+  requestResetPassword(email: String!): ReqResetPwdResponse! @join__field(graph: USERS)
+  logout: Boolean! @join__field(graph: USERS)
+  forgotPassword(email: String!): ForgotPasswordResponse! @join__field(graph: USERS)
+  updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload! @join__field(graph: USERS)
+  sendInviteCode(email: String!): InviteCodeResponse! @join__field(graph: USERS)
+
+  """Updates the logged-in user's profile information"""
+  updateProfile(updateProfileInput: UpdateProfileInput): UpdateProfileResponse! @join__field(graph: USERS)
+}
+
+interface MutationResponse
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+  @join__type(graph: PAYMENTS)
+  @join__type(graph: REVIEWS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+}
+
+"""
+Provides the unique ID of an existing profile to add or remove from a network.
+"""
+input NetworkMemberInput
+  @join__type(graph: PROFILES)
+{
+  """The unique Auth0 ID of the user that is updating their network."""
+  accountId: ID!
+
+  """The unique Auth0 ID of the user to be added or removed from a network."""
+  networkMemberId: ID!
+}
+
+interface Node
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: USERS)
+{
+  """The node's ID"""
+  id: ID!
+}
+
+"""A profile contains metadata about a specific user."""
+type Profile
+  @join__type(graph: PROFILES, key: "id")
+{
+  """The unique ID of the user's profile."""
+  id: ID!
+
+  """The date and time the profile was created."""
+  createdAt: DateTime!
+
+  """The Auth0 account tied to this profile."""
+  account: Account!
+
+  """The full name of the user."""
+  fullName: String
+
+  """A tag-like list of topics of interest to the user."""
+  interests: [String]
+
+  """The unique username of the user."""
+  username: String!
+
+  """
+  Whether the currently authenticated user has another user in their network.
+  """
+  isInNetwork: Boolean
+
+  """Other users that have been added to the user's network."""
+  network: [Profile]
+}
+
+type Query
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: CARTS)
+  @join__type(graph: LISTINGS)
+  @join__type(graph: PAYMENTS)
+  @join__type(graph: PROFILES)
+  @join__type(graph: REVIEWS)
+  @join__type(graph: USERS)
+{
+  getUser(id: ID!): User @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """Returns the listings that match the criteria provided"""
+  listings: [Listing] @join__field(graph: ACCOUNTS) @join__field(graph: LISTINGS)
+
+  """User accounts"""
+  user(id: ID!): User @join__field(graph: ACCOUNTS)
+
+  """Currently logged-in user"""
+  me: User! @join__field(graph: ACCOUNTS)
+
+  """Retrieves the account of the currently logged-in user."""
+  viewer: Account @join__field(graph: ACCOUNTS)
+
+  """The booking of the currently user"""
+  bookings: [Booking] @join__field(graph: ACCOUNTS, type: "[Booking]") @join__field(graph: CARTS, type: "[Booking!]!")
+
+  """Retrieves the account of the currently logged-in user."""
+  account(id: ID!): Account @join__field(graph: ACCOUNTS)
+
+  """Retrieves the accounts of the currently logged-in user."""
+  accounts: [Account] @join__field(graph: ACCOUNTS)
+
+  """Cart of the currently logged-in user."""
+  cart: Cart @join__field(graph: ACCOUNTS)
+
+  """Cart of the currently logged-in user."""
+  carts: [Cart]! @join__field(graph: ACCOUNTS)
+
+  """
+  All bookings for the given listing, optionally filtered by a BookingStatus
+  """
+  bookingsForListing(listingId: ID!, status: BookingStatus): [Booking]! @join__field(graph: BOOKINGS)
+
+  """Current booking for guest based on current date"""
+  currentGuestBooking: Booking @join__field(graph: BOOKINGS)
+
+  """Upcoming and current bookings for guest based on current date"""
+  upcomingGuestBookings: [Booking]! @join__field(graph: BOOKINGS)
+
+  """Past bookings for guest based on current date"""
+  pastGuestBookings: [Booking]! @join__field(graph: BOOKINGS)
+
+  """A list of bookings for the guest - must be authenticated as guest"""
+  guestBookings: [Booking]! @join__field(graph: BOOKINGS)
+
+  """Query type for fetching booking information"""
+  booking(id: ID!): Booking @join__field(graph: BOOKINGS)
+
+  """Query type for fetching booking information"""
+  bookingsForUser(userId: ID!): [Booking] @join__field(graph: BOOKINGS)
+  getBookingsByUser(userId: ID!): [Booking] @join__field(graph: CARTS)
+  getBookingById(id: ID!): Booking @join__field(graph: CARTS)
+
+  """Returns the details about this listing"""
+  listing(id: ID!): Listing @join__field(graph: LISTINGS)
+
+  """A curated array of listings to feature on the homepage"""
+  featuredListings: [Listing!]! @join__field(graph: LISTINGS)
+
+  """Return the listings that belong to the currently logged-in host"""
+  hostListings: [Listing]! @join__field(graph: LISTINGS)
+
+  """Returns all possible amenities for a listing"""
+  listingAmenities: [Amenity!]! @join__field(graph: LISTINGS)
+
+  """Search results for listings that fit the criteria provided"""
+  searchListings(criteria: SearchListingsInput!): [Listing] @join__field(graph: LISTINGS)
+
+  """according to sale amount to sort"""
+  hotListingsByMoney: [Listing] @join__field(graph: LISTINGS)
+
+  """according to the number of bookings"""
+  hotListingsByBookingNumber: [Listing] @join__field(graph: LISTINGS)
+  payment: Int @join__field(graph: PAYMENTS)
+
+  """Retrieves a single profile by username."""
+  profile(username: String!): Profile! @join__field(graph: PROFILES)
+
+  """Retrieves a list of profiles."""
+  profiles: [Profile] @join__field(graph: PROFILES)
+}
+
+type ReqResetPwdResponse implements Response
+  @join__implements(graph: USERS, interface: "Response")
+  @join__type(graph: USERS)
+{
+  message: String!
+  code: Int!
+  success: Boolean!
+  link: String!
+  authPayload: AuthPayload!
+}
+
+type ReservedDate
+  @join__type(graph: BOOKINGS)
+  @join__type(graph: LISTINGS)
+{
+  """Date the guest checks in"""
+  checkInDate: DateTime!
+
+  """Date the guest checks out"""
+  checkOutDate: DateTime!
+}
+
+input ReservedDateInput
+  @join__type(graph: LISTINGS)
+{
+  checkInDate: String!
+  checkOutDate: String!
+}
+
+interface Response
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: LISTINGS)
+  @join__type(graph: USERS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+}
+
+"""
+A review consists of a numerical rating and written text. It can be written by a host or a guest.
+"""
+type Review
+  @join__type(graph: BOOKINGS, key: "id")
+  @join__type(graph: CARTS, key: "id")
+  @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
+{
+  id: ID!
+
+  """
+  The numerical rating for the review target, on a scale of 1-5, with 5 being excellent.
+  """
+  rating: Float! @join__field(graph: REVIEWS)
+  content: String! @join__field(graph: REVIEWS)
+  author: User! @join__field(graph: REVIEWS)
+
+  """The ID of the booking this review is about"""
+  bookingId: ID! @join__field(graph: REVIEWS)
+
+  """The ID of the location this review is about"""
+  locationId: ID @join__field(graph: REVIEWS)
+
+  """The ID of the guest this review is about"""
+  guestId: ID @join__field(graph: REVIEWS)
+
+  """The ID of the host this review is about"""
+  hostId: ID @join__field(graph: REVIEWS)
+
+  """The name of the location this review is about"""
+  location: Location @join__field(graph: REVIEWS)
+}
+
+"""
+ReviewInput is the bare minimum needed to submit a review, not tied to any target.
+"""
+input ReviewInput
+  @join__type(graph: REVIEWS)
+{
+  text: String!
+  rating: Float!
+}
+
+enum Role
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: USERS)
+{
+  ADMIN @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: USERS)
+  GUEST @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: USERS)
+  HOST @join__enumValue(graph: ACCOUNTS) @join__enumValue(graph: USERS)
+}
+
+input SearchListingsInput
+  @join__type(graph: LISTINGS)
+{
+  reservedDate: ReservedDateInput!
+  numOfBeds: Int
+  page: Int
+  limit: Int
+  sortBy: SortByCriteria
+}
+
+input SignInInput
+  @join__type(graph: USERS)
+{
+  email: String!
+  password: String!
+}
+
+type SignInResponse implements Response
+  @join__implements(graph: USERS, interface: "Response")
+  @join__type(graph: USERS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """The user's JWT"""
+  token: String!
+
+  """The user's ID"""
+  userId: ID!
+
+  """The user's role"""
+  role: Role
+}
+
+input SignUpInput
+  @join__type(graph: USERS)
+{
+  email: String!
+  password: String!
+  name: String!
+  nickname: String!
+  role: Role = GUEST
+  picture: String
+  inviteCode: String
+}
+
+enum SortByCriteria
+  @join__type(graph: LISTINGS)
+{
+  COST_ASC @join__enumValue(graph: LISTINGS)
+  COST_DESC @join__enumValue(graph: LISTINGS)
+}
+
+"""The response after submitting reviews for a guest."""
+type SubmitGuestReviewResponse implements MutationResponse
+  @join__implements(graph: REVIEWS, interface: "MutationResponse")
+  @join__type(graph: REVIEWS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """Newly created review about the guest"""
+  guestReview: Review
+}
+
+"""
+The response after submitting reviews for both host and location together.
+"""
+type SubmitHostAndLocationReviewsResponse implements MutationResponse
+  @join__implements(graph: REVIEWS, interface: "MutationResponse")
+  @join__type(graph: REVIEWS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """Newly created review about the host"""
+  hostReview: Review
+
+  """Newly created review about the location"""
+  locationReview: Review
+}
+
+"""Provides data to update an existing account's email."""
+input UpdateAccountEmailInput
+  @join__type(graph: ACCOUNTS)
+{
+  """The unique ID associated with the account."""
+  id: ID!
+
+  """The updated account email."""
+  email: String!
+}
+
+type UpdateAccountEmailPayload implements Response
+  @join__implements(graph: ACCOUNTS, interface: "Response")
+  @join__type(graph: ACCOUNTS)
+{
+  code: Int!
+  success: Boolean!
+  message: String!
+
+  """The updated account."""
+  account: Account
+}
+
+"""
+Provides data to update an existing account's password. A current password and new password are required to update a password.
+"""
+input UpdateAccountPasswordInput
+  @join__type(graph: ACCOUNTS)
+{
+  """The unique ID associated with the account."""
+  id: ID!
+
+  """The updated account password."""
+  newPassword: String!
+
+  """The existing account password."""
+  password: String!
+}
+
+type UpdateAccountPasswordPayload implements Response
+  @join__implements(graph: ACCOUNTS, interface: "Response")
+  @join__type(graph: ACCOUNTS)
+{
+  code: Int!
+  success: Boolean!
+  message: String!
+
+  """The updated account."""
+  account: Account
+}
+
+input UpdateListingInput
+  @join__type(graph: LISTINGS)
+{
+  """The listing's title"""
+  title: String
+
+  """The listing's description"""
+  description: String
+
+  """The thumbnail image for the listing"""
+  photoThumbnail: String
+
+  """The number of beds available"""
+  numOfBeds: Int
+
+  """The cost per night"""
+  costPerNight: Float
+
+  """The location type of the listing"""
+  locationType: LocationType
+
+  """The listing's amenities"""
+  amenities: [ID]
+}
+
+type UpdateListingResponse implements Response
+  @join__implements(graph: LISTINGS, interface: "Response")
+  @join__type(graph: LISTINGS)
+{
+  code: Int!
+  success: Boolean!
+  message: String!
+  listing: Listing
+}
+
+input UpdateListingStatusInput
+  @join__type(graph: LISTINGS)
+{
+  id: ID!
+  status: ListingStatus!
+}
+
+type UpdateListingStatusResponse
+  @join__type(graph: LISTINGS)
+{
+  success: Boolean!
+  message: String
+}
+
+input UpdatePasswordInput
+  @join__type(graph: USERS)
+{
+  userId: ID!
+  newPassword: String!
+  password: String!
+}
+
+"""Fields that can be updated"""
+input UpdateProfileInput
+  @join__type(graph: USERS)
+{
+  """The user's first and last name"""
+  name: String
+
+  """The user's profile photo URL"""
+  picture: String
+
+  """The host's profile bio description, will be shown in the listing"""
+  description: String
+}
+
+"""The response after updating a profile"""
+type UpdateProfileResponse implements Response
+  @join__implements(graph: USERS, interface: "Response")
+  @join__type(graph: USERS)
+{
+  """Similar to HTTP status code, represents the status of the mutation"""
+  code: Int!
+
+  """Indicates whether the mutation was successful"""
+  success: Boolean!
+
+  """Human-readable message for the UI"""
+  message: String!
+
+  """Updated user"""
+  user: User
+}
+
+"""Represents an Airlock user's common properties"""
+interface User
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: PAYMENTS)
+  @join__type(graph: REVIEWS)
+  @join__type(graph: USERS, key: "id")
+{
+  id: ID!
+
+  """The user's first and last name"""
+  name: String!
+
+  """The user's role"""
+  role: Role! @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """The user's profile photo URL"""
+  picture: String @join__field(graph: ACCOUNTS, type: "String!") @join__field(graph: USERS, type: "String")
+
+  """The email address of the user (must be unique)."""
+  email: String! @join__field(graph: ACCOUNTS)
+
+  """The nickname of the user"""
+  nickname: String! @join__field(graph: ACCOUNTS) @join__field(graph: USERS)
+
+  """The listings of the user"""
+  listings: [Listing] @join__field(graph: ACCOUNTS)
+}
+
+type UserId
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: USERS)
+{
+  id: ID!
+}
