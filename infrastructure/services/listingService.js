@@ -303,6 +303,22 @@ async hotListingsByMoneyBookingTop5() {
   }
   }
 
+  async hostListings(){
+    try {
+      const query = `
+        SELECT * FROM listings WHERE hostId = :hostId
+      `;
+      const listings = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { hostId },
+      });
+      return listings;
+    } catch (error) {
+      console.error('Error fetching listings by host:', error);
+      throw new GraphQLError('Error fetching listings by host', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+  }
+
+  }
 
   async updateListingStatus(id, status){
     try {

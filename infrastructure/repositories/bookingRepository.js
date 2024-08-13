@@ -1,5 +1,6 @@
 import axios from 'axios';
 import mysql from 'mysql2/promise';
+import dbConfig from '../DB/dbconfig.js';
 
 class BookingRepository {
   constructor(dbConfig) {
@@ -8,7 +9,7 @@ class BookingRepository {
     }
     this.dbConfig = dbConfig;
     this.httpClient = axios.create({
-      baseURL: 'http://localhost:4014', // Adjust as needed
+      baseURL: 'http://localhost:4050', // Adjust as needed
     });
   }
 
@@ -17,17 +18,24 @@ class BookingRepository {
   }
 
   async findOne(query) {
+    console.log('Inside findAll method');
+    console.log('Query:', query);
+    
     const connection = await this.getConnection();
     try {
-      const queryKeys = Object.keys(query);
-      const queryValues = Object.values(query);
+      const queryKeys = Object.keys(query.where);
+      const queryValues = Object.values(query.where);
+      const whereClause = queryKeys.map(key => `${key} = ?`).join(' AND ');
+      const sql = `SELECT * FROM bookings${queryKeys.length ? ` WHERE ${whereClause}` : ''}`;
       if (queryKeys.length === 0) {
         throw new Error('Query object is empty');
       }
-      const whereClause = queryKeys.map(key => `${key} = ?`).join(' AND ');
-      const sql = `SELECT * FROM bookings WHERE ${whereClause}`;
+      console.log('SQL:', sql);
+      console.log('Query Values:', queryValues);
+      
       const [rows] = await connection.execute(sql, queryValues);
-      return rows[0];
+      console.log('Rows:', rows);
+      return rows;
     } catch (error) {
       console.error('Error in findOne:', error);
       throw error;
