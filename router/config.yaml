@@ -13,7 +13,7 @@ supergraph:
   schema: ./supergraph.graphql
 subgraphs:
   users:
-    routing_url: http://localhost:4000
+    routing_url: http://localhost:4010
   accounts:
     routing_url: http://localhost:4001
   profiles:
