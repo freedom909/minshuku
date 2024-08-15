@@ -9,7 +9,7 @@ class CartService extends RESTDataSource {
     this.listingRepository = listingRepository;
     this.cartRepository = cartRepository;
     this.userRepository = userRepository;
-    this.baseURL = 'http://localhost:4016/';
+    this.baseURL = 'http://localhost:4060/';
   }
 
   async createBooking({ guestId, listingId }) {

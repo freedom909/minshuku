@@ -1,12 +1,13 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
-
+import { GraphQLError } from 'graphql';
+import { Sequelize,Op } from "sequelize";
 class BookingService extends RESTDataSource {
   constructor({ bookingRepository, paymentRepository, listingRepository }) {
     super();
     this.bookingRepository = bookingRepository;
     this.paymentRepository = paymentRepository;
     this.listingRepository = listingRepository;
-    this.baseURL = 'http://localhost:4014/';
+    this.baseURL = 'http://localhost:4050/';
   }
 
 async getBookingsByGuest(userId){
@@ -45,6 +46,49 @@ async getBookingsByGuest(userId){
       throw new ForbiddenError('Unable to fetch bookings for listing', { extension: { code: 'forbidden' } });
     }
   }
+
+async getReservedDates({checkInDate, checkOutDate, someListingIds}) {
+  console.log('Inside getReservedDates method');
+  console.log('Parameters:', { checkInDate, checkOutDate, someListingIds });
+    if (!checkInDate || !checkOutDate || !someListingIds) {
+      throw new  GraphQLError('Missing required parameters', { extension: { code: 'missing_parameters' } });
+    }
+    if (checkInDate > checkOutDate) { 
+      throw new  GraphQLError('Invalid date range', { extension: { code: 'invalid_date_range' } });
+  }
+  const { or, and, lt, gt } = Sequelize.Op;
+  const bookings = await this.bookingRepository.findAll({ // Fetch all confirmed bookings for the given listing IDs
+    where: {
+      listingId: { [Op.in]: someListingIds },
+      status: 'confirmed',
+      [or]: [
+        {
+          [and]: [
+            { checkInDate: { [Op.lt]: checkOutDate } },
+            { checkOutDate: { [Op.gt]: checkOutDate } },
+          ],
+        },
+        {
+          [and]: [
+            { checkInDate: { [Op.lt]: checkInDate } },
+            { checkOutDate: { [Op.gt]: checkOutDate } },
+          ],
+        },
+        {
+          [and]: [
+            { checkInDate: { [Op.gt]: checkInDate } },
+            { checkOutDate: { [Op.lt]: checkOutDate } },
+          ],
+        },
+      ],
+    },
+  });
+  return bookings.map(booking => ({
+    checkInDate: booking.checkInDate,
+    checkOutDate: booking.checkOutDate,
+    listingId: booking.listingId,
+  }));
+}
 
   async getBookingsForUser(userId, status) {
     try {

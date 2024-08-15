@@ -3,7 +3,7 @@ import RESTDataSource from '@apollo/datasource-rest'
 class ProfileService {
     constructor({ profileRepository }) {
       this.profileRepository = profileRepository;
-      this.baseURL = "http://localhost:4002/";
+      this.baseURL = "http://localhost:4020/";
     }
   
     async getProfile({ username }) {
