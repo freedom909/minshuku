@@ -7,25 +7,25 @@ extend schema
 scalar DateTime
 
 type Listing {
-  id: ID!
-  name: String!
-  amenities: [Amenity!]!
+  id: ID! @shareable
+  title: String! @shareable
+  amenities: [Amenity!]! @shareable
 }
 
 type Amenity {
-  id: ID!
-  name: String!
+  id: ID! @shareable
+  name: String! @shareable
 }
 
 type Query {
-  listings: [Listing!]!
-  listing(id: ID!): Listing
-  amenities: [Amenity!]!
-  amenity(id: ID!): Amenity
+  listings: [Listing!]! @shareable
+  listing(id: ID!): Listing @shareable
+  amenities: [Amenity!]! @shareable
+  amenity(id: ID!): Amenity @shareable
 }
 
 type Mutation {
-  addAmenity(name: String!): Amenity!
-  addAmenityToListing(listingId: ID!, amenityId: ID!): Listing!
+  addAmenity(name: String!): Amenity! @shareable
+  addAmenityToListing(listingId: ID!, amenityId: ID!): Listing! @shareable
 }
 

@@ -11,7 +11,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
 
-
 dotenv.config();
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -61,8 +60,10 @@ const startApolloServer = async () => {
       })
     );
 
-    httpServer.listen({ port: 4010 }, () => {
-      console.log(`🚀 Server ready at http://localhost:4010/graphql`);
+    const port = 4010;
+    console.log(`Starting server on port ${port}...`); // Additional debug information
+    httpServer.listen({ port }, () => {
+      console.log(`🚀 Server ready at http://localhost:${port}/graphql`);
     });
   } catch (error) {
     console.error('Error starting server:', error);
