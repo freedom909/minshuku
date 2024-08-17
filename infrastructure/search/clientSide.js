@@ -9,9 +9,11 @@ const password=process.env.ES_PASSWORD;
 
 const client = new Client({
   node: [
+
     'https://0365222805934378a20e1e2d4cb145d2.us-central1.gcp.cloud.es.io',
     'https://minshuku-e64d78.es.us-west-2.aws.elastic.cloud:9243',
   ],
+
   auth: {
     username: username,
     password: password,

@@ -1,6 +1,10 @@
+
+
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7", 
-        import: ["@key", "@shareable"])
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.7"
+    import: ["@key", "@shareable"]
+  )
 
 scalar DateTime
 # Query definitions for retrieving listing data
@@ -66,7 +70,7 @@ interface Response {
 }
 
 input ReservedDateInput {
-  checkInDate: String!
+  checkInDate: String! 
   checkOutDate: String!
 }
 
@@ -173,8 +177,13 @@ reservedDate: ReservedDateInput!
   numOfBeds: Int
   page: Int
   limit: Int
+<<<<<<< HEAD
   sortBy: SortByCriteria
   someListingIds: [ID!] # Add this field to the input type
+=======
+  sortBy: SortByCriteria,
+  someListingIds: [ID!]!
+>>>>>>> 83a2145888019a4f75d39fb3c1bedee36d050d44
 }
 
 # Type representing a listing
