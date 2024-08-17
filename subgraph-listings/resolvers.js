@@ -1,6 +1,7 @@
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
 import { permissions } from '../infrastructure/auth/permission.js';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
+import {searchData} from '../infrastructure/search/searchData.js'
 const resolvers = {
 
   Query: {
@@ -55,23 +56,13 @@ const resolvers = {
       const { listingService } = dataSources;
       return listingService.getAllAmenities();
     },
-    searchListings: async (_, { criteria }, { dataSources }) => {
-      const { listingService, bookingService } = dataSources;
-      const { numOfBeds, checkInDate, checkOutDate, page, limit, sortBy } = criteria;
-      const listings = await listingService.searchListings({
-        numOfBeds,
-        checkInDate: reservedDate.checkInDate,
-        checkOutDate: reservedDate.checkOutDate,
-        page,
-        limit,
-        sortBy
-      });
-      const listingAvailability = await Promise.all(
-        listings.map(listing =>
-          bookingService.isListingAvailable({ listingId: listing.id, checkInDate, checkOutDate })
-        )
-      );
-      return listings.filter((listing, index) => listingAvailability[index]);
+    searchListings: async (_, { criteria }) => {
+      try {
+        const results = await searchData('listings_index', criteria);
+        return results;
+      } catch (error) {
+        throw new Error(`Failed to search listings: ${error.message}`);
+      }
     }
   },
 
