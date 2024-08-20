@@ -15,7 +15,8 @@ crom.schedule('0 0 * * *', async () => {
     const searchIndex = await getSearchIndex(mysqlPool);
     const searchIndexName = await getSearchIndexName(mysqlPool);
     const searchIndexType = await getSearchIndexType(mysqlPool);
-    const listingDocuments = await searchIndex.search(searchIndexName, searchIndexType);
+   
+    
     // Fetch and index data as before...
     
     const mongoDb = await dbConfig.mongo();

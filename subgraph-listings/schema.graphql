@@ -177,13 +177,8 @@ reservedDate: ReservedDateInput!
   numOfBeds: Int
   page: Int
   limit: Int
-<<<<<<< HEAD
   sortBy: SortByCriteria
   someListingIds: [ID!] # Add this field to the input type
-=======
-  sortBy: SortByCriteria,
-  someListingIds: [ID!]!
->>>>>>> 83a2145888019a4f75d39fb3c1bedee36d050d44
 }
 
 # Type representing a listing

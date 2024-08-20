@@ -129,10 +129,19 @@ const resolvers = {
   },
 
   User: {
+
     __resolveType(user) {
       return user.role;
     },
   },
+  searchReviews: async (_, { criteria }) => {
+    try {
+      const results = await searchReviews(criteria);
+      return results;
+    } catch (error) {
+      throw new Error(`Failed to search reviews: ${error.message}`);
+    }
+  }  
 };
 
 export default resolvers;

@@ -1,75 +1,107 @@
 import client from './clientSide.js';
 
-<<<<<<< HEAD
 export const searchData = async (index, criteria) => {
-  const { reservedDate, numOfBeds, someListingIds } = criteria;
   try {
-    const esQuery = {
-      bool: {
-        must: [
-          ...(reservedDate ? [
-            { range: { checkInDate: { gte: reservedDate.checkInDate } } },
-            { range: { checkOutDate: { lte: reservedDate.checkOutDate } } }
-          ] : []),
-          ...(numOfBeds ? [{ match: { numOfBeds } }] : []),
-          ...(someListingIds && someListingIds.length > 0 ? [{ terms: { id: someListingIds } }] : [])
-        ]
+    const constructQuery = (criteria) => {
+      const query = {
+        bool: {
+          must: [],
+        },
+      };
+
+      if (criteria.costPerNight) {
+        query.bool.must.push({
+          range: {
+            costPerNight: {
+              gte: criteria.costPerNight.min,
+              lte: criteria.costPerNight.max,
+            },
+          },
+        });
       }
+
+      if (criteria.price) {
+        query.bool.must.push({
+          range: {
+            price: {
+              gte: criteria.price.min,
+              lte: criteria.price.max,
+            },
+          },
+        });
+      }
+
+      if (criteria.category) {
+        query.bool.must.push({
+          term: {
+            category: criteria.category,
+          },
+        });
+      }
+
+      if (criteria.name) { // amenities' name?
+        query.bool.must.push({
+          term: {
+            brand: criteria.name,
+          },
+        });
+      }
+
+      if (criteria.amenities) {
+        query.bool.must.push({
+          term: {
+            amenities: criteria.amenities,
+          },
+        });
+      }
+
+      if (criteria.checkInDate || criteria.checkOutDate) {
+        query.bool.must.push({
+          range: {
+            checkInDate: {
+              gte: criteria.checkInDate,
+            },
+            checkOutDate: {
+              lte: criteria.checkOutDate,
+            },
+          },
+        });
+      }
+
+      if (criteria.locationType) {
+        query.bool.must.push({
+          term: {
+            locationType: criteria.locationType,
+          },
+        });
+      }
+
+      return query;
     };
+
     const response = await client.search({
       index: index,
-=======
-export const searchData = async (index, query) => {
-  const { reservedDate, numOfBeds, someListingIds } = query;
-
-  // Construct the query using the provided criteria
-  const simpleQuery = {
-    query: {
-      match_all: {}
-    }
-  };
-  
-
-  try {
-    const response = await client.search({
-      index: 'listings_index',
->>>>>>> 83a2145888019a4f75d39fb3c1bedee36d050d44
       body: {
-        query: esQuery
-      }
+        query: constructQuery(criteria),
+      },
     });
-<<<<<<< HEAD
+
+    // Log the full response
     console.log("Elasticsearch query response:", response);
-    console.log('Elasticsearch response:', JSON.stringify(body, null, 2));
-    
-    const hits = response.body.hits.hits || [];
-    return hits.map(hit => hit._source);
-=======
 
-    console.log("Elasticsearch query response:", JSON.stringify(response, null, 2));
+    // Check if hits are present and log them
+    const hits = response.hits?.hits || [];
 
-    if (response && response.hits && Array.isArray(response.hits.hits)) {
-      const hits = response.hits.hits;
-
-      if (hits.length > 0) {
-        hits.forEach((hit, index) => {
-          console.log(`Hit ${index + 1}:`, JSON.stringify(hit._source, null, 2));
-        });
-      } else {
-        console.error("No hits found.");
-      }
+    if (hits.length > 0) {
+      console.log("Query hits:", hits);
     } else {
-      console.error("Invalid Elasticsearch response structure:", JSON.stringify(response, null, 2));
+      console.info("No hits found for the query.");
     }
->>>>>>> 83a2145888019a4f75d39fb3c1bedee36d050d44
+
+    return hits.map(hit => hit._source);
+
   } catch (error) {
     console.error('Elasticsearch query failed:', error.message);
     throw error;
   }
-}
-<<<<<<< HEAD
-  
-
-
-=======
->>>>>>> 83a2145888019a4f75d39fb3c1bedee36d050d44
+};
