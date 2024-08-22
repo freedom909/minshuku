@@ -119,11 +119,7 @@ const mongoUrl =  'mongodb://localhost:27017/air';
 
 const seedDatabase = async () => {
     try {
-        await mongoose.connect(mongoUrl, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-         
-        });
+        await mongoose.connect(mongoUrl);
         console.log('Connected to MongoDB');
 
         // Clear existing data

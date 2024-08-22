@@ -1,6 +1,6 @@
 import client from './clientSide.js';
 
-export const searchData = async (index, criteria) => {
+export const searchListings= async (index, criteria) => {
   try {
     const constructQuery = (criteria) => {
       const query = {

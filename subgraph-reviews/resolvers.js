@@ -1,7 +1,36 @@
 import { AuthenticationError, ForbiddenError } from "../infrastructure/utils/errors.js";
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
+import { searchReviews } from "../infrastructure/search/reviewService.js";
+import { Review } from "../infrastructure/models/review.js";
 
 const resolvers = {
+  Query:{
+    searchReviews: async (_, { criteria }) => {
+      try {
+        const results = await searchReviews(criteria);
+        return results;
+      } catch (error) {
+        throw new Error(`Failed to search reviews: ${error.message}`);
+      }
+    },
+    reviews: async (_, { criteria }) => {
+      const reviews = await Review.findAll({ where: criteria });
+
+      return reviews.map(review => {
+        if (review.guestId) {
+          const guest =  User.findByPk(review.guestId);
+          return {
+            ...review.toJSON(),
+            author: {
+              ...guest.toJSON(),
+              name: guest.nickname, // Replace full name with nickname
+            },
+          };
+        }
+        return review;
+      });
+    },
+  },
   Mutation: {
     submitGuestReview: requireAuth(async (
       _,
@@ -129,19 +158,11 @@ const resolvers = {
   },
 
   User: {
-
     __resolveType(user) {
       return user.role;
     },
   },
-  searchReviews: async (_, { criteria }) => {
-    try {
-      const results = await searchReviews(criteria);
-      return results;
-    } catch (error) {
-      throw new Error(`Failed to search reviews: ${error.message}`);
-    }
-  }  
+
 };
 
 export default resolvers;

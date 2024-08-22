@@ -20,10 +20,30 @@ import sequelize from './seq.js';
 
 export class Review extends Model {}
 
-Review.init({
+const Review = sequelize.define('Review', {
   id: {
     type: DataTypes.STRING,
     primaryKey: true,
+  },
+  authorId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  bookingId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  locationId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  guestId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  hostId: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   content: {
     type: DataTypes.TEXT,
@@ -33,15 +53,12 @@ Review.init({
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  userId: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
 }, {
   sequelize,
   modelName: 'Review',
   timestamps: true,
 });
+
 
 export default Review;
 

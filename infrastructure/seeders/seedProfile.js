@@ -53,10 +53,7 @@ const mockData = [
 
 async function seedDatabase() {
   try {
-    await mongoose.connect(url, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(url);
 
     await Profile.deleteMany({}); // Clear existing data
     await Profile.insertMany(mockData); // Insert mock data

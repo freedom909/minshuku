@@ -36,6 +36,8 @@ type Review @key(fields: "id") {
   hostId: ID
   "The name of the location this review is about"
   location: Location @shareable
+  createdAt: String!
+  updatedAt: String!
 }
 
 type Location @key(fields: "id") {

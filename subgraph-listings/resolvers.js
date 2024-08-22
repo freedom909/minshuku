@@ -2,7 +2,7 @@ import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/err
 import { permissions } from '../infrastructure/auth/permission.js';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
-import { searchData } from '../infrastructure/search/searchData.js';
+import { searchListings} from '../infrastructure/search/searchData.js';
 // const client = new Client({ host: 'http://localhost:9200' })
 
 const resolvers = {
@@ -63,7 +63,7 @@ const resolvers = {
 
     searchListings: async (_, { criteria }) => {
       try {
-        const results = await searchData('listings_index', criteria);
+        const results = await searchListings('listings_index', criteria);
         return results;
       } catch (error) {
         throw new Error(`Failed to search listings: ${error.message}`);
