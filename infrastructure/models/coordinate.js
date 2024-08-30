@@ -1,30 +1,34 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js'; // Correct path to seq.js
+import sequelize from './seq.js'; // Adjust the path as necessary
 
-class Coordinates extends Model {}
+class Coordinate extends Model {}
 
-Coordinates.init({
+Coordinate.init({
   coordinateId: {
     type: DataTypes.STRING,
     primaryKey: true,
   },
-  latitude:{
+  latitude: {
     type: DataTypes.FLOAT,
     allowNull: false,
-  } ,
+  },
   longitude: {
     type: DataTypes.FLOAT,
     allowNull: false,
-  } ,
-  listingId: {
-    type: DataTypes.STRING, 
   },
-  createdAt: DataTypes.DATE,
-  updatedAt: DataTypes.DATE,
+  listingId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: 'Listings', // Ensure this matches the table name
+      key: 'id'
+    }
+  },
 }, {
   sequelize,
-  modelName: 'Coordinates',
+  modelName: 'Coordinate',
   timestamps: true,
 });
 
-export default Coordinates;
+// Export the model
+export default Coordinate;

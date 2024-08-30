@@ -12,9 +12,9 @@
       "isFeatured": true,
       "saleAmount": 20.1,
       "bookingNumber":109,
-      "checkInDate":"2021-09-08 04:00:00",
-      "checkOutDate":"2021-09-17 04:00:00",
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-08 04:00:00",
+      "checkOutDate":"2021-03-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 592.0,
@@ -28,7 +28,9 @@
       "isFeatured": true,
       "saleAmount": 10.1,
       "bookingNumber":108,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-08 04:00:00",
+      "checkOutDate":"2024-03-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 313.0,
@@ -41,7 +43,9 @@
       "hostId": "user-1",
       "saleAmount": 0.91,
       "bookingNumber":107,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-08 04:00:00",
+      "checkOutDate":"2022-03-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 520.0,
@@ -55,7 +59,9 @@
       "isFeatured": true,
       "saleAmount": 0.81,
       "bookingNumber":106,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-08 04:00:00",
+      "checkOutDate":"2021-09-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 580.0,
@@ -68,7 +74,9 @@
       "hostId": "user-1",
       "saleAmount": 0.71,
       "bookingNumber":105,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-01-08 04:00:00",
+      "checkOutDate":"2021-03-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 330.0,
@@ -81,7 +89,9 @@
       "hostId": "user-4",
       "saleAmount": 0.61,
       "bookingNumber":104,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-01-08 04:00:00",
+      "checkOutDate":"2021-03-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 430.0,
@@ -94,7 +104,9 @@
       "hostId": "user-4",
       "saleAmount": 0.51,
       "bookingNumber":103,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-08 04:00:00",
+      "checkOutDate":"2021-05-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 688.0,
@@ -107,7 +119,9 @@
       "hostId": "user-5",
       "saleAmount": 0.41,
       "bookingNumber":102,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-01 04:00:00",
+      "checkOutDate":"2021-03-17 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 474.0,
@@ -121,7 +135,9 @@
       "isFeatured": true,
       "saleAmount": 0.31,
       "bookingNumber":101,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-08 04:00:00",
+      "checkOutDate":"2021-03-18 04:00:00",
+      "status":"SOLD"
     },
     {
       "costPerNight": 687.0,
@@ -134,6 +150,8 @@
       "hostId": "user-6",
       "saleAmount": 0.21,
       "bookingNumber":100,
-      "listingStatus":"SOLD"
+      "checkInDate":"2021-02-08 04:00:00",
+      "checkOutDate":"2021-03-13 04:00:00",
+      "status":"SOLD"
     }
   ]

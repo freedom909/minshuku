@@ -1,6 +1,10 @@
+
+
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7", 
-        import: ["@key", "@shareable"])
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.7"
+    import: ["@key", "@shareable"]
+  )
 
 scalar DateTime
 # Query definitions for retrieving listing data
@@ -26,7 +30,7 @@ extend type Query {
 
 input UpdateListingStatusInput {
   id: ID!
-  status: ListingStatus! 
+  status: Status! 
 }
 
 type UpdateListingStatusResponse {
@@ -34,7 +38,7 @@ type UpdateListingStatusResponse {
   message: String @shareable
 }
 
-enum ListingStatus{
+enum Status{
   ACTIVE,
   PENDING,
   SOLD,
@@ -42,6 +46,7 @@ enum ListingStatus{
   REJECT,
   CANCELLED,
   EXPIRED
+  COMPLETED
 }
 
 extend type Mutation {
@@ -52,7 +57,8 @@ extend type Mutation {
     listingId: ID!
     listing: UpdateListingInput!
   ): UpdateListingResponse! @shareable
-   updateListingStatus(input: UpdateListingStatusInput!): Listing! @shareable
+
+   updateListingStatus(input: UpdateListingStatusInput!): Listing @shareable
 }
 
 # Common interface for response types
@@ -66,7 +72,7 @@ interface Response {
 }
 
 input ReservedDateInput {
-  checkInDate: String!
+  checkInDate: String! 
   checkOutDate: String!
 }
 
@@ -92,7 +98,7 @@ input CreateListingInput {
   locationType: LocationType!
   "The amenities of the listing"
   amenities: [AmenityInput!]!
-  status: ListingStatus
+  status: Status
 }
 
 input AmenityInput {
@@ -195,6 +201,7 @@ type Listing @key(fields: "id") {
   bookingNumber: Int @shareable
   checkInDate: String! @shareable
   checkOutDate: String! @shareable
+  status: Status @shareable
 }
 
 # Type representing a host

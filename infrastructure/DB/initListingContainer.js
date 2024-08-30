@@ -5,11 +5,12 @@ import ListingService from '../services/listingService.js';
 import ListingRepository from '../repositories/listingRepository.js';
 import UserService from '../services/userService.js';
 import UserRepository from '../repositories/userRepository.js';
+import sequelize from '../models/seq.js';  // Import your Sequelize instance
 
 const initializeListingContainer = async ({ services = [] } = {}) => {
   // Establishing connection to MySQL database
   const mysqldb = await connectMysql(); 
-  
+ 
   // Establishing connection to MongoDB database
   const mongodb = await connectToMongoDB(); 
 
@@ -18,6 +19,7 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
   container.register({
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
+    sequelize: asValue(sequelize), 
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton(),
     listingRepository: asClass(ListingRepository).singleton(),

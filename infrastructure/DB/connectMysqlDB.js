@@ -20,7 +20,6 @@ export const connectMysql = async () => {
       });
       console.log('Connected to the mysql database');
     }
-  
     return pool;
   };
 export default connectMysql;
