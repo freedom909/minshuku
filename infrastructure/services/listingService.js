@@ -351,40 +351,29 @@ class ListingService {
     try {
       const checkIn = new Date(checkInDate);
       const checkOut = new Date(checkOutDate);
-  
-      // Ensure the check-in date is before the check-out date
-      if (checkIn > checkOut) {
+      if (checkIn >= checkOut) {
         throw new Error('Check-in date must be before check-out date');
       }
-      if (!id) {
-        throw new Error('Listing ID is required');
-      }
-      const diffInTime = checkOutDate.getTime() - checkInDate.getTime();
-      // Find the listing by ID and get the cost per night
+  
       const listingInstance = await Listing.findOne({
         where: { id: id },
-        attributes: ['costPerNight'],
+        attributes: ['costPerNight'], // Only select costPerNight
       });
   
       if (!listingInstance) {
         throw new Error('Listing not found');
       }
   
-      // Calculate the number of days between the check-in and check-out dates
-      const diffInDays = Math.round(diffInTime  / (1000 * 60 * 60 * 24));
-  
-      // Calculate the total cost
+      const diffInDays = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
       const totalCost = listingInstance.costPerNight * diffInDays;
   
-      // Return the total cost as a number
-      return { cost: totalCost };
+      return { cost: totalCost }; // Make sure to return an object with 'cost' key
     } catch (error) {
       console.error('Error fetching total cost:', error);
-      throw new GraphQLError('Error fetching total cost', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      });
+      throw new GraphQLError('Error fetching total cost', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
+  
   
 
   async getListingsByHost(hostId) {

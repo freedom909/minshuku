@@ -23,8 +23,8 @@ Object.keys(models).forEach((modelName) => {
 });
 
 // Define associations
-Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
-Coordinate.belongsTo(Listing, { foreignKey: 'listingId' });
+Listing.hasOne(models.Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
+// Coordinate.belongsTo(Listing, { foreignKey: 'listingId' });
 
 // Sync database
 (async () => {

@@ -20,7 +20,7 @@ Coordinate.init({
     type: DataTypes.STRING,
     allowNull: false,
     references: {
-      model: 'Listings', // Ensure this matches the table name
+      model: 'Listing', // Ensure this matches the table name
       key: 'id'
     }
   },
@@ -29,6 +29,7 @@ Coordinate.init({
   modelName: 'Coordinate',
   timestamps: true,
 });
+
 
 // Export the model
 export default Coordinate;

@@ -221,20 +221,19 @@ const resolvers = {
       host: ({ hostId }) => {
         return { id: hostId };
       },
-      totalCost: async (parent, { checkInDate, checkOutDate }, { dataSources }) => {
-        console.log('Parent object:', parent); // Log the parent object
-        const { id } = parent;
+    
+      totalCost: async (parent,{ checkInDate, checkOutDate }, { dataSources }) => {
         const { listingService } = dataSources;
-
+        const { id } = parent; 
         try {
           const result = await listingService.getTotalCost({ id, checkInDate, checkOutDate });
-
-          console.log('getTotalCost result:', result);
-
+  
+          console.log('getTotalCost result:', result); // Log the result for debugging
+  
           if (!result || typeof result.cost !== 'number') {
             throw new Error('Total cost could not be calculated');
           }
-
+  
           return result.cost;
         } catch (error) {
           console.error('Error in totalCost resolver:', error);
@@ -242,8 +241,7 @@ const resolvers = {
             extensions: { code: 'INTERNAL_SERVER_ERROR' },
           });
         }
-      },
-
+      },   
 
       amenities: async ({ id }, _, { dataSources }) => {
         const { listingService } = dataSources;
