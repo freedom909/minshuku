@@ -201,6 +201,7 @@ type Listing @key(fields: "id") {
   bookingNumber: Int @shareable
   checkInDate: String! @shareable
   checkOutDate: String! @shareable
+  
   status: Status @shareable
 
 }
