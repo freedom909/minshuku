@@ -392,7 +392,28 @@ class ListingService {
     }
   }
 
+<<<<<<< HEAD
   async hostListings() {
+=======
+  async hostListings(){
+    try {
+      const query = `
+        SELECT * FROM listings WHERE hostId = :hostId
+      `;
+      const listings = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { hostId },
+      });
+      return listings;
+    } catch (error) {
+      console.error('Error fetching listings by host:', error);
+      throw new GraphQLError('Error fetching listings by host', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+  }
+
+  }
+
+  async updateListingStatus(id, status){
+>>>>>>> d5a7c2663de4fded6aadcab540dbc2b7276f7f65
     try {
       const query = `
         SELECT * FROM listings WHERE hostId = :hostId

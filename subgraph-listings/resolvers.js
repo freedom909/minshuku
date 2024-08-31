@@ -4,7 +4,11 @@ import Listing from '../infrastructure/models/listing.js';
 import Coordinate from '../infrastructure/models/coordinate.js';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
+
 // import { searchListings } from '../infrastructure/search/searchData.js';
+
+import { searchListings} from '../infrastructure/search/searchData.js';
+
 // const client = new Client({ host: 'http://localhost:9200' })
 
 const resolvers = {
@@ -72,6 +76,7 @@ const resolvers = {
       const { listingService } = dataSources;
       return listingService.getAllAmenities();
     },
+
     amenities: (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       return listingService.getAllAmenities();
@@ -213,6 +218,101 @@ const resolvers = {
     },
 
 
+
+
+
+    searchListings: async (_, { criteria }) => {
+      try {
+        const results = await searchListings('listings_index', criteria);
+        return results;
+      } catch (error) {
+        throw new Error(`Failed to search listings: ${error.message}`);
+      }
+    }
+  },
+    Mutation: {
+      createListing: async (_, { listing }, { dataSources, userId }) => {
+        if (!userId) throw new AuthenticationError('User not authenticated');
+        if (!listingWithPermissions) {
+          throw new AuthenticationError('User does not have permissions to create a listing');
+        }
+
+        const { listingService, amenityService } = dataSources;
+        const { amenities } = listing;
+        if (!amenities || !amenities.length) {
+          throw new Error('Listing must have at least one amenity');
+        }
+        const amenityIds = await amenityService.getAmenityIds(amenities);
+        listing.amenities = amenityIds;
+        try {
+          const newListing = await listingService.createListing({ ...listing, hostId: userId });
+          await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
+          return {
+            code: 200,
+            success: true,
+            message: 'Listing successfully created!',
+            listing: newListing
+          };
+        } catch (err) {
+          console.error(err);
+          return {
+            code: 400,
+            success: false,
+            message: err.message
+          };
+
+        }
+      },
+      updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
+        if (!userId) throw new AuthenticationError('User not authenticated');
+        if (!isHostOfListing || !isAdmin) {
+          throw new AuthenticationError(`you don't have right to update this list`)
+        }
+        const { listingService } = dataSources;
+
+        if (!listingId) throw new Error('Listing ID not provided');
+        try {
+          const updatedListing = await listingService.updateListing({ ...listing, id: listingId });
+          return {
+            code: 200,
+            success: true,
+            message: 'Listing successfully updated',
+            listing: updatedListing
+          };
+        } catch (error) {
+          console.error(error);
+          return {
+            code: 500,
+            success: false,
+            message: error.message
+          };
+        }
+      },
+      deleteListing: async (_, { listingId }, { dataSources, userId }) => {
+        if (!userId) throw new AuthenticationError('User not authenticated');
+        if (!isHostOfListing || !isAdmin) {
+          throw new AuthenticationError(`you don't have right to delete this list`)
+        }
+        const { listingService } = dataSources;
+        if (!listingId) throw new Error('Listing ID not provided');
+        try {
+          await listingService.deleteListing(listingId);
+          return {
+            code: 200,
+            success: true,
+            message: 'Listing successfully deleted'
+          };
+        } catch (error) {
+          console.error(error);
+          return {
+            code: 500,
+            success: false,
+            message: error.message
+          };
+        }
+      },
+    
+
     Listing: {
       __resolveReference: async ({ id }, { dataSources }) => {
         const { listingService } = dataSources;
@@ -221,6 +321,7 @@ const resolvers = {
       host: ({ hostId }) => {
         return { id: hostId };
       },
+
     
       totalCost: async (parent,{ checkInDate, checkOutDate }, { dataSources }) => {
         const { listingService } = dataSources;
@@ -242,6 +343,13 @@ const resolvers = {
           });
         }
       },   
+
+
+      totalCost: async ({ id }, { checkInDate, checkOutDate }, { dataSources }) => {
+        const { listingService } = dataSources;
+        const { cost } = await listingService.getTotalCost({ id, checkInDate, checkOutDate });
+        return cost;
+      },
 
       amenities: async ({ id }, _, { dataSources }) => {
         const { listingService } = dataSources;
@@ -285,11 +393,19 @@ const resolvers = {
         },
     },
   },
+
+      coordinates: ({ id }, _, { dataSources }) => {
+        const { listingService } = dataSources;
+        return listingService.getCoordinates(id);
+      }
+    },
+
+
     AmenityCategory: {
       ACCOMMODATION_DETAILS: 'ACCOMMODATION_DETAILS',
       SPACE_SURVIVAL: 'SPACE_SURVIVAL',
       OUTDOORS: 'OUTDOORS'
     }
   }
-}
+
 export default resolvers;

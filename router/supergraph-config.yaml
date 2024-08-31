@@ -1,27 +1,10 @@
-headers:
-  all:
-    request:
-      - propagate:
-          named: "Authorization"
-include_subgraph_errors:
-  all: true # Propagate errors from all subgraphs
-cors:
-  origins:
-    - http://localhost:3000 # Allows any locally-running client to run against your Router
-    - https://studio.apollographql.com # Allows Apollo Studio to still run queries against your Router
-supergraph:
-  schema: ./supergraph.graphql
+schema:
+  version: 2
 subgraphs:
   users:
-<<<<<<< HEAD
-    routing_url: http://localhost:4010
-  accounts:
-    routing_url: http://localhost:4001
-=======
     routing_url: http://localhost:4010/graphql
     schema:
       file: ./subgraph-users/schema.graphql
->>>>>>> d5a7c2663de4fded6aadcab540dbc2b7276f7f65
   profiles:
     routing_url: http://localhost:4020/graphql
     schema:
@@ -50,5 +33,6 @@ subgraphs:
     routing_url: http://localhost:4080/graphql
     schema:
       file: ./subgraph-reviews/schema.graphql
- 
+  
+
 

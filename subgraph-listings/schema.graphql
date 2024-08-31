@@ -180,6 +180,7 @@ reservedDate: ReservedDateInput!
   page: Int
   limit: Int
   sortBy: SortByCriteria
+  someListingIds: [ID!] # Add this field to the input type
 }
 
 # Type representing a listing
