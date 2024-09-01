@@ -11,7 +11,7 @@ const client = new Client({
   node: [
   //  'https://e64d78593e59431a835c40042381edbb.us-central1.gcp.cloud.es.io:443',
 
-    'https://fdb1fb542dd84eba8ec8d0431e1862d8.us-central1.gcp.cloud.es.io:9243',
+    'https://60a172ce59124d5bbff7fc0fa93326bd.us-central1.gcp.cloud.es.io:9243',
    ],
   auth: {
     username: username,

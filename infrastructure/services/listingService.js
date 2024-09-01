@@ -392,9 +392,8 @@ class ListingService {
     }
   }
 
-<<<<<<< HEAD
-  async hostListings() {
-=======
+
+
   async hostListings(){
     try {
       const query = `
@@ -413,7 +412,6 @@ class ListingService {
   }
 
   async updateListingStatus(id, status){
->>>>>>> d5a7c2663de4fded6aadcab540dbc2b7276f7f65
     try {
       const query = `
         SELECT * FROM listings WHERE hostId = :hostId

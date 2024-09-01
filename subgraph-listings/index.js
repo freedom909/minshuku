@@ -7,7 +7,7 @@ import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import initializeListingContainer from '../infrastructure/DB/initListingContainer.js';
-import ListingService from '../infrastructure/services/listingService.js';
+
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
@@ -18,20 +18,8 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    // Initialize the container
-    const container = await initializeListingContainer({ services: [] });
-    // Resolve the necessary dependencies
-    const listingRepository = container.resolve('listingRepository');
-    const sequelize = container.resolve('sequelize');
-    // Initialize the ListingService
-    let listingService;
-    try {
-      listingService = new ListingService({ listingRepository, sequelize });
-      console.log('ListingService initialized successfully');
-    } catch (error) {
-      console.error('Error initializing ListingService:', error);
-      throw new Error('Failed to initialize ListingService');
-    }
+    const mysqlContainer = await initializeListingContainer({ services: [] }); 
+  
 
     const app = express();
     const httpServer = http.createServer(app);
@@ -44,7 +32,7 @@ const startApolloServer = async () => {
         {
           async serverWillStart() {
             return {
-              async drainServer() {
+              async drainServer() {   
                 await mysqlContainer.resolve('mysqldb').end();
               }
             };
@@ -54,9 +42,9 @@ const startApolloServer = async () => {
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          listingService, // Use the initialized listingService here
+          listingService:mysqlContainer.resolve('listingService')
         },
-      }),
+      })
     });
 
     await server.start();
@@ -69,9 +57,9 @@ const startApolloServer = async () => {
         context: async ({ req }) => ({
           token: req.headers.authorization || '',
           dataSources: {
-            listingService, // Pass the listingService into the context
+            listingService:mysqlContainer.resolve('listingService')
           },
-        }),
+        })
       })
     );
 

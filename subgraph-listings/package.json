@@ -10,7 +10,7 @@
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "start": "nodemon index.js",
-    "dev": "nodemon index0.js"
+    "dev": "nodemon index.js"
   },
   "type": "module",
   "nodemonConfig": {

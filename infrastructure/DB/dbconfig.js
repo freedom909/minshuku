@@ -13,12 +13,8 @@ const dbConfig = {
       pool = mysql.createPool({
         host: process.env.MYSQL_HOST || '127.0.0.1',
         user: process.env.MYSQL_USER || 'root',
-<<<<<<< HEAD
         password: process.env.MYSQL_PASSWORD || 'princess',
-=======
-        password: process.env.MYSQL_PASSWORD || '',
->>>>>>> d5a7c2663de4fded6aadcab540dbc2b7276f7f65
-        database: process.env.MYSQL_DATABASE || 'test',
+        database: process.env.MYSQL_DATABASE || 'air',
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,

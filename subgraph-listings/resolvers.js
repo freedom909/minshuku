@@ -7,7 +7,7 @@ const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 // import { searchListings } from '../infrastructure/search/searchData.js';
 
-import { searchListings} from '../infrastructure/search/searchData.js';
+import { searchListings } from '../infrastructure/search/searchData.js';
 
 // const client = new Client({ host: 'http://localhost:9200' })
 
@@ -34,32 +34,59 @@ const resolvers = {
     },
 
     listings: async (_, args, { dataSources }) => {
-      const { listingService } = dataSources;
+
       try {
-        return await listingService.getListings(args);
+        const listings = await Listing.findAll({
+          include: [{
+            model: Coordinate,
+            as: 'coordinate', // Ensure this alias matches your model association
+          }],
+        });
+        if (!listings) {
+          throw new Error('No listings found');
+        }
+
+        return listings.map(listing => ({
+          ...listing.toJSON(),
+          checkInDate: new Date(listing.checkInDate).toISOString(),
+          checkOutDate: new Date(listing.checkOutDate).toISOString(),
+        }));
       } catch (error) {
-        console.error('Error fetching listings:', error);
         throw new Error('Failed to fetch listings');
       }
+
     },
+
     listing: async (_, { id }, { dataSources }) => {
-      const { listingService } = dataSources;
       try {
-        return await listingService.getListingById(id);
+        const listing = await Listing.findOne({
+          where: { id },
+          include: [{
+            model: Coordinate,
+            as: 'coordinate',
+          }],
+        });
         if (!listing) {
           throw new Error('Listing not found');
         }
-        return listing;
+        return {
+          ...listing.toJSON(),
+          checkInDate: new Date(listing.checkInDate).toISOString(),
+          checkOutDate: new Date(listing.checkOutDate).toISOString(),
+        };
       } catch (error) {
         console.error('Error fetching listing:', error);
-        throw new Error('Failed to fetch listing');
+        throw new GraphQLError('Error fetching listing', {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        });
       }
     },
-    // featuredListings: async (_, __, { dataSources }) => {
-    //   const { listingService } = dataSources;
-    //   const limit = 3;
-    //   return await listingService.getFeaturedListings(limit);
-    // },
+    featuredListings: async (_, __, { dataSources }) => {
+      const { listingService } = dataSources;
+      const limit = 3;
+      return await listingService.getFeaturedListings(limit);
+    },
+
     featuredListings: async () => {
       // Fetch featured listings with coordinates
       return await Listing.findAll({
@@ -230,88 +257,88 @@ const resolvers = {
       }
     }
   },
-    Mutation: {
-      createListing: async (_, { listing }, { dataSources, userId }) => {
-        if (!userId) throw new AuthenticationError('User not authenticated');
-        if (!listingWithPermissions) {
-          throw new AuthenticationError('User does not have permissions to create a listing');
-        }
+  Mutation: {
+    createListing: async (_, { listing }, { dataSources, userId }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!listingWithPermissions) {
+        throw new AuthenticationError('User does not have permissions to create a listing');
+      }
 
-        const { listingService, amenityService } = dataSources;
-        const { amenities } = listing;
-        if (!amenities || !amenities.length) {
-          throw new Error('Listing must have at least one amenity');
-        }
-        const amenityIds = await amenityService.getAmenityIds(amenities);
-        listing.amenities = amenityIds;
-        try {
-          const newListing = await listingService.createListing({ ...listing, hostId: userId });
-          await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
-          return {
-            code: 200,
-            success: true,
-            message: 'Listing successfully created!',
-            listing: newListing
-          };
-        } catch (err) {
-          console.error(err);
-          return {
-            code: 400,
-            success: false,
-            message: err.message
-          };
+      const { listingService, amenityService } = dataSources;
+      const { amenities } = listing;
+      if (!amenities || !amenities.length) {
+        throw new Error('Listing must have at least one amenity');
+      }
+      const amenityIds = await amenityService.getAmenityIds(amenities);
+      listing.amenities = amenityIds;
+      try {
+        const newListing = await listingService.createListing({ ...listing, hostId: userId });
+        await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
+        return {
+          code: 200,
+          success: true,
+          message: 'Listing successfully created!',
+          listing: newListing
+        };
+      } catch (err) {
+        console.error(err);
+        return {
+          code: 400,
+          success: false,
+          message: err.message
+        };
 
-        }
-      },
-      updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
-        if (!userId) throw new AuthenticationError('User not authenticated');
-        if (!isHostOfListing || !isAdmin) {
-          throw new AuthenticationError(`you don't have right to update this list`)
-        }
-        const { listingService } = dataSources;
+      }
+    },
+    updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHostOfListing || !isAdmin) {
+        throw new AuthenticationError(`you don't have right to update this list`)
+      }
+      const { listingService } = dataSources;
 
-        if (!listingId) throw new Error('Listing ID not provided');
-        try {
-          const updatedListing = await listingService.updateListing({ ...listing, id: listingId });
-          return {
-            code: 200,
-            success: true,
-            message: 'Listing successfully updated',
-            listing: updatedListing
-          };
-        } catch (error) {
-          console.error(error);
-          return {
-            code: 500,
-            success: false,
-            message: error.message
-          };
-        }
-      },
-      deleteListing: async (_, { listingId }, { dataSources, userId }) => {
-        if (!userId) throw new AuthenticationError('User not authenticated');
-        if (!isHostOfListing || !isAdmin) {
-          throw new AuthenticationError(`you don't have right to delete this list`)
-        }
-        const { listingService } = dataSources;
-        if (!listingId) throw new Error('Listing ID not provided');
-        try {
-          await listingService.deleteListing(listingId);
-          return {
-            code: 200,
-            success: true,
-            message: 'Listing successfully deleted'
-          };
-        } catch (error) {
-          console.error(error);
-          return {
-            code: 500,
-            success: false,
-            message: error.message
-          };
-        }
-      },
-    
+      if (!listingId) throw new Error('Listing ID not provided');
+      try {
+        const updatedListing = await listingService.updateListing({ ...listing, id: listingId });
+        return {
+          code: 200,
+          success: true,
+          message: 'Listing successfully updated',
+          listing: updatedListing
+        };
+      } catch (error) {
+        console.error(error);
+        return {
+          code: 500,
+          success: false,
+          message: error.message
+        };
+      }
+    },
+    deleteListing: async (_, { listingId }, { dataSources, userId }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHostOfListing || !isAdmin) {
+        throw new AuthenticationError(`you don't have right to delete this list`)
+      }
+      const { listingService } = dataSources;
+      if (!listingId) throw new Error('Listing ID not provided');
+      try {
+        await listingService.deleteListing(listingId);
+        return {
+          code: 200,
+          success: true,
+          message: 'Listing successfully deleted'
+        };
+      } catch (error) {
+        console.error(error);
+        return {
+          code: 500,
+          success: false,
+          message: error.message
+        };
+      }
+    },
+
 
     Listing: {
       __resolveReference: async ({ id }, { dataSources }) => {
@@ -322,19 +349,19 @@ const resolvers = {
         return { id: hostId };
       },
 
-    
-      totalCost: async (parent,{ checkInDate, checkOutDate }, { dataSources }) => {
+
+      totalCost: async (parent, { checkInDate, checkOutDate }, { dataSources }) => {
         const { listingService } = dataSources;
-        const { id } = parent; 
+        const { id } = parent;
         try {
           const result = await listingService.getTotalCost({ id, checkInDate, checkOutDate });
-  
+
           console.log('getTotalCost result:', result); // Log the result for debugging
-  
+
           if (!result || typeof result.cost !== 'number') {
             throw new Error('Total cost could not be calculated');
           }
-  
+
           return result.cost;
         } catch (error) {
           console.error('Error in totalCost resolver:', error);
@@ -342,7 +369,7 @@ const resolvers = {
             extensions: { code: 'INTERNAL_SERVER_ERROR' },
           });
         }
-      },   
+      },
 
 
       totalCost: async ({ id }, { checkInDate, checkOutDate }, { dataSources }) => {
@@ -380,32 +407,34 @@ const resolvers = {
         const bookings = await bookingService.getBookingsForListing(id, 'UPCOMING') || [];
         return bookings.length;
       },
-      Listing: {
-        coordinates: async (parent, _, { dataSources }) => {
-          // Use eager loading to fetch coordinates when fetching listings
-          const listingWithCoordinates = await Listing.findOne({
-            where: { id: parent.id },
-            include: [{ model: Coordinate, as: 'coordinates' }],
-          });
-    
-          // Return the associated coordinates
-          return listingWithCoordinates?.coordinates || null;
-        },
+
+      coordinates: async (parent,_, { dataSources }) => {
+        // Use eager loading to fetch coordinates when fetching listings
+        const listingWithCoordinates = await Listing.findOne({
+          where: { id: parent.id },
+          include: [{ model: Coordinate, as: 'coordinate' }],
+        });
+
+        // Return the associated coordinates
+        return listingWithCoordinates?.coordinates || null;
+
+      },
     },
+    coordinate: async (listing) => {
+      return Coordinate.findOne({ where: { listingId: listing.id } });
+    },
+    // coordinates: ({ id }, _, { dataSources }) => {
+    //   const { listingService } = dataSources;
+    //   return listingService.getCoordinates(id);
+    // }
   },
 
-      coordinates: ({ id }, _, { dataSources }) => {
-        const { listingService } = dataSources;
-        return listingService.getCoordinates(id);
-      }
-    },
 
-
-    AmenityCategory: {
-      ACCOMMODATION_DETAILS: 'ACCOMMODATION_DETAILS',
-      SPACE_SURVIVAL: 'SPACE_SURVIVAL',
-      OUTDOORS: 'OUTDOORS'
-    }
+  AmenityCategory: {
+    ACCOMMODATION_DETAILS: 'ACCOMMODATION_DETAILS',
+    SPACE_SURVIVAL: 'SPACE_SURVIVAL',
+    OUTDOORS: 'OUTDOORS'
   }
+}
 
 export default resolvers;
