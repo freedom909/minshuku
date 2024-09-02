@@ -81,6 +81,7 @@ const resolvers = {
         });
       }
     },
+
     featuredListings: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       const limit = 3;
@@ -196,33 +197,39 @@ const resolvers = {
       if (!isAdmin) {
         throw new AuthenticationError(`You don't have permission to update listing status`);
       }
-
-      const { id, status } = input; // Destructure the input to get id and status
-      const { listingService } = dataSources;
       try {
-        const updatedListing = await listingService.updateListingStatus(id, status);
+        const updatedListing = await dataSources.listingService.updateListingStatus(id, status)
+
+        if (!updatedListing) {
+          return {
+            status: null,
+            code: 404,
+            message: "Listing not found or update failed",
+            success: false,
+          };
+        }
+
         return {
+          status: updatedListing.status,
           code: 200,
+          message: "Status updated successfully",
           success: true,
-          message: 'Listing status successfully updated!',
-          listing: updatedListing
         };
       } catch (error) {
-        console.error(error);
-        return {
-          code: 500,
-          success: false,
-          message: error.message
-        };
+        console.error('Error in updateListingStatus resolver:', error);
+        throw new GraphQLError('Error updating listing status', {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      
+        });
       }
     },
-
+    
 
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!isHostOfListing && !isAdmin) {
-        throw new AuthenticationError(`you don't have right to update this list`)
-      }
+      // if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!isHostOfListing && !isAdmin) {
+      //   throw new AuthenticationError(`you don't have right to update this list`)
+      // }
       const { listingService } = dataSources;
 
       if (!listingId) throw new Error('Listing ID not provided');
@@ -349,34 +356,62 @@ const resolvers = {
         return { id: hostId };
       },
 
-
       totalCost: async (parent, { checkInDate, checkOutDate }, { dataSources }) => {
         const { listingService } = dataSources;
         const { id } = parent;
+  
         try {
-          const result = await listingService.getTotalCost({ id, checkInDate, checkOutDate });
-
-          console.log('getTotalCost result:', result); // Log the result for debugging
-
-          if (!result || typeof result.cost !== 'number') {
-            throw new Error('Total cost could not be calculated');
+          // Fetch the listing by its ID
+          const listing = await Listing.findOne({ where: { id } });
+  
+          // Log the listing and its costPerNight for debugging
+          console.log('Fetched listing:', listing);
+          if (!listing) {
+            console.log(`No listing found with ID: ${id}`);
+            return null;
           }
-
-          return result.cost;
+          if (typeof listing.costPerNight !== 'number') {
+            console.log('Invalid or missing costPerNight:', listing.costPerNight);
+            return null;
+          }
+  
+          // Parse dates
+          const checkIn = new Date(checkInDate).toISOString();
+          const checkOut = new Date(checkOutDate).toISOString();
+  
+          // Log the parsed dates
+          console.log('Check-in date:', checkIn);
+          console.log('Check-out date:', checkOut);
+  
+          if (isNaN(checkIn) || isNaN(checkOut)) {
+            console.log('Invalid dates provided.');
+            return null;
+          }
+  
+          // Calculate the number of nights
+          const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+  
+          // Log the number of nights
+          console.log('Number of nights:', numberOfNights);
+  
+          // Calculate the total cost
+          const totalCost = listing.costPerNight * numberOfNights;
+  
+          // Log the calculated total cost
+          console.log('Calculated total cost:', totalCost);
+  
+          return totalCost;
         } catch (error) {
           console.error('Error in totalCost resolver:', error);
-          throw new GraphQLError('Error calculating total cost', {
-            extensions: { code: 'INTERNAL_SERVER_ERROR' },
-          });
+          return null;
         }
       },
 
-
-      totalCost: async ({ id }, { checkInDate, checkOutDate }, { dataSources }) => {
-        const { listingService } = dataSources;
-        const { cost } = await listingService.getTotalCost({ id, checkInDate, checkOutDate });
-        return cost;
-      },
+      // totalCost: async ({ id }, { checkInDate, checkOutDate }, { dataSources }) => {
+      //   const { listingService } = dataSources;
+      //   const { cost } = await listingService.getTotalCost({ id, checkInDate, checkOutDate });
+      //   return cost;
+      // },
 
       amenities: async ({ id }, _, { dataSources }) => {
         const { listingService } = dataSources;
@@ -423,10 +458,7 @@ const resolvers = {
     coordinate: async (listing) => {
       return Coordinate.findOne({ where: { listingId: listing.id } });
     },
-    // coordinates: ({ id }, _, { dataSources }) => {
-    //   const { listingService } = dataSources;
-    //   return listingService.getCoordinates(id);
-    // }
+
   },
 
 

@@ -1,8 +1,8 @@
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes, ENUM } from 'sequelize';
 import sequelize from './seq.js'; // Adjust the path as necessary
-
-class Listing extends Model {}
 import Coordinate from './coordinate.js'; // Import Coordinate model
+class Listing extends Model {}
+
 Listing.init({
   id: {
     type: DataTypes.STRING,
@@ -22,7 +22,7 @@ Listing.init({
   updatedAt: DataTypes.DATE,
   checkInDate: DataTypes.DATE,
   checkOutDate: DataTypes.DATE,
-  status: {
+  listingStatus: {
     type: DataTypes.ENUM,
     values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED', 'COMPLETED'],
   },
@@ -31,6 +31,8 @@ Listing.init({
   modelName: 'Listing',
   timestamps: true,
 });
-Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
+// Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
 // Export the model
 export default Listing;
+
+

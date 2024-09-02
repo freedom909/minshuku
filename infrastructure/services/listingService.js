@@ -411,56 +411,71 @@ class ListingService {
 
   }
 
-  async updateListingStatus(id, status){
-    try {
-      const query = `
-        SELECT * FROM listings WHERE hostId = :hostId
-      `;
-      const listings = await this.sequelize.query(query, {
-        type: QueryTypes.SELECT,
-        replacements: { hostId },
-      });
-      return listings;
-    } catch (error) {
-      console.error('Error fetching listings by host:', error);
-      throw new GraphQLError('Error fetching listings by host', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
-
-  }
-
   async updateListingStatus(id, status) {
-    console.log('Updating listing with id:', id, 'to status:', status);
-
     try {
-      // Check if id and status are defined and of the correct type
-      if (!id || !status) {
-        throw new Error('Invalid id or status provided');
-      }
-  
-      // SQL query using named replacements
       const query = `
-        UPDATE listings SET status = :status WHERE id = :id
+        UPDATE listings 
+        SET status = :status
+        WHERE id = :id
+        RETURNING status
       `;
   
-      // Execute the query with replacements
-      const result = await this.sequelize.query(query, {
+      const [results, metadata] = await this.sequelize.query(query, {
         type: QueryTypes.UPDATE,
-        replacements: { id, status }, // Ensure these are defined and correctly named
+        replacements: { id, status },
       });
   
-      //If the update was successful, fetch and return the updated listing
-      if (result[1] === 0) {
-        throw new Error('No listing found with the provided id');
+      // Log the result for debugging
+      console.log('Updated listing status:', results);
+  
+      // Check if the update was successful
+      if (metadata.rowCount === 0) {
+        throw new Error('No listing found with the given id');
       }
   
-      const updatedListing = await this.getListingById(id);
-      return updatedListing;
-  
+      return results[0].status; // Return the updated status
     } catch (error) {
       console.error('Error updating listing status:', error);
-      throw new GraphQLError('Error updating listing status', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      throw new GraphQLError('Error updating listing status', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
     }
   }
+  
+
+  // async updateListingStatus(id, status) {
+  //   console.log('Updating listing with id:', id, 'to status:', status);
+
+  //   try {
+  //     // Check if id and status are defined and of the correct type
+  //     if (!id || !status) {
+  //       throw new Error('Invalid id or status provided');
+  //     }
+  
+  //     // SQL query using named replacements
+  //     const query = `
+  //       UPDATE listings SET status = :status WHERE id = :id
+  //     `;
+  
+  //     // Execute the query with replacements
+  //     const result = await this.sequelize.query(query, {
+  //       type: QueryTypes.UPDATE,
+  //       replacements: { id, status }, // Ensure these are defined and correctly named
+  //     });
+  
+  //     //If the update was successful, fetch and return the updated listing
+  //     if (result[1] === 0) {
+  //       throw new Error('No listing found with the provided id');
+  //     }
+  
+  //     const updatedListing = await this.getListingById(id);
+  //     return updatedListing;
+  
+  //   } catch (error) {
+  //     console.error('Error updating listing status:', error);
+  //     throw new GraphQLError('Error updating listing status', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+  //   }
+  // }
 
   async createListing({ title, description, price, locationId, hostId }) {
     if (!this.context.user) {

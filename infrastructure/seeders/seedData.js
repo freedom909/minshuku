@@ -8,9 +8,9 @@ import Payment from '../models/payment.js';
 import Amenity from '../models/amenity.js';
 import Coordinate from '../models/coordinate.js';
 import ListingAmenities from '../models/listingAmenities.js';
-// import Location from '../models/location.js'; // Ensure this model exists and is imported correctly
+import Location from '../models/location.js'; // Ensure this model exists and is imported correctly
 
-const models = { Listing, Coordinate,  Booking, Payment, Amenity, ListingAmenities };
+const models = { Listing, Coordinate,  Booking, Payment, Amenity, ListingAmenities, Location};
 
 async function loadJSON(filePath) {
   const data = await fs.readFile(filePath, 'utf-8');
@@ -38,6 +38,7 @@ async function seedDatabase() {
     const payments = await loadJSON(path.join(__dirname, 'payments.json'));
     const amenities = await loadJSON(path.join(__dirname, 'amenities.json'));
     const listingAmenities = await loadJSON(path.join(__dirname, 'listingAmenities.json'));
+    const locations= await loadJSON(path.join(__dirname, 'locations.json'));
 
     // await seedModel(Location, locations);
     await seedModel(Listing, listings);
@@ -46,6 +47,7 @@ async function seedDatabase() {
     await seedModel(Payment, payments);
     await seedModel(Amenity, amenities);
     await seedModel(ListingAmenities, listingAmenities);
+    await seedModel(Location, locations);  // Ensure this model exists and is imported correctly
 
     console.log('Data seeded successfully!');
   } catch (error) {

@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
 import ListingService from './listingService.js'; // Adjust the path as necessary
-import ListingRepository from './listingService.js'; // Adjust the path as necessary
+import ListingRepository from '../repositories/listingRepository.js'; // Adjust the path as necessary
 
 const sequelize = new Sequelize('air', 'root', 'princess', {
   host: 'localhost',
@@ -24,13 +24,13 @@ listingService.getCoordinates(testId).then(coordinates => {
   console.error('Error:', error);
 });
 
-// async function fetchListing(listingId) {
-//   try {
-//     const listing = await listingService.getListing(listingId);
-//     console.log('Fetched listing:', listing);
-//   } catch (error) {
-//     console.error('Error:', error);
-//   }
-// }
+async function fetchListing(listingId) {
+  try {
+    const listing = await listingService.getListing(listingId);
+    console.log('Fetched listing:', listing);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
 
-// fetchListing('listing-1');
+fetchListing('listing-1');

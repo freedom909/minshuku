@@ -13,7 +13,7 @@
 // export default Location;
 
 import { DataTypes, Model } from 'sequelize';
-
+import sequelize from './seq.js'; // Adjust the path as necessary
 export class Location extends Model {}
 
 Location.init({
@@ -42,6 +42,10 @@ Location.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+}, {
+  sequelize,
+  modelName: 'Location',
+  timestamps: true,
 })
 
 Location.associate = (models) => {

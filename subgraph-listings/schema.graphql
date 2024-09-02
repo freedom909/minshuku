@@ -30,15 +30,10 @@ extend type Query {
 
 input UpdateListingStatusInput {
   id: ID!
-  status: Status! 
+  listingStatus: ListingStatus! 
 }
 
-type UpdateListingStatusResponse {
-  success: Boolean! @shareable
-  message: String @shareable
-}
-
-enum Status{
+enum ListingStatus{
   ACTIVE,
   PENDING,
   SOLD,
@@ -58,8 +53,16 @@ extend type Mutation {
     listing: UpdateListingInput!
   ): UpdateListingResponse! @shareable
 
-   updateListingStatus(input: UpdateListingStatusInput!): Listing @shareable
+   updateListingStatus(input: UpdateListingStatusInput!): UpdateListingStatusResponse @shareable
 }
+
+type UpdateListingStatusResponse implements Response {
+  listingStatus: ListingStatus @shareable
+  code: Int! @shareable 
+  message: String! @shareable
+  success: Boolean! @shareable
+}
+
 
 # Common interface for response types
 interface Response {
@@ -98,7 +101,7 @@ input CreateListingInput {
   locationType: LocationType!
   "The amenities of the listing"
   amenities: [AmenityInput!]!
-  status: Status
+  listingStatus: ListingStatus 
 }
 
 input AmenityInput {
@@ -196,15 +199,13 @@ type Listing @key(fields: "id") {
   amenities: [Amenity!]! @shareable
   numberOfUpcomingBookings: Int! @shareable
   currentlyBookedDates: [ReservedDate]! @shareable
-  totalCost(checkInDate: String!, checkOutDate: String!): Float! @shareable
+  totalCost(checkInDate: String!, checkOutDate: String!): Float @shareable
   coordinate: Coordinate @shareable
   saleAmount: Float @shareable
   bookingNumber: Int @shareable
   checkInDate: String! @shareable
   checkOutDate: String! @shareable
-  
-  status: Status @shareable
-
+  listingStatus: ListingStatus @shareable
 }
 
 # Type representing a host
