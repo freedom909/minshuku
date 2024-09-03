@@ -82,11 +82,11 @@ const resolvers = {
       }
     },
 
-    featuredListings: async (_, __, { dataSources }) => {
-      const { listingService } = dataSources;
-      const limit = 3;
-      return await listingService.getFeaturedListings(limit);
-    },
+    // featuredListings: async (_, __, { dataSources }) => {
+    //   const { listingService } = dataSources;
+    //   const limit = 3;
+    //   return await listingService.getFeaturedListings(limit);
+    // },
 
     featuredListings: async () => {
       // Fetch featured listings with coordinates
@@ -219,11 +219,11 @@ const resolvers = {
         console.error('Error in updateListingStatus resolver:', error);
         throw new GraphQLError('Error updating listing status', {
           extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      
+
         });
       }
     },
-    
+
 
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
       // if (!userId) throw new AuthenticationError('User not authenticated');
@@ -356,16 +356,15 @@ const resolvers = {
         return { id: hostId };
       },
 
+
       totalCost: async (parent, { checkInDate, checkOutDate }, { dataSources }) => {
         const { listingService } = dataSources;
         const { id } = parent;
-  
+
         try {
           // Fetch the listing by its ID
           const listing = await Listing.findOne({ where: { id } });
-  
-          // Log the listing and its costPerNight for debugging
-          console.log('Fetched listing:', listing);
+          console.log(listing.totalCost); // Outputs the calculated total cost
           if (!listing) {
             console.log(`No listing found with ID: ${id}`);
             return null;
@@ -374,32 +373,23 @@ const resolvers = {
             console.log('Invalid or missing costPerNight:', listing.costPerNight);
             return null;
           }
-  
+
           // Parse dates
-          const checkIn = new Date(checkInDate).toISOString();
-          const checkOut = new Date(checkOutDate).toISOString();
-  
-          // Log the parsed dates
-          console.log('Check-in date:', checkIn);
-          console.log('Check-out date:', checkOut);
-  
-          if (isNaN(checkIn) || isNaN(checkOut)) {
+          const checkIn = new Date(checkInDate);
+          const checkOut = new Date(checkOutDate);
+
+          // Check if dates are valid
+          if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
             console.log('Invalid dates provided.');
             return null;
           }
-  
+
           // Calculate the number of nights
-          const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-  
-          // Log the number of nights
-          console.log('Number of nights:', numberOfNights);
-  
+          const numberOfNights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+
           // Calculate the total cost
           const totalCost = listing.costPerNight * numberOfNights;
-  
-          // Log the calculated total cost
-          console.log('Calculated total cost:', totalCost);
-  
+
           return totalCost;
         } catch (error) {
           console.error('Error in totalCost resolver:', error);
@@ -407,11 +397,6 @@ const resolvers = {
         }
       },
 
-      // totalCost: async ({ id }, { checkInDate, checkOutDate }, { dataSources }) => {
-      //   const { listingService } = dataSources;
-      //   const { cost } = await listingService.getTotalCost({ id, checkInDate, checkOutDate });
-      //   return cost;
-      // },
 
       amenities: async ({ id }, _, { dataSources }) => {
         const { listingService } = dataSources;
@@ -443,7 +428,7 @@ const resolvers = {
         return bookings.length;
       },
 
-      coordinates: async (parent,_, { dataSources }) => {
+      coordinates: async (parent, _, { dataSources }) => {
         // Use eager loading to fetch coordinates when fetching listings
         const listingWithCoordinates = await Listing.findOne({
           where: { id: parent.id },
@@ -455,13 +440,8 @@ const resolvers = {
 
       },
     },
-    coordinate: async (listing) => {
-      return Coordinate.findOne({ where: { listingId: listing.id } });
-    },
 
   },
-
-
   AmenityCategory: {
     ACCOMMODATION_DETAILS: 'ACCOMMODATION_DETAILS',
     SPACE_SURVIVAL: 'SPACE_SURVIVAL',

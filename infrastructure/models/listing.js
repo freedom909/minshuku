@@ -22,6 +22,15 @@ Listing.init({
   updatedAt: DataTypes.DATE,
   checkInDate: DataTypes.DATE,
   checkOutDate: DataTypes.DATE,
+  totalCost: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      const checkIn = new Date(this.checkInDate);
+      const checkOut = new Date(this.checkOutDate);
+      const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+      return this.costPerNight * numberOfNights;
+    }
+  },
   listingStatus: {
     type: DataTypes.ENUM,
     values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED', 'COMPLETED'],
@@ -31,7 +40,7 @@ Listing.init({
   modelName: 'Listing',
   timestamps: true,
 });
-// Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
+Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
 // Export the model
 export default Listing;
 
