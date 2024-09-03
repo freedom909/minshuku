@@ -1,7 +1,7 @@
 import { Model, DataTypes, ENUM } from 'sequelize';
 import sequelize from './seq.js'; // Adjust the path as necessary
 import Coordinate from './coordinate.js'; // Import Coordinate model
-class Listing extends Model {}
+class Listing extends Model { }
 
 Listing.init({
   id: {
@@ -34,6 +34,18 @@ Listing.init({
   listingStatus: {
     type: DataTypes.ENUM,
     values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED', 'COMPLETED'],
+    set(value) {
+      // Log the value to ensure it's being set
+      console.log(`Setting listingStatus to: ${value}`);
+
+      // Add any custom logic before setting the value
+      if (this.isFeatured && value === 'SOLD') {
+        throw new Error('Featured listings cannot be set to SOLD.');
+      }
+
+      // Set the value using the default setter
+      this.setDataValue('listingStatus', value);
+    }
   },
 }, {
   sequelize,
