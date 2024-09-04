@@ -12,6 +12,8 @@ import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
 import Listing from '../models/listing.js';
 import Coordinate from '../models/coordinate.js'
+import dbConfig from '../DB/dbconfig.js';
+
 
 dotenv.config();
 
@@ -286,40 +288,6 @@ class ListingService {
     }
   }
 
-  async getListingCoordinates(id) {
-    try {
-      const response = await this.get(`listings/${id}/coordinate`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching listing coordinate:', error);
-      throw error;
-    }
-  }
-
-  // async getCoordinatesByListingId(id) {
-  //   try {
-  //     const listing = await this.getListing(id);
-  //     const coordinates = await this.sequelize.models.Coordinate.findOne({
-  //       where: {listing: listing},
-  //       include: [
-  //         {
-  //           model: Coordinate,
-  //           attributes: ['latitude', 'longitude'],
-  //         },
-  //       ],
-  //     });
-  //     if (!coordinates) {
-  //       throw new Error('Coordinates not found');
-  //     }
-  //     return coordinates;
-  //   } catch (error) {
-  //     console.error('Error fetching coordinates:', error);
-  //     throw new GraphQLError('Error fetching coordinates', {
-  //       extensions: { code: 'INTERNAL_SERVER_ERROR' },
-  //     });
-  //   }
-  // }
-
 
   async getAllAmenities() {
     try {
@@ -347,35 +315,6 @@ class ListingService {
     }
   }
 
-  async getTotalCost({ id, checkInDate, checkOutDate }) {
-    try {
-      const checkIn = new Date(checkInDate);
-      const checkOut = new Date(checkOutDate);
-      if (checkIn >= checkOut) {
-        throw new Error('Check-in date must be before check-out date');
-      }
-
-      const listingInstance = await Listing.findOne({
-        where: { id: id },
-        attributes: ['costPerNight'], // Only select costPerNight
-      });
-
-      if (!listingInstance) {
-        throw new Error('Listing not found');
-      }
-
-      const diffInDays = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
-      const totalCost = listingInstance.costPerNight * diffInDays;
-
-      return { cost: totalCost }; // Make sure to return an object with 'cost' key
-    } catch (error) {
-      console.error('Error fetching total cost:', error);
-      throw new GraphQLError('Error fetching total cost', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
-  }
-
-
-
   async getListingsByHost(hostId) {
     try {
       const query = `
@@ -392,8 +331,6 @@ class ListingService {
     }
   }
 
-
-
   async hostListings() {
     try {
       const query = `
@@ -408,7 +345,6 @@ class ListingService {
       console.error('Error fetching listings by host:', error);
       throw new GraphQLError('Error fetching listings by host', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
-
   }
 
   async updateListingStatus(id, listingStatus) {
@@ -440,7 +376,6 @@ class ListingService {
       if (!updatedRecord) {
         throw new Error('No listing found with the given id');
       }
-
       return updatedRecord.listingStatus; // Return the updated status
     } catch (error) {
       console.error('Error updating listing status:', error);
@@ -450,6 +385,25 @@ class ListingService {
     }
   }
 
+
+  async deleteListing(id) {
+    const pool = await dbConfig.mysql(); // Get the MySQL connection pool
+
+    try {
+      const [result] = await pool.query('DELETE FROM listings WHERE id = ?', [id]);
+
+      console.log('Delete results:', result);
+
+      if (result.affectedRows === 0) {
+        throw new Error('No listing found with the given id');
+      }
+
+      console.log('Deleted listing with ID successfully:', id);
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      throw new Error('Error deleting listing');
+    }
+  }
 
 
   async updateListingStatus(id, listingStatus) {

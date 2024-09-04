@@ -44,6 +44,13 @@ enum ListingStatus{
   COMPLETED
 }
 
+type DeleteListingResponse implements Response{
+  code: Int! @shareable 
+  message: String! @shareable
+  success: Boolean! @shareable
+  listing: Listing @shareable
+}
+
 extend type Mutation {
   "Creates a new listing for the currently authenticated host"
   createListing(input: CreateListingInput!): CreateListingResponse! @shareable
@@ -54,6 +61,7 @@ extend type Mutation {
   ): UpdateListingResponse! @shareable
 
    updateListingStatus(input: UpdateListingStatusInput!): UpdateListingStatusResponse @shareable
+   deleteListing(input: DeleteListingInput!): DeleteListingResponse! @shareable
 }
 
 type UpdateListingStatusResponse implements Response {
@@ -62,7 +70,6 @@ type UpdateListingStatusResponse implements Response {
   message: String! @shareable
   success: Boolean! @shareable
 }
-
 
 # Common interface for response types
 interface Response {
@@ -77,6 +84,10 @@ interface Response {
 input ReservedDateInput {
   checkInDate: String! 
   checkOutDate: String!
+}
+
+input DeleteListingInput {
+  listingId: ID!
 }
 
 # Input type for creating a listing

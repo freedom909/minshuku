@@ -2,6 +2,7 @@ import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/err
 import { permissions } from '../infrastructure/auth/permission.js';
 import Listing from '../infrastructure/models/listing.js';
 import Coordinate from '../infrastructure/models/coordinate.js';
+
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 
@@ -135,26 +136,29 @@ const resolvers = {
     }
   },
   Mutation: {
-    deleteListing: async (_, { listingId }, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!isHostOfListing || !isAdmin) {
-        throw new AuthenticationError(`you don't have right to delete this list`)
-      }
-      const { listingService } = dataSources;
+    deleteListing: async (_, { input }, { dataSources, userId }) => {
+      // if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!isHostOfListing || !isAdmin) {
+      //   throw new AuthenticationError(`you don't have right to delete this list`)
+      // }
+      const { listingId } = input; // Destructure listingId from input
       if (!listingId) throw new Error('Listing ID not provided');
+      console.log('Attempting to delete listing with ID:', listingId); // Log the listing ID
       try {
-        await listingService.deleteListing(listingId);
+        await dataSources.listingService.deleteListing(listingId);
         return {
           code: 200,
           success: true,
-          message: 'Listing successfully deleted'
+          message: 'Listing successfully deleted',
+          listing: null // Or return listing details if needed
         };
       } catch (error) {
-        console.error(error);
+        console.error('Error deleting listing:', error);
         return {
           code: 500,
           success: false,
-          message: error.message
+          message: error.message,
+          listing: null
         };
       }
     },
@@ -194,6 +198,10 @@ const resolvers = {
     },
 
     updateListingStatus: async (_, { input }, { dataSources }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!listingWithPermissions) {
+        throw new AuthenticationError('User does not have permissions to create a listing');
+      }
       const { id, listingStatus } = input;
       console.log('Input received:', input);
 
@@ -298,30 +306,6 @@ const resolvers = {
     }
   },
 
-  deleteListing: async (_, { listingId }, { dataSources, userId }) => {
-    if (!userId) throw new AuthenticationError('User not authenticated');
-    if (!isHostOfListing || !isAdmin) {
-      throw new AuthenticationError(`you don't have right to delete this list`)
-    }
-    const { listingService } = dataSources;
-    if (!listingId) throw new Error('Listing ID not provided');
-    try {
-      await listingService.deleteListing(listingId);
-      return {
-        code: 200,
-        success: true,
-        message: 'Listing successfully deleted'
-      };
-    } catch (error) {
-      console.error(error);
-      return {
-        code: 500,
-        success: false,
-        message: error.message
-      };
-    }
-  },
-
 
   Listing: {
     __resolveReference: async ({ id }, { dataSources }) => {
@@ -413,10 +397,8 @@ const resolvers = {
 
       // Return the associated coordinates
       return listingWithCoordinates?.coordinates || null;
-
     },
   },
-
 
   AmenityCategory: {
     ACCOMMODATION_DETAILS: 'ACCOMMODATION_DETAILS',
