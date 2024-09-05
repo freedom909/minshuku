@@ -187,16 +187,6 @@ enum SortByCriteria {
   COST_DESC
 }
 
-# Input type for searching listings
-input SearchListingsInput {
-reservedDate: ReservedDateInput!
-  numOfBeds: Int
-  page: Int
-  limit: Int
-  sortBy: SortByCriteria
-  someListingIds: [ID!] # Add this field to the input type
-}
-
 # Type representing a listing
 type Listing @key(fields: "id") {
   id: ID!
@@ -217,6 +207,20 @@ type Listing @key(fields: "id") {
   checkInDate: String! @shareable
   checkOutDate: String! @shareable
   listingStatus: ListingStatus @shareable
+}
+
+input PriceRangeInput {
+  min: Float!
+  max: Float!
+}
+
+input SearchListingsInput {
+  reservedDate: ReservedDateInput!
+  numOfBeds: Int
+  page: Int
+  limit: Int
+  sortBy: SortByCriteria
+  priceRange: PriceRangeInput!  
 }
 
 # Type representing a host

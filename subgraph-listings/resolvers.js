@@ -2,19 +2,67 @@ import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/err
 import { permissions } from '../infrastructure/auth/permission.js';
 import Listing from '../infrastructure/models/listing.js';
 import Coordinate from '../infrastructure/models/coordinate.js';
-
+import dbConfig from '../infrastructure/DB/dbconfig.js';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 
 // import { searchListings } from '../infrastructure/search/searchData.js';
 
-import { searchListings } from '../infrastructure/search/searchData.js';
+// import { searchListings } from '../infrastructure/search/searchData.js';
 
 // const client = new Client({ host: 'http://localhost:9200' })
 
 const resolvers = {
 
   Query: {
+    searchListings: async (_, { criteria }) => {
+      const { numOfBeds, priceRange, reservedDate } = criteria;
+      const { checkInDate, checkOutDate } = reservedDate;
+      const db = await dbConfig.mysql();
+      console.log('Input received:', criteria);
+
+      // Validate input criteria
+      if (!(numOfBeds >= 1) || !priceRange || !priceRange.min || !priceRange.max || !(checkInDate < checkOutDate)) {
+        throw new Error("Invalid input: numOfBeds must be at least 1, price range must be defined with min and max values, and checkInDate must be before checkOutDate.");
+      }
+      // Convert checkInDate and checkOutDate to UNIX timestamps if they are in standard date format
+      const checkInTimestamp = new Date(checkInDate).getTime();
+      const checkOutTimestamp = new Date(checkOutDate).getTime();
+      try {
+        const query = `
+       SELECT * FROM listings
+       WHERE numOfBeds = ? 
+       AND costPerNight BETWEEN ? AND ?
+       AND  DATE(checkInDate) <= ?  -- Check if the listing is available during the requested dates
+       AND  DATE(checkOutDate) >= ?
+        `;
+
+        const [results] = await db.query(query, [
+          numOfBeds,
+          priceRange.min,
+          priceRange.max,
+          checkInDate,
+          checkOutDate
+        ]);
+
+        // Transform the UNIX timestamps into human-readable dates for the response
+        const transformedResults = results.map(listing => ({
+          ...listing,
+          checkInDate: new Date(listing.checkInDate).toISOString().split('T')[0], // YYYY-MM-DD
+
+          checkOutDate: new Date(listing.checkOutDate).toISOString().split('T')[0] // YYYY-MM-DD
+
+        }));
+        console.log('checkInDate:', checkInDate, 'checkOutDate:', checkOutDate);
+        console.log('Transformed checkInTimestamp:', checkInTimestamp, 'checkOutTimestamp:', checkOutTimestamp);
+
+        return transformedResults;
+      } catch (error) {
+        console.error('Error searching listings:', error);
+        throw new Error('Failed to search listings');
+      }
+    },
+
     hotListingsByMoney: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       try {
@@ -110,12 +158,12 @@ const resolvers = {
       const { listingService } = dataSources;
       return listingService.getAllAmenities();
     },
-    searchListings: async (_, { criteria }, { dataSources }) => {
+    searchListingOfBooking: async (_, { criteria }, { dataSources }) => {
       try {
         const { listingService, bookingService } = dataSources;
         const { numOfBeds, reservedDate, page, limit, sortBy } = criteria;
         const { checkInDate, checkOutDate } = reservedDate;
-        const listings = await listingService.searchListings({
+        const listings = await listingService.searchListingOfBooking({
           numOfBeds,
           checkInDate,
           checkOutDate,
@@ -137,10 +185,10 @@ const resolvers = {
   },
   Mutation: {
     deleteListing: async (_, { input }, { dataSources, userId }) => {
-      // if (!userId) throw new AuthenticationError('User not authenticated');
-      // if (!isHostOfListing || !isAdmin) {
-      //   throw new AuthenticationError(`you don't have right to delete this list`)
-      // }
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHostOfListing || !isAdmin) {
+        throw new AuthenticationError(`you don't have right to delete this list`)
+      }
       const { listingId } = input; // Destructure listingId from input
       if (!listingId) throw new Error('Listing ID not provided');
       console.log('Attempting to delete listing with ID:', listingId); // Log the listing ID
@@ -238,74 +286,67 @@ const resolvers = {
       }
     },
 
-    searchListings: async (_, { criteria }) => {
-      try {
-        const results = await searchListings('listings_index', criteria);
-        return results;
-      } catch (error) {
-        throw new Error(`Failed to search listings: ${error.message}`);
+
+
+
+    createListing: async (_, { listing }, { dataSources, userId }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!listingWithPermissions) {
+        throw new AuthenticationError('User does not have permissions to create a listing');
       }
-    }
+
+      const { listingService, amenityService } = dataSources;
+      const { amenities } = listing;
+      if (!amenities || !amenities.length) {
+        throw new Error('Listing must have at least one amenity');
+      }
+      const amenityIds = await amenityService.getAmenityIds(amenities);
+      listing.amenities = amenityIds;
+      try {
+        const newListing = await listingService.createListing({ ...listing, hostId: userId });
+        await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
+        return {
+          code: 200,
+          success: true,
+          message: 'Listing successfully created!',
+          listing: newListing
+        };
+      } catch (err) {
+        console.error(err);
+        return {
+          code: 400,
+          success: false,
+          message: err.message
+        };
+      }
+    },
+
+    updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHostOfListing || !isAdmin) {
+        throw new AuthenticationError(`you don't have right to update this list`)
+      }
+      const { listingService } = dataSources;
+
+      if (!listingId) throw new Error('Listing ID not provided');
+      try {
+        const updatedListing = await listingService.updateListing({ ...listing, id: listingId });
+        return {
+          code: 200,
+          success: true,
+          message: 'Listing successfully updated',
+          listing: updatedListing
+        };
+      } catch (error) {
+        console.error(error);
+        return {
+          code: 500,
+          success: false,
+          message: error.message
+        };
+      }
+    },
   },
-
-  createListing: async (_, { listing }, { dataSources, userId }) => {
-    if (!userId) throw new AuthenticationError('User not authenticated');
-    if (!listingWithPermissions) {
-      throw new AuthenticationError('User does not have permissions to create a listing');
-    }
-
-    const { listingService, amenityService } = dataSources;
-    const { amenities } = listing;
-    if (!amenities || !amenities.length) {
-      throw new Error('Listing must have at least one amenity');
-    }
-    const amenityIds = await amenityService.getAmenityIds(amenities);
-    listing.amenities = amenityIds;
-    try {
-      const newListing = await listingService.createListing({ ...listing, hostId: userId });
-      await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
-      return {
-        code: 200,
-        success: true,
-        message: 'Listing successfully created!',
-        listing: newListing
-      };
-    } catch (err) {
-      console.error(err);
-      return {
-        code: 400,
-        success: false,
-        message: err.message
-      };
-    }
-  },
-
-  updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
-    if (!userId) throw new AuthenticationError('User not authenticated');
-    if (!isHostOfListing || !isAdmin) {
-      throw new AuthenticationError(`you don't have right to update this list`)
-    }
-    const { listingService } = dataSources;
-
-    if (!listingId) throw new Error('Listing ID not provided');
-    try {
-      const updatedListing = await listingService.updateListing({ ...listing, id: listingId });
-      return {
-        code: 200,
-        success: true,
-        message: 'Listing successfully updated',
-        listing: updatedListing
-      };
-    } catch (error) {
-      console.error(error);
-      return {
-        code: 500,
-        success: false,
-        message: error.message
-      };
-    }
-  },
-
 
   Listing: {
     __resolveReference: async ({ id }, { dataSources }) => {
@@ -378,10 +419,35 @@ const resolvers = {
       const { bookingService } = dataSources;
       return bookingService.getCurrentlyBookedDateRangesForListing(id);
     },
-    bookings: ({ id }, _, { dataSources }) => {
-      const { bookingService } = dataSources;
-      return bookingService.getBookingsForListing(id);
+    bookings: async ({ id }, _, { dataSources, userId }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!listingWithPermissions) {
+        throw new ForbiddenError('User does not have permissions to search the listings');
+      }
+      try {
+        const { listingService, bookingService } = dataSources;
+        const { numOfBeds, reservedDate, page, limit, sortBy } = criteria;
+        const { checkInDate, checkOutDate } = reservedDate;
+        const listings = await listingService.searchListingOfBooking({
+          numOfBeds,
+          checkInDate,
+          checkOutDate,
+          page,
+          limit,
+          sortBy
+        });
+        const listingAvailability = await Promise.all(
+          listings.map(listing =>
+            bookingService.isListingAvailable({ listingId: listing.id, checkInDate, checkOutDate })
+          )
+        );
+        return listings.filter((listing, index) => listingAvailability[index]);
+      } catch (error) {
+        console.error('Error searching listings:', error);
+        throw new Error('Failed to search listings');
+      }
     },
+
     numberOfUpcomingBookings: async ({ id }, _, { dataSources }) => {
       const { bookingService } = dataSources;
       const bookings = await bookingService.getBookingsForListing(id, 'UPCOMING') || [];
