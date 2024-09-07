@@ -1,24 +1,34 @@
-import pkg from 'mongodb';
-const { MongoClient } = pkg;
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
 
 
+const mongoUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
+const dbName = process.env.DB_NAME || 'water'; // Provide default DB name
+console.log('MONGODB_URL:', mongoUrl);
+console.log('DB_NAME:', dbName);
 
-const mongoUrl=process.env.MONGODB_URL||'mongodb://localhost:27017';
-const client = new MongoClient(mongoUrl);
-console.log('MONGODB_URL:', process.env.MONGODB_URL);
-const dbName=process.env.DB_NAME;
-console.log('DB_NAME:', process.env.DB_NAME);
-let mongodb;
+let isConnected = false;
+
 async function connectToMongoDB() {
- if (!mongodb) {
-  await client.connect();
-  console.log('Connected to MongoDB');
-  mongodb= client.db(dbName);
- 
- }
- return mongodb;
+    if (!isConnected) {
+        try {
+            // Connect to MongoDB with Mongoose
+            await mongoose.connect(mongoUrl, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                dbName: dbName,
+            });
+            isConnected = true;
+            console.log('Connected to MongoDB with Mongoose');
+        } catch (err) {
+            console.error('Failed to connect to MongoDB:', err);
+            throw err; // Re-throw the error to stop execution if connection fails
+        }
+    }
 }
 
 export default connectToMongoDB;
+
+
+

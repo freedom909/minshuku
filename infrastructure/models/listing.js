@@ -1,6 +1,10 @@
 import { Model, DataTypes, ENUM } from 'sequelize';
 import sequelize from './seq.js'; // Adjust the path as necessary
-import Coordinate from './coordinate.js'; // Import Coordinate model
+// import Coordinate from './coordinate.js'; // Import Coordinate model
+import Amenities from './amenities.js';
+import ListingAmenities from './listingAmenities.js';
+import Location from './location.js'; // Ensure this model exists and is imported correctly
+
 class Listing extends Model { }
 
 Listing.init({
@@ -52,7 +56,12 @@ Listing.init({
   modelName: 'Listing',
   timestamps: true,
 });
-Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
+// Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
+Listing.hasOne(Location, { foreignKey: 'locationId', as: 'location' });
+
+Listing.belongsToMany(Amenities, { through: ListingAmenities, foreignKey: 'listingId', otherKey: 'amenityId', as: 'amenities' });
+
+
 // Export the model
 export default Listing;
 

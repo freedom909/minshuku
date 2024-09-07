@@ -1,10 +1,11 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from './seq.js';
-
+import ListingAmenities from './listingAmenities.js';
+import Listing from './listing.js';
 // Amenity model
 
-class Amenity extends Model {}
-Amenity.init({
+class Amenities extends Model { }
+Amenities.init({
   id: {
     type: DataTypes.STRING,
     primaryKey: true,
@@ -27,9 +28,16 @@ Amenity.init({
   },
 }, {
   sequelize,
-  modelName: 'Amenity',
+  modelName: 'Amenities',
   timestamps: true,
 });
+//Define associations
+// Amenities.belongsToMany(Listing, {
+//   through: ListingAmenities, // Join table
+//   foreignKey: 'amenityId', // FK in ListingAmenities for Amenities
+//   otherKey: 'listingId', // FK in ListingAmenities for Listings
+//   as: 'listings' // Alias for reverse querying
+// });
 
-export default Amenity;
+export default Amenities;
 

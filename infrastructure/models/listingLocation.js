@@ -1,8 +1,8 @@
 // In your models setup file or where you define associations
 import Listing from './models/listing.js';
-import Coordinate from './models/coordinates.js';
+import Location from './models/location.js';
 
-// ListingCoordinate.init({
+// ListingLocation.init({
 //     id: {
 //       type: DataTypes.INTEGER,
 //       primaryKey: true,
@@ -12,7 +12,7 @@ import Coordinate from './models/coordinates.js';
 //       type: DataTypes.STRING,
 //       allowNull: false,
 //     },
-//     CoordinateId: {
+//     LocationId: {
 //       type: DataTypes.STRING,
 //       allowNull: false,
 //     },
@@ -26,12 +26,12 @@ import Coordinate from './models/coordinates.js';
 //     },
 //   }, {
 //     sequelize,
-//     modelName: 'ListingCoordinate', // Specify the model name explicitly
+//     modelName: 'ListingLocation', // Specify the model name explicitly
 //     timestamps: true,
 //   });
-  
-  
-Listing.hasOne(models.Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
 
-Coordinate.belongsTo(Listing, { foreignKey: 'listingId' });
-export default ListingCoordinate;
+
+Listing.hasOne(models.Location, { foreignKey: 'listingId', as: 'location' });
+
+Location.belongsTo(Listing, { foreignKey: 'listingId' });
+export default ListingLocation;

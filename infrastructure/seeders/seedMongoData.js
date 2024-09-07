@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import connectToMongoDB from './connectMongo.js';
+import connectToMongoDB from '../DB/connectMongoDB.js';
 import Account from '../models/account.js';
 import User from '../models/user.js';
 import Profile from '../models/profile.js';
@@ -58,7 +58,7 @@ const seedAccounts = async () => {
           fullname: profileData.fullname,
           interests: profileData.interests,
           network: profileData.network,
-  
+
         });
         await newProfile.save();
       }

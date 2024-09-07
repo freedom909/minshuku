@@ -29,7 +29,7 @@ const dbConfig = {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
-      mongodb = client.db(process.env.MONGODB_DB_NAME || 'test');
+      mongodb = client.db(process.env.DB_NAME || 'test');
       console.log('Connected to MongoDB');
     }
     return mongodb;

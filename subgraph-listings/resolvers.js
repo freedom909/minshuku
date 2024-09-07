@@ -1,8 +1,10 @@
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
 import { permissions } from '../infrastructure/auth/permission.js';
 import Listing from '../infrastructure/models/listing.js';
-import Coordinate from '../infrastructure/models/coordinate.js';
+import Coordinate from '../infrastructure/models/location.js';
 import dbConfig from '../infrastructure/DB/dbconfig.js';
+import Location from '../infrastructure/models/location.js';
+import GraphQLError from 'graphql/error/GraphQLError.js';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 
@@ -26,8 +28,8 @@ const resolvers = {
         throw new Error("Invalid input: numOfBeds must be at least 1, price range must be defined with min and max values, and checkInDate must be before checkOutDate.");
       }
       // Convert checkInDate and checkOutDate to UNIX timestamps if they are in standard date format
-      const checkInTimestamp = new Date(checkInDate).getTime();
-      const checkOutTimestamp = new Date(checkOutDate).getTime();
+      // const checkInTimestamp = new Date(checkInDate).getTime();
+      // const checkOutTimestamp = new Date(checkOutDate).getTime();
       try {
         const query = `
        SELECT * FROM listings
@@ -53,8 +55,8 @@ const resolvers = {
           checkOutDate: new Date(listing.checkOutDate).toISOString().split('T')[0] // YYYY-MM-DD
 
         }));
-        console.log('checkInDate:', checkInDate, 'checkOutDate:', checkOutDate);
-        console.log('Transformed checkInTimestamp:', checkInTimestamp, 'checkOutTimestamp:', checkOutTimestamp);
+        // console.log('checkInDate:', checkInDate, 'checkOutDate:', checkOutDate);
+        // console.log('Transformed checkInTimestamp:', checkInTimestamp, 'checkOutTimestamp:', checkOutTimestamp);
 
         return transformedResults;
       } catch (error) {
@@ -86,10 +88,25 @@ const resolvers = {
 
       try {
         const listings = await Listing.findAll({
-          include: [{
-            model: Coordinate,
-            as: 'coordinate', // Ensure this alias matches your model association
-          }],
+          include: [
+            {
+              model: Coordinate,
+              as: 'coordinate', // Ensure this alias matches your model association
+            },
+            {
+              model: Amenities,   // Include Amenities (through ListingAmenities)
+              as: 'amenities',    // Alias for Amenities
+              through: { attributes: [] },  // Exclude fields from the join table
+              attributes: ['name', 'category']  // Only fetch the name and category of the amenities
+            },
+            {
+              model: Location,
+              as: 'location', // Ensure this alias matches your model association
+              attributes: ['state', 'address', 'city', 'country', 'zipCode'] // Only fetch the name, address, city, and country of the location// Only fetch the name, address, city, and country of the location
+            }
+
+
+          ],
         });
         if (!listings) {
           throw new Error('No listings found');
@@ -131,11 +148,6 @@ const resolvers = {
       }
     },
 
-    // featuredListings: async (_, __, { dataSources }) => {
-    //   const { listingService } = dataSources;
-    //   const limit = 3;
-    //   return await listingService.getFeaturedListings(limit);
-    // },
 
     featuredListings: async () => {
       // Fetch featured listings with coordinates
@@ -322,10 +334,10 @@ const resolvers = {
     },
 
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!isHostOfListing || !isAdmin) {
-        throw new AuthenticationError(`you don't have right to update this list`)
-      }
+      // if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!isHostOfListing || !isAdmin) {
+      //   throw new AuthenticationError(`you don't have right to update this list`)
+      // }
       const { listingService } = dataSources;
 
       if (!listingId) throw new Error('Listing ID not provided');
@@ -454,6 +466,11 @@ const resolvers = {
       return bookings.length;
     },
 
+    location: async ({ _, __, dataSources }) => {
+      const { listingService } = dataSources;
+      const { location } = await listingService.getListing(parent.id);
+      return location;
+    },
     coordinates: async (parent, _, { dataSources }) => {
       // Use eager loading to fetch coordinates when fetching listings
       const listingWithCoordinates = await Listing.findOne({

@@ -1,56 +1,46 @@
-// import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
-// const locationSchema = new mongoose.Schema({
-//   address: { type: String, required: true },
-//   city: { type: String, required: true },
-//   state: { type: String, required: true },
-//   country: { type: String, required: true },
-//   zipCode: { type: String, required: true },
-// }, { timestamps: true });
-
-// const Location = mongoose.model('Location', locationSchema);
-
-// export default Location;
-
-import { DataTypes, Model } from 'sequelize';
-import sequelize from './seq.js'; // Adjust the path as necessary
-export class Location extends Model {}
-
-Location.init({
+const locationSchema = new mongoose.Schema({
   id: {
-    type: DataTypes.STRING,
-    defaultValue: DataTypes.STRING,
-    primaryKey: true,
+    type: String,
+    required: true,
+    unique: true, // Ensures each location has a unique id
   },
+  name: {
+    type: String,
+    required: true,
+  },
+  latitude: {
+    type: Number,
+    required: true,
+  },
+  longitude: {
+    type: Number,
+    required: true,
+  },
+  radius: Number,
   address: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   city: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   state: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   country: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   zipCode: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
-}, {
-  sequelize,
-  modelName: 'Location',
-  timestamps: true,
-})
+});
 
-Location.associate = (models) => {
-  Location.belongsTo(models.Listing, { foreignKey: 'listingId', as: 'listing' });
-};
+const Location = mongoose.model('Location', locationSchema);
 
- 
-export default Location
+export default Location;

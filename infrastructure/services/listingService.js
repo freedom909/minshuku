@@ -1,7 +1,7 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
 import { QueryTypes } from 'sequelize'; // Ensure this is imported
 import { GraphQLError } from 'graphql';
-import axios from 'axios';
+import { GraphQLClient } from 'graphql-request';
 import { shield, allow } from 'graphql-shield';
 import { permissions } from '../auth/permission.js';
 import ListingRepository from '../repositories/listingRepository.js';
@@ -11,7 +11,7 @@ import mysql from 'mysql2/promise';
 import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
 import Listing from '../models/listing.js';
-import Coordinate from '../models/coordinate.js'
+import Coordinate from '../models/location.js'
 import dbConfig from '../DB/dbconfig.js';
 
 
@@ -26,11 +26,13 @@ const permissionsMiddleware = shield({
     "*": allow,  // Allow all mutations by default, customize as needed
   },
 });
+// or wherever your GraphQL endpoint is
 
 class ListingService {
   constructor({ listingRepository, sequelize }) {
     this.listingRepository = listingRepository;
     this.sequelize = sequelize;
+    this.graphQLClient = new GraphQLClient('http://localhost:4040/graphql');; // Your GraphQL endpoint
   }
 
   willSendRequest(request) {
@@ -406,55 +408,55 @@ class ListingService {
   }
 
 
-  async updateListingStatus(id, listingStatus) {
+  // async updateListingStatus(id, listingStatus) {
 
-    console.log('Updating listing with ID:', id, 'to status:', listingStatus); // Log the inputs
-    try {
-      console.log("Entering function...");
+  //   console.log('Updating listing with ID:', id, 'to status:', listingStatus); // Log the inputs
+  //   try {
+  //     console.log("Entering function...");
 
-      const query = `
-        UPDATE listings 
-        SET listingStatus = :listingStatus
-        WHERE id = :id
-      `;
+  //     const query = `
+  //       UPDATE listings 
+  //       SET listingStatus = :listingStatus
+  //       WHERE id = :id
+  //     `;
 
-      const [results, metadata] = await this.sequelize.query(query, {
-        type: QueryTypes.UPDATE,
-        replacements: { id, listingStatus },
-      });
+  //     const [results, metadata] = await this.sequelize.query(query, {
+  //       type: QueryTypes.UPDATE,
+  //       replacements: { id, listingStatus },
+  //     });
 
-      console.log('Update results:', results, 'Metadata:', metadata); // Log the results of the update query
+  //     console.log('Update results:', results, 'Metadata:', metadata); // Log the results of the update query
 
-      const [updatedRecord] = await this.sequelize.query(`
-        SELECT listingStatus FROM listings WHERE id = :id
-      `, {
-        type: QueryTypes.SELECT,
-        replacements: { id },
-      });
+  //     const [updatedRecord] = await this.sequelize.query(`
+  //       SELECT listingStatus FROM listings WHERE id = :id
+  //     `, {
+  //       type: QueryTypes.SELECT,
+  //       replacements: { id },
+  //     });
 
-      console.log('Fetched updated record:', updatedRecord); // Log the result of the select query
-      const [testRecord] = await this.sequelize.query(`
-        SELECT * FROM listings WHERE id = :id
-      `, {
-        type: QueryTypes.SELECT,
-        replacements: { id },
-      });
+  //     console.log('Fetched updated record:', updatedRecord); // Log the result of the select query
+  //     const [testRecord] = await this.sequelize.query(`
+  //       SELECT * FROM listings WHERE id = :id
+  //     `, {
+  //       type: QueryTypes.SELECT,
+  //       replacements: { id },
+  //     });
 
-      console.log('Test record:', testRecord);
+  //     console.log('Test record:', testRecord);
 
-      if (!updatedRecord) {
-        console.error('No listing found after update');
-        return null;
-      }
+  //     if (!updatedRecord) {
+  //       console.error('No listing found after update');
+  //       return null;
+  //     }
 
-      return updatedRecord.listingStatus;
-    } catch (error) {
-      console.error('Error updating listing status:', error);
-      throw new GraphQLError('Error updating listing status', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' },
-      });
-    }
-  }
+  //     return updatedRecord.listingStatus;
+  //   } catch (error) {
+  //     console.error('Error updating listing status:', error);
+  //     throw new GraphQLError('Error updating listing status', {
+  //       extensions: { code: 'INTERNAL_SERVER_ERROR' },
+  //     });
+  //   }
+  // }
 
 
   async createListing({ title, description, price, locationId, hostId }) {
@@ -476,15 +478,10 @@ class ListingService {
     }
   }
 
-  async updateListing({ listingId, listing }) {
-    try {
-      const response = await this.patch(`listings/${listingId}`, listing);//Error updating listing: TypeError: this.patch is not a function
-      return response.data;
-    } catch (error) {
-      console.error('Error updating listing:', error);
-      throw new GraphQLError('Error updating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
-  }
+
+
+
+
 
   async hotListingsByMoneyBookingTop5() {
     const query = `

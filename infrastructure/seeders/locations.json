@@ -1,97 +1,132 @@
 [
-    {
-      "id": "location-1",
-      "address": "456 Elm St",
-      "city": "San Francisco",
-      "state": "CA",
-      "country": "USA",
-      "zipCode": "94101",
-      "listingId": "listing-1"
-    },
-    {
-      "id": "location-2",
-      "address": "789 Oak St",
-      "city": "Chicago",
-      "state": "IL",
-      "country": "USA",
-      "zipCode": "60601",
-      "listingId": "listing-2"
-    },
-    {
-      "id": "location-3",
-      "address": "321 Pine St",
-      "city": "New York",
-      "state": "NY",
-      "country": "USA",
-      "zipCode": "10001",
-      "listingId": "listing-3"
-    },
-    {
-      "id": "location-4",
-      "address": "654 Maple St",
-      "city": "Boston",
-      "state": "MA",
-      "country": "USA",
-      "zipCode": "02101",
-      "listingId": "listing-4"
-    },
-    {
-      "id": "location-5",
-      "address": "987 Willow St",
-      "city": "Seattle",
-      "state": "WA",
-      "country": "USA",
-      "zipCode": "98101",
-      "listingId": "listing-5"
-    },
-    {
-      "id": "location-6",
-      "address": "246 Cedar St",
-      "city": "Los Angeles",
-      "state": "CA",
-      "country": "USA",
-      "zipCode": "90001",
-      "listingId": "listing-6"
-    },
-    {
-        "id": "location-7",
-      "address": "567 Birch St",
-      "city": "Vancouver",
-      "state": "BC",
-      "country": "Canada",
-      "zipCode": "V6A 1B2",
-      "listingId": "listing-7"
-    },
-    {
-      "id": "location-8",
-      "address": "789 Oak St",
-      "city": "Toronto",
-      "state": "ON",
-      "country": "Canada",
-      "zipCode": "M5H 2N2",
-      "listingId": "listing-8"
-    },
-    {
-      "id": "location-9",
-      "address": "321 Pine St",
-      "city": "Montreal",
-      "state": "QC",
-      "country": "Canada",
-      "zipCode": "H3A 2K1",
-      "listingId": "listing-9"
-    },
-    {
-      "id": "location-10",
-      "address": "456 Elm St",
-      "city": "Calgary",
-      "state": "AB",
-      "country": "Canada",
-      "zipCode": "T2P 2N2",
-      "listingId": "listing-10"
-    }
-  ]
-
- 
-  
-  
-  
+  {
+    "id": "location-1",
+    "name": "washington D.C.",
+    "address": "456 Elm St",
+    "city": "San Francisco",
+    "state": "CA",
+    "country": "USA",
+    "zipCode": "94101",
+    "listingId": "listing-1",
+    "radius": 1000,
+    "latitude": 58.130,
+    "longitude": 125.0360
+  },
+  {
+    "id": "location-2",
+    "name": "Los Angeles",
+    "address": "789 Oak St",
+    "city": "Chicago",
+    "state": "IL",
+    "country": "USA",
+    "zipCode": "60601",
+    "radius": 1000,
+    "listingId": "listing-2",
+    "latitude": 41.8789,
+    "longitude": -87.6298
+  },
+  {
+    "id": "location-3",
+    "name": "New York",
+    "address": "321 Pine St",
+    "city": "New York",
+    "state": "NY",
+    "country": "USA",
+    "zipCode": "10001",
+    "radius": 1000,
+    "listingId": "listing-3",
+    "latitude": 40.7128,
+    "longitude": -74.0060
+  },
+  {
+    "id": "location-4",
+    "name": "Boston",
+    "address": "123 Oak St",
+    "city": "Boston",
+    "state": "MA",
+    "country": "USA",
+    "zipCode": "02101",
+    "radius": 1000,
+    "listingId": "listing-4",
+    "latitude": 42.3601,
+    "longitude": -71.0589
+  },
+  {
+    "id": "location-5",
+    "name": "Seattle",
+    "address": "987 Willow St",
+    "city": "Seattle",
+    "state": "WA",
+    "country": "USA",
+    "zipCode": "98101",
+    "radius": 1000,
+    "listingId": "listing-5",
+    "latitude": 47.6062,
+    "longitude": -122.3321
+  },
+  {
+    "id": "location-6",
+    "name": "San Francisco",
+    "address": "246 Cedar St",
+    "city": "Los Angeles",
+    "state": "CA",
+    "country": "USA",
+    "zipCode": "90001",
+    "radius": 1000,
+    "listingId": "listing-6",
+    "latitude": 34.0522,
+    "longitude": -118.2437
+  },
+  {
+    "id": "location-7",
+    "name": "Vancouver",
+    "address": "567 Birch St",
+    "city": "Vancouver",
+    "state": "BC",
+    "country": "Canada",
+    "zipCode": "V6A 1B2",
+    "radius": 1000,
+    "listingId": "listing-7",
+    "latitude": 49.2827,
+    "longitude": -123.1207
+  },
+  {
+    "id": "location-8",
+    "name": "Toronto",
+    "address": "789 Oak St",
+    "city": "Toronto",
+    "state": "ON",
+    "country": "Canada",
+    "zipCode": "M5H 2N2",
+    "radius": 1000,
+    "listingId": "listing-8",
+    "latitude": 43.6532,
+    "longitude": -79.3832
+  },
+  {
+    "id": "location-9",
+    "name": "Montreal",
+    "address": "321 Pine St",
+    "city": "Montreal",
+    "state": "QC",
+    "country": "Canada",
+    "zipCode": "H3A 2K1",
+    "radius": 1000,
+    "listingId": "listing-9",
+    "latitude": 45.4995,
+    "longitude": -73.56927
+  },
+  {
+    "id": "location-10",
+    "name": "Calgary",
+    "address": "456 Elm St",
+    "city": "Calgary",
+    "state": "AB",
+    "country": "Canada",
+    "zipCode": "T2P 2N2",
+    "radius": 1000,
+    "listingId": "listing-10",
+    "latitude": 40.71128,
+    "longitude": -74.06040
+  }
+]

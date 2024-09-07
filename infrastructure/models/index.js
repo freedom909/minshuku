@@ -9,12 +9,12 @@ import Booking from './booking.js';
 import Payment from './payment.js';
 import Amenity from './amenity.js';
 import ListingAmenities from './listingAmenities.js';
-import Coordinate from './coordinate.js'; // Import Coordinate model
+
 import Location from './location.js';
 
 
 // Define associations
-const models = { User, Account, Listing, Review, ReviewOfGuest, ReviewOfHost, Booking, Payment, Amenity, ListingAmenities, Coordinate, Location };
+const models = { User, Account, Listing, Review, ReviewOfGuest, ReviewOfHost, Booking, Payment, Amenity, ListingAmenities, Location };
 
 Object.keys(models).forEach((modelName) => {
   if (models[modelName].associate) {
@@ -23,9 +23,9 @@ Object.keys(models).forEach((modelName) => {
 });
 
 // Define associations
-Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
+// Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
 Listing.hasOne(Location, { foreignKey: 'listingId', as: 'location' });
-Coordinate.belongsTo(Listing, { foreignKey: 'listingId', as: 'listing' });
+Location.belongsTo(Listing, { foreignKey: 'listingId', as: 'listing' });
 
 // Sync database
 (async () => {
