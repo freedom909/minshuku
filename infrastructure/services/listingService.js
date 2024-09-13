@@ -375,6 +375,38 @@ class ListingService {
     }
   }
 
+  async getAmenitiesForListing(listingId) {
+    try {
+      const query = `
+        SELECT a.* 
+        FROM AMENITIES a
+        JOIN LISTINGAMENITIES la ON la.amenityId = a.id
+        WHERE la.listingId = :listingId
+      `;
+      const response = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { listingId }
+      });
+
+      if (!response || !Array.isArray(response)) {
+        throw new Error('Invalid response from the database');
+      }
+
+      const amenities = response.map(amenity => ({
+        id: amenity.id,
+        name: amenity.name,
+        category: amenity.category ? amenity.category.replace(' ', '_').toUpperCase() : 'UNKNOWN',
+      }));
+
+      return amenities;
+    } catch (error) {
+      console.error('Error fetching amenities for listing:', error);
+      throw new GraphQLError('Error fetching amenities for listing', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' }
+      });
+    }
+  }
+
   async hostListings() {
     try {
       const query = `
@@ -450,55 +482,19 @@ class ListingService {
   }
 
 
-  // async updateListingStatus(id, listingStatus) {
+  async getTop5Listings() {
+    const pool = await dbConfig.mysql(); // Get the MySQL connection pool
 
-  //   console.log('Updating listing with ID:', id, 'to status:', listingStatus); // Log the inputs
-  //   try {
-  //     console.log("Entering function...");
+    try {
+      const [rows] = await pool.query('SELECT * FROM listings ORDER BY rating DESC LIMIT 5');
 
-  //     const query = `
-  //       UPDATE listings 
-  //       SET listingStatus = :listingStatus
-  //       WHERE id = :id
-  //     `;
+      console.log('Top 5 listings:', rows);
 
-  //     const [results, metadata] = await this.sequelize.query(query, {
-  //       type: QueryTypes.UPDATE,
-  //       replacements: { id, listingStatus },
-  //     });
-
-  //     console.log('Update results:', results, 'Metadata:', metadata); // Log the results of the update query
-
-  //     const [updatedRecord] = await this.sequelize.query(`
-  //       SELECT listingStatus FROM listings WHERE id = :id
-  //     `, {
-  //       type: QueryTypes.SELECT,
-  //       replacements: { id },
-  //     });
-
-  //     console.log('Fetched updated record:', updatedRecord); // Log the result of the select query
-  //     const [testRecord] = await this.sequelize.query(`
-  //       SELECT * FROM listings WHERE id = :id
-  //     `, {
-  //       type: QueryTypes.SELECT,
-  //       replacements: { id },
-  //     });
-
-  //     console.log('Test record:', testRecord);
-
-  //     if (!updatedRecord) {
-  //       console.error('No listing found after update');
-  //       return null;
-  //     }
-
-  //     return updatedRecord.listingStatus;
-  //   } catch (error) {
-  //     console.error('Error updating listing status:', error);
-  //     throw new GraphQLError('Error updating listing status', {
-  //       extensions: { code: 'INTERNAL_SERVER_ERROR' },
-  //     });
-  //   }
-  // }
+      return rows;
+    } catch (error) {
+      console.error('Error fetching top 5 listings:', error);
+    }
+  }
 
 
   async createListing({ title, description, price, locationId, hostId }) {
@@ -528,6 +524,29 @@ class ListingService {
     } catch (error) {
       console.error('Error fetching locations:', error);
       throw new GraphQLError('Error fetching locations', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
+  async numberOfUpcomingBookings(listingId) {
+    try {
+      const query = `SELECT COUNT(*) as count FROM bookings WHERE listingId = ? AND startDate > CURDATE()`;
+      const response = await this.sequelize.query(query, { replacements: [listingId], type: QueryTypes.SELECT });
+      return response[0].count;
+    } catch (error) {
+      console.error('Error fetching number of upcoming bookings:', error);
+      throw new GraphQLError('Error fetching number of upcoming bookings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+  async getBookingsByListing(listingId) {
+    try {
+      const query = `
+        SELECT * FROM bookings WHERE listingId = ?
+      `;
+      const bookings = await this.sequelize.query(query, { replacements: [listingId], type: QueryTypes.SELECT });
+      return bookings;
+    } catch (error) {
+      console.error('Error fetching bookings by listing:', error);
+      throw new GraphQLError('Error fetching bookings by listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 

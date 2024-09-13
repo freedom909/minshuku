@@ -1,5 +1,3 @@
-
-
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.7"
@@ -7,25 +5,48 @@ extend schema
   )
 
 scalar DateTime
+
 # Query definitions for retrieving listing data
 extend type Query {
   "Returns the details about this listing"
   listing(id: ID!): Listing @shareable
+  
   "A curated array of listings to feature on the homepage"
   featuredListings: [Listing!]! @shareable
+
   "Return the listings that belong to the currently logged-in host"
   hostListings: [Listing]! @shareable
+  
   "Returns all possible amenities for a listing"
   listingAmenities: [Amenity!]! @shareable
-  "Search results for listings that fit the criteria provided"
-  searchListings(criteria: SearchListingsInput!): [Listing] @shareable
-  "Returns the listings that match the criteria provided"
+
+  """
+  Search results for listings that fit the criteria provided
+  Returns the listings that match the criteria provided
+  """
   listings(numOfBeds: Int, page: Int, limit: Int, sortBy: String): [Listing] @shareable
-  "according to sale amount to sort"
+  
+  "Sort by sale amount"
   hotListingsByMoney: [Listing] @shareable
-  "according to the number of bookings"
+  
+  "Sort by the number of bookings"
   hotListingsByBookingNumber: [Listing] @shareable
+  
+  "Get listing details with location information"
   getListingWithLocation(listingId: ID!): Listing @shareable
+  
+  "Full-text search for listings"
+  fullTextSearchListings(input: FullTextSearchInput!): SearchResult! @shareable
+  
+  "Search listings with advanced filters"
+  searchListings(
+    location: LocationInput
+    priceRange: PriceRangeInput
+    totalCostRange: TotalCostRangeInput
+    limit: Int
+    offset: Int
+  ): [Listing] @shareable
+
 }
 
 
@@ -34,18 +55,18 @@ input UpdateListingStatusInput {
   listingStatus: ListingStatus! 
 }
 
-enum ListingStatus{
-  ACTIVE,
-  PENDING,
-  SOLD,
-  DELETED,
-  REJECT,
-  CANCELLED,
+enum ListingStatus {
+  ACTIVE
+  PENDING
+  SOLD
+  DELETED
+  REJECT
+  CANCELLED
   EXPIRED
   COMPLETED
 }
 
-type DeleteListingResponse implements Response{
+type DeleteListingResponse implements Response {
   code: Int! @shareable 
   message: String! @shareable
   success: Boolean! @shareable
@@ -60,9 +81,8 @@ extend type Mutation {
     listingId: ID!
     listing: UpdateListingInput!
   ): UpdateListingResponse! @shareable
-
-   updateListingStatus(input: UpdateListingStatusInput!): UpdateListingStatusResponse @shareable
-   deleteListing(input: DeleteListingInput!): DeleteListingResponse! @shareable
+  updateListingStatus(input: UpdateListingStatusInput!): UpdateListingStatusResponse @shareable
+  deleteListing(input: DeleteListingInput!): DeleteListingResponse! @shareable
 }
 
 type UpdateListingStatusResponse implements Response {
@@ -96,7 +116,7 @@ input CreateListingInput {
   "The title of the listing"
   title: String!
   "The description of the listing"
-  description: String
+  description: String!
   "The price of the listing"
   price: Float!
   "The ID of the location"
@@ -167,8 +187,6 @@ type UpdateListingResponse implements Response {
   listing: Listing @shareable
 }
 
-# Type representing an amenity
-
 # Enum representing the type of a listing location
 enum LocationType {
   SPACESHIP
@@ -178,10 +196,11 @@ enum LocationType {
   ROOM
 }
 
-type ReservedDate @shareable{
+type ReservedDate @shareable {
   checkInDate: DateTime! 
   checkOutDate: DateTime!
 }
+
 # Enum representing sorting criteria for listings
 enum SortByCriteria {
   COST_ASC
@@ -190,7 +209,7 @@ enum SortByCriteria {
 
 # Type representing a listing
 type Listing @key(fields: "id") {
-  id: ID!
+id: ID!
   title: String! @shareable
   description: String! @shareable
   photoThumbnail: String! @shareable
@@ -208,42 +227,43 @@ type Listing @key(fields: "id") {
   checkInDate: String! @shareable
   checkOutDate: String! @shareable
   listingStatus: ListingStatus @shareable
+  bookings: [Booking!]! @shareable
+  availability: [Availability]! @shareable
+  priceRange: PriceRange! @shareable  # Changed to output type
+  totalCostRange: TotalCostRange! @shareable  # Changed to output type
+  locationFilter: Location! @shareable  # Changed to output type
 }
+
+type PriceRange {
+  min: Float
+  max: Float
+}
+
+type TotalCostRange {
+  min: Float
+  max: Float
+}
+
 
 input PriceRangeInput {
-  min: Float!
-  max: Float!
+  min: Float
+  max: Float
 }
 
-input SearchListingsInput {
-  reservedDate: ReservedDateInput!
-  numOfBeds: Int
-  page: Int
-  limit: Int
-  sortBy: SortByCriteria
-  priceRange: PriceRangeInput!  
+input TotalCostRangeInput {
+  min: Float
+  max: Float
 }
 
-# Type representing a host
-type Host @key(fields: "id") {
-  id: ID!
- listing:[Listing] @shareable
+input LocationInput {
+  radius: Float
+  latitude: Float
+  longitude: Float
 }
 
+# Type representing a review
 
-# Type representing galactic coordinates for a listing
-type Location @shareable {
-  id: ID!
-  name: String! @shareable
-  address: String! @shareable
-  city: String! @shareable
-  state: String! @shareable
-  zipCode: String! @shareable
-  country: String! @shareable
-  radius:Float! @shareable
-  latitude: Float! @shareable
-  longitude: Float! @shareable
-}
+
 # Type representing a booking
 type Booking @key(fields: "id") {
   id: ID!
@@ -251,6 +271,56 @@ type Booking @key(fields: "id") {
   guest: Guest! @shareable
   review: Review @shareable
 }
+
+
+# Type representing a host
+type Host @key(fields: "id") {
+  id: ID!
+ listing:[Listing] @shareable
+}
+
+# Input for full-text search
+input FullTextSearchInput {
+  searchText: String!
+  limit: Int
+  offset: Int
+}
+
+type SearchResult {
+  listings: [Listing!]!
+  totalCount: Int!
+}
+
+type Location @key(fields: "id") {
+  id: ID!
+  "The location's name"
+  name: String! @shareable
+  "the country's name"
+  country: String! @shareable
+  "The location's postal code"
+  postalCode: String! @shareable
+  "The location's city"
+  city: String! @shareable
+  "The location's state"
+  state: String! @shareable
+  "The location's address"
+  address: String! @shareable
+  "The location's latitude"
+  latitude: Float! @shareable
+  "The location's longitude"
+  longitude: Float! @shareable
+ "The location's distance from a given point"
+  radius: String! @shareable 
+}
+
+type Availability @key(fields: "id") {
+  id: ID!
+  listing: Listing! @shareable
+  checkInDate: String! @shareable
+  checkOutDate: String! @shareable
+  availability: Boolean! @shareable
+}
+
 
 # Type representing a review
 type Review @key(fields: "id") {
@@ -261,5 +331,14 @@ type Review @key(fields: "id") {
 type Guest @key(fields: "id") {
   id: ID!
   name: String! @shareable
+}
+
+"Represents an Airlock user's common properties"
+interface User {
+  id: ID!
+  "The user's first and last name"
+  name: String!
+  "The user's profile photo URL"
+  profilePicture: String!
 }
 

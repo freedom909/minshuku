@@ -6,6 +6,7 @@ import dbConfig from '../infrastructure/DB/dbconfig.js';
 import Location from '../infrastructure/models/location.js';
 import { GraphQLError } from 'graphql';
 import Amenity from '../infrastructure/models/amenity.js';
+import { Op } from '@sequelize/core'
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 
@@ -18,52 +19,32 @@ const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 const resolvers = {
 
   Query: {
-    searchListings: async (_, { criteria }) => {
-      const { numOfBeds, priceRange, reservedDate } = criteria;
-      const { checkInDate, checkOutDate } = reservedDate;
-      const db = await dbConfig.mysql();
-      console.log('Input received:', criteria);
+    fullTextSearchListings: async (_, { input }, { dataSources }) => {
+      const { searchText, limit = 10, offset = 0 } = input;
+      const { listingService } = dataSources;
+      // Search in the `description` field using LIKE or other full-text search methods
+      const listings = await Listing.findAll({
+        where: {
+          description: {
+            [Op.like]: `%${searchText}%`,  // For full-text search in MySQL/PostgreSQL with LIKE
+            //[Op.match]: sequelize.fn('to_tsquery', searchText),  // For PostgreSQL full-text search with tsvector
+          }
+        },
+        limit,
+        offset,
+      });
+      const totalCount = await Listing.count({
+        where: {
+          description: {
+            [Op.like]: `%${searchText}%`,  // Use the same condition for counting results
+          }
+        }
+      });
 
-      // Validate input criteria
-      if (!(numOfBeds >= 1) || !priceRange || !priceRange.min || !priceRange.max || !(checkInDate < checkOutDate)) {
-        throw new Error("Invalid input: numOfBeds must be at least 1, price range must be defined with min and max values, and checkInDate must be before checkOutDate.");
-      }
-      // Convert checkInDate and checkOutDate to UNIX timestamps if they are in standard date format
-      // const checkInTimestamp = new Date(checkInDate).getTime();
-      // const checkOutTimestamp = new Date(checkOutDate).getTime();
-      try {
-        const query = `
-       SELECT * FROM listings
-       WHERE numOfBeds = ? 
-       AND costPerNight BETWEEN ? AND ?
-       AND  DATE(checkInDate) <= ?  -- Check if the listing is available during the requested dates
-       AND  DATE(checkOutDate) >= ?
-        `;
-
-        const [results] = await db.query(query, [
-          numOfBeds,
-          priceRange.min,
-          priceRange.max,
-          checkInDate,
-          checkOutDate
-        ]);
-
-        // Transform the UNIX timestamps into human-readable dates for the response
-        const transformedResults = results.map(listing => ({
-          ...listing,
-          checkInDate: new Date(listing.checkInDate).toISOString().split('T')[0], // YYYY-MM-DD
-
-          checkOutDate: new Date(listing.checkOutDate).toISOString().split('T')[0] // YYYY-MM-DD
-
-        }));
-        // console.log('checkInDate:', checkInDate, 'checkOutDate:', checkOutDate);
-        // console.log('Transformed checkInTimestamp:', checkInTimestamp, 'checkOutTimestamp:', checkOutTimestamp);
-
-        return transformedResults;
-      } catch (error) {
-        console.error('Error searching listings:', error);
-        throw new Error('Failed to search listings');
-      }
+      return {
+        listings,
+        totalCount
+      };
     },
 
     location: async (parent, _, { dataSources }) => {
@@ -218,10 +199,14 @@ const resolvers = {
       return listingService.getAllAmenities();
     },
 
-    amenities: (_, __, { dataSources }) => {
+    amenities: async (listing, _, { dataSources }) => {
       const { listingService } = dataSources;
-      return listingService.getAllAmenities();
+      const amenities = await listingService.getAmenitiesForListing(listing.id);
+      console.log(`Amenities for listing ${listing.id}:`, amenities);  // Debug log
+      return amenities;
     },
+
+
 
     searchListingOfBooking: async (_, { criteria }, { dataSources }) => {
       try {
@@ -311,10 +296,10 @@ const resolvers = {
     },
 
     updateListingStatus: async (_, { input }, { dataSources }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!listingWithPermissions) {
-        throw new AuthenticationError('User does not have permissions to create a listing');
-      }
+      // if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!listingWithPermissions) {
+      //   throw new AuthenticationError('User does not have permissions to create a listing');
+      // }
       const { id, listingStatus } = input;
       console.log('Input received:', input);
 
@@ -384,10 +369,10 @@ const resolvers = {
     },
 
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
-      // if (!userId) throw new AuthenticationError('User not authenticated');
-      // if (!isHostOfListing || !isAdmin) {
-      //   throw new AuthenticationError(`you don't have right to update this list`)
-      // }
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHostOfListing || !isAdmin) {
+        throw new AuthenticationError(`you don't have right to update this list`)
+      }
       const { listingService } = dataSources;
 
       if (!listingId) throw new Error('Listing ID not provided');
