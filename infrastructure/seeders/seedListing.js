@@ -4,9 +4,9 @@ import { fileURLToPath } from 'url';
 import sequelize from '../models/seq.js';
 import Listing from '../models/listing.js';
 
-// import Location from '../models/location.js'; // Ensure this model exists and is imported correctly
+import Location from '../models/location.js'; // Ensure this model exists and is imported correctly
 
-const models = { Listing};
+const models = { Listing };
 
 async function loadJSON(filePath) {
   const data = await fs.readFile(filePath, 'utf-8');
@@ -22,11 +22,11 @@ async function seedModel(model, data) {
 async function seedDatabase() {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  
+
   try {
     await sequelize.sync({ force: true });
     console.log('Database synced!');
-    
+
     // const locations = await loadJSON(path.join(__dirname, 'locations.json'));
     const listings = await loadJSON(path.join(__dirname, 'listings.json'));
 

@@ -37,6 +37,7 @@
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "http": "^0.0.1-security",
+    "mongoose": "^8.6.1",
     "mysql2": "^3.6.0",
     "postinstall": "^0.8.0"
   },

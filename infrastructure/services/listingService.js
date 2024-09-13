@@ -13,6 +13,7 @@ import queryDatabase from '../DB/dbUtils.js'
 import Listing from '../models/listing.js';
 import Coordinate from '../models/location.js'
 import dbConfig from '../DB/dbconfig.js';
+import Location from '../models/location.js';
 
 
 dotenv.config();
@@ -115,6 +116,28 @@ class ListingService {
     } catch (e) {
       console.error('Error fetching listing by ID:', e);
       throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
+  async getListing(id) {
+    try {
+      const listing = await this.sequelize.models.Listing.findByPk(id, {
+        include: [{
+          model: this.sequelize.models.Location,
+          as: 'locations'  // Use alias defined in the association
+        }]
+      });
+
+      if (!listing) {
+        throw new Error('Listing not found');
+      }
+
+      return listing;
+    } catch (error) {
+      console.error('Error fetching listing:', error);
+      throw new GraphQLError('Error fetching listing', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' }
+      });
     }
   }
 
@@ -290,6 +313,22 @@ class ListingService {
     }
   }
 
+  async getListing(id) {
+    try {
+      const query = `SELECT * FROM listings WHERE id = :id LIMIT 1`
+      const [listing] = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { id } // Using replacements to safely insert the id into the query
+      });
+      if (!listing) {
+        throw new Error('Listing not found');
+      }
+      return listing;
+    } catch (error) {
+      console.error('Error fetching listing:', error);
+      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
 
   async getAllAmenities() {
     try {
@@ -302,13 +341,16 @@ class ListingService {
       }
 
       // Map the amenities and provide default values for non-nullable fields
+
+      // Provide a default value if category is null
       const amenities = response.map(amenity => ({
-        ...amenity,
-        id: amenity.id,
+        id: amenity.id, // Explicitly map the required fields
         name: amenity.name,
-        // Provide a default value if category is null
-        category: amenity.category ? amenity.category.replace(' ', '_').toUpperCase() : 'UNKNOWN',
-      })).filter(amenity => amenity.name && amenity.category); // Filter out amenities without name or category;
+        // Ensure category has a valid value or default to 'UNKNOWN'
+        category: amenity.category
+          ? amenity.category.replace(' ', '_').toUpperCase()
+          : 'UNKNOWN',
+      }));
       console.log('Processed amenities:', amenities);
       return amenities;
     } catch (error) {
@@ -478,9 +520,39 @@ class ListingService {
     }
   }
 
+  async getLocations() {
+    try {
+      const query = `SELECT * FROM locations`
+      const locations = await this.sequelize.query(query, { type: QueryTypes.SELECT });
+      return locations;
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      throw new GraphQLError('Error fetching locations', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
 
+  async getLocationById(listingId) {
+    try {
+      const query = `SELECT * FROM locations WHERE listingId = ?`; // Query using listingId
+      console.log('Listing ID:', listingId); // Log listingId for debugging
 
+      const response = await this.sequelize.query(query, {
+        replacements: [listingId],  // Correct replacement for listingId
+        type: QueryTypes.SELECT
+      });
 
+      if (response.length === 0) {
+        console.log(`Location not found for listing ID: ${listingId}`);
+        return null;  // Return null if no location is found
+      }
+
+      console.log('Query result:', response);
+      return response[0];  // Return the first location found
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      throw new GraphQLError('Error fetching locations', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
 
 
   async hotListingsByMoneyBookingTop5() {
@@ -525,6 +597,20 @@ class ListingService {
     } catch (error) {
       console.error('Error fetching listings:', error);
       throw new Error('Failed to fetch listings');
+    }
+  }
+  async getCurrentlyBookedDateRangesForListing(listingId) {
+    try {
+      const query = `
+        SELECT * FROM bookings WHERE listingId = :listingId
+      `;
+      const bookings = await this.sequelize.query(query, {
+        type: QueryTypes.SELECT,
+        replacements: { listingId },
+      });
+      return bookings;
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
     }
   }
 

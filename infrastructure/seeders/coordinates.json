@@ -1,13 +1,82 @@
 [
-    { "id": "1", "listingId": "listing-1", "latitude": 58.130, "longitude": 125.0360 },
-    { "id": "2", "listingId": "listing-2", "latitude": 58.130, "longitude": 125.0360 },
-    { "id": "3", "listingId": "listing-3", "latitude": 40.7128, "longitude": -74.060 },
-    { "id": "4", "listingId": "listing-4", "latitude": 34.0194, "longitude": -118.14912 },
-    { "id": "5", "listingId": "listing-5", "latitude": 58.1130, "longitude": 125.3260 },
-    { "id": "6", "listingId": "listing-6", "latitude": 40.71128, "longitude": -74.0604 },
-    { "id": "7", "listingId": "listing-7", "latitude": 34.02194, "longitude": -118.14912 },
-    { "id": "8", "listingId": "listing-8", "latitude": 40.71128, "longitude": -74.06040 },
-    { "id": "9", "listingId": "listing-9", "latitude": 34.02194, "longitude": -118.14912 },
-    { "id": "10", "listingId": "listing-10", "latitude": 40.71128, "longitude": -74.06040 }
+    {
+        "id": "coordinate-1",
+        "listingId": "listing-1",
+        "name": "washington D.C.",
+        "radius": 1000,
+        "latitude": 58.130,
+        "longitude": 125.0360
+    },
+    {
+        "id": "coordinate-2",
+        "listingId": "listing-2",
+        "name": "Los Angeles",
+        "radius": 1000,
+        "latitude": 41.8789,
+        "longitude": -87.6298
+    },
+    {
+        "id": "coordinate-3",
+        "listingId": "listing-3",
+        "name": "Chicago",
+        "radius": 1000,
+        "latitude": 41.8781,
+        "longitude": -87.6298
+    },
+    {
+        "id": "coordinate-4",
+        "listingId": "listing-4",
+        "name": "Boston",
+        "radius": 1000,
+        "latitude": 42.3601,
+        "longitude": -71.0589
+    },
+    {
+        "id": "coordinate-5",
+        "listingId": "listing-5",
+        "name": "Seattle",
+        "radius": 1000,
+        "latitude": 47.6062,
+        "longitude": -122.3321
+    },
+    {
+        "id": "coordinate-6",
+        "listingId": "listing-6",
+        "name": "San Francisco",
+        "radius": 1000,
+        "latitude": 34.0522,
+        "longitude": -118.2437
+    },
+    {
+        "id": "coordinate-7",
+        "listingId": "listing-7",
+        "name": "Vancouver",
+        "radius": 1000,
+        "latitude": 49.2827,
+        "longitude": -123.1207
+    },
+    {
+        "id": "coordinate-8",
+        "listingId": "listing-8",
+        "name": "Toronto",
+        "radius": 1000,
+        "latitude": 43.6532,
+        "longitude": -79.3832
+    },
+    {
+        "id": "coordinate-9",
+        "listingId": "listing-9",
+        "name": "Montreal",
+        "radius": 1000,
+        "latitude": 45.4995,
+        "longitude": -73.56927
+    },
+    {
+        "id": "coordinate-10",
+        "listingId": "listing-10",
+        "name": "Calgary",
+        "radius": 1000,
+        "latitude": 40.71128,
+        "longitude": -74.06040
+    }
 ]
-  

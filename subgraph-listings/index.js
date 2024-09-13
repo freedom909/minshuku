@@ -7,7 +7,7 @@ import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import initializeListingContainer from '../infrastructure/DB/initListingContainer.js';
-
+import { GraphQLError } from 'graphql';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
@@ -18,8 +18,8 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    const mysqlContainer = await initializeListingContainer({ services: [] }); 
-  
+    const mysqlContainer = await initializeListingContainer({ services: [] });
+
 
     const app = express();
     const httpServer = http.createServer(app);
@@ -32,7 +32,7 @@ const startApolloServer = async () => {
         {
           async serverWillStart() {
             return {
-              async drainServer() {   
+              async drainServer() {
                 await mysqlContainer.resolve('mysqldb').end();
               }
             };
@@ -42,7 +42,7 @@ const startApolloServer = async () => {
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          listingService:mysqlContainer.resolve('listingService')
+          listingService: mysqlContainer.resolve('listingService')
         },
       })
     });
@@ -57,7 +57,7 @@ const startApolloServer = async () => {
         context: async ({ req }) => ({
           token: req.headers.authorization || '',
           dataSources: {
-            listingService:mysqlContainer.resolve('listingService')
+            listingService: mysqlContainer.resolve('listingService')
           },
         })
       })

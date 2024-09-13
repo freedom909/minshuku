@@ -1,46 +1,65 @@
-import mongoose from 'mongoose';
+import { Model, DataTypes, ENUM } from 'sequelize';
+import sequelize from './seq.js'; // Adjust the path as necessary
 
-const locationSchema = new mongoose.Schema({
+class Location extends Model { }
+
+Location.init({
   id: {
-    type: String,
-    required: true,
-    unique: true, // Ensures each location has a unique id
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+  listingId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: 'Listings',
+      key: 'id',
+    },
   },
   name: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  radius: {
+    type: DataTypes.FLOAT,
   },
   latitude: {
-    type: Number,
-    required: true,
+    type: DataTypes.FLOAT,
+    allowNull: false,
   },
   longitude: {
-    type: Number,
-    required: true,
+    type: DataTypes.FLOAT,
+    allowNull: false,
   },
-  radius: Number,
   address: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   city: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   state: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   country: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   zipCode: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
+  type: {
+    type: DataTypes.ENUM('primary', 'secondary', 'tertiary'),
+    allowNull: false,
+    defaultValue: 'primary', // Add a default value
+  },
+}, {
+  sequelize,
+  modelName: 'Location',
+  timestamps: false,
+
 });
-
-const Location = mongoose.model('Location', locationSchema);
-
-export default Location;
+export default Location

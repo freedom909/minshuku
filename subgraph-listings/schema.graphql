@@ -25,6 +25,7 @@ extend type Query {
   hotListingsByMoney: [Listing] @shareable
   "according to the number of bookings"
   hotListingsByBookingNumber: [Listing] @shareable
+  getListingWithLocation(listingId: ID!): Listing @shareable
 }
 
 
@@ -201,7 +202,7 @@ type Listing @key(fields: "id") {
   numberOfUpcomingBookings: Int! @shareable
   currentlyBookedDates: [ReservedDate]! @shareable
   totalCost(checkInDate: String!, checkOutDate: String!): Float @shareable
-  coordinate: Coordinate @shareable
+  location: Location @shareable
   saleAmount: Float @shareable
   bookingNumber: Int @shareable
   checkInDate: String! @shareable
@@ -231,9 +232,17 @@ type Host @key(fields: "id") {
 
 
 # Type representing galactic coordinates for a listing
-type Coordinate @shareable {
-  latitude: Float! 
-  longitude: Float! 
+type Location @shareable {
+  id: ID!
+  name: String! @shareable
+  address: String! @shareable
+  city: String! @shareable
+  state: String! @shareable
+  zipCode: String! @shareable
+  country: String! @shareable
+  radius:Float! @shareable
+  latitude: Float! @shareable
+  longitude: Float! @shareable
 }
 # Type representing a booking
 type Booking @key(fields: "id") {

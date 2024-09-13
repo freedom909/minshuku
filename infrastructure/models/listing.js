@@ -1,15 +1,17 @@
 import { Model, DataTypes, ENUM } from 'sequelize';
 import sequelize from './seq.js'; // Adjust the path as necessary
-// import Coordinate from './coordinate.js'; // Import Coordinate model
-import Amenities from './amenities.js';
+import Location from './location.js'; // Import Coordinate model
+import Amenity from './amenity.js';
 import ListingAmenities from './listingAmenities.js';
-import Location from './location.js'; // Ensure this model exists and is imported correctly
+import Coordinate from './coordinate.js'; // Import Coordinate model
+
 
 class Listing extends Model { }
 
 Listing.init({
   id: {
     type: DataTypes.STRING,
+    allowNull: false,
     primaryKey: true,
   },
   title: DataTypes.STRING,
@@ -26,6 +28,13 @@ Listing.init({
   updatedAt: DataTypes.DATE,
   checkInDate: DataTypes.DATE,
   checkOutDate: DataTypes.DATE,
+  locationId: {  // Add this field
+    type: DataTypes.STRING,
+    allowNull: true,  // If locationId is mandatory, else allowNull: true
+    onUpdate: 'CASCADE',
+    onDelete: 'SET NULL',  // If a location is deleted, set locationId to NULL
+  },
+  // listingAmenitiesId: DataTypes.STRING,
   totalCost: {
     type: DataTypes.VIRTUAL,
     get() {
@@ -56,11 +65,27 @@ Listing.init({
   modelName: 'Listing',
   timestamps: true,
 });
+
 // Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
-Listing.hasOne(Location, { foreignKey: 'locationId', as: 'location' });
+// //Define the one-to-one relationship
 
-Listing.belongsToMany(Amenities, { through: ListingAmenities, foreignKey: 'listingId', otherKey: 'amenityId', as: 'amenities' });
+// Coordinate.belongsTo(Listing, {
+//   foreignKey: 'listingId',
+//   as: 'coordinate', // Alias must match the Listing model association
+// });
 
+Listing.hasOne(Location, {
+  foreignKey: 'listingId', // Foreign key in the Location model
+  as: 'location', // Alias should reflect a collection of locations
+});
+Location.belongsTo(Listing, {
+  foreignKey: 'listingId', // Foreign key in the Location model
+  as: 'location', // This alias must match the association in Listing
+});
+// Define the many-to-many relationship
+
+Listing.belongsToMany(Amenity, { through: ListingAmenities, foreignKey: 'listingId', otherKey: 'amenityId', as: 'amenities' });
+Amenity.belongsToMany(Listing, { through: ListingAmenities, foreignKey: 'amenityId', otherKey: 'listingId', as: 'listings' });
 
 // Export the model
 export default Listing;

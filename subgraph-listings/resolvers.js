@@ -4,7 +4,8 @@ import Listing from '../infrastructure/models/listing.js';
 import Coordinate from '../infrastructure/models/location.js';
 import dbConfig from '../infrastructure/DB/dbconfig.js';
 import Location from '../infrastructure/models/location.js';
-import GraphQLError from 'graphql/error/GraphQLError.js';
+import { GraphQLError } from 'graphql';
+import Amenity from '../infrastructure/models/amenity.js';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 
@@ -65,6 +66,34 @@ const resolvers = {
       }
     },
 
+    location: async (parent, _, { dataSources }) => {
+      const { listingService } = dataSources;
+      const listingId = parent.id;  // Use the listing's ID from the parent
+
+      try {
+        const result = await listingService.getLocationById(listingId);  // Fetch location by listingId
+
+        if (!result) {
+          console.error('Location not found for listing ID:', listingId);
+          return null;  // Return null if no location is found
+        }
+
+        // Return the location object as per the schema
+        return {
+          id: result.id,
+          name: result.name,
+          address: result.address,
+          city: result.city,
+          state: result.state,
+          country: result.country,
+          zipCode: result.zipCode,
+        };
+      } catch (error) {
+        console.error('Error fetching location:', error);
+        return null;
+      }
+    },
+
     hotListingsByMoney: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       try {
@@ -85,29 +114,23 @@ const resolvers = {
     },
 
     listings: async (_, args, { dataSources }) => {
-
       try {
         const listings = await Listing.findAll({
           include: [
             {
-              model: Coordinate,
-              as: 'coordinate', // Ensure this alias matches your model association
-            },
-            {
-              model: Amenities,   // Include Amenities (through ListingAmenities)
-              as: 'amenities',    // Alias for Amenities
-              through: { attributes: [] },  // Exclude fields from the join table
-              attributes: ['name', 'category']  // Only fetch the name and category of the amenities
+              model: Amenity,
+              as: 'amenities', // This alias must match the association
+              through: { attributes: [] },
+              attributes: ['name', 'category'],
             },
             {
               model: Location,
-              as: 'location', // Ensure this alias matches your model association
-              attributes: ['state', 'address', 'city', 'country', 'zipCode'] // Only fetch the name, address, city, and country of the location// Only fetch the name, address, city, and country of the location
+              as: 'location', // This alias must match the association
+              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
             }
-
-
           ],
         });
+        console.log(JSON.stringify(listings, null, 2));  // Log the data for debugging
         if (!listings) {
           throw new Error('No listings found');
         }
@@ -118,20 +141,35 @@ const resolvers = {
           checkOutDate: new Date(listing.checkOutDate).toISOString(),
         }));
       } catch (error) {
+        console.error('Error fetching listings:', error);
         throw new Error('Failed to fetch listings');
       }
-
     },
 
     listing: async (_, { id }, { dataSources }) => {
       try {
         const listing = await Listing.findOne({
           where: { id },
-          include: [{
-            model: Coordinate,
-            as: 'coordinate',
-          }],
+          include: [
+            // {
+            //   model: Coordinate,
+            //   as: 'coordinate', // Ensure this alias matches your model association
+            //   attributes: ['latitude', 'longitude', 'name', 'radius'],
+            // },
+            {
+              model: Amenity,
+              as: 'amenities', // This alias must match the association
+              through: { attributes: [] },
+              attributes: ['name', 'category'],
+            },
+            {
+              model: Location,
+              as: 'location', // This alias must match the association
+              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+            }
+          ],
         });
+        console.log(JSON.stringify(listing.toJSON(), null, 2));  // Log the data for debugging
         if (!listing) {
           throw new Error('Listing not found');
         }
@@ -152,10 +190,24 @@ const resolvers = {
     featuredListings: async () => {
       // Fetch featured listings with coordinates
       return await Listing.findAll({
-        where: { isFeatured: true }, // Assuming you have a field to filter featured listings
-        include: [{ model: Coordinate, as: 'coordinate' }], // Include coordinates
+        where: { isFeatured: true }, // Filter for featured listings
+        attributes: ['id', 'locationType', 'title'], // Include id, locationType, title
+        include: [
+          {
+            model: Amenity,
+            as: 'amenities',
+            through: { attributes: [] },
+            attributes: ['name', 'category'],
+          },
+          {
+            model: Location,
+            as: 'location', // Ensure alias matches the association
+            attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+          }
+        ],
       });
     },
+
     hotListings: async (_, __, { dataSources }) => {
       const { listingService } = dataSources;
       return listingService.getTop5Listings();
@@ -170,6 +222,7 @@ const resolvers = {
       const { listingService } = dataSources;
       return listingService.getAllAmenities();
     },
+
     searchListingOfBooking: async (_, { criteria }, { dataSources }) => {
       try {
         const { listingService, bookingService } = dataSources;
@@ -298,9 +351,6 @@ const resolvers = {
       }
     },
 
-
-
-
     createListing: async (_, { listing }, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError('User not authenticated');
       if (!listingWithPermissions) {
@@ -368,7 +418,6 @@ const resolvers = {
     host: ({ hostId }) => {
       return { id: hostId };
     },
-
 
     totalCost: async (parent, { checkInDate, checkOutDate }, { dataSources }) => {
       const { listingService } = dataSources;
@@ -466,10 +515,37 @@ const resolvers = {
       return bookings.length;
     },
 
-    location: async ({ _, __, dataSources }) => {
-      const { listingService } = dataSources;
-      const { location } = await listingService.getListing(parent.id);
-      return location;
+    getListingWithLocation: async (_, { listingId }, { dataSources }) => {
+      try {
+        const listing = await dataSources.listingService.getListingById(listingId);  // Fetch listing details
+        if (!listing) {
+          throw new Error(`Listing not found for ID: ${listingId}`);
+        }
+
+        return listing;  // Return the listing object
+      } catch (error) {
+        console.error('Error fetching listing:', error);
+        throw new Error('Failed to fetch listing');
+      }
+    },
+
+
+    locations: async ({ parent }, _, { dataSources }) => {
+
+      try {
+        const locations = await models.Listing.findByPk({
+          where: { id: parent.id },
+          include: [{ model: Location, as: 'location' }],
+        });
+        if (!locations) {
+          throw new Error('Listing not found');
+        }
+
+        return locations[0]; // Return the associated locations
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+        throw new Error('Failed to fetch locations');
+      }
     },
     coordinates: async (parent, _, { dataSources }) => {
       // Use eager loading to fetch coordinates when fetching listings
