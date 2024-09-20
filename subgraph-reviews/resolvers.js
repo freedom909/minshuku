@@ -1,10 +1,10 @@
 import { AuthenticationError, ForbiddenError } from "../infrastructure/utils/errors.js";
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
-import { searchReviews } from "../infrastructure/search/reviewService.js";
-import { Review } from "../infrastructure/models/review.js";
+import { searchReviews } from "../infrastructure/services/reviewService.js";
+import Review from "../infrastructure/models/review.js";
 
 const resolvers = {
-  Query:{
+  Query: {
     searchReviews: async (_, { criteria }) => {
       try {
         const results = await searchReviews(criteria);
@@ -13,12 +13,12 @@ const resolvers = {
         throw new Error(`Failed to search reviews: ${error.message}`);
       }
     },
+
     reviews: async (_, { criteria }) => {
       const reviews = await Review.findAll({ where: criteria });
-
       return reviews.map(review => {
         if (review.guestId) {
-          const guest =  User.findByPk(review.guestId);
+          const guest = User.findByPk(review.guestId);
           return {
             ...review.toJSON(),
             author: {
@@ -110,6 +110,10 @@ const resolvers = {
       const { reviewService } = dataSources;
       return reviewService.getReviewsForListing(id);
     },
+    __resolveReference: async (listing, { dataSources }) => {
+      return dataSources.listingService.getListing(listing.id);
+    },
+
   },
 
   Booking: {
@@ -155,6 +159,18 @@ const resolvers = {
       }
       return { __typename: role, id: review.authorId };
     },
+    isFeatured: ({ id }, _, { dataSources }) => {
+      const { listingService } = dataSources;
+      return listingService.isFeatured(id);
+    },
+    likesCount: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getLikeCount(id);
+    },
+    dislikesCount: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getDislikeCount(id);
+    },
   },
 
   User: {
@@ -162,7 +178,6 @@ const resolvers = {
       return user.role;
     },
   },
-
 };
 
 export default resolvers;

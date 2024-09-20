@@ -8,8 +8,7 @@ import UserService from '../services/userService.js';
 import UserRepository from '../repositories/userRepository.js';
 import AmenityService from '../services/amenityService.js';
 import axios from 'axios';
-import httpClient from '../../../localhost:3000'; // Import your configured HTTP client
-
+import httpClient from '../../frontend/src/__mocks__/httpClient.js'; // Import your configured HTTP client
 
 const initializeAmenityContainer = async ({ services = [] } = {}) => {
   const mysqldb = await connectMysql();

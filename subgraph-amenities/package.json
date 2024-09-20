@@ -21,12 +21,12 @@
     "graphql-shield": "^7.6.5",
     "graphql-tag": "^2.12.6",
     "http": "^0.0.1-security",
+    "jest": "^29.7.0",
     "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
     "mongodb": "^6.8.0",
     "mongoose": "^8.4.3",
     "nodemailer": "^6.9.7",
-    "nodemon": "^3.1.4",
     "paseto": "^3.1.4",
     "path": "^0.12.7",
     "url": "^0.11.3"
@@ -34,5 +34,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
 }

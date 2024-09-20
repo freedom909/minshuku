@@ -18,24 +18,20 @@ class BookingRepository {
   }
 
   async findOne(query) {
-    console.log('Inside findAll method');
-    console.log('Query:', query);
-    
+    debugger; // This will pause the execution when you run in debug mode
     const connection = await this.getConnection();
     try {
       const queryKeys = Object.keys(query.where);
       const queryValues = Object.values(query.where);
       const whereClause = queryKeys.map(key => `${key} = ?`).join(' AND ');
       const sql = `SELECT * FROM bookings${queryKeys.length ? ` WHERE ${whereClause}` : ''}`;
-      if (queryKeys.length === 0) {
-        throw new Error('Query object is empty');
-      }
+
       console.log('SQL:', sql);
       console.log('Query Values:', queryValues);
-      
+
       const [rows] = await connection.execute(sql, queryValues);
-      console.log('Rows:', rows);
-      return rows;
+
+      return rows[0];
     } catch (error) {
       console.error('Error in findOne:', error);
       throw error;
@@ -161,6 +157,8 @@ class BookingRepository {
       throw error;
     }
   }
+
+
 }
 
 export default BookingRepository;

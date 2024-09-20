@@ -146,10 +146,10 @@ const resolvers = {
         throw new UserInputError('All booking details must be provided');
       }
 
-      // Fetch total cost from listing service
+      //Fetch total cost from listing service
       const { totalCost } = await dataSources.listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
 
-      // Subtract funds from user's account
+      //Subtract funds from user's account
       try {
         await dataSources.paymentService.subtractFunds({ guestId, amount: totalCost });
       } catch (error) {

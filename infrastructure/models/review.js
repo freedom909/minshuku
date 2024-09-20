@@ -1,65 +1,27 @@
-// import mongoose from 'mongoose';
-// import { FLOAT } from 'sequelize';
+import mongoose from 'mongoose';
 
-// const reviewSchema = new mongoose.Schema({
-//   title: { type: String, required: true },
-//   rating: { type: FLOAT, required: true },
-//   content: { type: String, required: true },
-//   locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: true },
-//   hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-//   guestId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-//   reviewId: { type: mongoose.Schema.Types.ObjectId, ref: 'Review' },
-// }, { timestamps: true });
+// Define the schema for reviews
+const reviewSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  rating: { type: Number, required: true }, // Corresponds to Float in GraphQL
+  content: { type: String, required: true },
+  picture: { type: String }, // Optional image upload
+  locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: false }, // Corresponds to locationId in GraphQL
+  hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Host reference
+  guestId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Guest reference
+  authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Corresponds to the 'author' field in GraphQL
+  bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true }, // Corresponds to bookingId in GraphQL
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }], // Optional comments array
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Optional likes array
+  dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Optional dislikes array
+  bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Optional bookmarks array
+  isFeatured: { type: Boolean, default: false },
+  isHighlighted: { type: Boolean, default: false },
+  isPinned: { type: Boolean, default: false },
+  round: { type: Number, required: true }, // Corresponds to round in GraphQL
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 
-// const Review = mongoose.model('Review', reviewSchema);
-
-// export default Review;
-
-import { DataTypes, Model } from 'sequelize';
-import sequelize from './seq.js';
-
-export class Review extends Model {}
-
-const Review = sequelize.define('Review', {
-  id: {
-    type: DataTypes.STRING,
-    primaryKey: true,
-  },
-  authorId: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  bookingId: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  locationId: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  guestId: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  hostId: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  content: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-  },
-  rating: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-}, {
-  sequelize,
-  modelName: 'Review',
-  timestamps: true,
-});
-
+// Create the model from the schema
+const Review = mongoose.model('Review', reviewSchema);
 
 export default Review;
-
-

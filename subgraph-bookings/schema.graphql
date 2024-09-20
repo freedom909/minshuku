@@ -110,6 +110,7 @@ type Guest @key(fields: "id") {
   id: ID!
   "The list of bookings for a guest"
   bookings: [Booking]! @shareable
+  picture: String! @shareable
 }
 
 type Review @key(fields: "id") {

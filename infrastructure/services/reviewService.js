@@ -1,3 +1,5 @@
+
+
 import ReviewRepository from "../repositories/reviewRepository.js";
 class ReviewService {
   constructor(reviewRepository) {
@@ -24,7 +26,7 @@ class ReviewService {
     });
   }
 
-  
+
   async createReviewForHost({ hostId, authorId, bookingId, ...reviewInput }) {
     return await this.reviewRepository.createReview({
       ...reviewInput,
@@ -33,6 +35,26 @@ class ReviewService {
       bookingId,
       targetType: 'HOST',
     });
+  }
+
+  async searchReviews({ guestId, authorId, listingId, hostId, targetType, comment, ...filters }) {
+    // Build the search query
+    const query = {
+      bool: {
+        must: [
+          { match: { guestId } },
+          { match: { authorId } },
+          { match: { listingId } },
+          { match: { hostId } },
+          { match: { targetType } }
+        ],
+        // Add a full-text search for the comment field if the user wants to search by comment
+        ...(comment ? { should: [{ match: { comment } }] } : {})
+      }
+    };
+
+    // Perform the search using the review repository (which interacts with Elasticsearch)
+    return await this.reviewRepository.searchReviews(query, filters);
   }
 
   async getOverallRatingForListing(listingId) {
@@ -55,9 +77,12 @@ class ReviewService {
     return await this.reviewRepository.getUser(userId);
   }
 
-  async getOverallRatingForListing(id){
+  async getOverallRatingForListing(id) {
     return await this.reviewRepository.getAverageRating({ targetType: 'LISTING', listingId: id });
-  
+  }
+
+  async getListing(listingId) {
+    return await this.reviewRepository.getListing(listingId);
   }
 }
 

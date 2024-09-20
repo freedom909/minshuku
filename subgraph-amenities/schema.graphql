@@ -12,7 +12,7 @@ type Listing {
   amenities: [Amenity!]! @shareable
 }
 
-type Amenity {
+type Amenity @key(fields: "id"){
   id: ID! @shareable
   name: String! @shareable
 }

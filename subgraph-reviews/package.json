@@ -9,7 +9,8 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "dev": "nodemon index.js"
   },
   "nodemonConfig": {
     "ext": "*.js, *.graphql"
@@ -26,8 +27,10 @@
     "dotenv": "^16.3.1",
     "graphql": "^16.8.0",
     "graphql-tag": "^2.12.6",
-    "nodemon": "^3.1.4",
     "sequelize": "^6.32.1",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
   }
 }

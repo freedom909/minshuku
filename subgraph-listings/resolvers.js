@@ -172,7 +172,7 @@ const resolvers = {
       // Fetch featured listings with coordinates
       return await Listing.findAll({
         where: { isFeatured: true }, // Filter for featured listings
-        attributes: ['id', 'locationType', 'title'], // Include id, locationType, title
+        attributes: ['id', 'locationType', 'title', 'checkInDate', 'checkOutDate', 'photoThumbnail', 'description', 'costPerNight', 'saleAmount'], // Include id, locationType, title
         include: [
           {
             model: Amenity,
@@ -396,10 +396,38 @@ const resolvers = {
   },
 
   Listing: {
-    __resolveReference: async ({ id }, { dataSources }) => {
-      const { listingService } = dataSources;
-      return await listingService.getListing(id);
+    __resolveReference: async (reference, { dataSources }) => {
+      try {
+        const listing = await Listing.findOne({
+          where: { id: reference.id },
+          include: [
+            {
+              model: Amenity,
+              as: 'amenities',
+              through: { attributes: [] },
+              attributes: ['name', 'category'],
+            },
+            {
+              model: Location,
+              as: 'location',
+              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+            }
+          ]
+        })
+        if (!listing) {
+          throw new Error('Listing not found');
+        }
+        return {
+          ...listing.toJSON(),
+          checkInDate: new Date(listing.checkInDate).toISOString(),
+          checkOutDate: new Date(listing.checkOutDate).toISOString(),
+        };
+      } catch (error) {
+        console.error('Error resolving listing reference:', error);
+        throw new Error('Failed to resolve listing reference');
+      }
     },
+
     host: ({ hostId }) => {
       return { id: hostId };
     },
@@ -444,6 +472,14 @@ const resolvers = {
       }
     },
 
+    __resolveType(listing) {
+      if (listing.apartment) {
+        return 'ApartmentListing';
+      } else if (listing.house) {
+        return 'HouseListing';
+      }
+      return 'OtherListingType';
+    },
 
     amenities: async ({ id }, _, { dataSources }) => {
       const { listingService } = dataSources;

@@ -1,5 +1,5 @@
 import { GraphQLError } from 'graphql';
-import DateTimeType from '../infrastructure/scalar/DateTimeType.js';
+import DateTimeType from '../infrastructure/scalar/dateTimeType.js';
 import { authenticateJWT, checkPermissions } from '../infrastructure/middleware/auth.js';
 import { permissions } from '../infrastructure/auth/permission.js';
 
@@ -187,10 +187,10 @@ const resolvers = {
 
     async updateListingStatus(id, status) {
       // Update the status of a listing in the database
-      
+
       // Implement the logic here
     },
-  
+
     cancelListing: async (_, { id }, { dataSources }) => {
       const { listingService } = dataSources;
       return listingService.updateListingStatus(id, 'CANCELLED');
@@ -215,44 +215,5 @@ const resolvers = {
 
 export default resolvers;
 
-// import AccountService from '../infrastructure/services/accountService.js';
-// import AccountRepository from '../infrastructure/repositories/accountRepository.js';
-// import connectToMongoDB from '../infrastructure/seeders/connectMongo.js';
 
-// let accountService;
-
-// (async () => {
-//   const db = await connectToMongoDB();
-//   const accountRepository = new AccountRepository({ mongodb: db });
-//   accountService = new AccountService(accountRepository);
-// })();
-
-// const resolvers = {
-//   Query: {
-//     async getAccount(_, { id }) {
-//       return await accountService.getAccountById(id);
-//     },
-//     async getAllAccounts() {
-//       return await accountService.getAllAccounts();
-//     },
-//     // Add other query resolvers
-//   },
-//   Mutation: {
-//     async createAccount(_, { account }) {
-//       return await accountService.createAccount(account);
-//     },
-//     async updateAccountEmail(_, { id, email }) {
-//       return await accountService.updateAccountEmail(id, email);
-//     },
-//     async updateAccountPassword(_, { id, password }) {
-//       return await accountService.updateAccountPassword(id, password);
-//     },
-//     async deleteAccount(_, { id }) {
-//       return await accountService.deleteAccount(id);
-//     },
-//     // Add other mutation resolvers
-//   }
-// };
-
-// export default resolvers;
 

@@ -234,14 +234,17 @@ id: ID!
   locationFilter: Location! @shareable  # Changed to output type
 }
 
-type PriceRange {
-  min: Float
-  max: Float
+type PriceRange @key(fields: "id") {
+  id: ID!  # Add an id field to use as the key
+  min: Float @shareable
+  max: Float @shareable
 }
 
-type TotalCostRange {
-  min: Float
-  max: Float
+
+type TotalCostRange @key(fields: "id") {
+  id: ID!  # Add an id field to use as the key
+  min: Float @shareable
+  max: Float @shareable
 }
 
 
@@ -277,6 +280,7 @@ type Booking @key(fields: "id") {
 type Host @key(fields: "id") {
   id: ID!
  listing:[Listing] @shareable
+ picture: String @shareable
 }
 
 # Input for full-text search
@@ -286,9 +290,17 @@ input FullTextSearchInput {
   offset: Int
 }
 
-type SearchResult {
-  listings: [Listing!]!
-  totalCount: Int!
+type SearchResult @key(fields: "id") {
+  id: ID!
+  "The type of search result (e.g., LISTING, USER)"
+  type: SearchResultType! @shareable
+  listings: [Listing!]! @shareable
+  totalCount: Int! @shareable
+}
+
+enum SearchResultType {
+  LISTING
+  USER
 }
 
 type Location @key(fields: "id") {
@@ -331,14 +343,17 @@ type Review @key(fields: "id") {
 type Guest @key(fields: "id") {
   id: ID!
   name: String! @shareable
+  picture: String @shareable
 }
 
 "Represents an Airlock user's common properties"
 interface User {
   id: ID!
   "The user's first and last name"
-  name: String!
+  name: String! 
   "The user's profile photo URL"
-  profilePicture: String!
+  picture: String
 }
+
+
 

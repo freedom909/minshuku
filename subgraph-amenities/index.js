@@ -13,6 +13,11 @@ import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
 import initMongoContainer from '../infrastructure/DB/initMongoContainer.js'
 import initializeAmenityContainer from '../infrastructure/DB/initAmenityContainer.js';
+import ListingService from '../infrastructure/services/listingService.js';
+import AmenityService from '../infrastructure/services/amenityService.js';
+import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
+import UserService from '../infrastructure/services/userService.js';
+
 
 dotenv.config();
 

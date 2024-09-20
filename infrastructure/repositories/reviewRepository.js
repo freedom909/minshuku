@@ -5,6 +5,23 @@ class ReviewRepository {
     return await Review.create(reviewData);
   }
 
+  async searchReviews(query, filters) {
+    const searchParams = {
+      index: 'reviews',
+      body: {
+        query: query,
+        ...filters // Add any pagination or sorting filters here
+      }
+    };
+
+    try {
+      const response = await elasticsearchClient.search(searchParams);
+      return response.hits.hits.map(hit => hit._source); // Map the Elasticsearch hits to the review data
+    } catch (error) {
+      throw new Error(`Elasticsearch search failed: ${error.message}`);
+    }
+  }
+
   async getAverageRating({ targetType, listingId = null, hostId = null }) {
     const where = { targetType };
     if (listingId) where.listingId = listingId;
@@ -27,6 +44,9 @@ class ReviewRepository {
 
   async getUser(userId) {
     return await Review.findOne({ where: { userId } });
+  }
+  async getListing(listingId) {
+    return await Review.findOne({ where: { listingId } });
   }
 }
 
