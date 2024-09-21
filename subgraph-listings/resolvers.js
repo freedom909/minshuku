@@ -126,17 +126,38 @@ const resolvers = {
         throw new Error('Failed to fetch listings');
       }
     },
-
+    //"Return the listings that belong to the currently logged-in host"
+    hostListings: async (_, { hostId }, { dataSources }) => {
+      if (!hostId) {
+        throw new AuthenticationError('You must be logged in to access this resource');
+      }
+      try {
+        const listings = await Listing.findAll({
+          where: { hostId },
+          include: [
+            {
+              model: Amenity,
+              as: 'amenities', // This alias must match the association
+              through: { attributes: [] },
+              attributes: ['name', 'category'],
+            },
+            {
+              model: Location,
+              as: 'location', // This alias must match the association
+              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+            }
+          ],
+        });
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+        throw new Error('Failed to fetch listings');
+      }
+    },
     listing: async (_, { id }, { dataSources }) => {
       try {
         const listing = await Listing.findOne({
           where: { id },
           include: [
-            // {
-            //   model: Coordinate,
-            //   as: 'coordinate', // Ensure this alias matches your model association
-            //   attributes: ['latitude', 'longitude', 'name', 'radius'],
-            // },
             {
               model: Amenity,
               as: 'amenities', // This alias must match the association

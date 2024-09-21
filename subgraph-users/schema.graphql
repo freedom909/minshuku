@@ -1,6 +1,6 @@
 extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.7",
-  import: ["@key", "@shareable", "@external"])
+  import: ["@key", "@shareable", "@external","cacheControl"])
 
 enum Role {
   ADMIN
@@ -94,40 +94,41 @@ type SignInResponse implements Response {
   role: Role @shareable
 }
 
-type AuthPayload {
+type AuthPayload @cacheControl{
   "The user's JWT"
-  token: String! @shareable
+  token: String! @shareable 
   "The user's ID"
-  userId: ID! @shareable
+  userId: ID! @shareable @cacheControl(maxAge: 3600)
   "The user's role"
-  role: Role @shareable
+  role: Role @shareable @cacheControl(maxAge:3600)
 }
 
-type Host implements User @key(fields: "id") {
-  id: ID! 
-  "The user's first and last name"
-  name: String! @shareable
-  "The user's profile photo URL"
-  picture: String @shareable
-  "The host's profile bio description, will be shown in the listing"
-  description: String @shareable
-  "The user's chosen nickname (must be unique)"
-  nickname: String! @shareable
-  "The role of the user"
-  role: Role! @shareable
-}
-
-type Guest implements User @key(fields: "id") {
+type Guest implements User @key(fields: "id") @cacheControl(maxAge: 6000) {
   id: ID!
   "The user's first and last name"
   name: String! @shareable
   "The user's profile photo URL"
-  picture: String @shareable
+  picture: String @shareable @cacheControl(maxAge: 300) # Reduced cache duration for sensitive info
   "The user's chosen nickname (must be unique)"
-  nickname: String! @shareable
+  nickname: String! @shareable @cacheControl(maxAge: 300) # Reduced cache duration
   "The role of the user"
-  role: Role! @shareable
+  role: Role! @shareable @cacheControl(maxAge: 300)
 }
+
+type Host implements User @key(fields: "id") @cacheControl(maxAge: 6000) {
+  id: ID!
+  "The user's first and last name"
+  name: String! @shareable
+  "The user's profile photo URL"
+  picture: String @shareable @cacheControl(maxAge: 300) # Reduced cache duration for sensitive info
+  "The host's profile bio description, will be shown in the listing"
+  description: String @shareable
+  "The user's chosen nickname (must be unique)"
+  nickname: String! @shareable @cacheControl(maxAge: 300)
+  "The role of the user"
+  role: Role! @shareable @cacheControl(maxAge: 300)
+}
+
 
 type _Service {
   sdl: String

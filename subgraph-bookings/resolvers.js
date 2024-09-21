@@ -224,6 +224,15 @@ const resolvers = {
     addFundsToWallet: requireAuth(async (_, { amount }, { dataSources, userId }) => {
       try {
         const updateWallet = await dataSources.paymentService.addFunds({ userId, amount });
+
+        if (!updateWallet) {
+          throw new Error('Unable to add funds to wallet');
+        }
+
+        // Broadcast updated wallet info via subscription
+        broadcast(subscriptionTopics.USER_UPDATED, updateWallet);
+
+        // Return success response
         return {
           code: 200,
           success: true,
@@ -231,14 +240,33 @@ const resolvers = {
           amount: updateWallet.amount,
         };
       } catch (error) {
+        // Return failure response with appropriate error message
         return {
           code: 400,
           success: false,
-          message: 'We couldn’t complete your request because your funds are insufficient.',
+          message: 'We couldn’t complete your request due to insufficient funds or an error occurred.',
         };
       }
     }),
   },
+
+  Reviews: {
+    booking: async ({ bookingId }, _, { dataSources }) => {
+      return dataSources.bookingService.getBooking(bookingId);
+    },
+    author: async ({ authorId }, _, { dataSources }) => {
+      return dataSources.userService.getUser(authorId);
+    },
+    createdAt: ({ createdAt }) => new Date(createdAt).toISOString(),
+
+    // Resolve reference for federated queries
+    __resolveReference: async (review, { dataSources }) => {
+      return dataSources.reviewService.getReview(review.id);
+    },
+  },
+
+
+
 
   Booking: {
     listing: async ({ listingId }, _, { dataSources }) => {

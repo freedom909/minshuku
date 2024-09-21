@@ -7,11 +7,13 @@ import jwt from 'jsonwebtoken';
 import generateToken from '../infrastructure/auth/generateToken.js';
 import driver from '../infrastructure/helpers/driver.js';
 import bcrypt from 'bcrypt';
+import { getCache, setCache } from '../cache/cacheManage.js'
+
 const resolvers = {
   Mutation: {
     Query: {
       user: async (_, { id }, { dataSources }) => {
-        const { userService}=dataSources
+        const { userService } = dataSources
         const user = await userService.getUserFromDb(id);
         if (!user) {
           throw new GraphQLError("No user found", {
@@ -21,17 +23,32 @@ const resolvers = {
         return user;
       },
       getUserByEmail: async (_, { email }, { dataSources }) => {
-        const { userService}=dataSources
+        const { userService } = dataSources
         return userService.getUserByEmailFromDb(email);
       },
       me: async (_, __, { dataSources, userId }) => {
-        const { userService}=dataSources
+        const { userService } = dataSources
         if (!userId) {
           throw new GraphQLError("User not authenticated", {
             extensions: { code: ApolloServerErrorCode.BAD_REQUEST_ERROR },
           });
         }
         const user = await userService.getUserFromDb(userId);
+        return user;
+      },
+      getUsers: async (_, { id }, context) => {
+        const cacheKey = `user_${id}`;
+        const cachedUser = await context.cache.get(cacheKey);
+        if (cachedUser) {
+          return cachedUser;
+        }
+        const user = await context.dataSources.userService.getUserFromDb(id);
+        if (!user) {
+          throw new GraphQLError("No user found", {
+            extensions: { code: "NO_USER_FOUND" },
+          });
+        }
+        await context.cache.set(cacheKey, user, 1000 * 60 * 60); // 1 hour
         return user;
       },
     },
@@ -190,13 +207,13 @@ const resolvers = {
         });
       }
       const { userService } = dataSources;
-      const inviteCode= await userService.generateInviteCode(email);
-      await userService.sendInviteCode(email,inviteCode)
+      const inviteCode = await userService.generateInviteCode(email);
+      await userService.sendInviteCode(email, inviteCode)
       return { success: true };
-     
+
     },
-    
-    
+
+
     requestResetPassword: async (_, { email }, { dataSources }) => {
       const { userService } = dataSources
       // Validate the email input (optional step)
@@ -235,21 +252,43 @@ const resolvers = {
   },
 
   User: {
-    __resolveType(user) {
-      if (user.role === "HOST") {
-        return "Host";
-      } else if (user.role === "GUEST") {
-        return "Guest";
+
+    __resolveType(obj, context, info) {
+      if (obj.role === 'GUEST') {
+        return 'Guest';
+      }
+      if (obj.role === 'HOST') {
+        return 'Host';
       }
       return null;
     },
   },
   Host: {
+    async nickname(host, _, context) {
+      const cacheKey = `host_nickname_${host.id}}`
+      const cachedNickname = await context.cache.get(cacheKey);
+      if (cachedNickname) {
+        return cachedNickname;
+      }
+      const nickname = await dataSources.userService.getHostNicknameFromDb(host.id);
+      await context.cache.set(cacheKey, nickname, 1000 * 60 * 60); // 1 hour
+      return nickname;
+    },
     __resolveReference: (user, { dataSources }) => {
       return dataSources.userService.getUserFromDb(user.id);
     },
   },
   Guest: {
+    async name(guest, _, context) {
+      const cacheKey = `guest_name_${guest.id}}`
+      const cachedName = await context.cache.get(cacheKey);
+      if (cachedName) {
+        return cachedName;
+      }
+      const name = await dataSources.userService.getGuestNameFromDb(guest.id);
+      await context.cache.set(cacheKey, name, 1000 * 60 * 60); // 1 hour
+      return name;
+    },
     __resolveReference: (user, { dataSources }) => {
       return dataSources.userService.getUserFromDb(user.id);
     },
