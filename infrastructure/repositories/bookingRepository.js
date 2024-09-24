@@ -67,7 +67,7 @@ class BookingRepository {
     }
   }
 
-  async getBookingsForUser(userId, status = null) {
+  async getBookingsForGuest(userId, status = null) {
     try {
       const response = await this.httpClient.get(`/bookings`, {
         params: {
@@ -97,7 +97,7 @@ class BookingRepository {
     }
   }
 
-  async getBookingsForListing(listingId, status = null) {
+  async getBookingsForHost(listingId, status = null) {
     try {
       const response = await this.httpClient.get(`/bookings`, {
         params: {

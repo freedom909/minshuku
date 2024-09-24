@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import generateToken from '../infrastructure/auth/generateToken.js';
 import driver from '../infrastructure/helpers/driver.js';
 import bcrypt from 'bcrypt';
-import { getCache, setCache } from '../cache/cacheManage.js'
+
 
 const resolvers = {
   Mutation: {
@@ -30,7 +30,7 @@ const resolvers = {
         const { userService } = dataSources
         if (!userId) {
           throw new GraphQLError("User not authenticated", {
-            extensions: { code: ApolloServerErrorCode.BAD_REQUEST_ERROR },
+            extensions: { code: BAD_REQUEST_ERROR },
           });
         }
         const user = await userService.getUserFromDb(userId);

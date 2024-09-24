@@ -1,10 +1,14 @@
+enum CacheControlScope {  
+  PUBLIC  
+  PRIVATE  
+  INHERIT  
+}
+
 extend schema
-  @link(
-    url: "https://specs.apollo.dev/federation/v2.7"
-    import: ["@key", "@shareable"]
-  )
+  @link(url: "https://specs.apollo.dev/federation/v2.7", import: ["@key", "@shareable"])
 
 scalar DateTime
+directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE  
 
 # Query definitions for retrieving listing data
 extend type Query {
@@ -271,7 +275,7 @@ input LocationInput {
 type Booking @key(fields: "id") {
   id: ID!
   listing: Listing! @shareable
-  guest: Guest! @shareable
+  guest: Guest! @shareable @cacheControl(maxAge: 3600)  # Cache for 1 hour
   review: Review @shareable
 }
 
@@ -295,7 +299,7 @@ type SearchResult @key(fields: "id") {
   "The type of search result (e.g., LISTING, USER)"
   type: SearchResultType! @shareable
   listings: [Listing!]! @shareable
-  totalCount: Int! @shareable
+  totalCount: Int! @shareable @cacheControl(maxAge: 3600)
 }
 
 enum SearchResultType {
@@ -327,9 +331,9 @@ type Location @key(fields: "id") {
 
 type Availability @key(fields: "id") {
   id: ID!
-  listing: Listing! @shareable
-  checkInDate: String! @shareable
-  checkOutDate: String! @shareable
+  listing: Listing! @shareable @cacheControl(maxAge: 3600)  # Cache for 1 hour
+  checkInDate: String! @shareable  @cacheControl(maxAge: 3600)
+  checkOutDate: String! @shareable @cacheControl(maxAge: 3600)
   availability: Boolean! @shareable
 }
 
@@ -355,5 +359,12 @@ interface User {
   picture: String
 }
 
-
+input CreateBookingInput {
+  "ID of the listing associated with the booking"
+  listingId: ID!
+  "Date of check-in"
+  checkInDate: DateTime!
+  "Date of check-out"
+  checkOutDate: DateTime!
+}
 

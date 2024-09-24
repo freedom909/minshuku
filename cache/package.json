@@ -10,6 +10,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "redis": "^4.7.0"
+    "ioredis": "^5.4.1"
   }
 }

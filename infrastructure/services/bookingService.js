@@ -1,6 +1,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 import { GraphQLError } from 'graphql';
-import { Sequelize,Op } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 class BookingService extends RESTDataSource {
   constructor({ bookingRepository, paymentRepository, listingRepository }) {
     super();
@@ -10,17 +10,17 @@ class BookingService extends RESTDataSource {
     this.baseURL = 'http://localhost:4050/';
   }
 
-async getBookingsByGuest(userId){
-  try {
-    const bookings = await this.bookingRepository.findAll({
-      where: { guestId: userId },
-    });
-    return bookings;
-  }catch(e){
-    console.error('Error fetching bookings for guest:', e);
-    throw new ForbiddenError('Unable to fetch bookings for guest', { extension: { code: 'forbidden' } });
+  async getBookingsForGuest(userId) {
+    try {
+      const bookings = await this.bookingRepository.findAll({
+        where: { guestId: userId },
+      });
+      return bookings;
+    } catch (e) {
+      console.error('Error fetching bookings for guest:', e);
+      throw new ForbiddenError('Unable to fetch bookings for guest', { extension: { code: 'forbidden' } });
+    }
   }
-}
 
   async getBooking(id) {
     try {
@@ -47,50 +47,50 @@ async getBookingsByGuest(userId){
     }
   }
 
-async getReservedDates({checkInDate, checkOutDate, someListingIds}) {
-  console.log('Inside getReservedDates method');
-  console.log('Parameters:', { checkInDate, checkOutDate, someListingIds });
+  async getReservedDates({ checkInDate, checkOutDate, someListingIds }) {
+    console.log('Inside getReservedDates method');
+    console.log('Parameters:', { checkInDate, checkOutDate, someListingIds });
     if (!checkInDate || !checkOutDate || !someListingIds) {
-      throw new  GraphQLError('Missing required parameters', { extension: { code: 'missing_parameters' } });
+      throw new GraphQLError('Missing required parameters', { extension: { code: 'missing_parameters' } });
     }
-    if (checkInDate > checkOutDate) { 
-      throw new  GraphQLError('Invalid date range', { extension: { code: 'invalid_date_range' } });
+    if (checkInDate > checkOutDate) {
+      throw new GraphQLError('Invalid date range', { extension: { code: 'invalid_date_range' } });
+    }
+    const { or, and, lt, gt } = Sequelize.Op;
+    const bookings = await this.bookingRepository.findAll({ // Fetch all confirmed bookings for the given listing IDs
+      where: {
+        listingId: { [Op.in]: someListingIds },
+        status: 'confirmed',
+        [or]: [
+          {
+            [and]: [
+              { checkInDate: { [Op.lt]: checkOutDate } },
+              { checkOutDate: { [Op.gt]: checkOutDate } },
+            ],
+          },
+          {
+            [and]: [
+              { checkInDate: { [Op.lt]: checkInDate } },
+              { checkOutDate: { [Op.gt]: checkOutDate } },
+            ],
+          },
+          {
+            [and]: [
+              { checkInDate: { [Op.gt]: checkInDate } },
+              { checkOutDate: { [Op.lt]: checkOutDate } },
+            ],
+          },
+        ],
+      },
+    });
+    return bookings.map(booking => ({
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      listingId: booking.listingId,
+    }));
   }
-  const { or, and, lt, gt } = Sequelize.Op;
-  const bookings = await this.bookingRepository.findAll({ // Fetch all confirmed bookings for the given listing IDs
-    where: {
-      listingId: { [Op.in]: someListingIds },
-      status: 'confirmed',
-      [or]: [
-        {
-          [and]: [
-            { checkInDate: { [Op.lt]: checkOutDate } },
-            { checkOutDate: { [Op.gt]: checkOutDate } },
-          ],
-        },
-        {
-          [and]: [
-            { checkInDate: { [Op.lt]: checkInDate } },
-            { checkOutDate: { [Op.gt]: checkOutDate } },
-          ],
-        },
-        {
-          [and]: [
-            { checkInDate: { [Op.gt]: checkInDate } },
-            { checkOutDate: { [Op.lt]: checkOutDate } },
-          ],
-        },
-      ],
-    },
-  });
-  return bookings.map(booking => ({
-    checkInDate: booking.checkInDate,
-    checkOutDate: booking.checkOutDate,
-    listingId: booking.listingId,
-  }));
-}
 
-  async getBookingsForUser(userId, status) {
+  async getBookingsForHost(userId, status) {
     try {
       const bookings = await this.bookingRepository.findAll({
         where: { guestId: userId, status },
@@ -162,10 +162,10 @@ async getReservedDates({checkInDate, checkOutDate, someListingIds}) {
     const bookingDates = await bookings.get(`listing/${listingId}/currentBookedDates`);
     return bookingDates.length === 0;
   }
-  
+
 
   async getBookingsForUser(userId, status) {
-    const bookingRepoForUser = await this.bookingRepository.getBookingsForUser(userId,status);
+    const bookingRepoForUser = await this.bookingRepository.getBookingsForUser(userId, status);
     return bookingRepoForUser;
   }
 

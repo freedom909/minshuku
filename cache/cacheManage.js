@@ -1,8 +1,9 @@
-import { setEx, get } from './cacheClient';
+import cacheClient from './cacheClient.js';
+const { set, get } = cacheClient;
 
 const setCache = async (key, data, maxAge) => {
     try {
-        await setEx(key, maxAge, JSON.stringify(data));
+        await set(key, maxAge, JSON.stringify(data));
     } catch (err) {
         console.error('Error setting cache:', err);
     }

@@ -7,16 +7,14 @@ import { permissions } from '../infrastructure/auth/permission.js';
 import Booking from '../infrastructure/models/booking.js';
 import User from '../infrastructure/models/user.js';
 import Listing from '../infrastructure/models/listing.js';
+import cacheClient from '../cache/cacheClient.js';
+import { broadcast, subscriptionTopics } from '../cache/cachePubSub.js';
 const { bookingsWithPermission } = permissions;
 
-// const client = createClient({
-//   url: 'ws://localhost:4000/graphql', // Replace with your GraphQL endpoint
-// });
 const client = createClient({
-  url: 'ws://localhost:3000',
+  url: 'http://localhost:3000', // Correct Socket.IO URL  
   webSocketImpl: WebSocket
-})
-
+});
 
 let clients = []
 function addClient(client) {
@@ -34,59 +32,31 @@ client.subscribe({
       id
       listingId
       guestId
-      checkIn
-      checkOut
-      total
+      checkInDate
+      checkOutDate
+      totalCost
     }`
 }, {
   next: (data) => {
-    broadcast(subscriptionTopics.BOOKING_CREATED, data.subscriptionTopics.BOOKING_CREATED)
+    // Use the Redis broadcast function from cachePubSub.js
+    broadcast(subscriptionTopics.BOOKING_CREATED, data.bookingCreated);
   },
   error: (error) => console.error('Error:', error),
   complete: () => console.log('Subscription complete'),
 })
 
-// function broadcastBookingCreated(booking) {
-// Iterate over connected clients
-//   clients.forEach(client => {
-//     if (client.subscriptions.has('bookingCreated')) {
-//       client.send(JSON.stringify({
-//         type: 'data',
-//         id: client.subscriptionId, // Or use a unique identifier
-//         payload: {
-//           bookingCreated: booking
-//         }
-//       }));
-//     }
-//   });
-// }
-
-const subscriptionTopics = {
-  BOOKING_CREATED: 'bookingCreated',
-  BOOKING_CANCELLED: 'bookingCancelled',
-  BOOKING_CONFIRMED: 'bookingConfirmed',
-};
-
-function broadcast(topic, payload) {
-  const clientsToNotify = clients.filter(client => client.subscriptionTopics.has(topic))
-  clientsToNotify.forEach(client => {
-    client.send(JSON.stringify({
-      type: 'data',
-      id: client.subscriptionId, // Or use a unique identifier
-      payload: {
-        [topic]: payload
-      }
-    }));
-  });
-}
-
+// Example usage of addClient and removeClient for registration  
+addClient(client); // Add the client to the active clients 
+removeClient(client); // Remove the client from the active clients when it disconnects
 const resolvers = {
 
   Query: {
     users: async (parent, args, { dataSources }) => {
       return dataSources.userService.getUsers();
     },
-    booking: requireAuth(async (_, { id }, { dataSources, listingId, guestId }) => {
+
+
+    getBooking: requireAuth(async (_, { id }, { dataSources, listingId, guestId }) => {
       if (!listingId && !guestId) {
         throw new ForbiddenError('No such booking', { extensions: { code: 'FORBIDDEN' } });
       }
@@ -98,9 +68,23 @@ const resolvers = {
           throw new ForbiddenError('Listing not found', { extensions: { code: 'FORBIDDEN' } });
         }
       }
-      return dataSources.bookingService.getBooking(id);
+      const cacheKey = `booking_${id}`;
+
+      // Try to get the booking from cache
+      let booking = await cacheClient.get(cacheKey);
+      if (booking) {
+        booking = JSON.parse(booking); // Parse the cached string
+      } else {
+        // Cache miss: Fetch from DB or other data source
+        booking = await dataSources.bookingService.getBookingById(id);
+
+        // Set cache for future requests (serialize before storing)
+        await cacheClient.set(cacheKey, JSON.stringify(booking), 3600); // Cache for 1 hour
+      }
+
+      return booking;
     }),
-    bookingsForUser: requireAuth(async (_, { userId }, { dataSources, context }) => {
+    bookingsForGuest: requireAuth(async (_, { userId }, { dataSources, context }) => {
       if (!userId) {
         throw new AuthenticationError('You need to be logged in to view bookings');
       }
@@ -111,15 +95,41 @@ const resolvers = {
       if (existingUser.role === 'GUEST') {
         return Booking.findAll({ where: { guestId: context.userId } });
       }
-      return dataSources.bookingService.getBookingsForUser(userId);
+      return dataSources.bookingService.getBookingsForGuest(userId);
     }),
-    bookingsForListing: requireRole('HOST', async (_, { listingId, status }, { dataSources, userId }) => {
-      const listings = await dataSources.listingService.getListingsForUser(userId);
-      if (!listings.find(listing => listing.id === listingId)) {
-        throw new ForbiddenError('Listing does not belong to host', { extensions: { code: 'FORBIDDEN' } });
+
+    bookingsForHost: requireRole('HOST', async (_, { listingId, status }, { dataSources, userId }) => {
+      if (!listingId) {
+        throw new UserInputError('Listing ID is required', { extensions: { code: 'BAD_USER_INPUT' } });
       }
-      return dataSources.bookingService.getBookingsForListing(listingId, status) || [];
+
+      if (!userId) {
+        throw new AuthenticationError('User ID is missing', { extensions: { code: 'UNAUTHENTICATED' } });
+      }
+      const cacheKey = `bookings:${userId}:${listingId}:${status || 'all'}`;
+      // Try to retrieve from cache first
+      const cachedData = await cacheClient.get(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+      const existingUser = await User.findOne({ where: { id: userId } });
+      if (!existingUser) {
+        throw new ForbiddenError('User not found', { extensions: { code: 'FORBIDDEN' } });
+      }
+
+      // No need to check `existingUser.role === 'HOST'` if `requireRole` does that
+
+      // Fetch bookings with optional status filter
+      const whereClause = { listingId };
+      if (status) {
+        whereClause.status = status;
+      }
+      const bookings = Booking.findAll({ where: whereClause });
+      // Cache the result before returning it (with a TTL, e.g., 5 minutes)
+      await cacheClient.set(cacheKey, bookings, 300); // Cache for 5 minutes
+      return bookings;
     }),
+
     currentGuestBooking: requireRole('GUEST', async (_, __, { dataSources, userId }) => {
       return dataSources.bookingService.getCurrentGuestBooking(userId);
     }),
@@ -135,74 +145,109 @@ const resolvers = {
   },
 
   Mutation: {
-    createBooking: requireAuth(async (_, { guestId, createBookingInput }, { dataSources }) => {
+    createBooking:
+      //  requireAuth(
+      async (_, { createBookingInput }, { dataSources }) => {
+        const { listingId, checkInDate, checkOutDate } = createBookingInput;
+        // if (!guestId) {
+        //   throw new AuthenticationError('You need to be logged in to create a booking');
+        // }
+
+
+        // const { listingService, bookingService } = dataSources
+        // // Validate input data
+        // if (!listingId || !checkInDate || !checkOutDate || new Date(checkInDate) > new Date(checkOutDate)) {
+        //   throw new UserInputError('All booking details must be provided');
+        // }
+        // Fetch total cost from the listing service
+        const { totalCost } = await dataSources.listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
+        // Create booking
+        try {
+          const booking = await dataSources.bookingService.createBooking({
+            id: uuidv4(),
+            listingId,
+            checkInDate,
+            checkOutDate,
+            totalCost,
+            guestId,
+            status: 'UPCOMING',
+          });
+          // Broadcast booking creation to subscribers
+          broadcast(subscriptionTopics.BOOKING_CREATED, booking);
+          return {
+            code: 200,
+            success: true,
+            message: 'Your booking has been successfully created',
+            booking,
+          };
+        } catch (error) {
+          console.error('Booking Error:', error);
+          throw new ForbiddenError('Unable to create booking at this time', { extensions: { code: 'FORBIDDEN' } });
+        }
+      },
+    // ),
+
+
+    confirmBooking: requireAuth(async (_, { id, guestId }, { dataSources }) => {
       if (!guestId) {
-        throw new AuthenticationError('You need to be logged in to create a booking');
-      }
-      const { listingId, checkInDate, checkOutDate } = createBookingInput;
-
-      // Validate input data
-      if (!listingId || !checkInDate || !checkOutDate) {
-        throw new UserInputError('All booking details must be provided');
+        throw new AuthenticationError('You need to be logged in to confirm a booking');
       }
 
-      //Fetch total cost from listing service
-      const { totalCost } = await dataSources.listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
+      // Fetch the booking details from the database using the booking ID (id)
+      const booking = await dataSources.bookingService.getBookingById(id);
 
-      //Subtract funds from user's account
+      if (!booking) {
+        throw new ForbiddenError('Booking not found', { extensions: { code: 'NOT_FOUND' } });
+      }
+
+      // Check if the guestId in the booking matches the logged-in user's guestId
+      if (booking.guestId !== guestId) {
+        throw new ForbiddenError('Insufficient permissions', { extensions: { code: 'FORBIDDEN' } });
+      }
+
       try {
-        await dataSources.paymentService.subtractFunds({ guestId, amount: totalCost });
-      } catch (error) {
-        console.error('Payment Error:', error);
-        throw new ForbiddenError('Insufficient funds', { extensions: { code: 'FORBIDDEN' } });
-      }
-
-      // Create booking
-      try {
-        const booking = await Booking.create({
-          id: uuidv4(),
-          listingId,
-          checkInDate,
-          checkOutDate,
-          totalCost,
-          guestId: guestId,
-          status: 'UPCOMING',
-        });
-        //GraphQL-WS server's broadcast function
-        broadcast(subscriptionTopics.BOOKING_CREATED, booking);
-        return {
-          code: 200,
-          success: true,
-          message: 'Your Booking has been created',
-          booking,
-        };
-
-      } catch (error) {
-        console.error('Booking Error:', error);
-        throw new ForbiddenError('Unable to create booking', { extensions: { code: 'FORBIDDEN' } });
-      }
-    }),
-
-    confirmBooking: requireAuth(async (_, { id }, { dataSources }) => {
-      try {
-        const booking = await dataSources.bookingService.updateBookingStatus({
+        // Update the booking status to 'CONFIRMED'
+        const updatedBooking = await dataSources.bookingService.updateBookingStatus({
           id,
-          status: 'COMPLETED',
+          status: 'CONFIRMED',
           confirmedAt: new Date().toISOString(),
         });
-        broadcast(subscriptionTopics.BOOKING_CONFIRMED, booking);
+
+        // Broadcast the booking confirmation event
+        broadcast(subscriptionTopics.BOOKING_CONFIRMED, updatedBooking);
+
         return {
           code: 200,
           success: true,
           message: 'Booking confirmed',
-          booking,
+          booking: updatedBooking,
         };
       } catch (error) {
         throw new ForbiddenError('Unable to confirm booking', { extensions: { code: 'FORBIDDEN' } });
       }
     }),
 
+
+
     cancelBooking: requireAuth(async (_, { id }, { dataSources }) => {
+      if (!guestId) {
+        throw new AuthenticationError('You need to be logged in to confirm a booking');
+      }
+
+      // Fetch the booking details from the database using the booking ID (id)
+      const booking = await dataSources.bookingService.getBookingById(id);
+
+      if (!booking) {
+        throw new ForbiddenError('Booking not found', { extensions: { code: 'NOT_FOUND' } });
+      }
+
+      // Check if the guestId in the booking matches the logged-in user's guestId
+      if (booking.guestId !== guestId) {
+        throw new ForbiddenError('Insufficient permissions', { extensions: { code: 'FORBIDDEN' } });
+      }
+      if (creteriaTime < Date.now()) {
+        throw new ForbiddenError('Booking cannot be cancelled after the check-in time', { extensions: { code: 'FORBIDDEN' } });
+      }
       try {
         const booking = await dataSources.bookingService.updateBookingStatus({
           id,

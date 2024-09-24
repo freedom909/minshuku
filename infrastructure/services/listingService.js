@@ -312,6 +312,54 @@ class ListingService {
       });
     }
   }
+  async getTotalCost({ listingId, checkInDate, checkOutDate }) {
+    // if (!listingId || !checkInDate || !checkOutDate) {
+    //   throw new Error('Listing ID, check-in, and check-out dates are required');
+    // }
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+
+    if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) {
+      throw new Error('Invalid dates provided');
+    }
+
+    if (checkIn >= checkOut) {
+      throw new Error('Check-in date must be before check-out date');
+    }
+
+    // Generate a unique cache key using listingId, checkInDate, and checkOutDate
+    const cacheKey = `totalCost:${listingId}:${checkInDate}:${checkOutDate}`;
+
+    try {
+      // Check cache for existing total cost
+      const cachedTotalCost = await cacheClient.get(cacheKey);
+      if (cachedTotalCost) {
+        console.log(`Cache hit for key: ${cacheKey}`);
+        return { totalCost: cachedTotalCost };
+      }
+
+      // If no cache, fetch total cost from the database
+      const listing = await Listing.findByPk(listingId);
+      if (!listing) {
+        throw new Error('Listing not found');
+      }
+
+      const totalDays = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24)); // Difference in days
+      const totalCost = totalDays * listing.pricePerDay;
+
+      // Cache the total cost for 1 hour (3600 seconds)
+      await cacheClient.set(cacheKey, totalCost, 3600);
+
+      return { totalCost };
+    } catch (error) {
+      console.error('Error fetching total cost:', error);
+      throw new GraphQLError('Error fetching total cost', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
+    }
+  }
+
 
   async getListing(id) {
     try {
