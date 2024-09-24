@@ -101,4 +101,5 @@ input CreateBookingInput {
   listingId: ID!
   checkInDate: DateTime!
   checkOutDate: DateTime!
+  guestId: ID!
 }

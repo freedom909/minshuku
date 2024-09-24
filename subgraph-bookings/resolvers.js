@@ -147,23 +147,23 @@ const resolvers = {
   Mutation: {
     createBooking:
       //  requireAuth(
-      async (_, { createBookingInput }, { dataSources }) => {
-        const { listingId, checkInDate, checkOutDate } = createBookingInput;
+      async (_, { input }, { dataSources }) => {
+
         // if (!guestId) {
         //   throw new AuthenticationError('You need to be logged in to create a booking');
         // }
+        const { checkInDate, checkOutDate, guestId, listingId } = input
 
-
-        // const { listingService, bookingService } = dataSources
+        const { listingService, bookingService } = dataSources
         // // Validate input data
         // if (!listingId || !checkInDate || !checkOutDate || new Date(checkInDate) > new Date(checkOutDate)) {
         //   throw new UserInputError('All booking details must be provided');
         // }
         // Fetch total cost from the listing service
-        const { totalCost } = await dataSources.listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
+        const { totalCost } = await listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
         // Create booking
         try {
-          const booking = await dataSources.bookingService.createBooking({
+          const booking = await bookingService.createBooking({
             id: uuidv4(),
             listingId,
             checkInDate,

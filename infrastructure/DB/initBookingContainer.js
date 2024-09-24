@@ -1,6 +1,7 @@
 import { createContainer, asValue, asClass } from 'awilix';
 import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
+import cacheClient from '../../cache/cacheClient.js'; // Import your cache client
 import ListingService from '../services/listingService.js';
 import ListingRepository from '../repositories/listingRepository.js';
 import UserService from '../services/userService.js';
@@ -13,7 +14,6 @@ const initializeBookingContainer = async ({ services = [] } = {}) => {
   let mongodb;
 
   try {
-    // Establish connection to MySQL database
     mysqldb = await connectMysql();
     console.log('Connected to MySQL database');
   } catch (error) {
@@ -22,7 +22,6 @@ const initializeBookingContainer = async ({ services = [] } = {}) => {
   }
 
   try {
-    // Establish connection to MongoDB database
     mongodb = await connectToMongoDB();
     console.log('Connected to MongoDB database');
   } catch (error) {
@@ -30,11 +29,11 @@ const initializeBookingContainer = async ({ services = [] } = {}) => {
     throw error;
   }
 
-  // Initialize the container and register dependencies and services
   const container = createContainer();
   container.register({
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
+    cacheClient: asValue(cacheClient), // Register your cacheClient here
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton(),
     bookingRepository: asClass(BookingRepository).singleton(),
@@ -43,7 +42,6 @@ const initializeBookingContainer = async ({ services = [] } = {}) => {
     listingService: asClass(ListingService).singleton(),
   });
 
-  // Register services dynamically
   services.forEach(service => {
     container.register({
       [service.name]: asClass(service).singleton(),

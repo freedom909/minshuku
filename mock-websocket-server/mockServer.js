@@ -2,6 +2,11 @@ import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Define __dirname in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const server = http.createServer((req, res) => {
     const filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);

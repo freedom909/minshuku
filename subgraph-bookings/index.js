@@ -7,18 +7,20 @@ import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import initializeBookingContainer from '../infrastructure/DB/initBookingContainer.js';
+
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import ListingService from '../infrastructure/services/listingService.js'; 
-import BookingService from '../infrastructure/services/bookingService.js';  
+import initializeBookingContainer from '../infrastructure/DB/initBookingContainer.js'
+import ListingService from '../infrastructure/services/listingService.js';
+import BookingService from '../infrastructure/services/bookingService.js';
 import UserService from '../infrastructure/services/userService.js';
 import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { WebSocketServer } from 'ws';
 dotenv.config();
+
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
@@ -35,53 +37,62 @@ const startApolloServer = async () => {
 
     const app = express();
     const httpServer = http.createServer(app);
-    const wsServer=new WebSocketServer({
+
+    // WebSocket server for subscriptions
+    const wsServer = new WebSocketServer({
       server: httpServer,
       path: '/graphql',
-    })
+    });
 
+    // Set up WebSocket server with GraphQL subscriptions
     const serverCleanup = useServer({
       schema: buildSubgraphSchema({ typeDefs, resolvers }),
       context: (ctx, msg, args) => {
-        return {
-          ...ctx,
-          subscriptions: {}, // Add subscriptions context here if needed
-        };
+        const token = ctx.connectionParams?.authorization || '';
+        const user = getUserFromToken(token);
+        return { user };
       },
     }, wsServer);
+
+    // Initialize Apollo Server
     const server = new ApolloServer({
-      schema: buildSubgraphSchema({ typeDefs, resolvers,wsServer }),
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),
         {
           async serverWillStart() {
             return {
               async drainServer() {
+                // Close the WebSocket server and database connections
                 serverCleanup.dispose();
                 await mysqlContainer.resolve('mysqldb').close();
-                await mongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
+                await mongoContainer.resolve('mongodb').close();
               }
             };
           }
         }
       ],
-      introspection: true,  // Enable introspection for GraphQL Playground
+
       context: async ({ req }) => {
         const token = req.headers.authorization || '';
         const user = getUserFromToken(token);
-        return { 
+
+        return {
           user,
           dataSources: {
-            listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
-            bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services
-            userService: mongoContainer.resolve('userService')  // Ensure correct resolution of services
+            listingService: mysqlContainer.resolve('listingService'),  // Resolve MySQL services
+            bookingService: mysqlContainer.resolve('bookingService'),
+            userService: mongoContainer.resolve('userService'), // Resolve MongoDB services
+            cacheClient, // Cache client is available globally, no need to resolve from container
           }
         };
       }
     });
 
+    // Start Apollo Server
     await server.start();
 
+    // Apply Express middleware for handling requests
     app.use(
       '/graphql',
       cors(),
@@ -89,6 +100,7 @@ const startApolloServer = async () => {
       expressMiddleware(server)
     );
 
+    // Start the HTTP server
     httpServer.listen({ port: 4050 }, () => {
       console.log(`🚀 Server ready at http://localhost:4050/graphql`);
     });
@@ -97,4 +109,5 @@ const startApolloServer = async () => {
   }
 };
 
+// Start the server
 startApolloServer();

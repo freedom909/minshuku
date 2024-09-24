@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node mockServer.js"
+    "start": "nodemon mockServer.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "nodemon": "^3.1.7",
     "socket.io": "^4.8.0",
     "socket.io-client": "^4.8.0"
   }
