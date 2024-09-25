@@ -1,6 +1,6 @@
 extend schema
   @link(
-    url: "https://specs.apollo.dev/federation/v2.7"
+    url: "https://specs.apollo.dev/federation/v2.5"
     import: ["@key", "@shareable"]
   )
 
@@ -47,6 +47,7 @@ type Review @key(fields: "id") {
   title: String! @shareable
   isFeatured: Boolean! @shareable
   isPinned: Boolean! @shareable
+  comment: Comment //to allow users to comment on reviews
 }
 
 ### Likes
@@ -67,7 +68,7 @@ type Location @key(fields: "id") {
 
 ### Input Types
 input ReviewInput {
-  text: String!
+  content: String!
   rating: Float!
   locationId: ID
   guestId: ID
@@ -111,16 +112,11 @@ interface MutationResponse {
 ### Bookings
 type Booking @key(fields: "id") {
   id: ID!
-  locationReview: Review @shareable
-  hostReview: Review @shareable
-  guestReview: Review @shareable
 }
 
 ### Listings
 type Listing @key(fields: "id") {
   id: ID!
-  reviews: [Review]! @shareable
-  overallRating: Float @shareable
 }
 
 ### User Types
@@ -135,6 +131,7 @@ type Host implements User @key(fields: "id") {
   name: String! @shareable
   overallRating: Float @shareable
   picture: String @shareable
+
 }
 
 type Guest implements User @key(fields: "id") {

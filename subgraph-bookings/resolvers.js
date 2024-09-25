@@ -145,56 +145,62 @@ const resolvers = {
   },
 
   Mutation: {
-    createBooking:
-      //  requireAuth(
-      async (_, { input }, { dataSources }) => {
-
-        // if (!guestId) {
-        //   throw new AuthenticationError('You need to be logged in to create a booking');
-        // }
-        const { checkInDate, checkOutDate, guestId, listingId } = input
-
-        const { listingService, bookingService } = dataSources
-        // // Validate input data
-        // if (!listingId || !checkInDate || !checkOutDate || new Date(checkInDate) > new Date(checkOutDate)) {
-        //   throw new UserInputError('All booking details must be provided');
-        // }
-        // Fetch total cost from the listing service
-        const { totalCost } = await listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
-        // Create booking
-        try {
-          const booking = await bookingService.createBooking({
-            id: uuidv4(),
-            listingId,
-            checkInDate,
-            checkOutDate,
-            totalCost,
-            guestId,
-            status: 'UPCOMING',
-          });
-          // Broadcast booking creation to subscribers
-          broadcast(subscriptionTopics.BOOKING_CREATED, booking);
-          return {
-            code: 200,
-            success: true,
-            message: 'Your booking has been successfully created',
-            booking,
-          };
-        } catch (error) {
-          console.error('Booking Error:', error);
-          throw new ForbiddenError('Unable to create booking at this time', { extensions: { code: 'FORBIDDEN' } });
-        }
-      },
-    // ),
-
-
-    confirmBooking: requireAuth(async (_, { id, guestId }, { dataSources }) => {
+    createBooking: requireAuth(async (_, { input }, { dataSources, user }) => {
+      const { listingService, bookingService } = dataSources
+      const guestId = user?.id;
       if (!guestId) {
-        throw new AuthenticationError('You need to be logged in to confirm a booking');
+        throw new AuthenticationError('You need to be logged in as a guest to create a booking');
+      }
+
+      const { checkInDate, checkOutDate, listingId } = input
+      console.log('Data Sources:', dataSources); // Debugging line 
+
+      if (!listingService || !bookingService) {
+        throw new Error('Data sources are not available.');
+      }
+      console.log('Creating bookingService for listingService:' `${bookingService}`, `${listingService}`)
+      // Validate input data
+      if (!listingId || !checkInDate || !checkOutDate || new Date(checkInDate) > new Date(checkOutDate)) {
+        throw new UserInputError('All booking details must be provided');
+      }
+      // Fetch total cost from the listing service
+      const { totalCost } = await listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
+      // Create booking
+      try {
+        const booking = await bookingService.createBooking({
+          id: uuidv4(),
+          listingId,
+          checkInDate,
+          checkOutDate,
+          totalCost,
+          guestId,
+          status: 'UPCOMING',
+        });
+        // Broadcast booking creation to subscribers
+        broadcast(subscriptionTopics.BOOKING_CREATED, booking);
+        return {
+          code: 200,
+          success: true,
+          message: 'Your booking has been successfully created',
+          booking,
+        };
+      } catch (error) {
+        console.error('Booking Error:', error);
+        throw new ForbiddenError('Unable to create booking at this time', { extensions: { code: 'FORBIDDEN' } });
+      }
+    },
+    ),
+
+
+    confirmBooking: requireAuth(async (_, { id }, { dataSources, user }) => {
+      const { bookingService } = dataSources
+      const guestId = user?.id;
+      if (!guestId) {
+        throw new AuthenticationError('You need to be logged in as a guest to create a booking');
       }
 
       // Fetch the booking details from the database using the booking ID (id)
-      const booking = await dataSources.bookingService.getBookingById(id);
+      const booking = await bookingService.getBookingById(id);
 
       if (!booking) {
         throw new ForbiddenError('Booking not found', { extensions: { code: 'NOT_FOUND' } });
@@ -207,7 +213,7 @@ const resolvers = {
 
       try {
         // Update the booking status to 'CONFIRMED'
-        const updatedBooking = await dataSources.bookingService.updateBookingStatus({
+        const updatedBooking = await bookingService.updateBookingStatus({
           id,
           status: 'CONFIRMED',
           confirmedAt: new Date().toISOString(),
@@ -227,15 +233,15 @@ const resolvers = {
       }
     }),
 
-
-
-    cancelBooking: requireAuth(async (_, { id }, { dataSources }) => {
+    cancelBooking: requireAuth(async (_, { id }, { dataSources, user }) => {
+      const { bookingService } = dataSources
+      const guestId = user?.id;
       if (!guestId) {
         throw new AuthenticationError('You need to be logged in to confirm a booking');
       }
 
       // Fetch the booking details from the database using the booking ID (id)
-      const booking = await dataSources.bookingService.getBookingById(id);
+      const booking = await bookingService.getBookingById(id);
 
       if (!booking) {
         throw new ForbiddenError('Booking not found', { extensions: { code: 'NOT_FOUND' } });
@@ -245,11 +251,11 @@ const resolvers = {
       if (booking.guestId !== guestId) {
         throw new ForbiddenError('Insufficient permissions', { extensions: { code: 'FORBIDDEN' } });
       }
-      if (creteriaTime < Date.now()) {
+      if (criteriaTime < Date.now()) {
         throw new ForbiddenError('Booking cannot be cancelled after the check-in time', { extensions: { code: 'FORBIDDEN' } });
       }
       try {
-        const booking = await dataSources.bookingService.updateBookingStatus({
+        const booking = await bookingService.updateBookingStatus({
           id,
           status: 'CANCELLED',
           cancelledAt: new Date().toISOString(),
@@ -265,36 +271,7 @@ const resolvers = {
         throw new ForbiddenError('Unable to cancel booking', { extensions: { code: 'FORBIDDEN' } });
       }
     }),
-
-    addFundsToWallet: requireAuth(async (_, { amount }, { dataSources, userId }) => {
-      try {
-        const updateWallet = await dataSources.paymentService.addFunds({ userId, amount });
-
-        if (!updateWallet) {
-          throw new Error('Unable to add funds to wallet');
-        }
-
-        // Broadcast updated wallet info via subscription
-        broadcast(subscriptionTopics.USER_UPDATED, updateWallet);
-
-        // Return success response
-        return {
-          code: 200,
-          success: true,
-          message: 'Funds added successfully',
-          amount: updateWallet.amount,
-        };
-      } catch (error) {
-        // Return failure response with appropriate error message
-        return {
-          code: 400,
-          success: false,
-          message: 'We couldn’t complete your request due to insufficient funds or an error occurred.',
-        };
-      }
-    }),
   },
-
   Reviews: {
     booking: async ({ bookingId }, _, { dataSources }) => {
       return dataSources.bookingService.getBooking(bookingId);

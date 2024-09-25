@@ -7,7 +7,7 @@ const db = process.env.DB_NAME
 const user = process.env.DB_USER
 const password = process.env.DB_PASSWORD
 
-export const connectMysql = async () => {
+const connectMysql = async () => {
   if (!pool) {
     pool = mysql.createPool({
       host: '127.0.0.1',

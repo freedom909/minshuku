@@ -31,7 +31,6 @@ type Mutation {
   createBooking(input: CreateBookingInput!): CreateBookingResponse! @shareable
   cancelBooking(id: ID!): CancelBookingResponse @shareable
   confirmBooking(id: ID!): Booking @shareable
-  addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
 }
 
 type CreateBookingResponse {
@@ -39,13 +38,6 @@ type CreateBookingResponse {
   success: Boolean! @shareable
   message: String! @shareable
   booking: Booking @shareable
-}
-
-type AddFundsToWalletResponse implements MutationResponse {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  amount: Float @shareable
 }
 
 enum BookingStatus {

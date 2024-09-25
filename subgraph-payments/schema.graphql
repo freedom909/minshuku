@@ -1,6 +1,13 @@
 extend schema
   @link(url: "https://specs.apollo.dev/federation/v2.5", 
         import: ["@key", "@shareable"])
+enum CacheControlScope {  
+  PUBLIC  
+  PRIVATE  
+  INHERIT  
+}
+scalar DateTime
+directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE  
 
 # Query type for fetching payment information
 type Query {
@@ -76,3 +83,4 @@ type Host implements User @key(fields: "id") {
   earnings: Float! @shareable
   picture: String @shareable
 }
+

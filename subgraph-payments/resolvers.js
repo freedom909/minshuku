@@ -4,7 +4,7 @@ const resolvers = {
       if (!userId) {
         throw new AuthenticationError('You must be logged in to view payment information');
       }
-      const {paymentService } = dataSources;
+      const { paymentService } = dataSources;
       const payment = await paymentService.getPayment(userId);
       if (!payment) {
         return {
@@ -20,25 +20,31 @@ const resolvers = {
     },
   },
   Mutation: {
-    addFundsToWallet: async (_, { amount }, { dataSources, userId }) => {
+    addFundsToWallet: async (_, { amount }, { dataSources, user }) => {
+      const userId = user?.id;
       if (!userId) {
         throw new AuthenticationError('You must be logged in to add funds to your wallet');
       }
-      const {paymentService } = dataSources;
+      const { paymentService } = dataSources;
       // Implement the logic to add funds to the wallet
       const funds = await paymentService.addFunds({ userId, amount });
       return {
         code: 200,
         success: true,
         message: 'Funds added successfully',
-        amount: response.amount, // assuming the response contains the updated amount
+        amount: funds.amount, // assuming the response contains the updated amount
       };
     },
-    cancelBooking: async (_, { bookingId }, { dataSources, userId, userRole }) => {
-      if (!userId) {
+    cancelBooking: async (_, { bookingId }, { dataSources, user }) => {
+      const userId = user?.id;
+      if (!{ guestId: userId }) {
         throw new AuthenticationError('You must be logged in to cancel a booking');
       }
-        const { bookingService,listingService,paymentService} = dataSources;
+      if (criteria.time >= new now()) {
+        throw new Error('You can only cancel a booking if it is in the future');
+
+      }
+      const { bookingService, listingService, paymentService } = dataSources;
       // Fetch the booking details
       const booking = await bookingService.getBooking(bookingId);
       if (!booking) {

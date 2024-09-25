@@ -4,15 +4,18 @@ import connectToMongoDB from '../DB/connectMongoDB.js';
 import Account from '../models/account.js';
 import User from '../models/user.js';
 import Profile from '../models/profile.js';
+import reviews from '../models/review.js'
 import mongoose from 'mongoose';
 
 const seedAccounts = async () => {
   const accountsFilePath = path.resolve('seeders/accounts.json');
   const profilesFilePath = path.resolve('seeders/profiles.json');
+  const reviewsFilePath = path.resolve('seeders/reviews.json');
 
   // Load data from JSON files
   const accountsData = JSON.parse(fs.readFileSync(accountsFilePath, 'utf-8'));
   const profilesData = JSON.parse(fs.readFileSync(profilesFilePath, 'utf-8'));
+  const reviewsData = JSON.parse(fs.readFileSync(reviewsFilePath, 'utf-8'));
 
   try {
     // Establish connection to MongoDB

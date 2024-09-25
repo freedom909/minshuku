@@ -13,15 +13,14 @@ import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
 import initializeBookingContainer from '../infrastructure/DB/initBookingContainer.js'
 import ListingService from '../infrastructure/services/listingService.js';
-import BookingService from '../infrastructure/services/bookingService.js';
+import BookingService from '../infrastructure/services/bookingService.js'
 import UserService from '../infrastructure/services/userService.js';
 import initMongoContainer from '../infrastructure/DB/initMongoContainer.js';
 import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { WebSocketServer } from 'ws';
+
 dotenv.config();
-
-
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {

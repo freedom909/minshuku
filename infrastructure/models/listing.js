@@ -5,7 +5,6 @@ import Amenity from './amenity.js';
 import ListingAmenities from './listingAmenities.js';
 import Coordinate from './coordinate.js'; // Import Coordinate model
 
-
 class Listing extends Model { }
 
 Listing.init({

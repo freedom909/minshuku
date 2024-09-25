@@ -1,7 +1,7 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from './seq.js';
 
-export class Booking extends Model {}
+export class Booking extends Model { }
 
 Booking.init({
   id: {
@@ -17,7 +17,7 @@ Booking.init({
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'),
+    type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'UPCOMING', 'PAST'),
     allowNull: false,
     defaultValue: 'PENDING',
   },

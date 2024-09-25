@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 // Define the schema for reviews
 const reviewSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  rating: { type: Number, required: true }, // Corresponds to Float in GraphQL
+  rating: { type: Number, required: true, min: 0, max: 5 }, // Corresponds to Float in GraphQL
   content: { type: String, required: true },
   picture: { type: String }, // Optional image upload
   locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location', required: false }, // Corresponds to locationId in GraphQL
@@ -11,10 +11,9 @@ const reviewSchema = new mongoose.Schema({
   guestId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Guest reference
   authorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Corresponds to the 'author' field in GraphQL
   bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true }, // Corresponds to bookingId in GraphQL
-  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }], // Optional comments array
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }], // Optional comments array //allow users to comment on reviews,
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Optional likes array
   dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Optional dislikes array
-  bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Optional bookmarks array
   isFeatured: { type: Boolean, default: false },
   isHighlighted: { type: Boolean, default: false },
   isPinned: { type: Boolean, default: false },

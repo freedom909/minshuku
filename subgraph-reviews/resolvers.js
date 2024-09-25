@@ -1,6 +1,6 @@
 import { AuthenticationError, ForbiddenError } from "../infrastructure/utils/errors.js";
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
-import { searchReviews } from "../infrastructure/services/reviewService.js";
+import { searchReviews } from "../infrastructure/search/searchReviews.js";
 import Review from "../infrastructure/models/review.js";
 
 const resolvers = {

@@ -9,6 +9,7 @@ import UserRepository from '../repositories/userRepository.js';
 import BookingService from '../services/bookingService.js';
 import BookingRepository from '../repositories/bookingRepository.js';
 
+
 const initializeBookingContainer = async ({ services = [] } = {}) => {
   let mysqldb;
   let mongodb;
@@ -33,13 +34,13 @@ const initializeBookingContainer = async ({ services = [] } = {}) => {
   container.register({
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
-    cacheClient: asValue(cacheClient), // Register your cacheClient here
+    cacheClient: asValue(cacheClient),
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton(),
-    bookingRepository: asClass(BookingRepository).singleton(),
-    bookingService: asClass(BookingService).singleton(),
     listingRepository: asClass(ListingRepository).singleton(),
     listingService: asClass(ListingService).singleton(),
+    bookingRepository: asValue(BookingRepository),  // Register the Listing model here
+    bookingService: asValue(BookingService),     // Reusing Listing model for the service
   });
 
   services.forEach(service => {
