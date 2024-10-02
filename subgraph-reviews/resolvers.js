@@ -2,6 +2,7 @@ import { AuthenticationError, ForbiddenError } from "../infrastructure/utils/err
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
 import { searchReviews } from "../infrastructure/search/searchReviews.js";
 import Review from "../infrastructure/models/review.js";
+import find from "mongoose";
 
 const resolvers = {
   Query: {
@@ -15,7 +16,7 @@ const resolvers = {
     },
 
     reviews: async (_, { criteria }) => {
-      const reviews = await Review.findAll({ where: criteria });
+      const reviews = await Review.find({ where: criteria });
       return reviews.map(review => {
         if (review.guestId) {
           const guest = User.findByPk(review.guestId);
@@ -23,7 +24,7 @@ const resolvers = {
             ...review.toJSON(),
             author: {
               ...guest.toJSON(),
-              name: guest.nickname, // Replace full name with nickname
+              name: guest.nickname, // Replace full name with nickname  
             },
           };
         }
@@ -31,6 +32,7 @@ const resolvers = {
       });
     },
   },
+
   Mutation: {
     submitGuestReview: requireAuth(async (
       _,
@@ -113,7 +115,6 @@ const resolvers = {
     __resolveReference: async (listing, { dataSources }) => {
       return dataSources.listingService.getListing(listing.id);
     },
-
   },
 
   Booking: {
@@ -128,6 +129,49 @@ const resolvers = {
     locationReview: ({ id }, _, { dataSources }) => {
       const { reviewService } = dataSources;
       return reviewService.getReviewForBooking("LISTING", id);
+    },
+  },
+
+  User: {
+    __resolveType(user) {
+      return user.role;
+    },
+  },
+  LocationReview: {
+    __resolveReference: (review, { dataSources }) => {
+      return dataSources.listingService.getListing(review.listingId);
+    },
+  },
+  GuestReview: {
+    __resolveReference: (review, { dataSources }) => {
+      return dataSources.bookingService.getBooking(review.bookingId);
+    },
+  },
+  HostReview: {
+    __resolveReference: (review, { dataSources }) => {
+      return dataSources.bookingService.getBooking(review.bookingId);
+    },
+  },
+  Listing: {
+    overallRating: ({ id }, _, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getOverallRatingForListing(id);
+    },
+    __resolveReference: (listing, { dataSources }) => {
+      const { reviewService } = dataSources;
+      return reviewService.getReviewForListing(id);
+    }
+  },
+
+  Booking: {
+    guestReview: (booking) => {
+      return { __typename: "GuestReview", id: booking.guestReviewId };
+    },
+    hostReview: (booking) => {
+      return { __typename: "HostReview", id: booking.hostReviewId };
+    },
+    locationReview: (booking) => {
+      return { __typename: "LocationReview", id: booking.locationReviewId };
     },
   },
 

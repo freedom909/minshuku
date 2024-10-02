@@ -7,6 +7,7 @@ import Location from '../infrastructure/models/location.js';
 import { GraphQLError } from 'graphql';
 import Amenity from '../infrastructure/models/amenity.js';
 import { Op } from '@sequelize/core'
+import calculateDistance from './helper.js'
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 
@@ -508,10 +509,11 @@ const resolvers = {
         const listing = await listingService.getListing(id);
         if (!listing) throw new Error('Listing not found');
         const amenities = listing.amenities || [];
+        console.log('Amenities:', amenities);
         return amenities.map(amenity => ({
-          ...amenity,
-          category: amenity.category.replace(' ', '_').toUpperCase(),
-          name: amenity.name.replace(' ', '_').toUpperCase()
+          id: amenity.dataValues.id,
+          category: amenity.dataValues.category.replace(' ', '_').toUpperCase(),
+          name: amenity.dataValues.name.replace(' ', '_').toUpperCase(),
         }));
       } catch (error) {
         console.error(`Error fetching amenities for listing ${id}:`, error);
@@ -556,15 +558,53 @@ const resolvers = {
       const bookings = await bookingService.getBookingsForListing(id, 'UPCOMING') || [];
       return bookings.length;
     },
-
-    getListingWithLocation: async (_, { listingId }, { dataSources }) => {
+    getNearbyListings: async (_, { latitude, longitude, radius }, { dataSources }) => {
+      if (!latitude || !longitude) throw new Error('You must provide a latitude and longitude');
+      const { listingService } = dataSources;
       try {
-        const listing = await dataSources.listingService.getListingById(listingId);  // Fetch listing details
-        if (!listing) {
-          throw new Error(`Listing not found for ID: ${listingId}`);
-        }
+        // Fetch all listings from your database (ideally you'd use pagination)
+        const listings = await listingService.getAllListings();
+        // Filter listings by calculating distance from the guest's location
+        const nearbyListings = listings.filter(listing => {
+          const distance = calculateDistance(latitude, longitude, listing.latitude, listing.longitude);
+          // Attach distance to the listing data
+          listing.distance = distance; // Attach distance to the listing data
+          return distance <= radius;
+        }).map(listing => {
+          return {
+            id: listing.id,
+            name: listing.name,
+            pricePerNight: listing.costPerNight,
+            location: listing.location.dataValues,
+            numOfBeds: listing.numOfBeds
+          };
+        });
+        // Return the filtered listings
+        return nearbyListings;
+      } catch (error) {
+        console.error('Error fetching nearby listings:', error);
+        throw new Error('Failed to fetch nearby listings');
+      }
+    },
 
-        return listing;  // Return the listing object
+
+    getListingWithLocation: async (_, { latitude, longitude, locationId }, { dataSources }) => {
+      if (latitude !== undefined && longitude !== undefined) {
+        throw new Error(`you must provide a latitude and longitude`)
+      }
+      const { listingService } = dataSources;
+      try {
+        // Fetch the listing by locationId
+        const listing = await listingService.getListingByLocation(locationId);
+        if (!listing) throw new Error('Listing not found');
+        // Calculate the radius/distance between the guest's location and the room
+        const distance = calculateDistance(latitude, longitude, listing.latitude, listing.longitude);
+
+        // Return the listing data along with the distance
+        return {
+          ...listing,
+          distance // Return distance in kilometers (or your preferred unit)
+        };
       } catch (error) {
         console.error('Error fetching listing:', error);
         throw new Error('Failed to fetch listing');

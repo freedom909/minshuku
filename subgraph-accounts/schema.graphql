@@ -1,11 +1,37 @@
-extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7",
-  import: ["@key", "@shareable"])
+extend schema  
+  @link(url: "https://specs.apollo.dev/federation/v2.7",  
+  import: ["@key", "@shareable"])  
 
-# SCALARS
-scalar DateTime
+# SCALARS  
+scalar DateTime  
 
-# OBJECTS
+# OBJECTS  
+
+type Query {
+  getUser(id: ID!): User @shareable
+  listings: [Listing] @shareable
+  "User accounts"
+  user(id: ID!): User @shareable
+  "Currently logged-in user"
+  me: User! @shareable
+  "Retrieves the account of the currently logged-in user."
+  viewer: Account @shareable
+  "Retrieves the account of the currently logged-in user."
+  account(id: ID!): Account @shareable
+  "Retrieves the accounts of the currently logged-in user."
+  accounts: [Account] @shareable
+  "Cart of the currently logged-in user."
+  cart: Cart @shareable
+  "Cart of the currently logged-in user."
+  carts: [Cart]! @shareable
+  "Retrieves the bookings of the currently logged-in user."
+  bookingHistory: [Booking] @shareable   
+  "Retrieves the bookings of the currently logged-in user."
+  getBookingByGuest(guestId: ID!): [Booking] @shareable
+  "retrieve the location of the currently logged-in user."
+  location: Location @shareable
+  getListingByHost(hostId: ID!): [Listing] @shareable
+}
 
 type Account @key(fields: "id") {
   "The unique ID associated with the account."
@@ -54,7 +80,7 @@ type Host implements User @key(fields: "id") {
   nickname: String! @shareable
   "The role of the user"
   role: Role! @shareable
-  "The listings of the user"
+  "The listings of the host (must be unique)."
   listings: [Listing]! @shareable
   overallRating: Float! @shareable
 }
@@ -163,6 +189,14 @@ type Listing @key(fields: "id") {
   longitude: Float! @shareable
 }
 
+type Review @key(fields: "id") {  
+  id: ID!  
+  userId: ID! @shareable  
+  listingId: ID! @shareable  
+  rating: Float!  
+  text: String  
+  createdAt: DateTime!  
+} 
 type Location @key(fields:"id") {
   "The unique ID associated with the location"
   id: ID! 
@@ -185,6 +219,8 @@ interface Node {
   id: ID!
 }
 
+ _entities(representations: [_Any!]!): [_Entity]!
+
 type _Service {
   sdl: String
 }
@@ -195,30 +231,7 @@ type UserId {
 
 scalar _Any
 
-union _Entity = Listing | Host | Guest | Booking | Cart
-
-type Query {
-  getUser(id: ID!): User @shareable
-  listings: [Listing] @shareable
-  "User accounts"
-  user(id: ID!): User @shareable
-  "Currently logged-in user"
-  me: User! @shareable
-  "Retrieves the account of the currently logged-in user."
-  viewer: Account @shareable
-  "The booking of the currently user"
-  bookings: [Booking] @shareable
-  "Retrieves the account of the currently logged-in user."
-  account(id: ID!): Account @shareable
-  "Retrieves the accounts of the currently logged-in user."
-  accounts: [Account] @shareable
-  "Cart of the currently logged-in user."
-  cart: Cart @shareable
-  "Cart of the currently logged-in user."
-  carts: [Cart]! @shareable
-  _service: _Service!
-  _entities(representations: [_Any!]!): [_Entity]!
-}
+union _Entity = Listing | Host | Guest | Booking | Cart 
 
 type Mutation {
   "Creates a new account."
@@ -229,6 +242,7 @@ type Mutation {
   updateAccountPassword(input: UpdateAccountPasswordInput!): UpdateAccountPasswordPayload! @shareable
   "Creates a new listing."
   createListing(input: CreateListingInput!): CreateListingResponse! @shareable
+   logout: Boolean! @shareable 
 }
 
 type CreateAccountPayload implements Response {
@@ -343,3 +357,6 @@ type Booking @key(fields: "id") {
   "The total price for the booking"
   totalPrice: Float! @shareable
 }
+
+
+

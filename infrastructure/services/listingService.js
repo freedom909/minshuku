@@ -11,6 +11,7 @@ import mysql from 'mysql2/promise';
 import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
 import Listing from '../models/listing.js';
+import Amenity from '../models/amenity.js';
 import Coordinate from '../models/location.js'
 import dbConfig from '../DB/dbconfig.js';
 import Location from '../models/location.js';
@@ -119,7 +120,7 @@ class ListingService {
     }
   }
 
-  async getListing(id) {
+  async getListingById(id) {
     try {
       const listing = await this.sequelize.models.Listing.findByPk(id, {
         include: [{
@@ -138,28 +139,6 @@ class ListingService {
       throw new GraphQLError('Error fetching listing', {
         extensions: { code: 'INTERNAL_SERVER_ERROR' }
       });
-    }
-  }
-
-  async getListingById(id) {
-    // if (!this.context.user) {
-    //   throw new GraphQLError('You must be logged in to view listings', { extensions: { code: 'UNAUTHENTICATED' } });
-    // }
-
-    try {
-      const query = `SELECT * FROM listings WHERE id = :id`;
-      const response = await this.sequelize.query(query, {
-        type: QueryTypes.SELECT,
-        replacements: { id },
-      });
-      if (response.length > 0) {
-        return response[0]; // Return the first (and only) listing
-      } else {
-        throw new GraphQLError('Listing not found', { extensions: { code: 'NOT_FOUND' } });
-      }
-    } catch (error) {
-      console.error('Error fetching listing by ID:', error);
-      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -235,15 +214,12 @@ class ListingService {
 
   async getListing(id) {  // Updated to match the resolver method name
     try {
-      const query = `SELECT * FROM listings WHERE id = :id LIMIT 1`
-      const [listing] = await this.sequelize.query(query, {
-        type: QueryTypes.SELECT,
-        replacements: { id } // Using replacements to safely insert the id into the query
+      return await Listing.findByPk(id, {
+        include: [{
+          model: Amenity,
+          as: 'amenities' // Adjust this to match your association
+        }]
       });
-      if (!listing) {
-        throw new Error('Listing not found');
-      }
-      return listing;
     } catch (error) {
       console.error('Error fetching listing:', error);
       throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
@@ -363,15 +339,12 @@ class ListingService {
 
   async getListing(id) {
     try {
-      const query = `SELECT * FROM listings WHERE id = :id LIMIT 1`
-      const [listing] = await this.sequelize.query(query, {
-        type: QueryTypes.SELECT,
-        replacements: { id } // Using replacements to safely insert the id into the query
+      return await Listing.findByPk(id, {
+        include: [{
+          model: Amenity,
+          as: 'amenities' // Adjust this to match your association
+        }]
       });
-      if (!listing) {
-        throw new Error('Listing not found');
-      }
-      return listing;
     } catch (error) {
       console.error('Error fetching listing:', error);
       throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });

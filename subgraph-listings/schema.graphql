@@ -37,8 +37,9 @@ extend type Query {
   hotListingsByBookingNumber: [Listing] @shareable
   
   "Get listing details with location information"
-  getListingWithLocation(listingId: ID!): Listing @shareable
-  
+  getListingWithLocation(lat:Float!,lon:Float!,locationId: ID!): Listing @shareable
+  "Get nearby listings based on latitude and longitude"
+  getNearbyListings(latitude: Float!, longitude: Float!, radius: Float!): [Listing] @shareable
   "Full-text search for listings"
   fullTextSearchListings(input: FullTextSearchInput!): SearchResult! @shareable
   
@@ -213,7 +214,7 @@ enum SortByCriteria {
 
 # Type representing a listing
 type Listing @key(fields: "id") {
-id: ID!
+  id: ID!
   title: String! @shareable
   description: String! @shareable
   photoThumbnail: String! @shareable
@@ -236,6 +237,7 @@ id: ID!
   priceRange: PriceRange! @shareable  # Changed to output type
   totalCostRange: TotalCostRange! @shareable  # Changed to output type
   locationFilter: Location! @shareable  # Changed to output type
+  distance: Float @shareable
 }
 
 type PriceRange @key(fields: "id") {
@@ -326,7 +328,7 @@ type Location @key(fields: "id") {
   "The location's longitude"
   longitude: Float! @shareable
  "The location's distance from a given point"
-  radius: String! @shareable 
+  radius: Float! @shareable 
 }
 
 type Availability @key(fields: "id") {

@@ -47,7 +47,8 @@ type Review @key(fields: "id") {
   title: String! @shareable
   isFeatured: Boolean! @shareable
   isPinned: Boolean! @shareable
-  comment: Comment //to allow users to comment on reviews
+  "to allow users to comment on reviews"
+  comment: Comment 
 }
 
 ### Likes
@@ -138,4 +139,10 @@ type Guest implements User @key(fields: "id") {
   id: ID! @shareable 
   name: String! @shareable
   picture: String @shareable
+}
+
+type Comment @key(fields: "id") {
+  id: ID!
+  text: String! @shareable
+  guest: Guest! @shareable
 }

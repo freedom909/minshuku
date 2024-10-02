@@ -9,6 +9,7 @@ import UserRepository from '../repositories/userRepository.js';
 import connectMysql from './connectMysqlDB.js';
 import ListingRepository from '../repositories/listingRepository.js';
 import CartRepository from '../repositories/cartRepository.js';
+
 const initAccountContainer = async ({ services = [] } = {}) => {
   let mongodb;
 
@@ -22,12 +23,12 @@ const initAccountContainer = async ({ services = [] } = {}) => {
   }
   let mysqldb
   try {
-    mysqldb=await connectMysql()
+    mysqldb = await connectMysql()
     console.log('Connected to MongoDB database');
   } catch (error) {
     console.error('Error connecting to MysqlDB database:', error);
     throw error;
-  
+
   }
 
   // Create a container and register services and repositories

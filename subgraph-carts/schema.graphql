@@ -84,6 +84,8 @@ input CreateBookingInput {
   checkInDate: DateTime!
   "Date of check-out"
   checkOutDate: DateTime!
+  "Guest ID"
+  guestId: ID!
 }
 
 type Mutation {
