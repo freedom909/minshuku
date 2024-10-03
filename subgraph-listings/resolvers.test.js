@@ -138,7 +138,7 @@ const mockListingService = {
 };
 
 (async () => {
-  const input = { id: 'listing-10', listingStatus: 'COMPLETED' };
+  const input = { id: 'listing-8', listingStatus: 'CANCELLED' };
   const result = await resolvers.Mutation.updateListingStatus(
     null,
     { input },

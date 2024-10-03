@@ -10,16 +10,64 @@ import { Op } from '@sequelize/core'
 import calculateDistance from './helper.js'
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
-
-// import { searchListings } from '../infrastructure/search/searchData.js';
-
-// import { searchListings } from '../infrastructure/search/searchData.js';
-
-// const client = new Client({ host: 'http://localhost:9200' })
-
 const resolvers = {
 
   Query: {
+    getNearbyListings: async (_, { latitude, longitude, radius }, { dataSources }) => {
+      if (!latitude || !longitude) throw new Error('You must provide a latitude and longitude');
+      const { listingService } = dataSources;
+
+      try {
+        // Fetch all listings (ensure the listing includes location details like latitude and longitude)
+        const listings = await listingService.getAllListings();
+
+        // Debug: Check if listings are retrieved and log the first few listings
+        console.log('Fetched listings:', listings.slice(0, 5));
+
+        // Filter listings by calculating the distance
+        const nearbyListings = listings
+          .map(listing => {
+            if (!listing.location || !listing.location.latitude || !listing.location.longitude) {
+              console.log(`No location data for listing: ${listing.id}`);
+              return null;
+            }
+
+            // Log the coordinates before calculating distance
+            console.log(`Listing ${listing.id} - Guest Lat: ${latitude}, Guest Lon: ${longitude}, Listing Lat: ${listing.latitude}, Listing Lon: ${listing.longitude}`);
+
+            // Calculate the distance between the guest's location and the listing
+            const distance = calculateDistance(latitude, longitude, listing.location.latitude, listing.location.longitude);
+
+            if (isNaN(distance)) {
+              console.error(`Invalid distance calculated for listing ${listing.id}`);
+              return null;
+            }
+
+            // Attach distance to listing data
+            listing.distance = distance;
+
+            // Return the listing if it's within the radius
+            return distance <= radius ? {
+              id: listing.id,
+              name: listing.title,
+              costPerNight: listing.costPerNight,
+              numOfBeds: listing.numOfBeds,
+              distance, // Include distance in the response
+            } : null;
+          })
+          .filter(listing => listing !== null);
+
+        // Debug: Log the nearby listings
+        console.log('Nearby listings:', nearbyListings);
+
+        return nearbyListings;
+      } catch (error) {
+        console.error('Error fetching nearby listings:', error);
+        throw new Error('Failed to fetch nearby listings');
+      }
+    },
+
+
     fullTextSearchListings: async (_, { input }, { dataSources }) => {
       const { searchText, limit = 10, offset = 0 } = input;
       const { listingService } = dataSources;
@@ -77,6 +125,7 @@ const resolvers = {
     },
 
     hotListingsByMoney: async (_, __, { dataSources }) => {
+
       const { listingService } = dataSources;
       try {
         const listings = await listingService.hotListingsByMoneyBookingTop5();
@@ -396,15 +445,16 @@ const resolvers = {
         throw new AuthenticationError(`you don't have right to update this list`)
       }
       const { listingService } = dataSources;
-
+      console.log('Updating listing with id:', listingId, 'and data:', listing);
       if (!listingId) throw new Error('Listing ID not provided');
       try {
-        const updatedListing = await listingService.updateListing({ ...listing, id: listingId });
+        const updatedListing = await listingService.updateListing({ listingId, listing });
+        console.log('Updated listing:', updatedListing);
         return {
-          code: 200,
+          code: 200, // Example success code
           success: true,
-          message: 'Listing successfully updated',
-          listing: updatedListing
+          message: 'Listing updated successfully.',
+          listing: updatedListing // Return the updated listing object
         };
       } catch (error) {
         console.error(error);
@@ -558,34 +608,8 @@ const resolvers = {
       const bookings = await bookingService.getBookingsForListing(id, 'UPCOMING') || [];
       return bookings.length;
     },
-    getNearbyListings: async (_, { latitude, longitude, radius }, { dataSources }) => {
-      if (!latitude || !longitude) throw new Error('You must provide a latitude and longitude');
-      const { listingService } = dataSources;
-      try {
-        // Fetch all listings from your database (ideally you'd use pagination)
-        const listings = await listingService.getAllListings();
-        // Filter listings by calculating distance from the guest's location
-        const nearbyListings = listings.filter(listing => {
-          const distance = calculateDistance(latitude, longitude, listing.latitude, listing.longitude);
-          // Attach distance to the listing data
-          listing.distance = distance; // Attach distance to the listing data
-          return distance <= radius;
-        }).map(listing => {
-          return {
-            id: listing.id,
-            name: listing.name,
-            pricePerNight: listing.costPerNight,
-            location: listing.location.dataValues,
-            numOfBeds: listing.numOfBeds
-          };
-        });
-        // Return the filtered listings
-        return nearbyListings;
-      } catch (error) {
-        console.error('Error fetching nearby listings:', error);
-        throw new Error('Failed to fetch nearby listings');
-      }
-    },
+
+
 
 
     getListingWithLocation: async (_, { latitude, longitude, locationId }, { dataSources }) => {

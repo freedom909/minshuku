@@ -20,15 +20,15 @@ import Location from '../models/location.js';
 dotenv.config();
 
 // Applying the permissions middleware
-const permissionsMiddleware = shield({
-  Query: {
-    "*": allow,  // Allow all queries by default, customize as needed
-  },
-  Mutation: {
-    "*": allow,  // Allow all mutations by default, customize as needed
-  },
-});
-// or wherever your GraphQL endpoint is
+// const permissionsMiddleware = shield({
+//   Query: {
+//     "*": allow,  // Allow all queries by default, customize as needed
+//   },
+//   Mutation: {
+//     "*": allow,  // Allow all mutations by default, customize as needed
+//   },
+// });
+// // or wherever your GraphQL endpoint is
 
 class ListingService {
   constructor({ listingRepository, sequelize }) {
@@ -79,17 +79,24 @@ class ListingService {
   }
 
   async getAllListings() {
-    try {
-      const query = `
-      SELECT * FROM listings
-      `;
-      const response = await this.sequelize.query(query, { type: QueryTypes.SELECT })
-      return response
-    } catch (error) {
-      console.error('Error fetching all listings:', error);
-      throw new GraphQLError('Error fetching listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
+    const listings = await Listing.findAll({
+      include: [
+        {
+          model: Location, // Assuming you have a Location model
+          as: 'location', // Use the proper alias if needed
+        },
+        {
+          model: Amenity, // Assuming you have an Amenity model
+          as: 'amenities', // Use the proper alias if needed
+        }
+      ],
+    });
+    return listings;
+  } catch(error) {
+    console.error('Error fetching listing:', error);
+    throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
   }
+
 
   async getListingsByUser(userId) {
     try {
@@ -215,10 +222,16 @@ class ListingService {
   async getListing(id) {  // Updated to match the resolver method name
     try {
       return await Listing.findByPk(id, {
-        include: [{
-          model: Amenity,
-          as: 'amenities' // Adjust this to match your association
-        }]
+        include: [
+          {
+            model: Amenity,
+            as: 'amenities' // Adjust this to match your association
+          },
+          {
+            model: Location,
+            as: 'location'  // Adjust this to match your association
+          }
+        ]
       });
     } catch (error) {
       console.error('Error fetching listing:', error);
@@ -333,21 +346,6 @@ class ListingService {
       throw new GraphQLError('Error fetching total cost', {
         extensions: { code: 'INTERNAL_SERVER_ERROR' },
       });
-    }
-  }
-
-
-  async getListing(id) {
-    try {
-      return await Listing.findByPk(id, {
-        include: [{
-          model: Amenity,
-          as: 'amenities' // Adjust this to match your association
-        }]
-      });
-    } catch (error) {
-      console.error('Error fetching listing:', error);
-      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
@@ -591,6 +589,47 @@ class ListingService {
     } catch (error) {
       console.error('Error fetching locations:', error);
       throw new GraphQLError('Error fetching locations', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
+  }
+
+  async updateListing({ listingId, listing }) {
+    try {
+      const { title, description, costPerNight } = listing;
+
+      console.log("Updating listing with id:", listingId, "and data:", listing);
+
+      const query = `
+      UPDATE listings
+      SET title = :title, description = :description, costPerNight = :costPerNight
+      WHERE id = :listingId
+    `;
+
+      console.log("Executing query:", query);
+      console.log("With replacements:", { title, description, costPerNight, listingId });
+
+      const [results, metadata] = await this.sequelize.query(query, {
+        type: QueryTypes.UPDATE,
+        replacements: {
+          title,
+          description,
+          costPerNight,
+          listingId, // Include listingId here for :listingId replacement
+        },
+      });
+
+      console.log("Results from query execution:", results);
+      console.log("Metadata from query execution:", metadata);
+
+      // Handle MySQL vs PostgreSQL result structures
+      const affectedRows = metadata?.rowCount || results; // rowCount for PostgreSQL, results for MySQL
+
+      console.log('Update query affected rows:', affectedRows);
+
+      // Return true if one or more rows were updated
+      return affectedRows > 0;
+    } catch (error) {
+      console.error('Error updating listing:', error);
+      throw new GraphQLError('Error updating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
