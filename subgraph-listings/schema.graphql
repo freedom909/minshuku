@@ -61,6 +61,7 @@ input UpdateListingStatusInput {
 }
 
 enum ListingStatus {
+  PUBLISHED
   ACTIVE
   PENDING
   SOLD
@@ -122,10 +123,8 @@ input CreateListingInput {
   title: String!
   "The description of the listing"
   description: String!
-  "The price of the listing"
-  price: Float!
-  "The ID of the location"
-  locationId: String!
+   "The location details of the listing"
+  location: LocationInput! 
   "The ID of the host"
   hostId: String!
   "The photo thumbnail of the listing"
@@ -134,16 +133,15 @@ input CreateListingInput {
   numOfBeds: Int!
   "The cost per night of the listing"
   costPerNight: Float!
-  "The type of location"
-  locationType: LocationType!
   "The amenities of the listing"
   amenities: [AmenityInput!]!
   listingStatus: ListingStatus 
 }
 
 input AmenityInput {
-  type: String! 
+  name: String! 
   description: String 
+  category: String!
 }
 
 type Amenity @key(fields: "id") {
@@ -170,8 +168,8 @@ input UpdateListingInput {
   numOfBeds: Int
   "The cost per night"
   costPerNight: Float
-  "The location type of the listing"
-  locationType: LocationType
+  "The listing's location"
+  location: LocationInput  
   "The listing's amenities"
   amenities: [ID]
 }
@@ -265,9 +263,17 @@ input TotalCostRangeInput {
 }
 
 input LocationInput {
-  radius: Float
+  locationId: ID!
+  name: String!
   latitude: Float
+  radius: Float
   longitude: Float
+  address: String
+  city: String
+  state: String
+  country: String
+  zipCode: String
+  locationType: LocationType 
 }
 
 # Type representing a review
@@ -280,7 +286,6 @@ type Booking @key(fields: "id") {
   guest: Guest! @shareable @cacheControl(maxAge: 3600)  # Cache for 1 hour
   review: Review @shareable
 }
-
 
 # Type representing a host
 type Host @key(fields: "id") {

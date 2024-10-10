@@ -1,10 +1,10 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from './seq.js';
-import ListingAmenities from './listingAmenities.js';
-import Listing from './listing.js';
 // Amenity model
 
+import { Model, DataTypes } from 'sequelize';
+import sequelize from './seq.js'; // Correct path to seq.js  
+
 class Amenity extends Model { }
+
 Amenity.init({
   id: {
     type: DataTypes.STRING,
@@ -12,32 +12,24 @@ Amenity.init({
   },
   category: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: false, // Category should not be null  
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: false, // Name should not be null  
   },
-  createdAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  updatedAt: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false, // Description should not be null  
   },
 }, {
   sequelize,
   modelName: 'Amenity',
-  timestamps: true,
+  timestamps: true, // Automatically manages createdAt and updatedAt  
 });
-//Define associations
-// Amenity.belongsToMany(Listing, {
-//   through: ListingAmenities, // Join table
-//   foreignKey: 'amenityId', // FK in ListingAmenities for Amenity
-//   otherKey: 'listingId', // FK in ListingAmenities for Listings
-//   as: 'listings' // Alias for reverse querying
-// });
 
+// Export the model  
 export default Amenity;
+
+
 

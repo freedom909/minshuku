@@ -15,6 +15,8 @@ type Listing {
 type Amenity @key(fields: "id"){
   id: ID! @shareable
   name: String! @shareable
+  category: String! @shareable
+  description: String @shareable
 }
 
 type Query {
@@ -25,7 +27,7 @@ type Query {
 }
 
 type Mutation {
-  addAmenity(name: String!): Amenity! @shareable
+  addAmenity(name: String!,category:String!): Amenity! @shareable
   addAmenityToListing(listingId: ID!, amenityId: ID!): Listing! @shareable
 }
 

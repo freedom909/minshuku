@@ -1,92 +1,100 @@
-import { Model, DataTypes, ENUM } from 'sequelize';
-import sequelize from './seq.js'; // Adjust the path as necessary
-import Location from './location.js'; // Import Coordinate model
-import Amenity from './amenity.js';
-import ListingAmenities from './listingAmenities.js';
-import Coordinate from './coordinate.js'; // Import Coordinate model
+import { Model, DataTypes } from 'sequelize';
+import sequelize from './seq.js'; // Correct path to seq.js  
 
 class Listing extends Model { }
 
 Listing.init({
   id: {
     type: DataTypes.STRING,
-    allowNull: false,
     primaryKey: true,
   },
-  title: DataTypes.STRING,
-  description: DataTypes.TEXT,
-  costPerNight: DataTypes.FLOAT,
-  hostId: DataTypes.STRING,
-  locationType: DataTypes.STRING,
-  numOfBeds: DataTypes.INTEGER,
-  photoThumbnail: DataTypes.STRING,
-  isFeatured: DataTypes.BOOLEAN,
-  saleAmount: DataTypes.FLOAT,
-  bookingNumber: DataTypes.INTEGER,
-  createdAt: DataTypes.DATE,
-  updatedAt: DataTypes.DATE,
-  checkInDate: DataTypes.DATE,
-  checkOutDate: DataTypes.DATE,
-  locationId: {  // Add this field
+  title: {
     type: DataTypes.STRING,
-    allowNull: true,  // If locationId is mandatory, else allowNull: true
-    onUpdate: 'CASCADE',
-    onDelete: 'SET NULL',  // If a location is deleted, set locationId to NULL
+    allowNull: false, // You might want to enforce this  
   },
-  // listingAmenitiesId: DataTypes.STRING,
-  totalCost: {
-    type: DataTypes.VIRTUAL,
-    get() {
-      const checkIn = new Date(this.checkInDate);
-      const checkOut = new Date(this.checkOutDate);
-      const numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-      return this.costPerNight * numberOfNights;
-    }
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true, // Adjust based on requirements  
+  },
+  costPerNight: {
+    type: DataTypes.FLOAT,
+    allowNull: false, // You might want to enforce this  
+  },
+  hostId: {
+    type: DataTypes.STRING,
+    allowNull: false, // You might want to enforce this  
+  },
+  locationId: {
+    type: DataTypes.STRING,
+    allowNull: false, // You might want to enforce this  
+  },
+  numOfBeds: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Adjust based on requirements  
+  },
+  photoThumbnails: {
+    type: DataTypes.JSON, // Use JSON to store an array of URLs  
+    allowNull: true, // Adjust based on requirements  
+  },
+  isFeatured: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false, // Set default value  
+  },
+  saleAmount: {
+    type: DataTypes.FLOAT,
+    allowNull: true, // Adjust based on requirements  
+  },
+  bookingNumber: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0, // Optional default value  
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW, // Automatically set to now  
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW, // Automatically set to now  
+  },
+  checkInDate: {
+    type: DataTypes.DATE,
+    allowNull: true, // Adjust based on requirements  
+  },
+  checkOutDate: {
+    type: DataTypes.DATE,
+    allowNull: true, // Adjust based on requirements  
+  },
+  amenityIds: {
+    type: DataTypes.JSON, // Use JSON to store an array of amenity IDs  
+    allowNull: true, // Adjust based on requirements  
+  },
+  bookingIds: {  //
+    type: DataTypes.JSON, // Use JSON to store an array of booking IDs  
+    allowNull: true, // Adjust based on requirements  
+  },
+  reviewIds: {
+    type: DataTypes.JSON, // Use JSON to store an array of review IDs  
+    allowNull: true, // Adjust based on requirements  
+  },
+  hostId: {
+    type: DataTypes.STRING,
+    allowNull: false, // You might want to enforce this  
   },
   listingStatus: {
     type: DataTypes.ENUM,
-    values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED', 'COMPLETED'],
-    set(value) {
-      // Log the value to ensure it's being set
-      console.log(`Setting listingStatus to: ${value}`);
-
-      // Add any custom logic before setting the value
-      if (this.isFeatured && value === 'SOLD') {
-        throw new Error('Featured listings cannot be set to SOLD.');
-      }
-
-      // Set the value using the default setter
-      this.setDataValue('listingStatus', value);
-    }
+    values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED', 'COMPLETED', 'AVAILABLE', 'PUBLISHED'],
+    allowNull: false, // You might want to enforce this  
   },
 }, {
   sequelize,
   modelName: 'Listing',
-  timestamps: true,
+  timestamps: true, // This will automatically add createdAt and updatedAt fields  
 });
 
-// Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
-// //Define the one-to-one relationship
 
-// Coordinate.belongsTo(Listing, {
-//   foreignKey: 'listingId',
-//   as: 'coordinate', // Alias must match the Listing model association
-// });
-
-Listing.hasOne(Location, {
-  foreignKey: 'listingId', // Foreign key in the Location model
-  as: 'location', // Alias should reflect a collection of locations
-});
-Location.belongsTo(Listing, {
-  foreignKey: 'listingId', // Foreign key in the Location model
-  as: 'location', // This alias must match the association in Listing
-});
-// Define the many-to-many relationship
-
-Listing.belongsToMany(Amenity, { through: ListingAmenities, foreignKey: 'listingId', otherKey: 'amenityId', as: 'amenities' });
-Amenity.belongsToMany(Listing, { through: ListingAmenities, foreignKey: 'amenityId', otherKey: 'listingId', as: 'listings' });
-
-// Export the model
+Listing.associate = (models) => {
+  Listing.hasMany(models.Booking, { foreignKey: 'listingId', as: 'bookings' });
+  // If relevant, you can also associate BookingItem if listings can have items.  
+};
+// Export the model  
 export default Listing;
-
-

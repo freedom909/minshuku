@@ -15,6 +15,7 @@ import Amenity from '../models/amenity.js';
 import Coordinate from '../models/location.js'
 import dbConfig from '../DB/dbconfig.js';
 import Location from '../models/location.js';
+import { UUID } from 'uuidjs';
 
 
 dotenv.config();
@@ -190,22 +191,6 @@ class ListingService {
       throw new Error('Error fetching listings');
     }
   }
-
-
-  // async getFeaturedListings(limit) {
-  //   if (!Number.isInteger(limit) || limit <= 0) {
-  //     throw new Error('Limit must be a positive integer');
-  //   }
-  //   try {
-  //     const query = `select * from listings where isFeatured=1 LIMIT ${limit}`
-  //     const response = await this.sequelize.query(query, { type: QueryTypes.SELECT });
-
-  //     return response;
-  //   } catch (error) {
-  //     console.error('Error fetching featured listings:', error);
-  //     throw new GraphQLError('Error fetching featured listings', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-  //   }
-  // }
 
   async getFeaturedListings() {
     try {
@@ -516,22 +501,59 @@ class ListingService {
   }
 
 
-  async createListing({ title, description, price, locationId, hostId }) {
-    if (!this.context.user) {
-      throw new GraphQLError('You must be logged in to create listings', { extensions: { code: 'UNAUTHENTICATED' } });
-    }
+  async createListing({ title, description, location, hostId, photoThumbnail, numOfBeds, costPerNight, locationType, amenities, listingStatus }) {
+    const { locationId } = location;
+
     try {
-      const response = await this.post('listings', {
+      // Generate a UUID for the listing
+      const listingId = UUID.generate();
+      const currentListingStatus = (listingStatus === "PUBLISHED") ? listingStatus : "PENDING";
+
+      // Create the new listing using Sequelize's ORM
+      const newListing = await Listing.create({
+        id: listingId,
         title,
         description,
-        price,
         locationId,
         hostId,
+        photoThumbnail,
+        numOfBeds,
+        costPerNight,
+        locationType,
+        listingStatus: currentListingStatus,
       });
-      return response.data;
+
+      // Insert the amenities and associate them with the listing
+      const amenityPromises = amenities.map(async (amenity) => {
+        const amenityId = UUID.generate(); // Generate UUID for each amenity
+        const createdAt = new Date();
+        const updatedAt = createdAt;
+
+        // Create the amenity
+        const newAmenity = await Amenity.create({
+          id: amenityId,
+          category: amenity.category,
+          name: amenity.name,
+          description: amenity.description,
+          createdAt,
+          updatedAt
+        });
+
+        // Create the association between the listing and the amenity
+        await ListingAmenities.create({
+          listingId: newListing.id,  // Use the newly created listing ID
+          amenityId: newAmenity.id,  // Use the newly created amenity ID
+        });
+      });
+
+      // Wait for all amenities to be processed
+      await Promise.all(amenityPromises);
+
     } catch (error) {
       console.error('Error creating listing:', error);
-      throw new GraphQLError('Error creating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      throw new GraphQLError('Error creating listing', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' }
+      });
     }
   }
 

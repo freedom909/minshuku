@@ -7,6 +7,7 @@ import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import initializeListingContainer from '../infrastructure/DB/initListingContainer.js';
+import initializeAmenityContainer from '../infrastructure/DB/initAmenityContainer.js';
 import { GraphQLError } from 'graphql';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -42,7 +43,8 @@ const startApolloServer = async () => {
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          listingService: mysqlContainer.resolve('listingService')
+          listingService: mysqlContainer.resolve('listingService'),
+          amenityService: mysqlContainer.resolve('amenityService')
         },
       })
     });
@@ -57,7 +59,8 @@ const startApolloServer = async () => {
         context: async ({ req }) => ({
           token: req.headers.authorization || '',
           dataSources: {
-            listingService: mysqlContainer.resolve('listingService')
+            listingService: mysqlContainer.resolve('listingService'),
+            amenityService: mysqlContainer.resolve('amenityService')//
           },
         })
       })

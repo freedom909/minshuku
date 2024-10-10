@@ -1,157 +1,155 @@
 [
   {
-    "id": "am-1",
     "category": "Accommodation Details",
-    "name": "Interdimensional wifi harmony"
+    "name": "Interdimensional wifi harmony",
+    "description": "Our interdimensional wifi harmony is a marvel of modern technology that allows guests to connect to our network in any location, anywhere."
   },
   {
-    "id": "am-2",
     "category": "Accommodation Details",
-    "name": "Towel"
+    "name": "Towel",
+    "description": "We've got a beautiful, comfortable towel for guests to enjoy throughout their stay. It's not just a piece of furniture."
   },
   {
-    "id": "am-3",
     "category": "Accommodation Details",
-    "name": "Universal remote"
+    "name": "Universal remote",
+    "description": "Our universal remote is a must-have for those who enjoy using our airlock system."
   },
   {
-    "id": "am-4",
     "category": "Accommodation Details",
-    "name": "Adjustable gravity"
+    "name": "Adjustable gravity",
+    "description": "Our adjustable gravity system allows guests to adjust their room temperature to their liking. It's like having a room that's always right for you."
   },
   {
-    "id": "am-5",
     "category": "Accommodation Details",
-    "name": "Quantum microwave"
+    "name": "Quantum microwave",
+    "description": "Our quantum microwave is a revolutionary invention that allows guests to cook and bake in the comfort of their own homes."
   },
   {
-    "id": "am-6",
     "category": "Accommodation Details",
-    "name": "Retractable moonroof"
+    "name": "Retractable moonroof",
+    "description": "Our retractable moonroof is a must-have for those who love exploring the stars. It's like having a moonroof that's always right for you."
   },
   {
-    "id": "am-7",
     "category": "Accommodation Details",
-    "name": "Wormhole trash chute"
+    "name": "Wormhole trash chute",
+    "description": "Our wormhole trash chute is a must-have for those who love space travel. It's like having a trash chute that's always right for you."
   },
   {
-    "id": "am-8",
     "category": "Accommodation Details",
-    "name": "DroneDash food delivery"
+    "name": "DroneDash food delivery",
+    "description": "Our DroneDash food delivery is a must-have for those who love space travel. It's like having a food delivery that's always right for you."
   },
   {
-    "id": "am-9",
     "category": "Accommodation Details",
-    "name": "Cosmic jacuzzi"
+    "name": "Cosmic jacuzzi",
+    "description": "Our cosmic jacuzzi is a must-have for those who love space travel. It's like having a jacuzzi that's always right for you."
   },
   {
-    "id": "am-28",
     "category": "Accommodation Details",
-    "name": "Multi-planetary cable TV"
+    "name": "Multi-planetary cable TV",
+    "description": "Our multi-planetary cable TV is a must-have for those who love space travel. It's like having a cable TV that's always right for you."
   },
   {
-    "id": "am-29",
     "category": "Accommodation Details",
-    "name": "Cryochamber"
+    "name": "Cryochamber",
+    "description": "Our cryochamber is a must-have for those who love space travel. It's like having a cryo chamber that's always right for you."
   },
   {
-    "id": "am-30",
     "category": "Accommodation Details",
-    "name": "Heated sleeping pods"
+    "name": "Heated sleeping pods",
+    "description": "Our heated sleeping pods are a must-have for those who love space travel. It's like having a sleeping pod that's always right for you."
   },
   {
-    "id": "am-10",
     "category": "Space Survival",
-    "name": "Oxygen"
+    "name": "Oxygen",
+    "description": "We've got a special supply of oxygen for guests to enjoy throughout their stay. It's like having a special oxygen tank for your spacecraft."
   },
   {
-    "id": "am-11",
     "category": "Space Survival",
-    "name": "Prepackaged meals"
+    "name": "Prepackaged meals",
+    "description": "We've got a special supply of prepackaged meals for guests to enjoy throughout their stay. It's like having a special meal box for your spacecraft."
   },
   {
-    "id": "am-12",
     "category": "Space Survival",
-    "name": "SOS button"
+    "name": "SOS button",
+    "description": "We've got a special SOS button for guests to call for help throughout their stay. It's like having a special emergency call button for your spacecraft."
   },
   {
-    "id": "am-13",
     "category": "Space Survival",
-    "name": "Meteor shower shield"
+    "name": "Meteor shower shield",
+    "description": "We've got a special meteor shower shield for guests to enjoy throughout their stay. It's like having a special meteor shower shield for your spacecraft."
   },
   {
-    "id": "am-14",
     "category": "Space Survival",
-    "name": "First-aamenityId kit"
+    "name": "First-aid kit",
+    "description": "We've got a special first-aid kit for guests to enjoy throughout their stay. It's like having a special aid kit for your spacecraft."
   },
   {
-    "id": "am-15",
     "category": "Space Survival",
-    "name": "Water recycler"
+    "name": "Water recycler",
+    "description": "We've got a special water recycler for guests to enjoy throughout their stay. It's like"
   },
   {
-    "id": "am-16",
     "category": "Space Survival",
-    "name": "Panic button"
+    "name": "Panic button",
+    "description": "We've got a special panic button for guests to call for help throughout their stay. It's like having a special emergency call button for your spacecraft."
   },
   {
-    "id": "am-17",
     "category": "Space Survival",
-    "name": "Emergency life support systems"
+    "name": "Emergency life support systems",
+    "description": "We've got a special emergency life support systems for guests to enjoy throughout their stay. It's like having a special life support system for your spacecraft."
   },
   {
-    "id": "am-18",
     "category": "Space Survival",
-    "name": "Universal translator"
+    "name": "Universal translator",
+    "description": "We've got a special universal translator for guests to enjoy throughout their stay. It's like having a special translator for your spacecraft."
   },
   {
-    "id": "am-31",
     "category": "Space Survival",
-    "name": "Aquatic breathing aamenityId"
+    "name": "Aquatic breathing aamenityId",
+    "description": "We've got a special aquatic breathing aamenityId for guests to enjoy throughout their stay. It's like having a special aquatic breathing system for your spacecraft."
   },
   {
-    "id": "am-19",
     "category": "Outdoors",
-    "name": "Fire pit"
+    "name": "Fire pit",
+    "description": "We've got a special fire pit for guests to enjoy throughout their stay. It's like having a special fire pit for your spacecraft."
   },
   {
-    "id": "am-20",
     "category": "Outdoors",
-    "name": "AcamenityId lake access"
+    "name": "AcamenityId lake access",
+    "description": "We've got a special aamenityId lake access for guests to enjoy throughout their stay. It's like having a special aamenityId system for your spacecraft."
   },
   {
-    "id": "am-21",
     "category": "Outdoors",
-    "name": "Waterfront"
+    "name": "Waterfront",
+    "description": "We've got a special waterfront for guests to enjoy throughout their stay. It's like having a special waterfront for your spacecraft."
   },
   {
-    "id": "am-22",
     "category": "Outdoors",
-    "name": "Hydroponic garden"
+    "name": "Hydroponic garden",
+    "description": "We've got a special hydroponic garden for guests to enjoy throughout their stay. It's like having a special hydroponic garden for your spacecraft."
   },
   {
-    "id": "am-23",
     "category": "Outdoors",
-    "name": "Space view"
+    "name": "Space view",
+    "description": "We've got a special space view for guests to enjoy throughout their stay. It's like having a special space view for your spacecraft."
   },
   {
-    "id": "am-24",
     "category": "Outdoors",
-    "name": "Time travel paradoxes"
+    "name": "Time travel paradoxes",
+    "description": "We've got a special time travel paradoxes for guests to enjoy throughout their stay. It's like having a special time travel system for your spacecraft."
   },
   {
-    "id": "am-25",
     "category": "Outdoors",
     "name": "Tourist attraction"
   },
   {
-    "id": "am-26",
     "category": "Outdoors",
     "name": "Meteor showers"
   },
   {
-    "id": "am-27",
     "category": "Outdoors",
-    "name": "Wildlife"
+    "name": "Wildlife",
+    "description": "We've got a special wildlife for guests to enjoy throughout their stay. It's like having a special wildlife system for your spacecraft."
   }
 ]

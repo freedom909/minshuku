@@ -17,11 +17,15 @@ const connectMysql = async () => {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
-      logging: console.log
     });
     console.log('Connected to the mysql database');
   }
   return pool;
 };
+connectMysql();
+console.log('DB Name:', process.env.DB_NAME);
+console.log('DB User:', process.env.DB_USER);
+console.log('DB Password:', process.env.DB_PASSWORD);
+
 export default connectMysql;
 

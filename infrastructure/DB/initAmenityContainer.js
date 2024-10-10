@@ -8,24 +8,24 @@ import UserService from '../services/userService.js';
 import UserRepository from '../repositories/userRepository.js';
 import AmenityService from '../services/amenityService.js';
 import axios from 'axios';
-import httpClient from '../../frontend/src/__mocks__/httpClient.js'; // Import your configured HTTP client
+import sequelize from '../models/seq.js';
+import AmenityRepository from '../repositories/amenityRepository.js';
+// import httpClient from '../../frontend/src/__mocks__/httpClient.js'; // Import your configured HTTP client
 
 const initializeAmenityContainer = async ({ services = [] } = {}) => {
   const mysqldb = await connectMysql();
   const mongodb = await connectToMongoDB();
 
+
   const container = createContainer();
   container.register({
+    sequelize: asValue(sequelize),
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton(),
-    listingRepository: asClass(ListingRepository).singleton(),
-    listingService: asClass(ListingService).singleton(),
-    amenityService: asClass(AmenityService).singleton().inject(() => ({
-      sequelize: mysqldb,
-      httpClient: httpClient,
-    })),
+    amenityRepository: asClass(AmenityRepository).singleton(),
+    amenityService: asClass(AmenityService).singleton()
   });
 
   services.forEach(service => {

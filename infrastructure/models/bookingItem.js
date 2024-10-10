@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from './seq.js'; // Ensure you import your Sequelize instance
 
+
 const BookingItem = sequelize.define('BookingItem', {
   id: {
     type: DataTypes.UUID,

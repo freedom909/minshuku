@@ -331,40 +331,6 @@ const resolvers = {
         };
       }
     },
-    createListing: async (_, { input }, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!listingWithPermissions) {
-        throw new AuthenticationError('User does not have permissions to create a listing');
-      }
-
-      const { listingService, amenityService } = dataSources;
-      const { status = "PENDING", ...listingInput } = input;
-      const { amenities } = listingInput;
-      if (!amenities || !amenities.length) {
-        throw new Error('Listing must have at least one amenity');
-      }
-      const amenityIds = await amenityService.getAmenityIds(amenities);
-      // Prepare the listing object to be created
-      const listing = { ...listingInput, status, amenities: amenityIds, hostId: userId };
-
-      try {
-        const newListing = await listingService.createListing(listing);
-        await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
-        return {
-          code: 200,
-          success: true,
-          message: 'Listing successfully created!',
-          listing: newListing
-        };
-      } catch (err) {
-        console.error(err);
-        return {
-          code: 400,
-          success: false,
-          message: err.message
-        };
-      }
-    },
 
     updateListingStatus: async (_, { input }, { dataSources }) => {
       // if (!userId) throw new AuthenticationError('User not authenticated');
@@ -407,22 +373,29 @@ const resolvers = {
       }
     },
 
-    createListing: async (_, { listing }, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!listingWithPermissions) {
-        throw new AuthenticationError('User does not have permissions to create a listing');
-      }
+    createListing: async (_, { input }, { dataSources, userId }) => {
+      // if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!listingWithPermissions) {
+      //   throw new AuthenticationError('User does not have permissions to create a listing');
+      // }
+      console.log("Creating listing with input:", input);
+
+      const { amenities, ...listing } = input;
 
       const { listingService, amenityService } = dataSources;
-      const { amenities } = listing;
+
+      // Check if the listing includes at least one amenity
       if (!amenities || !amenities.length) {
         throw new Error('Listing must have at least one amenity');
       }
-      const amenityIds = await amenityService.getAmenityIds(amenities);
-      listing.amenities = amenityIds;
+
       try {
-        const newListing = await listingService.createListing({ ...listing, hostId: userId });
+        const amenityIds = await amenityService.getAmenityIds(amenities);
+        listing.amenities = amenityIds;
+
+        const newListing = await listingService.createListing({ hostId: userId, ...listing });
         await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
+
         return {
           code: 200,
           success: true,
@@ -432,18 +405,18 @@ const resolvers = {
       } catch (err) {
         console.error(err);
         return {
-          code: 400,
+          code: 500,
           success: false,
-          message: err.message
+          message: err.message || 'An error occurred while creating the listing',
         };
       }
     },
 
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!isHostOfListing || !isAdmin) {
-        throw new AuthenticationError(`you don't have right to update this list`)
-      }
+      // if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!isHostOfListing || !isAdmin) {
+      //   throw new AuthenticationError(`you don't have right to update this list`)
+      // }
       const { listingService } = dataSources;
       console.log('Updating listing with id:', listingId, 'and data:', listing);
       if (!listingId) throw new Error('Listing ID not provided');
