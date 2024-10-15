@@ -8,6 +8,8 @@ import { GraphQLError } from 'graphql';
 import Amenity from '../infrastructure/models/amenity.js';
 import { Op } from '@sequelize/core'
 import calculateDistance from './helper.js'
+import sequelize from '../infrastructure/models/seq.js';
+import { v4 as uuidv4 } from 'uuid';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 
 const resolvers = {
@@ -306,10 +308,10 @@ const resolvers = {
   },
   Mutation: {
     deleteListing: async (_, { input }, { dataSources, userId }) => {
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!isHostOfListing || !isAdmin) {
-        throw new AuthenticationError(`you don't have right to delete this list`)
-      }
+      // if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!isHostOfListing || !isAdmin) {
+      //   throw new AuthenticationError(`you don't have right to delete this list`)
+      // }
       const { listingId } = input; // Destructure listingId from input
       if (!listingId) throw new Error('Listing ID not provided');
       console.log('Attempting to delete listing with ID:', listingId); // Log the listing ID
@@ -373,41 +375,25 @@ const resolvers = {
       }
     },
 
-    createListing: async (_, { input }, { dataSources, userId }) => {
-      // if (!userId) throw new AuthenticationError('User not authenticated');
-      // if (!listingWithPermissions) {
-      //   throw new AuthenticationError('User does not have permissions to create a listing');
-      // }
-      console.log("Creating listing with input:", input);
-
-      const { amenities, ...listing } = input;
-
-      const { listingService, amenityService } = dataSources;
-
-      // Check if the listing includes at least one amenity
-      if (!amenities || !amenities.length) {
-        throw new Error('Listing must have at least one amenity');
-      }
-
+    async createListing(_, { input }, { dataSources, userId }) {
       try {
-        const amenityIds = await amenityService.getAmenityIds(amenities);
-        listing.amenities = amenityIds;
+        // if (!userId) throw new AuthenticationError('User not authenticated');
+        // if (!isHostOfListing || !isAdmin) {
+        //   throw new AuthenticationError(`you don't have right to update this list`)
+        // }
 
-        const newListing = await listingService.createListing({ hostId: userId, ...listing });
-        await amenityService.linkAmenitiesToListing(newListing.id, amenityIds);
-
+        const { listingService } = dataSources; // Destructure the listingService  
+        console.log("Received input data:", input);
+        // Call the create method from listingService  
+        const newListing = await listingService.create({ input, userId });
         return {
-          code: 200,
-          success: true,
-          message: 'Listing successfully created!',
-          listing: newListing
-        };
-      } catch (err) {
-        console.error(err);
+          listing: newListing,  // The created listing object
+        }; // Return the newly created listing 
+      } catch (error) {
         return {
           code: 500,
           success: false,
-          message: err.message || 'An error occurred while creating the listing',
+          message: error.message
         };
       }
     },
@@ -472,11 +458,59 @@ const resolvers = {
         throw new Error('Failed to resolve listing reference');
       }
     },
-
-    host: ({ hostId }) => {
-      return { id: hostId };
+    location: ({ location }) => {
+      return {
+        id: location.id,
+        state: location.state,
+        address: location.address,
+        city: location.city,
+        country: location.country,
+        zipCode: location.zipCode,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        name: location.name,
+        radius: location.radius,
+      };
+    },
+    amenities: ({ amenities }) => {
+      return amenities.map(amenity => ({ id: amenity.id, name: amenity.name, category: amenity.category }));
+    },
+    // Resolves hostId if the user is a 'host' or 'ADMIN'
+    hostId: ({ user }) => {
+      if (user && (user.role === 'host' || user.role === 'ADMIN')) {
+        return { id: user.id };
+      }
+      return null;
     },
 
+    // Directly resolve 'isFeatured' field if it's available in the Listing object
+    isFeatured: (listing) => {
+      return listing.isFeatured; // returns 1 or 0 depending on the listing data
+    },
+
+    // Resolve 'saleAmount' field, assuming it's a number in the listing
+    saleAmount: (listing) => {
+      return listing.saleAmount || 0; // Return 0 if no sale amount is set
+    },
+
+    // Resolve 'locationType' field if it's available in the listing
+    locationType: (listing) => {
+      return listing.locationType; // e.g., 'CAMPSITE', 'VILLA', 'APARTMENT'
+    },
+
+    // Resolve 'bookingNumber' field, assuming it represents the total number of bookings
+    bookingNumber: (listing) => {
+      return listing.bookingNumber || 0; // Return 0 if no bookings
+    },
+
+    // Resolve 'locationId' field if it's available in the listing
+    locationId: (listing) => {
+      return listing.locationId; // The foreign key reference to the location
+    },
+
+    pictures: (listing) => {
+      return listing.pictures.map(url => ({ url }));
+    },
     totalCost: async (parent, { checkInDate, checkOutDate }, { dataSources }) => {
       const { listingService } = dataSources;
       const { id } = parent;

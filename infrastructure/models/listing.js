@@ -1,100 +1,93 @@
+import { v4 as uuidv4 } from 'uuid';
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js'; // Correct path to seq.js  
+import sequelize from './seq.js'; // Adjust the path as necessary
 
 class Listing extends Model { }
 
 Listing.init({
   id: {
-    type: DataTypes.STRING,
+    type: DataTypes.UUID,         // Use UUID as the ID type
+    defaultValue: uuidv4(),      // Automatically generate UUID for new records
     primaryKey: true,
   },
   title: {
     type: DataTypes.STRING,
-    allowNull: false, // You might want to enforce this  
+    allowNull: false,
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: true, // Adjust based on requirements  
+    allowNull: true,
   },
   costPerNight: {
     type: DataTypes.FLOAT,
-    allowNull: false, // You might want to enforce this  
+    allowNull: false,
   },
   hostId: {
     type: DataTypes.STRING,
-    allowNull: false, // You might want to enforce this  
+    allowNull: false,
   },
   locationId: {
-    type: DataTypes.STRING,
-    allowNull: false, // You might want to enforce this  
+    type: DataTypes.UUID,         // Use UUID as the ID type
+    defaultValue: uuidv4(),    // Automatically generate UUID for new records
+    primaryKey: true,
   },
   numOfBeds: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Adjust based on requirements  
+    allowNull: true,
   },
-  photoThumbnails: {
-    type: DataTypes.JSON, // Use JSON to store an array of URLs  
-    allowNull: true, // Adjust based on requirements  
+  pictures: {
+    type: DataTypes.JSON, // Store array of picture URLs
+    allowNull: false,
+    defaultValue: ["pic1.jpg", "pic2.jpg"]
   },
   isFeatured: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false, // Set default value  
+    defaultValue: false,
   },
   saleAmount: {
     type: DataTypes.FLOAT,
-    allowNull: true, // Adjust based on requirements  
+    allowNull: true,
   },
   bookingNumber: {
     type: DataTypes.INTEGER,
-    defaultValue: 0, // Optional default value  
+    defaultValue: 0,
   },
   createdAt: {
     type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW, // Automatically set to now  
+    defaultValue: DataTypes.NOW,
   },
   updatedAt: {
     type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW, // Automatically set to now  
+    defaultValue: DataTypes.NOW,
   },
   checkInDate: {
     type: DataTypes.DATE,
-    allowNull: true, // Adjust based on requirements  
+    allowNull: true,
   },
   checkOutDate: {
     type: DataTypes.DATE,
-    allowNull: true, // Adjust based on requirements  
-  },
-  amenityIds: {
-    type: DataTypes.JSON, // Use JSON to store an array of amenity IDs  
-    allowNull: true, // Adjust based on requirements  
-  },
-  bookingIds: {  //
-    type: DataTypes.JSON, // Use JSON to store an array of booking IDs  
-    allowNull: true, // Adjust based on requirements  
-  },
-  reviewIds: {
-    type: DataTypes.JSON, // Use JSON to store an array of review IDs  
-    allowNull: true, // Adjust based on requirements  
-  },
-  hostId: {
-    type: DataTypes.STRING,
-    allowNull: false, // You might want to enforce this  
+    allowNull: true,
   },
   listingStatus: {
-    type: DataTypes.ENUM,
-    values: ['ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED', 'COMPLETED', 'AVAILABLE', 'PUBLISHED'],
-    allowNull: false, // You might want to enforce this  
+    type: DataTypes.ENUM('ACTIVE', 'PENDING', 'SOLD', 'DELETED', 'REJECT', 'CANCELLED', 'EXPIRED', 'COMPLETED', 'AVAILABLE', 'PUBLISHED'),
+    allowNull: false,
+  },
+  locationType: {
+    type: DataTypes.ENUM('SPACESHIP', 'HOUSE', 'CAMPSITE', 'APARTMENT', 'ROOM'),
+    allowNull: false,
+    defaultValue: 'ROOM', // Add a default value
   },
 }, {
   sequelize,
   modelName: 'Listing',
-  timestamps: true, // This will automatically add createdAt and updatedAt fields  
+  timestamps: false,
+
 });
 
-
+// Defining associations
 Listing.associate = (models) => {
   Listing.hasMany(models.Booking, { foreignKey: 'listingId', as: 'bookings' });
-  // If relevant, you can also associate BookingItem if listings can have items.  
+  Listing.belongsToMany(models.Amenity, { through: 'ListingAmenities', foreignKey: 'listingId', as: 'amenities' });
 };
-// Export the model  
+
 export default Listing;

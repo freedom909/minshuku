@@ -11,10 +11,10 @@ const dbConfig = {
   mysql: async () => {
     if (!pool) {
       pool = mysql.createPool({
-        host: process.env.MYSQL_HOST,
-        user: process.env.MYSQL_USER,
-        password: process.env.MYSQL_PASSWORD,
-        database: process.env.MYSQL_DATABASE,
+        host: 'localhost',// is anything wrong?
+        user: 'root',
+        password: 'princess',
+        database: 'food',
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,

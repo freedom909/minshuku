@@ -10,13 +10,13 @@ const listings = Array.from({ length: 10 }, (_, index) => ({
     locationId: `location-${index + 1}`,
     amenityids: [`am-${index + 1}`, `am-${index + 2}`, `am-${index + 3}`],
     costPerNight: 100 + index * 10,
+    pictures: ["https://example.org/foo#bar", "https://example.org/"],
     bookings: [],
     reviews: [],
     description: `Listing ${index + 1} description`,
     createdAt: new Date(),
     updatedAt: new Date(),
     hostid: `host-${index + 1}`,
-    pictures: [`${index + 1}.jpg`, `${index + 2}.jpg`],
     checkInDate: new Date(),
     checkOutDate: new Date(),
     isFeatured: false,
@@ -29,12 +29,12 @@ const listings = Array.from({ length: 10 }, (_, index) => ({
 const amenities = Array.from({ length: 30 }, (_, index) => ({
     id: `am-${index + 1}`,
     name: `Amenity ${index + 1}`,
-    category: `outdoors-${index + 1}`,
+    category: `outdoors-${Math.floor(Math.random() * 5) + 1}`,
     description: `Amenity ${index + 1} description`,
 }))
 
 const locations = Array.from({ length: 10 }, (_, index) => ({
-    id: `location-${index + 1}`, // Unique identifier for the location  
+    id: `uuid()`, // Unique identifier for the location  
     listingId: `listing-${Math.floor(Math.random() * 10) + 1}`, // Reference to a listing  
     name: 'Central Park', // Name of the location  
     radius: parseFloat((Math.random() * 10).toFixed(2)), // Random radius between 0 and 10  

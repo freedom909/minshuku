@@ -117,6 +117,28 @@ input DeleteListingInput {
   listingId: ID!
 }
 
+input LocationInput {  
+
+  "The name of the location"  
+  name: String!  
+  "The latitude of the location"  
+  latitude: Float  
+  "The radius around the location"  
+  radius: Float  
+  "The longitude of the location"  
+  longitude: Float  
+  "The street address of the location"  
+  address: String  
+  "The city where the location is situated"  
+  city: String  
+  "The state or province of the location"  
+  state: String  
+  "The country of the location"  
+  country: String  
+  "The postal code of the location"  
+  zipCode: String  
+}
+
 # Input type for creating a listing
 input CreateListingInput {
   "The title of the listing"
@@ -124,24 +146,30 @@ input CreateListingInput {
   "The description of the listing"
   description: String!
    "The location details of the listing"
-  location: LocationInput! 
-  "The ID of the host"
-  hostId: String!
+  location: LocationInput
   "The photo thumbnail of the listing"
-  photoThumbnail: String!
+  pictures: [String!]!
   "The number of beds in the listing"
   numOfBeds: Int!
   "The cost per night of the listing"
   costPerNight: Float!
   "The amenities of the listing"
-  amenities: [AmenityInput!]!
+  amenityIds: [AmenityInput!]!
   listingStatus: ListingStatus 
+  locationType: LocationType
+}
+
+enum LocationType {
+  SPACESHIP
+  HOUSE
+  CAMPSITE
+  APARTMENT
+  ROOM
 }
 
 input AmenityInput {
-  name: String! 
-  description: String 
-  category: String!
+
+id:[ID!]
 }
 
 type Amenity @key(fields: "id") {
@@ -191,13 +219,7 @@ type UpdateListingResponse implements Response {
 }
 
 # Enum representing the type of a listing location
-enum LocationType {
-  SPACESHIP
-  HOUSE
-  CAMPSITE
-  APARTMENT
-  ROOM
-}
+
 
 type ReservedDate @shareable {
   checkInDate: DateTime! 
@@ -215,11 +237,11 @@ type Listing @key(fields: "id") {
   id: ID!
   title: String! @shareable
   description: String! @shareable
-  photoThumbnail: String! @shareable
+  pictures: [Picture!]! @shareable  
   numOfBeds: Int! @shareable
   costPerNight: Float! @shareable
   locationType: LocationType! @shareable
-  host: Host! @shareable
+  hostId: ID! @shareable
   amenities: [Amenity!]! @shareable
   numberOfUpcomingBookings: Int! @shareable
   currentlyBookedDates: [ReservedDate]! @shareable
@@ -237,6 +259,11 @@ type Listing @key(fields: "id") {
   locationFilter: Location! @shareable  # Changed to output type
   distance: Float @shareable
 }
+
+type Picture {
+  url: String! @shareable
+}
+
 
 type PriceRange @key(fields: "id") {
   id: ID!  # Add an id field to use as the key
@@ -262,19 +289,7 @@ input TotalCostRangeInput {
   max: Float
 }
 
-input LocationInput {
-  locationId: ID!
-  name: String!
-  latitude: Float
-  radius: Float
-  longitude: Float
-  address: String
-  city: String
-  state: String
-  country: String
-  zipCode: String
-  locationType: LocationType 
-}
+
 
 # Type representing a review
 
@@ -290,7 +305,6 @@ type Booking @key(fields: "id") {
 # Type representing a host
 type Host @key(fields: "id") {
   id: ID!
- listing:[Listing] @shareable
  picture: String @shareable
 }
 

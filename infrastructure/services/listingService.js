@@ -12,6 +12,8 @@ import sequelize from '../models/seq.js';
 import queryDatabase from '../DB/dbUtils.js'
 import Listing from '../models/listing.js';
 import Amenity from '../models/amenity.js';
+import validateListing from '../helpers/validateListing.js';
+import ListingAmenities from '../models/listingAmenities.js';
 import Coordinate from '../models/location.js'
 import dbConfig from '../DB/dbconfig.js';
 import Location from '../models/location.js';
@@ -501,61 +503,117 @@ class ListingService {
   }
 
 
-  async createListing({ title, description, location, hostId, photoThumbnail, numOfBeds, costPerNight, locationType, amenities, listingStatus }) {
-    const { locationId } = location;
-
+  async create({ input, userId }) {
+    console.log('Creating new listing with:', input);
+    let transaction;
+    let newListing;
+    let mockUserId = userId || '66dc30358791fb6291ca94d1'
+    console.log('Creating new listing with:', mockUserId);
     try {
-      // Generate a UUID for the listing
-      const listingId = UUID.generate();
-      const currentListingStatus = (listingStatus === "PUBLISHED") ? listingStatus : "PENDING";
 
-      // Create the new listing using Sequelize's ORM
-      const newListing = await Listing.create({
-        id: listingId,
-        title,
-        description,
-        locationId,
-        hostId,
-        photoThumbnail,
-        numOfBeds,
-        costPerNight,
-        locationType,
-        listingStatus: currentListingStatus,
-      });
+      validateListing(input)
+      // Perform additional validation based on the schema or requirements
+      if (input.costPerNight < 0) {
+        throw new Error("Price per night must be a positive number.");
+      }
+      if (input.costPerNight > 1000) {
+        throw new Error("Price per night must not exceed $1000.");
+      }
 
-      // Insert the amenities and associate them with the listing
-      const amenityPromises = amenities.map(async (amenity) => {
-        const amenityId = UUID.generate(); // Generate UUID for each amenity
-        const createdAt = new Date();
-        const updatedAt = createdAt;
+      if (!input.location || typeof input.location !== 'object') {
+        console.error('Invalid or missing location:', input.location);
+        throw new Error('Location is required and must be an object');
+      }
+      if (!input.pictures) {
+        throw new Error("Missing required fields.");
+      }
+      // Input validation  
+      if (!input.title || typeof input.title !== 'string') {
+        console.error('Invalid or missing title:', input.title);
+        throw new Error('Title is required and must be a string');
+      }
 
-        // Create the amenity
-        const newAmenity = await Amenity.create({
-          id: amenityId,
-          category: amenity.category,
-          name: amenity.name,
-          description: amenity.description,
-          createdAt,
-          updatedAt
-        });
+      if (!Array.isArray(input.amenityIds) || input.amenityIds.length === 0) {
+        console.error('At least one amenity ID is required, received:', input.amenityIds);
+        throw new Error('At least one amenity ID is required');
+      }
 
-        // Create the association between the listing and the amenity
-        await ListingAmenities.create({
-          listingId: newListing.id,  // Use the newly created listing ID
-          amenityId: newAmenity.id,  // Use the newly created amenity ID
-        });
-      });
+      if (!input.description || typeof input.description !== 'string') {
+        console.error('Invalid or missing description:', input.description);
+        throw new Error('Description is required and must be a string');
+      }
 
-      // Wait for all amenities to be processed
-      await Promise.all(amenityPromises);
+      if (!mockUserId) {
+        console.error('Host ID is required:', mockUserId);
+        throw new Error('Host ID is required');
+      }
+
+      if (typeof input.numOfBeds !== 'number' || input.numOfBeds <= 0 || !Number.isInteger(input.numOfBeds)) {
+        console.error('Number of beds must be a positive integer:', input.numOfBeds);
+        throw new Error('Number of beds must be a positive integer');
+      }
+      console.log("Input data validated successfully:", JSON.stringify(input, null, 2));
+
+      // Start a database transaction
+      console.log("Starting transaction...");
+
+      // Start a database transaction  
+      transaction = await this.sequelize.transaction();
+      const { amenityIds, location, ...listingData } = input;
+
+      //step 1: create listing first
+      newListing = await Listing.create({
+        ...listingData,
+        hostId: mockUserId,
+
+      }, { transaction });
+      console.log("Listing created with ID:", newListing.id);
+
+      // Step 2: create location if provided, else use default location
+      let locationId;
+      if (location) {
+        const locationData = {
+          listingId: newListing.id,
+          name: location.name,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: location.address,
+          city: location.city,
+          state: location.state,
+          country: location.country,
+          zipCode: location.zipCode,
+        };
+        if (!location) {
+          console.log("No location data provided.");
+        } else {
+          const createdLocation = await Location.create(locationData, { transaction });
+          locationId = createdLocation.id;
+          console.log("Location created with ID:", locationId);
+        }
+      }
+
+      console.log('Created locationId:', locationId);
+      console.log('Creating listing with data:', listingData);
+
+
+      const amenityAssociations = amenityIds.map(amenityId => ({
+        listingId: newListing.id,
+        amenityId: amenityId.id,
+      }));
+      console.log('newListing.id:', newListing.id)
+      await ListingAmenities.bulkCreate(amenityAssociations, { transaction });
+      console.log('Amenity associations created for listing:', newListing.id);
+
+      await transaction.commit();  // Commit the transaction  
+      return newListing;
 
     } catch (error) {
       console.error('Error creating listing:', error);
-      throw new GraphQLError('Error creating listing', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' }
-      });
+      // if (transaction) await transaction.rollback();  // Rollback on error  
+      throw new GraphQLError('Error creating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
+
 
   async getLocations() {
     try {
@@ -609,52 +667,106 @@ class ListingService {
       console.log('Query result:', response);
       return response[0];  // Return the first location found
     } catch (error) {
-      console.error('Error fetching locations:', error);
-      throw new GraphQLError('Error fetching locations', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+      console.error('Error creating listing:', error);
+      if (transaction) await transaction.rollback();  // Rollback on error  
+      throw new GraphQLError('Error creating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
 
   async updateListing({ listingId, listing }) {
     try {
-      const { title, description, costPerNight } = listing;
+      // Prepare the fields to be updated and ensure no undefined values are included  
+      const fieldsToUpdate = [];
+      const replacements = { listingId }; // Start with listingId in replacements  
 
-      console.log("Updating listing with id:", listingId, "and data:", listing);
+      if (listing.title !== undefined) {
+        fieldsToUpdate.push('title = :title');
+        replacements.title = listing.title;
+      }
+      if (listing.description !== undefined) {
+        fieldsToUpdate.push('description = :description');
+        replacements.description = listing.description;
+      }
+      if (listing.costPerNight !== undefined) {
+        fieldsToUpdate.push('costPerNight = :costPerNight');
+        replacements.costPerNight = listing.costPerNight;
+      }
+      if (listing.locationId !== undefined) {
+        fieldsToUpdate.push('locationId = :locationId');
+        replacements.locationId = listing.locationId;
+      }
+      if (listing.numOfBeds !== undefined) {
+        fieldsToUpdate.push('numOfBeds = :numOfBeds');
+        replacements.numOfBeds = listing.numOfBeds;
+      }
+      if (listing.pictures !== undefined) {
+        fieldsToUpdate.push('pictures = :pictures');
+        replacements.pictures = listing.pictures;
+      }
+      if (listing.isFeatured !== undefined) {
+        fieldsToUpdate.push('isFeatured = :isFeatured');
+        replacements.isFeatured = listing.isFeatured;
+      }
+      if (listing.saleAmount !== undefined) {
+        fieldsToUpdate.push('saleAmount = :saleAmount');
+        replacements.saleAmount = listing.saleAmount;
+      }
+      if (listing.bookingNumber !== undefined) {
+        fieldsToUpdate.push('bookingNumber = :bookingNumber');
+        replacements.bookingNumber = listing.bookingNumber;
+      }
+      if (listing.createdAt !== undefined) {
+        fieldsToUpdate.push('createdAt = :createdAt');
+        replacements.createdAt = listing.createdAt;
+      }
+      if (listing.updatedAt !== undefined) {
+        fieldsToUpdate.push('updatedAt = :updatedAt');
+        replacements.updatedAt = listing.updatedAt;
+      }
+      if (listing.checkInDate !== undefined) {
+        fieldsToUpdate.push('checkInDate = :checkInDate');
+        replacements.checkInDate = listing.checkInDate;
+      }
+      if (listing.checkOutDate !== undefined) {
+        fieldsToUpdate.push('checkOutDate = :checkOutDate');
+        replacements.checkOutDate = listing.checkOutDate;
+      }
+      if (listing.listingStatus !== undefined) {
+        fieldsToUpdate.push('listingStatus = :listingStatus');
+        replacements.listingStatus = listing.listingStatus;
+      }
 
-      const query = `
-      UPDATE listings
-      SET title = :title, description = :description, costPerNight = :costPerNight
-      WHERE id = :listingId
-    `;
+      if (fieldsToUpdate.length === 0) {
+        throw new Error('No fields provided for update');
+      }
+
+      const query = `  
+        UPDATE listings  
+        SET ${fieldsToUpdate.join(', ')}  
+        WHERE id = :listingId  
+      `;
 
       console.log("Executing query:", query);
-      console.log("With replacements:", { title, description, costPerNight, listingId });
+      console.log("With replacements:", replacements);
 
       const [results, metadata] = await this.sequelize.query(query, {
         type: QueryTypes.UPDATE,
-        replacements: {
-          title,
-          description,
-          costPerNight,
-          listingId, // Include listingId here for :listingId replacement
-        },
+        replacements,
       });
 
       console.log("Results from query execution:", results);
       console.log("Metadata from query execution:", metadata);
 
-      // Handle MySQL vs PostgreSQL result structures
-      const affectedRows = metadata?.rowCount || results; // rowCount for PostgreSQL, results for MySQL
-
+      const affectedRows = metadata?.rowCount || results; // rowCount for PostgreSQL, results for MySQL  
       console.log('Update query affected rows:', affectedRows);
 
-      // Return true if one or more rows were updated
+      // Return true if one or more rows were updated  
       return affectedRows > 0;
     } catch (error) {
       console.error('Error updating listing:', error);
       throw new GraphQLError('Error updating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
-
 
   async hotListingsByMoneyBookingTop5() {
     const query = `

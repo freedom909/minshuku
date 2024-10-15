@@ -30,21 +30,37 @@ ListingAmenities.init({
   },
 }, {
   sequelize,
-  modelName: 'ListingAmenities', // Specify the model name explicitly
+  modelName: 'ListingAmenities', // Explicit model name
   timestamps: true,
 });
 
-Listing.hasOne(Location, {
-  foreignKey: 'listingId', // Foreign key in the Location model
-  as: 'location', // Alias should reflect a collection of locations
-});
-Location.belongsTo(Listing, {
-  foreignKey: 'listingId', // Foreign key in the Location model
-  as: 'location', // This alias must match the association in Listing
-});
-// Define the many-to-many relationship
+// Associations
 
-Listing.belongsToMany(Amenity, { through: ListingAmenities, foreignKey: 'listingId', otherKey: 'amenityId', as: 'amenities' });
-Amenity.belongsToMany(Listing, { through: ListingAmenities, foreignKey: 'amenityId', otherKey: 'listingId', as: 'listings' });
+// Each Listing has one Location
+Listing.hasOne(Location, {
+  foreignKey: 'listingId',
+  as: 'location',
+});
+
+// Each Location belongs to one Listing
+Location.belongsTo(Listing, {
+  foreignKey: 'listingId',
+  as: 'location',
+});
+
+// Define the many-to-many relationship between Listing and Amenity
+Listing.belongsToMany(Amenity, {
+  through: ListingAmenities,
+  foreignKey: 'listingId',
+  otherKey: 'amenityId',
+  as: 'amenities'
+});
+
+Amenity.belongsToMany(Listing, {
+  through: ListingAmenities,
+  foreignKey: 'amenityId',
+  otherKey: 'listingId',
+  as: 'listings'
+});
 
 export default ListingAmenities;

@@ -1,13 +1,15 @@
-import { Model, DataTypes, ENUM } from 'sequelize';
+import { Model, DataTypes } from 'sequelize';
 import sequelize from './seq.js'; // Adjust the path as necessary
-
+import { v4 as uuidv4 } from 'uuid';
 class Location extends Model { }
 
 Location.init({
   id: {
-    type: DataTypes.STRING,
+    type: DataTypes.UUID,         // Use UUID as the ID type
+    defaultValue: uuidv4(),    // Automatically generate UUID for new records
     primaryKey: true,
   },
+
   listingId: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -56,6 +58,7 @@ Location.init({
     allowNull: false,
     defaultValue: 'primary', // Add a default value
   },
+
 }, {
   sequelize,
   modelName: 'Location',
