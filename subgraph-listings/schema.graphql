@@ -258,6 +258,16 @@ type Listing @key(fields: "id") {
   totalCostRange: TotalCostRange! @shareable  # Changed to output type
   locationFilter: Location! @shareable  # Changed to output type
   distance: Float @shareable
+  filterlistings(filter: ListingFilterInput): [Listing!]! @shareable # Changed to output type
+}
+
+input ListingFilterInput {
+  radius: Float
+  city: String
+  latitude: Float
+  longitude: Float
+  minCostPerNight: Float
+  maxCostPerNight: Float
 }
 
 type Picture {

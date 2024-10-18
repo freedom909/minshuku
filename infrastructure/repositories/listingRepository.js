@@ -2,6 +2,7 @@ import axios from 'axios';
 import { AuthenticationError, ForbiddenError } from '../utils/errors.js';
 import connectMysql from '../DB/connectMysqlDB.js'
 import Listing from '../models/listing.js';
+import Location from '../models/location.js';
 class ListingRepository {
     constructor(httpClient) {
         this.db = null;
@@ -12,20 +13,32 @@ class ListingRepository {
     async init() {
         this.db = await connectMysql()
     }
-       
-    
+
+
     async findAll() {
         try {
-            return await this.db.collection('listings').find().toArray();
+            const listings = await Listing.findAll({
+                include: [
+                    {
+                        model: Location,  // Include the associated Location model
+                        required: true,
+                        as: 'location',   // Use the alias defined in your association
+                        attributes: ['latitude', 'longitude'],  // Specify the fields you need from Location
+                    },
+                ],
+            });
+            // console.log('Fetched listings with location data:', JSON.stringify(listings, null, 2));
+            return listings;
         } catch (error) {
-            console.error('Error fetching listings from the database:', error);
-            throw new Error('Error fetching listings from the database');
+            console.error('Error fetching listings:', error);
+            throw new Error('Failed to fetch listings');
         }
+
     }
     async getListingsTop5ByMoneyBooking() {
         await this.initPromise; // Ensure the database is initialized before proceeding
         if (!this.db) {
-          throw new Error('Database not initialized');
+            throw new Error('Database not initialized');
         }
         try {
             //TypeError: Cannot read properties of null (reading 'query')  
@@ -49,11 +62,11 @@ class ListingRepository {
     }
 
 
-    async findOne({id}){
+    async findOne({ id }) {
         try {
-            const listing=await Listing.findOne({ where: { id: id } })
+            const listing = await Listing.findOne({ where: { id: id } })
             return listing;
-        }catch (error) {
+        } catch (error) {
             console.error('Error fetching listing:', error);
             throw error;
         }
@@ -134,26 +147,26 @@ class ListingRepository {
     async createListing({ title, description, photoThumbnail, numOfBeds, costPerNight, locationType, amenities, hostId }) {
         // Implementation of the database interaction to create a listing
         const newListing = await this.database.Listing.create({
-          title,
-          description,
-          photoThumbnail,
-          numOfBeds,
-          costPerNight,
-          locationType,
-          amenities,
-          hostId,
+            title,
+            description,
+            photoThumbnail,
+            numOfBeds,
+            costPerNight,
+            locationType,
+            amenities,
+            hostId,
         });
-    
+
         // Assuming amenities is an array of IDs, you might need to handle its association separately.
         if (amenities && amenities.length > 0) {
-          // Handle association logic here
-          await this.database.ListingAmenities.bulkCreate(
-            amenities.map(amenityId => ({ listingId: newListing.id, amenityId }))
-          );
+            // Handle association logic here
+            await this.database.ListingAmenities.bulkCreate(
+                amenities.map(amenityId => ({ listingId: newListing.id, amenityId }))
+            );
         }
-    
+
         return newListing;
-      }
+    }
 
     async getBookingsForListing(listingId) {
         try {

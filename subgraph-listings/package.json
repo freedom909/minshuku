@@ -36,10 +36,12 @@
     "esm": "^3.2.25",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
+    "haversine-distance": "^1.2.3",
     "http": "^0.0.1-security",
     "mongoose": "^8.6.1",
     "mysql2": "^3.6.0",
-    "postinstall": "^0.8.0"
+    "postinstall": "^0.8.0",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",

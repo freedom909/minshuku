@@ -7,68 +7,83 @@ import Location from '../infrastructure/models/location.js';
 import { GraphQLError } from 'graphql';
 import Amenity from '../infrastructure/models/amenity.js';
 import { Op } from '@sequelize/core'
-import calculateDistance from './helper.js'
+import fetch from 'axios';
 import sequelize from '../infrastructure/models/seq.js';
 import { v4 as uuidv4 } from 'uuid';
 const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
+import haversine from 'haversine-distance';
+import { calculateDistance, haversineDistance } from './helper.js';
 
 const resolvers = {
 
   Query: {
+
+    location: async (listing, _, { dataSources }) => {
+      try {
+        if (!listing.locationId) {
+          console.log('Location not found`', listing.locationId);
+          return null;
+        }
+        return dataSources.listingService.getLocationById(listing.location)
+      } catch {
+        console.error('Error resolving location:', error);
+        throw new Error('Failed to resolve location');
+      }
+    },
+
     getNearbyListings: async (_, { latitude, longitude, radius }, { dataSources }) => {
       if (!latitude || !longitude) throw new Error('You must provide a latitude and longitude');
       const { listingService } = dataSources;
 
       try {
-        // Fetch all listings (ensure the listing includes location details like latitude and longitude)
-        const listings = await listingService.getAllListings();
+        const response = await listingService.findNearbyListings({ longitude, latitude, radius });
 
-        // Debug: Check if listings are retrieved and log the first few listings
-        console.log('Fetched listings:', listings.slice(0, 5));
+        // Directly use response if it's already the listings  
+        const listings = response.listings || response; // Adjust as necessary  
 
-        // Filter listings by calculating the distance
-        const nearbyListings = listings
-          .map(listing => {
-            if (!listing.location || !listing.location.latitude || !listing.location.longitude) {
-              console.log(`No location data for listing: ${listing.id}`);
-              return null;
-            }
+        console.log("Full Listings Data:", JSON.stringify(listings, null, 2));
 
-            // Log the coordinates before calculating distance
-            console.log(`Listing ${listing.id} - Guest Lat: ${latitude}, Guest Lon: ${longitude}, Listing Lat: ${listing.latitude}, Listing Lon: ${listing.longitude}`);
+        // Filter and process listings based on distance  
+        const nearbyListings = listings.map(listing => {
+          if (!listing || !listing.location) {
+            console.warn(`Listing ${listing ? listing.id : 'unknown'} is missing a location`);
+            return null; // Skip this listing  
+          }
+          const { latitude: listingLatitude, longitude: listingLongitude } = listing.location;
+          if (typeof listingLatitude !== 'number' || typeof listingLongitude !== 'number') {
+            console.warn(`Listing ${listing.id} has invalid location coordinates: `, listing.location);
+            return null; // Skip this listing  
+          }
+          const distance = haversineDistance(
+            latitude, longitude,
+            listingLatitude, listingLongitude
+          );
 
-            // Calculate the distance between the guest's location and the listing
-            const distance = calculateDistance(latitude, longitude, listing.location.latitude, listing.location.longitude);
+          if (isNaN(distance)) {
+            console.error(`Invalid distance calculated for listing ${listing.id}. Skipping.`);
+            return null;
+          }
 
-            if (isNaN(distance)) {
-              console.error(`Invalid distance calculated for listing ${listing.id}`);
-              return null;
-            }
-
-            // Attach distance to listing data
-            listing.distance = distance;
-
-            // Return the listing if it's within the radius
-            return distance <= radius ? {
-              id: listing.id,
-              name: listing.title,
-              costPerNight: listing.costPerNight,
-              numOfBeds: listing.numOfBeds,
-              distance, // Include distance in the response
-            } : null;
-          })
+          // Return listing only if it's within the radius  
+          return distance <= radius ? {
+            id: listing.id,
+            title: listing.title,
+            costPerNight: listing.costPerNight,
+            numOfBeds: listing.numOfBeds,
+            locationType: listing.locationType,
+            pictures: listing.pictures,
+            distance,  // Attach calculated distance  
+          } : null;
+        })
           .filter(listing => listing !== null);
 
-        // Debug: Log the nearby listings
-        console.log('Nearby listings:', nearbyListings);
-
+        console.log(`nearbyListing:`, JSON.stringify(nearbyListings, null, 2)); // Pretty print the output  
         return nearbyListings;
       } catch (error) {
         console.error('Error fetching nearby listings:', error);
         throw new Error('Failed to fetch nearby listings');
       }
     },
-
 
     fullTextSearchListings: async (_, { input }, { dataSources }) => {
       const { searchText, limit = 10, offset = 0 } = input;
@@ -240,12 +255,52 @@ const resolvers = {
       }
     },
 
+    filterlistings: async (_, { filter }, { dataSources }) => {
+      const whereClause = {}
+      if (filter?.minCostPerNight) {
+        whereClause.costPerNight = { [Op.gte]: filter.minCostPerNight }
+      }
+      if (filter?.maxCostPerNight) {
+        whereClause.costPerNight = { ...whereClause.costPerNight, [Op.lte]: filter.maxCostPerNight }
+      }
+      if (filter?.minGuests) {
+        whereClause.numOfGuests = { [Op.gte]: filter.minGuests }
+      }
+      if (filter?.maxGuests) {
+        whereClause.numOfGuests = { ...whereClause.numOfGuests, [Op.lte]: filter.maxGuests }
+      }
+      if (filter?.city) {
+        whereClause[`$Location.city$`] = filter.city
+      }
+      //fetch listings with the specified filters
+      let allListings = await dataSources.listingService.getListings(whereClause)
+      //fetch listings with the specified filters by distance
+      if (filter?.latitude && filter?.longitude && filter?.distance) {
+        allListings = allListings.filter((listing) => {
+          if (listing.location?.latitude && listing.location?.longitude) {
+            const distance = haversineDistance(
+              {
+                latitude: parseFloat(filter.latitude),
+                longitude: parseFloat(filter.longitude),
+              },
+              {
+                latitude: parseFloat(listing.location.latitude),
+                longitude: parseFloat(listing.location.longitude),
+              }
+            )
+            return distance <= filter.distance;
+          }
+          return false;
+        })
+      }
+      return allListings;
+    },
 
     featuredListings: async () => {
       // Fetch featured listings with coordinates
       return await Listing.findAll({
         where: { isFeatured: true }, // Filter for featured listings
-        attributes: ['id', 'locationType', 'title', 'checkInDate', 'checkOutDate', 'photoThumbnail', 'description', 'costPerNight', 'saleAmount'], // Include id, locationType, title
+        attributes: ['id', 'locationType', 'title', 'checkInDate', 'checkOutDate', 'pictures', 'description', 'costPerNight', 'saleAmount'], // Include id, locationType, title
         include: [
           {
             model: Amenity,
@@ -458,20 +513,24 @@ const resolvers = {
         throw new Error('Failed to resolve listing reference');
       }
     },
-    location: ({ location }) => {
-      return {
-        id: location.id,
-        state: location.state,
-        address: location.address,
-        city: location.city,
-        country: location.country,
-        zipCode: location.zipCode,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        name: location.name,
-        radius: location.radius,
-      };
-    },
+
+
+
+
+    // location: ({ location }) => {
+    //   return {
+    //     id: location.id,
+    //     state: location.state,
+    //     address: location.address,
+    //     city: location.city,
+    //     country: location.country,
+    //     zipCode: location.zipCode,
+    //     latitude: location.latitude,
+    //     longitude: location.longitude,
+    //     name: location.name,
+    //     radius: location.radius,
+    //   };
+    // },
     amenities: ({ amenities }) => {
       return amenities.map(amenity => ({ id: amenity.id, name: amenity.name, category: amenity.category }));
     },
@@ -548,6 +607,37 @@ const resolvers = {
       } catch (error) {
         console.error('Error in totalCost resolver:', error);
         return null;
+      }
+    },
+
+
+    locationFilter: async (listing, args, { dataSources }) => {
+      // Assuming you have a dataSource method to fetch the location details
+      const { city } = listing;
+
+      try {
+        // Fetch the location from the database based on the city or other location details
+        const location = await dataSources.locationService.getLocationByCity(city);
+
+        if (!location) {
+          throw new Error(`Location for city "${city}" not found`);
+        }
+
+        return {
+          id: location.id,
+          name: location.name,
+          country: location.country,
+          postalCode: location.postalCode,
+          city: location.city,
+          state: location.state,
+          address: location.address,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          radius: location.radius,
+        };
+      } catch (error) {
+        console.error('Error fetching location:', error);
+        throw new Error('Unable to fetch location');
       }
     },
 
@@ -643,23 +733,23 @@ const resolvers = {
     },
 
 
-    locations: async ({ parent }, _, { dataSources }) => {
+    // locations: async ({ parent }, _, { dataSources }) => {
 
-      try {
-        const locations = await models.Listing.findByPk({
-          where: { id: parent.id },
-          include: [{ model: Location, as: 'location' }],
-        });
-        if (!locations) {
-          throw new Error('Listing not found');
-        }
+    //   try {
+    //     const locations = await models.Listing.findByPk({
+    //       where: { id: parent.id },
+    //       include: [{ model: Location, as: 'location' }],
+    //     });
+    //     if (!locations) {
+    //       throw new Error('Listing not found');
+    //     }
 
-        return locations[0]; // Return the associated locations
-      } catch (error) {
-        console.error('Error fetching locations:', error);
-        throw new Error('Failed to fetch locations');
-      }
-    },
+    //     return locations[0]; // Return the associated locations
+    //   } catch (error) {
+    //     console.error('Error fetching locations:', error);
+    //     throw new Error('Failed to fetch locations');
+    //   }
+    // },
     coordinates: async (parent, _, { dataSources }) => {
       // Use eager loading to fetch coordinates when fetching listings
       const listingWithCoordinates = await Listing.findOne({
@@ -680,3 +770,4 @@ const resolvers = {
 }
 
 export default resolvers;
+

@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Model, DataTypes } from 'sequelize';
 import sequelize from './seq.js'; // Adjust the path as necessary
+import Location from './location.js';
 
 class Listing extends Model { }
 
@@ -88,6 +89,13 @@ Listing.init({
 Listing.associate = (models) => {
   Listing.hasMany(models.Booking, { foreignKey: 'listingId', as: 'bookings' });
   Listing.belongsToMany(models.Amenity, { through: 'ListingAmenities', foreignKey: 'listingId', as: 'amenities' });
+  // Listing model
+  // Listing model
+  Listing.belongsTo(Location, { as: 'location', foreignKey: 'locationId' });
+
+  // Location model
+  // Location model
+  Location.hasOne(Listing, { as: 'listing', foreignKey: 'locationId' });
 };
 
 export default Listing;

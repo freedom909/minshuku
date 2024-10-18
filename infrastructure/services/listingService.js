@@ -1,5 +1,5 @@
 import { RESTDataSource } from '@apollo/datasource-rest';
-import { QueryTypes } from 'sequelize'; // Ensure this is imported
+import { QueryTypes, literal, fn, Op } from 'sequelize'; // Ensure this is imported
 import { GraphQLError } from 'graphql';
 import { GraphQLClient } from 'graphql-request';
 import { shield, allow } from 'graphql-shield';
@@ -17,7 +17,7 @@ import ListingAmenities from '../models/listingAmenities.js';
 import Coordinate from '../models/location.js'
 import dbConfig from '../DB/dbconfig.js';
 import Location from '../models/location.js';
-import { UUID } from 'uuidjs';
+import { v4 as uuidv4 } from 'uuid';
 
 
 dotenv.config();
@@ -44,6 +44,73 @@ class ListingService {
     if (this.context && this.context.user) {
       request.headers.set('Authorization', this.context.user.token);
     }
+  }
+
+  async findNearbyListings({ longitude, latitude, radius }) {
+
+    const earthRadiusInKm = 6371;
+
+    // Using Haversine formula
+    const nearbyListings = await this.listingRepository.findAll({
+      attributes: {
+        include: [
+          'id', 'title', 'description', 'costPerNight', 'hostId', 'locationId', 'numOfBeds', 'pictures', 'isFeatured', 'saleAmount',
+          [
+            literal(`
+              (
+                ${earthRadiusInKm} * ACOS(
+                  COS(RADIANS(:latitude)) * COS(RADIANS(location.latitude)) *
+                  COS(RADIANS(location.longitude) - RADIANS(:longitude)) +
+                  SIN(RADIANS(:latitude)) * SIN(RADIANS(location.latitude))
+                )
+              )
+            `),
+            'distance'
+          ],
+        ],
+      },
+      include: [
+        {
+          model: Location,
+          required: true,
+          as: 'location',
+          attributes: ['latitude', 'longitude'], // only include necessary fields
+        },
+      ],
+      where: literal(`
+        (
+          ${earthRadiusInKm} * ACOS(
+            COS(RADIANS(:latitude)) * COS(RADIANS(location.latitude)) *
+            COS(RADIANS(location.longitude) - RADIANS(:longitude)) +
+            SIN(RADIANS(:latitude)) * SIN(RADIANS(location.latitude))
+          )
+        ) <= :radius
+      `),
+      replacements: { latitude, longitude, radius },
+    });
+
+    console.log(`nearbyListings:`, JSON.stringify(nearbyListings));
+
+    // nearbyListings.forEach(listing => {
+    //   if (!listing.location.latitude || !listing.location.longitude) {
+    //     console.log(`No location data for listing: ${listing.id}`);
+    //   }
+    // });
+
+    if (!nearbyListings || nearbyListings.length === 0) {
+      console.log('No nearby listings found');
+      return [];
+    }
+    const formattedListings = nearbyListings.map(listing => ({
+      id: listing.id,
+      title: listing.title,
+      costPerNight: listing.costPerNight,
+      numOfBeds: listing.numOfBeds,
+      locationType: listing.locationType,
+      pictures: listing.pictures,
+      distance: listing.dataValues.distance,  // Include the calculated distance
+    }));
+    return formattedListings;
   }
 
   async hotListingsByMoneyBookingTop5() {
@@ -81,23 +148,41 @@ class ListingService {
     }
   }
 
+  async getLocationByCity(city) {
+    try {
+      // Query the repository to find the location by city
+      const location = await this.locationRepository.findOne({ where: { city } });
+
+      if (!location) {
+        throw new Error(`Location not found for city: ${city}`);
+      }
+
+      return location;
+    } catch (error) {
+      console.error('Error in getLocationByCity:', error);
+      throw new Error('Unable to fetch location');
+    }
+  }
+
   async getAllListings() {
-    const listings = await Listing.findAll({
-      include: [
-        {
-          model: Location, // Assuming you have a Location model
-          as: 'location', // Use the proper alias if needed
-        },
-        {
-          model: Amenity, // Assuming you have an Amenity model
-          as: 'amenities', // Use the proper alias if needed
-        }
-      ],
-    });
-    return listings;
-  } catch(error) {
-    console.error('Error fetching listing:', error);
-    throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    try {
+      const listings = await Listing.findAll({
+        include: [
+          {
+            model: Location, // Assuming you have a Location model
+            as: 'location', // Use the proper alias if needed
+          },
+          {
+            model: Amenity, // Assuming you have an Amenity model
+            as: 'amenities', // Use the proper alias if needed
+          }
+        ],
+      });
+      return listings;
+    } catch (error) {
+      console.error('Error fetching listing:', error);
+      throw new GraphQLError('Error fetching listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
+    }
   }
 
 
@@ -840,6 +925,19 @@ class ListingService {
     } catch (error) {
       console.error('Error fetching listings for host:', error);
       throw new Error('Failed to fetch listings for host');
+    }
+  }
+
+  async getListings(whereClause) {
+    try {
+      const query = `
+        SELECT * FROM listings ${whereClause}
+      `;
+      const listings = await this.sequelize.query(query, { type: QueryTypes.SELECT });
+      return listings;
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+      throw new Error('Failed to fetch listings');
     }
   }
 }
