@@ -39,7 +39,7 @@ const resolvers = {
         const response = await listingService.findNearbyListings({ longitude, latitude, radius });
 
         // Directly use response if it's already the listings  
-        const listings = response.listings || response; // Adjust as necessary  
+        const listings = response.listings || response // Adjust as necessary  
 
         console.log("Full Listings Data:", JSON.stringify(listings, null, 2));
 
@@ -77,7 +77,7 @@ const resolvers = {
         })
           .filter(listing => listing !== null);
 
-        console.log(`nearbyListing:`, JSON.stringify(nearbyListings, null, 2)); // Pretty print the output  
+        // console.log(`nearbyListing:`, JSON.stringify(nearbyListings, null, 2)); 
         return nearbyListings;
       } catch (error) {
         console.error('Error fetching nearby listings:', error);

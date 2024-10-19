@@ -91,11 +91,11 @@ class ListingService {
 
     console.log(`nearbyListings:`, JSON.stringify(nearbyListings));
 
-    // nearbyListings.forEach(listing => {
-    //   if (!listing.location.latitude || !listing.location.longitude) {
-    //     console.log(`No location data for listing: ${listing.id}`);
-    //   }
-    // });
+    nearbyListings.forEach(listing => {
+      if (!listing.location.latitude || !listing.location.longitude) {
+        console.log(`No location data for listing: ${listing.id}`);
+      }
+    });
 
     if (!nearbyListings || nearbyListings.length === 0) {
       console.log('No nearby listings found');
@@ -108,7 +108,10 @@ class ListingService {
       numOfBeds: listing.numOfBeds,
       locationType: listing.locationType,
       pictures: listing.pictures,
-      distance: listing.dataValues.distance,  // Include the calculated distance
+      distance: listing.dataValues.distance,
+      pictures: listing.pictures ? listing.pictures.map(picture => picture.dataValues),
+      location: listing.location ? listing.location.dataValues : null,
+      amenities: listing.amenities ? listing.amenities.map(amenity => amenity.dataValues) : null,
     }));
     return formattedListings;
   }

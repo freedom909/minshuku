@@ -3,6 +3,8 @@ import { AuthenticationError, ForbiddenError } from '../utils/errors.js';
 import connectMysql from '../DB/connectMysqlDB.js'
 import Listing from '../models/listing.js';
 import Location from '../models/location.js';
+import sequelize from '../models/seq.js';
+
 class ListingRepository {
     constructor(httpClient) {
         this.db = null;
@@ -23,9 +25,10 @@ class ListingRepository {
                         model: Location,  // Include the associated Location model
                         required: true,
                         as: 'location',   // Use the alias defined in your association
-                        attributes: ['latitude', 'longitude'],  // Specify the fields you need from Location
+                        attributes: ['latitude', 'longitude', 'city', 'state', 'country'],  // Specify the fields you need from Location
                     },
                 ],
+
             });
             // console.log('Fetched listings with location data:', JSON.stringify(listings, null, 2));
             return listings;

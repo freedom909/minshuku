@@ -6,7 +6,10 @@
     "description": "Enjoy this amazing cave campsite in snow MoundiiX, where you'll be one with the nature and wildlife in this wintery planet. All space survival amenities are available. We have complementary dehydrated wine upon your arrival. Check in between 34:00 and 72:00. The nearest village is 3AU away, so please plan accordingly. Recommended for extreme outdoor adventurers.",
     "id": "listing-1",
     "numOfBeds": 2,
-    "pictures": "https://res.cloudinary.com/apollographql/image/upload/v1644350721/odyssey/federation-course2/illustrations/listings-01.png",
+    "pictures": [
+      "https://res.cloudinary.com/istings-01.png",
+      "https://res.cloudinary.com/istings-02.png"
+    ],
     "hostId": "user-1",
     "isFeatured": true,
     "saleAmount": 20.1,
