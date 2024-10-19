@@ -92,7 +92,7 @@ class ListingService {
     console.log(`nearbyListings:`, JSON.stringify(nearbyListings));
 
     nearbyListings.forEach(listing => {
-      if (!listing.location.latitude || !listing.location.longitude) {
+      if (!listing.location.latitude || !listing.location.longitude || listing.pictures.length === 0) {
         console.log(`No location data for listing: ${listing.id}`);
       }
     });
@@ -109,7 +109,7 @@ class ListingService {
       locationType: listing.locationType,
       pictures: listing.pictures,
       distance: listing.dataValues.distance,
-      pictures: listing.pictures ? listing.pictures.map(picture => picture.dataValues),
+      pictures: listing.pictures.filter(picture => ({ url: picture })),
       location: listing.location ? listing.location.dataValues : null,
       amenities: listing.amenities ? listing.amenities.map(amenity => amenity.dataValues) : null,
     }));

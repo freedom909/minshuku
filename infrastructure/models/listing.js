@@ -29,8 +29,8 @@ Listing.init({
   },
   locationId: {
     type: DataTypes.UUID,         // Use UUID as the ID type
-    defaultValue: uuidv4(),    // Automatically generate UUID for new records
-    primaryKey: true,
+    allowNull: false,
+    unique: true,
   },
   numOfBeds: {
     type: DataTypes.INTEGER,
@@ -89,8 +89,7 @@ Listing.init({
 Listing.associate = (models) => {
   Listing.hasMany(models.Booking, { foreignKey: 'listingId', as: 'bookings' });
   Listing.belongsToMany(models.Amenity, { through: 'ListingAmenities', foreignKey: 'listingId', as: 'amenities' });
-  // Listing model
-  // Listing model
+
   Listing.belongsTo(Location, { as: 'location', foreignKey: 'locationId' });
 
   // Location model
