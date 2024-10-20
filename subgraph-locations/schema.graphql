@@ -23,7 +23,7 @@ extend type Mutation {
   "Updates an existing Location"
   updateLocation(
     locationId: ID!
-    location: UpdateLocationInput!
+    location: UpdateLocationInput
   ): UpdateLocationResponse!
 }
 
@@ -34,7 +34,7 @@ type Location @key(fields: "id") {
   "The country's name"
   country: String! @shareable
   "The location's postal code"
-  postalCode: String! @shareable
+  zipCode: String! @shareable
   "The location's city"
   city: String! @shareable
   "The location's state"
@@ -47,27 +47,32 @@ type Location @key(fields: "id") {
   longitude: Float! @shareable
   "The location's distance from a given point"
   radius: Float @shareable 
+  "The location's type"
+  type: LocationType!
 }
 
 input CreateLocationInput {
+  id: ID!
   "The name of the location"
   name: String!
   "The latitude of the location"
-  latitude: Float
+  latitude: Float!
   "The radius around the location"
   radius: Float
   "The longitude of the location"
-  longitude: Float
+  longitude: Float!
   "The street address of the location"
-  address: String
+  address: String!
   "The city where the location is situated"
-  city: String
+  city: String!
   "The state or province of the location"
-  state: String
+  state: String!
   "The country of the location"
-  country: String
+  country: String!
   "The postal code of the location"
-  postalCode: String
+  zipCode: String!
+  "The location's type"
+  type: LocationType!
 }
 
 input UpdateLocationInput {
@@ -88,7 +93,9 @@ input UpdateLocationInput {
   "The country of the location"
   country: String
   "The postal code of the location"
-  postalCode: String
+  zipCode: String
+  "The location's type"
+  type: LocationType 
 }
 
 # Common interface for response types
@@ -106,7 +113,7 @@ type CreateLocationResponse implements Response {
   code: Int!
   success: Boolean!
   message: String!
-  location: Location @shareable
+  location: Location!@shareable
 }
 
 # Response type for updating a Location
@@ -122,4 +129,10 @@ type SearchResult {
   locations: [Location!]!
   totalCount: Int!
   hasNextPage: Boolean!
+}
+
+enum LocationType {
+    primary
+  secondary
+  tertiary
 }

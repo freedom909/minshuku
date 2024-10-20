@@ -432,26 +432,43 @@ const resolvers = {
 
     async createListing(_, { input }, { dataSources, userId }) {
       try {
+        // Uncomment authentication checks if required
         // if (!userId) throw new AuthenticationError('User not authenticated');
         // if (!isHostOfListing || !isAdmin) {
-        //   throw new AuthenticationError(`you don't have right to update this list`)
+        //   throw new AuthenticationError(`you don't have the right to update this list`);
         // }
 
-        const { listingService } = dataSources; // Destructure the listingService  
-        console.log("Received input data:", input);
-        // Call the create method from listingService  
-        const newListing = await listingService.create({ input, userId });
+        const { location, ...listingInput } = input;
+        let locationId = location.locationId;
+
+        const { listingService, locationService } = dataSources; // Destructure services
+
+        if (!locationId) {
+          // If locationId is not provided, create a new location
+          const newLocation = await locationService.createLocation({ location });
+          locationId = newLocation.id; // Get the new location's id
+        }
+
+        // Prepare listing data with locationId
+        const listingData = { ...listingInput, locationId, userId }; // Include userId in listingData
+
+        // Create the listing with the updated data
+        const newListing = await listingService.createListing(listingData);
+
         return {
-          listing: newListing,  // The created listing object
-        }; // Return the newly created listing 
+          listing: newListing,
+          success: !!newListing,
+        };
       } catch (error) {
         return {
           code: 500,
           success: false,
-          message: error.message
+          message: error.message,
         };
       }
     },
+
+
 
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
       // if (!userId) throw new AuthenticationError('User not authenticated');

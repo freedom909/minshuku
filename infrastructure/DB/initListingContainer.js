@@ -7,6 +7,9 @@ import UserService from '../services/userService.js';
 import UserRepository from '../repositories/userRepository.js';
 import sequelize from '../models/seq.js';  // Import your Sequelize instance
 import AmenityService from '../services/amenityService.js';
+import LocationService from '../services/locationService.js';
+import LocationRepository from '../repositories/locationRepository.js';
+import LocationService from '../services/locationService.js';
 
 const initializeListingContainer = async ({ services = [] } = {}) => {
   // Establishing connection to MySQL database
@@ -26,6 +29,9 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
     listingRepository: asClass(ListingRepository).singleton(),
     listingService: asClass(ListingService).singleton(),
     amenityService: asClass(AmenityService).singleton(),
+    locationService: asClass(LocationService).singleton(),
+    locationRepository: asClass(LocationRepository).singleton(),
+
   });
 
   // Register services dynamically

@@ -35,9 +35,7 @@ extend type Query {
   
   "Sort by the number of bookings"
   hotListingsByBookingNumber: [Listing] @shareable
-  
-  "Get listing details with location information"
-  getListingWithLocation(lat:Float!,lon:Float!,locationId: ID!): Listing @shareable
+
   "Get nearby listings based on latitude and longitude"
   getNearbyListings(latitude: Float!, longitude: Float!, radius: Float!): [Listing] @shareable
   "Full-text search for listings"
@@ -118,7 +116,7 @@ input DeleteListingInput {
 }
 
 input LocationInput {  
-
+  locationId:ID!
   "The name of the location"  
   name: String!  
   "The latitude of the location"  

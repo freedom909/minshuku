@@ -591,7 +591,7 @@ class ListingService {
   }
 
 
-  async create({ input, userId }) {
+  async createListing({ input, userId }) {
     console.log('Creating new listing with:', input);
     let transaction;
     let newListing;
@@ -658,7 +658,12 @@ class ListingService {
       console.log("Listing created with ID:", newListing.id);
 
       // Step 2: create location if provided, else use default location
-      let locationId;
+      let locationId = location.locationId;
+      if (!locationId) {
+        // If locationId is not provided, create a new location
+        const newLocation = await dataSources.locationService.createLocation({ location });
+        locationId = newLocation.id;  // Get the new location's id
+      }
       if (location) {
         const locationData = {
           listingId: newListing.id,

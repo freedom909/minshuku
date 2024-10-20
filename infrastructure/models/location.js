@@ -1,22 +1,18 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from './seq.js'; // Adjust the path as necessary
 import { v4 as uuidv4 } from 'uuid';
+
 class Location extends Model { }
 
 Location.init({
   id: {
-    type: DataTypes.UUID,         // Use UUID as the ID type
-    defaultValue: uuidv4(),    // Automatically generate UUID for new records
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4, // Use UUID as the ID type
     primaryKey: true,
   },
-
   listingId: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'Listings',
-      key: 'id',
-    },
+    allowNull: true, // This could be nullable depending on your needs
   },
   name: {
     type: DataTypes.STRING,
@@ -58,11 +54,10 @@ Location.init({
     allowNull: false,
     defaultValue: 'primary', // Add a default value
   },
-
 }, {
   sequelize,
   modelName: 'Location',
-  timestamps: false,
-
+  timestamps: false, // Assuming you don't need timestamps
 });
-export default Location
+
+export default Location;
