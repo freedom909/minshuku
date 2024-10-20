@@ -453,7 +453,7 @@ const resolvers = {
         const listingData = { ...listingInput, locationId, userId }; // Include userId in listingData
 
         // Create the listing with the updated data
-        const newListing = await listingService.createListing(listingData);
+        const newListing = await listingService.createListing({ input, userId });
 
         return {
           listing: newListing,

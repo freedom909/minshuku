@@ -598,14 +598,11 @@ class ListingService {
     let mockUserId = userId || '66dc30358791fb6291ca94d1'
     console.log('Creating new listing with:', mockUserId);
     try {
-
-      validateListing(input)
+      console.log('Input received:', input);
+      // validateListing(input)
       // Perform additional validation based on the schema or requirements
-      if (input.costPerNight < 0) {
-        throw new Error("Price per night must be a positive number.");
-      }
-      if (input.costPerNight > 1000) {
-        throw new Error("Price per night must not exceed $1000.");
+      if (input.costPerNight < 0 || input.costPerNight > 1000) {
+        throw new Error("Price per night must be a positive number and not exceed $1000.");
       }
 
       if (!input.location || typeof input.location !== 'object') {
@@ -649,64 +646,61 @@ class ListingService {
       transaction = await this.sequelize.transaction();
       const { amenityIds, location, ...listingData } = input;
 
-      //step 1: create listing first
-      newListing = await Listing.create({
-        ...listingData,
-        hostId: mockUserId,
+      // Step 1: Declare locationId first
+      let locationId;
 
-      }, { transaction });
-      console.log("Listing created with ID:", newListing.id);
-
-      // Step 2: create location if provided, else use default location
-      let locationId = location.locationId;
-      if (!locationId) {
+      // Check if a locationId was provided
+      if (!location.locationId) {
         // If locationId is not provided, create a new location
         const newLocation = await dataSources.locationService.createLocation({ location });
         locationId = newLocation.id;  // Get the new location's id
-      }
-      if (location) {
-        const locationData = {
-          listingId: newListing.id,
-          name: location.name,
-          latitude: location.latitude,
-          longitude: location.longitude,
-          address: location.address,
-          city: location.city,
-          state: location.state,
-          country: location.country,
-          zipCode: location.zipCode,
-        };
-        if (!location) {
-          console.log("No location data provided.");
-        } else {
-          const createdLocation = await Location.create(locationData, { transaction });
-          locationId = createdLocation.id;
-          console.log("Location created with ID:", locationId);
-        }
+        console.log("New location created with ID:", locationId);
+      } else {
+        locationId = location.locationId;  // Assign the existing locationId
+        console.log("Using existing location ID:", locationId);
       }
 
-      console.log('Created locationId:', locationId);
-      console.log('Creating listing with data:', listingData);
+      // Step 2: Create the listing now with the valid locationId
+      newListing = await Listing.create({
+        ...listingData,
+        hostId: mockUserId,
+        locationId: locationId,  // Make sure to pass locationId here
+      }, { transaction });
+      console.log("Listing created with ID:", newListing.id);
 
+      // Step 3: Link the location to the listing
+      const locationData = {
+        listingId: newListing.id,
+        name: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address: location.address,
+        city: location.city,
+        state: location.state,
+        country: location.country,
+        zipCode: location.zipCode,
+      };
 
+      const linkedLocation = await Location.create(locationData, { transaction });
+      console.log("Location linked with listing. Linked location ID:", linkedLocation.id);
+
+      // Step 4: Link amenities
       const amenityAssociations = amenityIds.map(amenityId => ({
         listingId: newListing.id,
         amenityId: amenityId.id,
       }));
-      console.log('newListing.id:', newListing.id)
       await ListingAmenities.bulkCreate(amenityAssociations, { transaction });
       console.log('Amenity associations created for listing:', newListing.id);
 
-      await transaction.commit();  // Commit the transaction  
+      await transaction.commit();  // Commit the transaction
       return newListing;
 
     } catch (error) {
       console.error('Error creating listing:', error);
-      // if (transaction) await transaction.rollback();  // Rollback on error  
+      if (transaction) await transaction.rollback();
       throw new GraphQLError('Error creating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
     }
   }
-
 
   async getLocations() {
     try {
@@ -742,29 +736,7 @@ class ListingService {
     }
   }
 
-  async getLocationById(listingId) {
-    try {
-      const query = `SELECT * FROM locations WHERE listingId = ?`; // Query using listingId
-      console.log('Listing ID:', listingId); // Log listingId for debugging
 
-      const response = await this.sequelize.query(query, {
-        replacements: [listingId],  // Correct replacement for listingId
-        type: QueryTypes.SELECT
-      });
-
-      if (response.length === 0) {
-        console.log(`Location not found for listing ID: ${listingId}`);
-        return null;  // Return null if no location is found
-      }
-
-      console.log('Query result:', response);
-      return response[0];  // Return the first location found
-    } catch (error) {
-      console.error('Error creating listing:', error);
-      if (transaction) await transaction.rollback();  // Rollback on error  
-      throw new GraphQLError('Error creating listing', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-    }
-  }
 
   async updateListing({ listingId, listing }) {
     try {

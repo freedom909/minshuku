@@ -9,7 +9,7 @@ import sequelize from '../models/seq.js';  // Import your Sequelize instance
 import AmenityService from '../services/amenityService.js';
 import LocationService from '../services/locationService.js';
 import LocationRepository from '../repositories/locationRepository.js';
-import LocationService from '../services/locationService.js';
+
 
 const initializeListingContainer = async ({ services = [] } = {}) => {
   // Establishing connection to MySQL database
