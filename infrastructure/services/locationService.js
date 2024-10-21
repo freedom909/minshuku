@@ -50,5 +50,14 @@ class LocationService {
             throw error;
         }
     }
+    async deleteLocation(id) {
+        try {
+            // Delete the location
+            const deletedLocation = await this.locationRepository.destroy({ where: { id } });
+        } catch (e) {
+            console.error('Error deleting location:', e);
+            throw e;
+        }
+    }
 }
 export default LocationService;

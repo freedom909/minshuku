@@ -113,33 +113,22 @@ const resolvers = {
       };
     },
 
-    location: async (parent, _, { dataSources }) => {
-      const { listingService } = dataSources;
-      const listingId = parent.id;  // Use the listing's ID from the parent
-
-      try {
-        const result = await listingService.getLocationById(listingId);  // Fetch location by listingId
-
-        if (!result) {
-          console.error('Location not found for listing ID:', listingId);
-          return null;  // Return null if no location is found
-        }
-
-        // Return the location object as per the schema
-        return {
-          id: result.id,
-          name: result.name,
-          address: result.address,
-          city: result.city,
-          state: result.state,
-          country: result.country,
-          zipCode: result.zipCode,
-        };
-      } catch (error) {
-        console.error('Error fetching location:', error);
-        return null;
-      }
-    },
+    // location: async (parent, _, { dataSources }) => {
+    //   const { locationService } = dataSources;
+    //   //   Fetch the location using the locationId from the parent (Listing)
+    //   try {
+    //     const locationId = parent.locationId;
+    //     if (!locationId) {
+    //       return null;
+    //     }
+    //     // Assuming you have a locationService to fetch the location
+    //     const location = await dataSources.locationService.getLocationById(locationId);
+    //     return location;
+    //   } catch (error) {
+    //     console.error('Error resolving location:', error);
+    //     throw new Error('Failed to resolve location');
+    //   }
+    // },
 
     hotListingsByMoney: async (_, __, { dataSources }) => {
 
@@ -453,7 +442,7 @@ const resolvers = {
         const listingData = { ...listingInput, locationId, userId }; // Include userId in listingData
 
         // Create the listing with the updated data
-        const newListing = await listingService.createListing({ input, userId });
+        const newListing = await listingService.createListing({ input: listingData });
 
         return {
           listing: newListing,
@@ -467,8 +456,6 @@ const resolvers = {
         };
       }
     },
-
-
 
     updateListing: async (_, { listingId, listing }, { dataSources, userId }) => {
       // if (!userId) throw new AuthenticationError('User not authenticated');
@@ -532,22 +519,6 @@ const resolvers = {
     },
 
 
-
-
-    // location: ({ location }) => {
-    //   return {
-    //     id: location.id,
-    //     state: location.state,
-    //     address: location.address,
-    //     city: location.city,
-    //     country: location.country,
-    //     zipCode: location.zipCode,
-    //     latitude: location.latitude,
-    //     longitude: location.longitude,
-    //     name: location.name,
-    //     radius: location.radius,
-    //   };
-    // },
     amenities: ({ amenities }) => {
       return amenities.map(amenity => ({ id: amenity.id, name: amenity.name, category: amenity.category }));
     },
@@ -723,9 +694,6 @@ const resolvers = {
       return bookings.length;
     },
 
-
-
-
     getListingWithLocation: async (_, { latitude, longitude, locationId }, { dataSources }) => {
       if (latitude !== undefined && longitude !== undefined) {
         throw new Error(`you must provide a latitude and longitude`)
@@ -750,23 +718,6 @@ const resolvers = {
     },
 
 
-    // locations: async ({ parent }, _, { dataSources }) => {
-
-    //   try {
-    //     const locations = await models.Listing.findByPk({
-    //       where: { id: parent.id },
-    //       include: [{ model: Location, as: 'location' }],
-    //     });
-    //     if (!locations) {
-    //       throw new Error('Listing not found');
-    //     }
-
-    //     return locations[0]; // Return the associated locations
-    //   } catch (error) {
-    //     console.error('Error fetching locations:', error);
-    //     throw new Error('Failed to fetch locations');
-    //   }
-    // },
     coordinates: async (parent, _, { dataSources }) => {
       // Use eager loading to fetch coordinates when fetching listings
       const listingWithCoordinates = await Listing.findOne({

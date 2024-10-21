@@ -22,7 +22,7 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
   const container = createContainer();
   container.register({
     mysqldb: asValue(mysqldb),
-    mongodb: asValue(mongodb),
+    mongodb: asValue(mongodb), //it use 'mongodb'
     sequelize: asValue(sequelize),
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton(),

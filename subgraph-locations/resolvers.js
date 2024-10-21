@@ -33,6 +33,10 @@ const resolvers = {
                 };
             }
         },
+        deleteLocation: (_, { id }, { dataSources }) => {
+            return dataSources.locationService.deleteLocation(id);
+        },
+        // updateLocation: (_, { id, input }, { dataSources }) => {
         updateLocation: (_, { input }, { dataSources }) => {
             return dataSources.locationService.updateLocation(input);
         },

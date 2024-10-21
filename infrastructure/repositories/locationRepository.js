@@ -25,6 +25,14 @@ class LocationRepository {
             throw new Error(`Error finding location: ${error.message}`);
         }
     }
+    async destroy(id) {
+        try {
+            await this.model.destroy({ where: { id } });
+        } catch (error) {
+            console.error('Error deleting location:', error);
+            throw new Error(`Error deleting location: ${error.message}`);
+        }
+    }
 }
 
 export default LocationRepository;

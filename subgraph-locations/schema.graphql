@@ -25,6 +25,7 @@ extend type Mutation {
     locationId: ID!
     location: UpdateLocationInput
   ): UpdateLocationResponse!
+  deleteLocation(locationId: ID!): Boolean!
 }
 
 type Location @key(fields: "id") {
@@ -132,7 +133,7 @@ type SearchResult {
 }
 
 enum LocationType {
-    primary
+  primary
   secondary
   tertiary
 }
