@@ -17,10 +17,11 @@ import LocalAuthService from '../services/userService/localAuthService.js';
 import OAuthService from '../services/userService/oauthService.js';
 import TokenService from '../services/userService/tokenService.js';
 import initMongoContainer from '../services/DB/initMongoContainer.js';
-import initializeCartContainer from '../services/DB/initCartContainer.js';
-import CartService from '../services/cartService.js';
 import ReviewService from '../services/reviewService.js';
+
+import initializeListingContainer from '../services/DB/initListingContainer.js';
 import initializeReviewContainer from '../services/DB/initReviewContainer.js';
+import ReviewRepository from '../services/repositories/reviewRepository.js';
 
 dotenv.config();
 
@@ -29,15 +30,16 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 const startApolloServer = async () => {
   try {
     // Initialize MySQL and MongoDB containers
-    const mysqlContainer = await initializeCartContainer({
-      services: [ListingService, BookingService, CartService]
+    const mysqlContainer = await initializeListingContainer({
+      services: [ListingService, BookingService]
     });
 
     const mongoContainer = await initMongoContainer({
       services: [LocalAuthService, OAuthService, TokenService]
     });
 
-    const neo4jContainer = await initializeReviewContainer({ services: [ReviewService] })
+    const neo4jContainer = await initializeReviewContainer({ services: [ReviewRepository] })
+
     const app = express();
     const httpServer = http.createServer(app);
 
@@ -49,9 +51,9 @@ const startApolloServer = async () => {
           async serverWillStart() {
             return {
               async drainServer() {
-                await mysqlContainer.resolve('mysqldb').close();
-                await mongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
-                await neo4jContainer.resolve('neo4j').close();
+                if (mysqlContainer?.resolve) await mysqlContainer.resolve('mysql')?.close();
+                if (mongoContainer?.resolve) await mongoContainer.resolve('mongodb')?.close();
+                if (neo4jContainer?.resolve) await neo4jContainer.resolve('neo4j')?.close();
               }
             };
           }
@@ -61,11 +63,7 @@ const startApolloServer = async () => {
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
-          bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services 
-          cartService: mysqlContainer.resolve('cartService'),
-          userService: mongoContainer.resolve('userService'), // Ensure correct resolution of services
-          reviewService: neo4jContainer.resolve('reviewService') // Ensure correct resolution of services
+          reviewRepository: neo4jContainer.resolve('reviewRepository'),
         }
       })
     });
@@ -84,6 +82,7 @@ const startApolloServer = async () => {
     });
   } catch (error) {
     console.error('Error starting server:', error);
+    // Cleanup resources if initialization fail
   }
 };
 

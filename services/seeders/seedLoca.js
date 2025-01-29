@@ -7,7 +7,7 @@ import connectToMongoDB from '../DB/connectMongoDB.js';  // Connect to MongoDB b
 dotenv.config();
 
 const mongoUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
-const dbName = process.env.DB_NAME || 'water';
+const dbName = process.env.DB_NAME || 'food';
 
 const locationData = JSON.parse(readFileSync('../infrastructure/seeders/locations.json', 'utf-8'));
 

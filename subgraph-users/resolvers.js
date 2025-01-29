@@ -56,13 +56,7 @@ const resolvers = {
           });
         }
 
-        const { localAuthService, oAuthService } = dataSources.userService;
-        if (!localAuthService || !oAuthService) {
-          throw new GraphQLError('Required authentication services are missing', {
-            extensions: { code: 'SERVICE_UNAVAILABLE' },
-          });
-        }
-
+        const { localAuthService, oAuthService, tokenService } = dataSources.userService;
         const { email, password, provider, providerToken } = input;
         let user;
 
@@ -74,16 +68,31 @@ const resolvers = {
             });
           }
 
-          // Validate provider token
-          const isValidToken = await oAuthService.validateProviderToken(provider, providerToken);
-          if (!isValidToken) {
+          if (!localAuthService || !oAuthService) {
+            throw new GraphQLError('Required authentication services are missing', {
+              extensions: { code: 'SERVICE_UNAVAILABLE' },
+            });
+          }
+
+          let providerUserInfo;
+          try {
+            providerUserInfo = await oAuthService.getUserInfoFromProvider(provider, providerToken);
+          } catch (error) {
+            console.error(`Error fetching provider user info: ${error.message}`);
+            throw new GraphQLError('Failed to fetch user info from provider', {
+              extensions: { code: 'PROVIDER_ERROR' },
+            });
+          }
+
+          if (!providerUserInfo) {
             throw new GraphQLError('Invalid provider token', {
               extensions: { code: 'INVALID_PROVIDER_TOKEN' },
             });
           }
 
-          // Login with the provider token
-          user = await oAuthService.loginWithProvider(provider, providerToken);
+          // Login with the provider user info
+          user = await oAuthService.loginWithProvider({ provider, token: providerToken });
+
         } else {
           // Email/password login
           if (!loginValidate(email, password)) {
@@ -99,18 +108,18 @@ const resolvers = {
           throw new AuthenticationError('Invalid credentials');
         }
 
-        // Return the user or a token as required
+        // Generate and return JWT token
         return {
           userId: user.id,
-          token: generateToken(user.id),
+          token: tokenService.generateToken({ userId: user.id }),
           role: user.role,
-        }
+        };
+
       } catch (error) {
         console.error('Error in signIn resolver:', error);
         throw error; // Re-throw the error to be handled by Apollo Server
       }
     },
-
 
     signUp: async (_, { input }, { dataSources }) => {
 
@@ -161,51 +170,38 @@ const resolvers = {
       }
     },
 
-    loginWithOAuth: async (_, { input }, context) => {
+
+    logout: async (_, { provider }, context) => {
+      const { dataSources } = context;
+      const { oAuthService } = dataSources.userService;
       try {
-        const { dataSources } = context;
-        // Validate dataSources and services
-        if (!dataSources || !dataSources.userService) {
-          throw new GraphQLError('UserService is not defined in dataSources', {
-            extensions: { code: 'SERVICE_UNAVAILABLE' },
+        console.log('Logging out user...');
+        // 1️⃣ Logout from OAuth provider (if applicable)
+        if (provider) {
+          await oAuthService.revokeProviderToken(provider, context);
+        }
+        // 2️⃣ Destroy session (if applicable)
+        if (context.session) {
+          return new Promise((resolve, reject) => {
+            context.session.destroy(err => {
+              if (err) {
+                reject(new GraphQLError('Failed to terminate the session', {
+                  extensions: { code: 'FAILED_TO_TERMINATE_SESSION' }
+                }));
+              }
+              resolve(true);
+            });
           });
         }
 
-        const { tokenService, oAuthService } = dataSources.userService;
-        if (!tokenService || !oAuthService) {
-          throw new GraphQLError('Required authentication services are missing', {
-            extensions: { code: 'SERVICE_UNAVAILABLE' },
-          });
-        }
-
-        const { provider, providerToken } = input;
-        const user = await oAuthService.loginWithProvider(provider, providerToken);
-        if (!user) {
-          throw new AuthenticationError('Invalid credentials');
-        }
-        const token = await tokenService.generateToken({ id: user._id, role: user.role });
-
-        return {
-          token,
-          userId: user._id,
-          role: user.role,
-        }
+        return true;
       } catch (error) {
-        console.error('Error in loginWithOAuth resolver:', error);
+        console.error('Error during logout:', error);
         throw error; // Re-throw the error to be handled by Apollo Server
       }
     },
 
-    logout: (_, __, context) => {
-      if (context.session) {
-        context.session.destroy(err => {
-          if (err) {
-            throw new GraphQLError('Failed to terminate the session', { extensions: { code: 'FAILED_TO_TERMINATE_SESSION' } });
-          }
-        });
-      }
-      return true;
-    },
+
 
     forgotPassword: async (_, { email }, { dataSources }) => {
       try {

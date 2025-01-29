@@ -40,6 +40,35 @@ class OAuthService extends RESTDataSource {
         }
     }
 
+    async revokeProviderToken(provider, context) {
+        const { token } = context;
+        if (!token) {
+            console.warn('no OAuth token found in context, skipping revocation.')
+            return;
+        }
+        let revokeUrl
+        switch (provider) {
+            case 'google':
+                revokeUrl = `https://accounts.google.com/o/oauth2/revoke?token=${token}`;
+                break;
+            case 'facebook':
+                revokeUrl = `https://graph.facebook.com/me/permissions?access_token=${token}`;
+                break;
+            case 'X': // Twitter (X) logout isn't standard, requires frontend clearing storage
+                console.log('Twitter (X) does not support direct token revocation.');
+                return;
+            default:
+                console.warn(`OAuth provider ${provider} not supported for logout.`);
+                return;
+        }
+        try {
+            await axios.post(revokeUrl);
+            console.log(`Revoked token for ${provider}`);
+        } catch (error) {
+            console.error(`Error revoking token for ${provider}:`, error.message);
+            throw new GraphQLError(`Failed to revoke ${provider} token`, { extensions: { code: 'TOKEN_REVOCATION_FAILED' } });
+        }
+    }
     async validateProviderToken(provider, providerToken) {
         try {
             let url, response;

@@ -17,45 +17,43 @@ import connectToMongoDB from './connectMongoDB.js';
 import connect from './connectNeo4jDB.js'; // Import your Neo4j database connection function
 import sequelize from '../models/seq.js'
 import axios from 'axios';
+import LocationRepository from '../repositories/locationRepository.js';
 
 const initializeReviewContainer = async () => {
-  // Establishing connection to MySQL database
-  const mysqldb = await connectMysql();
+  try {
+    // Connect to databases
+    const mysql = await connectMysql();
+    const mongodb = await connectToMongoDB();
+    const neo4jdb = await connect();
 
-  // Establishing connection to MongoDB database
-  const mongodb = await connectToMongoDB();
+    // Create and configure the container
+    const container = createContainer();
+    container.register({
+      mysql: asValue(mysql),
+      mongodb: asValue(mongodb),
+      neo4jdb: asValue(neo4jdb),
+      sequelize: asValue(sequelize),
+      userRepository: asClass(UserRepository).singleton(),
+      listingRepository: asClass(ListingRepository).singleton(),
+      locationRepository: asClass(LocationRepository).singleton(),
+      bookingRepository: asClass(BookingRepository).singleton(),
+      reviewRepository: asClass(ReviewRepository).singleton(),
+      listingService: asClass(ListingService).singleton(),
+      bookingService: asClass(BookingService).singleton(),
+      localAuthService: asClass(LocalAuthService).singleton(),
+      oAuthService: asClass(OAuthService).singleton(),
+      tokenService: asClass(TokenService).singleton(),
+      secretKey: asValue(process.env.JWT_SECRET || 'good'),
+      expiresIn: asValue('1h'),
+      axios: asValue(axios),
+    });
 
-
-  // Initializing the container and registering dependencies and services
-  const neo4jdb = await connect() // how to create the function connect()
-
-  const container = createContainer();
-  container.register({
-    mysqldb: asValue(mysqldb),
-    mongodb: asValue(mongodb),
-    neo4jdb: asValue(neo4jdb),
-    sequelize: asValue(sequelize),
-    userRepository: asClass(UserRepository).singleton(),
-    secretKey: asValue(process.env.JWT_SECRET || 'good'),
-    expiresIn: asValue('1h'),
-    localAuthService: asClass(LocalAuthService).singleton(),
-    oAuthService: asClass(OAuthService).singleton(),
-    tokenService: asClass(TokenService).singleton(),
-    userRepository: asClass(UserRepository).singleton(),
-    listingRepository: asClass(ListingRepository).singleton(),
-    listingService: asClass(ListingService).singleton(),
-    bookingService: asClass(BookingService).singleton(),
-    bookingRepository: asClass(BookingRepository).singleton(),
-    reviewService: asClass(ReviewService).singleton(),
-    reviewRepository: asClass(ReviewRepository).singleton(),
-    // Add other dependencies here...
-
-    axios: asValue(axios),
-    // Add other dependencies here...
-  });
-
-  console.log('Database connected');
-  return container;
+    console.log('Databases and container initialized');
+    return container;
+  } catch (error) {
+    console.error('Error initializing container:', error);
+    throw error;
+  }
 };
 
 export default initializeReviewContainer;

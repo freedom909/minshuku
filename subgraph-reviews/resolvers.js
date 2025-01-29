@@ -3,23 +3,28 @@ import {
   ForbiddenError,
 } from "../infrastructure/utils/errors.js";
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
-import reviewRepository from "../services/repositories/reviewRepository.js";
+import ReviewRepository from "../services/repositories/reviewRepository.js";
 import getUserFromDb from "../services/repositories/userRepository.js";
+import connect from "../services/DB/connectNeo4jDB.js";
+
 
 const resolvers = {
   Query: {
-    searchReviews: async (_, { criteria }) => {
-      return reviewRepository.searchReviews(criteria);
+    searchReviews: async (_, { criteria }, { dataSources }) => {
+      console.log("Input Arguments:", criteria);
+      const reviews = await dataSources.reviewRepository.searchReviews(criteria);//   "message": "Cannot read properties of undefined (reading 'reviewRepository')",
+      console.log("Fetched Reviews:", reviews);
+      return reviews
     },
 
-    reviews: async (_, { id }, __) => {
-      const review = await reviewRepository.getReviewById(id);
+    reviews: async (_, { id }, { dataSources }) => {
+      const review = await dataSources.reviewRepository.getReviewById(id);
       if (!review) throw new ForbiddenError("Review not found");
       return review;
     },
 
-    getReviewForListing: async (_, { listingId }) => {
-      return reviewRepository.getReviewsByListingId(listingId);
+    getReviewForListing: async (_, { listingId }, { dataSources }) => {
+      return dataSources.reviewRepository.getReviewsByListingId(listingId);
     },
   },
   Mutation: {
@@ -28,11 +33,12 @@ const resolvers = {
       if (!booking || booking.status !== "complete") {
         throw new ForbiddenError("Invalid booking status for review submission");
       }
-      return reviewRepository.createGuestReview(guestReview, bookingId, userId, booking.guestId);
+      return dataSources.reviewRepository.createGuestReview(guestReview, bookingId, userId, booking.guestId);
     }),
 
     submitHostAndLocationReviews: requireRole("HOST", async (_, args, context) => {
-      return reviewRepository.createHostAndLocationReviews(args, context);
+      const { dataSources } = context.dataSources
+      return dataSources.reviewRepository.createHostAndLocationReviews(args, context);
     }),
 
     Listing: {
