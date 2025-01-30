@@ -49,30 +49,32 @@ const resolvers = {
         console.log('Resolver context:', context); // Debugging context
         const { dataSources } = context;
 
-        // Validate dataSources and services
-        if (!dataSources || !dataSources.userService) {
+        // Validate dataSources and required services
+        if (!dataSources?.userService) {
           throw new GraphQLError('UserService is not defined in dataSources', {
             extensions: { code: 'SERVICE_UNAVAILABLE' },
           });
         }
 
         const { localAuthService, oAuthService, tokenService } = dataSources.userService;
+        if (!localAuthService || !oAuthService || !tokenService) {
+          throw new GraphQLError('Authentication services are missing', {
+            extensions: { code: 'SERVICE_UNAVAILABLE' },
+          });
+        }
+
         const { email, password, provider, providerToken } = input;
         let user;
 
         if (provider) {
-          // Third-party login
           if (!providerToken) {
-            throw new GraphQLError('Provider token is required for third-party login', {
-              extensions: { code: 'PROVIDER_TOKEN_REQUIRED' },
+            throw new GraphQLError('Provider token is required for OAuth login', {
+              extensions: { code: 'INVALID_INPUT' },
             });
           }
 
-          if (!localAuthService || !oAuthService) {
-            throw new GraphQLError('Required authentication services are missing', {
-              extensions: { code: 'SERVICE_UNAVAILABLE' },
-            });
-          }
+          // Validate provider token (Ensure `validateProviderToken` is implemented)
+          await oAuthService.validateProviderToken(provider, providerToken);
 
           let providerUserInfo;
           try {
@@ -91,10 +93,9 @@ const resolvers = {
           }
 
           // Login with the provider user info
-          user = await oAuthService.loginWithProvider({ provider, token: providerToken });
-
+          user = await oAuthService.loginWithProvider(providerUserInfo);
         } else {
-          // Email/password login
+          // Email/password login validation (Ensure `loginValidate` is implemented)
           if (!loginValidate(email, password)) {
             throw new GraphQLError('Invalid email or password', {
               extensions: { code: 'INVALID_LOGIN' },
@@ -110,16 +111,20 @@ const resolvers = {
 
         // Generate and return JWT token
         return {
-          userId: user.id,
-          token: tokenService.generateToken({ userId: user.id }),
+          userId: user._id.toString(), // Ensure it's a string
+          token: tokenService.generateToken({
+            _id: user._id.toString(),
+            email: user.email,
+            role: user.role
+          }),
           role: user.role,
         };
-
       } catch (error) {
         console.error('Error in signIn resolver:', error);
         throw error; // Re-throw the error to be handled by Apollo Server
       }
     },
+
 
     signUp: async (_, { input }, { dataSources }) => {
 

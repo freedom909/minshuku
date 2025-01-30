@@ -15,7 +15,12 @@ class TokenService {
         this.expiresIn = expiresIn || '1h';
     }
 
-    async generateToken(payload) {
+    async generateToken(user) {
+        const payload = {
+            userId: user._id, // Assuming user has an _id field
+            email: user.email,
+            role: user.role,
+        };
         return sign(payload, this.secretKey, { expiresIn: this.expiresIn });
     }
 
@@ -35,3 +40,6 @@ class TokenService {
 }
 
 export default TokenService;
+
+
+

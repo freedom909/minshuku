@@ -35,8 +35,6 @@ class LocalAuthService extends RESTDataSource {
     // Similar to previous example
     const hashedPassword = await this.userRepository.hashPassword(userData.password);
     const user = await this.userRepository.insertUser({ ...userData, password: hashedPassword });
-
-
     const token = await this.userRepository.generateToken({ _id: user.insertedId }); // Pass the correct _id
     //await this.userRepository.sendVerificationEmail(userData.email, token);
 
