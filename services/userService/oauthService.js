@@ -2,9 +2,10 @@ import axios from 'axios';
 import { RESTDataSource } from '@apollo/datasource-rest';
 import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
+import { OAuth2Client } from 'google-auth-library';
 
 dotenv.config();  // Load environment variables
-
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 class OAuthService extends RESTDataSource {
     constructor({ tokenService, userRepository }) {
         super();
@@ -15,6 +16,62 @@ class OAuthService extends RESTDataSource {
         this.userRepository = userRepository;
     }
 
+    async authenticate(provider, token) {
+        console.log("🔍 OAuthService.authenticate called with:");
+        console.log("➡️ Provider:", provider);
+        console.log("➡️ Token:", token ? token.slice(0, 20) + "..." : "No Token Received"); // Shorten token for readability
+
+        if (!provider || !token) {
+            console.error("❌ Missing provider or token");
+            throw new Error("Missing provider token for OAuth login");
+        }
+
+        try {
+            const userInfo = await this.verifyOAuthToken(provider, token);
+            console.log('this:', this)
+            console.log("✅ OAuth token verified. User info:", userInfo);
+            return userInfo;
+        } catch (error) {
+            console.error("⚠️ Error verifying OAuth token:", error);
+            throw new Error("Invalid OAuth token");
+        }
+    }
+
+    async verifyOAuthToken(provider, token) {
+        console.log("🔎 Verifying token for provider:", provider);
+
+        // Example token verification logic (modify based on actual implementation)
+        if (provider === "GOOGLE") {
+            try {
+                const decoded = await this.decodeGoogleToken(token);
+                console.log("✅ Decoded Google token:", decoded);
+                return decoded;
+            } catch (err) {
+                console.error("❌ Error decoding Google token:", err);
+                throw new Error("Failed to decode Google token");
+            }
+        }
+
+        console.error("❌ Unsupported provider:", provider);
+        throw new Error("OAuth provider not supported");
+    }
+
+    async decodeGoogleToken(token) {
+        try {
+            console.log("🔍 Decoding Google token with google-auth-library...");
+            const ticket = await client.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_CLIENT_ID, // Must match the client ID of your Google App
+            });
+
+            const payload = ticket.getPayload();
+            console.log("✅ Google token decoded:", payload);
+            return payload; // Contains user info like email, name, picture, etc.
+        } catch (error) {
+            console.error("❌ Error decoding Google token:", error.message);
+            throw new Error("Invalid Google token");
+        }
+    }
     /**
      * Logs in a user via OAuth provider.
      */
@@ -104,7 +161,8 @@ class OAuthService extends RESTDataSource {
     /**
      * Fetches user information from an OAuth provider.
      */
-    async getUserInfo(provider, token) {
+    async getUserInfoFromProvider(provider, token) {
+
         const endpoints = {
             google: { url: 'https://www.googleapis.com/oauth2/v3/userinfo', tokenType: 'Bearer' },
             facebook: { url: `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${token}`, tokenType: '' }

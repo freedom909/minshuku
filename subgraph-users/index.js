@@ -15,55 +15,61 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+
+const createApolloServer = (container) => {
+  return new ApolloServer({
+    schema: buildSubgraphSchema({ typeDefs, resolvers }),
+    introspection: true, // Ensure introspection is enabled
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer: container.httpServer }),
+      {
+        async serverWillStart() {
+          console.log('Server is starting...');
+          return {
+            async drainServer() {
+              console.log('Draining server...');
+              await container.resolve('mongodb').end(); // Ensure proper cleanup
+            },
+          };
+        },
+      },
+    ],
+  });
+};
+
+// 🔹 Express middleware context function
+const createContext = async ({ req, container }) => {
+  const token = req.headers.authorization || '';
+
+  return {
+    token,
+    dataSources: {
+      userService: {
+        localAuthService: container.resolve('localAuthService'),
+        oAuthService: container.resolve('oAuthService'),
+        tokenService: container.resolve('tokenService'),
+      },
+    },
+  };
+};
+
+// 🔹 Function to start Apollo Server
 const startApolloServer = async () => {
   try {
-    const container = await initUserContainer({ services: [] });
+    const container = await initUserContainer();
     const app = express();
     const httpServer = http.createServer(app);
+    container.httpServer = httpServer; // Store HTTP server reference
 
-    const server = new ApolloServer({
-      schema: buildSubgraphSchema({ typeDefs, resolvers }),
-      introspection: true, // Ensure introspection is enabled
-      plugins: [
-        ApolloServerPluginDrainHttpServer({ httpServer }),
-        {
-          async serverWillStart() {
-            console.log('Server is starting...');
-            return {
-              async drainServer() {
-                console.log('Draining server...');
-                await container.resolve('mongodb').end();
-              },
-            };
-          },
-        },
-      ],
-    });
-
+    const server = createApolloServer(container);
     await server.start();
 
-    // Define context in expressMiddleware
     app.use(
       '/graphql',
       cors(),
       express.json(),
       expressMiddleware(server, {
-        context: async ({ req }) => {
-          const token = req.headers.authorization || '';
-
-          const userService = {
-            localAuthService: container.resolve('localAuthService'),
-            oAuthService: container.resolve('oAuthService'),
-            tokenService: container.resolve('tokenService'),
-          };
-
-          return {
-            token,
-            dataSources: {
-              userService,
-            },
-          };
-        },
+        context: async ({ req }) => createContext({ req, container }),
       })
     );
 
@@ -71,7 +77,7 @@ const startApolloServer = async () => {
       console.log('🚀 Server ready at http://localhost:4010/graphql')
     );
   } catch (error) {
-    console.error('Error starting Apollo Server:', error);
+    console.error('❌ Error starting Apollo Server:', error);
   }
 };
 

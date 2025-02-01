@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { loginValidate, passwordValidate } from '../infrastructure/helpers/loginValidator.js';
 import runValidations from '../infrastructure/helpers/runValidations.js';
-import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
+import validateInviteCode from '../infrastructure/helpers/validateInviteCode.js';
 import TokenService from '../services/userService/tokenService.js';
 import LocalAuthService from '../services/userService/localAuthService.js';
 import OAuthService from '../services/userService/oauthService.js';
@@ -44,13 +44,12 @@ const resolvers = {
     },
 
 
-    signIn: async (_, { input }, context) => {
-      try {
-        console.log('Resolver context:', context); // Debugging context
-        const { dataSources } = context;
+    signIn: async (_, { input }, { dataSources }) => {
 
-        // Validate dataSources and required services
-        if (!dataSources?.userService) {
+      try {
+        //console.log('Resolver context:', context); // Debugging context
+
+        if (!dataSources || !dataSources.userService) {
           throw new GraphQLError('UserService is not defined in dataSources', {
             extensions: { code: 'SERVICE_UNAVAILABLE' },
           });
@@ -73,14 +72,14 @@ const resolvers = {
             });
           }
 
-          // Validate provider token (Ensure `validateProviderToken` is implemented)
+          // Validate provider token (Ensure validateProviderToken is implemented)
           await oAuthService.validateProviderToken(provider, providerToken);
 
           let providerUserInfo;
           try {
             providerUserInfo = await oAuthService.getUserInfoFromProvider(provider, providerToken);
           } catch (error) {
-            console.error(`Error fetching provider user info: ${error.message}`);
+            console.error("Error fetching provider user info: ${error.message}", error);
             throw new GraphQLError('Failed to fetch user info from provider', {
               extensions: { code: 'PROVIDER_ERROR' },
             });
@@ -95,7 +94,7 @@ const resolvers = {
           // Login with the provider user info
           user = await oAuthService.loginWithProvider(providerUserInfo);
         } else {
-          // Email/password login validation (Ensure `loginValidate` is implemented)
+          // Email/password login validation (Ensure loginValidate is implemented)
           if (!loginValidate(email, password)) {
             throw new GraphQLError('Invalid email or password', {
               extensions: { code: 'INVALID_LOGIN' },
@@ -125,15 +124,16 @@ const resolvers = {
       }
     },
 
-
     signUp: async (_, { input }, { dataSources }) => {
-
+      console.log("🛠️ signUp called with input:", input);
       if (!dataSources || !dataSources.userService) {
         throw new Error('dataSources.userService is not defined');
       }
 
       const { localAuthService, tokenService } = dataSources.userService;
-
+      if (!localAuthService || !tokenService) {
+        throw new Error('Required authentication services are missing');
+      }
       // Proceed with the sign-up logic
       const { email, password, name, nickname, role, inviteCode, picture } = input;
 
@@ -151,22 +151,20 @@ const resolvers = {
       }
 
       try {
-        const user = await localAuthService.register({
+        const userData = {
           email,
           password,
           name,
           nickname,
           role,
           picture,
-        });
+        }
+        const user = await localAuthService.register(userData);
+        const token = await tokenService.generateToken(user);
+        const response = await localAuthService.register(input);
 
-        const token = await tokenService.generateToken({ id: user._id, role: user.role });
-
-        return {
-          token,
-          userId: user._id,
-          role: user.role,
-        };
+        console.log("🚀 Sign-up response:", response);
+        return response;
       } catch (error) {
         console.error('Error during signUp:', error);
         throw new GraphQLError('User registration failed', {
