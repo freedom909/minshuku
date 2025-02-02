@@ -141,12 +141,13 @@ class UserRepository extends BaseRepository {
     }
   }
 
-  async insertUser(userData, hashedPassword) {
+  async insertUser(userData) {
     try {
-      const id = new ObjectId(); // Generate a new ObjectId if `id` is not provided
-      return await this.collection.insertOne({ _id: id, ...userData, password: hashedPassword });
+      const id = new ObjectId();
+      console.log("🛠️ Inserting User Data:", userData); // Debugging line
+      return await this.collection.insertOne({ _id: id, ...userData });
     } catch (error) {
-      console.error('Error during insertOne:', error);
+      console.error("❌ Error during insertOne:", error);
       throw error;
     }
   }
