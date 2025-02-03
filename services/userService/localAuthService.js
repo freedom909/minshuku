@@ -1,7 +1,6 @@
 
 import UserRepository from '../repositories/userRepository.js';
 import { RESTDataSource } from "@apollo/datasource-rest";
-import { hashPassword, checkPassword } from '../../infrastructure/helpers/passwords.js'; // Adjust the path accordingly
 import { GraphQLError } from 'graphql';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -25,6 +24,8 @@ class LocalAuthService extends RESTDataSource {
 
   async authenticateUser(email, password) {
     const user = await this.userRepository.getUserByEmailFromDb(email);
+    console.log("user:", user); // user: null
+
     if (!user || !(await this.userRepository.checkPassword(password, user.password))) {
       throw new Error('Invalid credentials');
     }
@@ -48,47 +49,6 @@ class LocalAuthService extends RESTDataSource {
     }
 
     return createdUser; // ✅ Ensure _id is returned
-  }
-
-  async login(email, password) {
-    // Find the user by email
-    const user = await this.authenticateUser(email, password);
-
-    if (!user) {
-      throw new GraphQLError("Incorrect password or email", {
-        extensions: { code: "BAD_USER_INPUT" },
-      });
-    }
-
-    try {
-      // Generate JWT token
-      const payload = { id: user._id.toString() };
-      const role = user.role;
-      const token = jwt.sign(payload, "good", { expiresIn: '1h' });
-      // Return the token and user info
-      return {
-        code: 200,
-        success: true,
-        message: "Login successful",
-        token: token,
-        userId: user._id.toString(),
-        role: role,
-      };
-    } catch (e) {
-      console.error("Error during login:", e);
-
-      // Handle specific error codes
-      if (e.code === 11000) {
-        throw new GraphQLError("Email can't be found", {
-          extensions: { code: "BAD_USER_INPUT" },
-        });
-      }
-
-      // Re-throw the error if it's not specifically handled
-      throw new GraphQLError("Login failed", {
-        extensions: { code: "INTERNAL_SERVER_ERROR" },
-      });
-    }
   }
 
   async sendLinkToUser(email, token) {
@@ -201,7 +161,7 @@ class LocalAuthService extends RESTDataSource {
   }
 
   async resetPassword(userId, newPassword) {
-    const hashedPassword = await hashPassword(newPassword);
+    const hashedPassword = await this.userRepository.hashPassword(newPassword);
     const updatedUser = await this.userRepository.findByIdAndUpdate(
       userId,
       { password: hashedPassword },

@@ -62,7 +62,7 @@ input SignInInput {
   email: String
   password: String
   provider: OAuthProvider
-  token: String! # Token from the third-party service
+  token: String # Token from the third-party service
 }
 
 input SignUpInput {

@@ -43,12 +43,8 @@ const resolvers = {
       },
     },
 
-
     signIn: async (_, { input }, { dataSources }) => {
-
       try {
-        //console.log('Resolver context:', context); // Debugging context
-
         if (!dataSources || !dataSources.userService) {
           throw new GraphQLError('UserService is not defined in dataSources', {
             extensions: { code: 'SERVICE_UNAVAILABLE' },
@@ -79,7 +75,7 @@ const resolvers = {
           try {
             providerUserInfo = await oAuthService.getUserInfoFromProvider(provider, providerToken);
           } catch (error) {
-            console.error("Error fetching provider user info: ${error.message}", error);
+            console.error("Error fetching provider user info:", error.message);
             throw new GraphQLError('Failed to fetch user info from provider', {
               extensions: { code: 'PROVIDER_ERROR' },
             });
@@ -94,29 +90,41 @@ const resolvers = {
           // Login with the provider user info
           user = await oAuthService.loginWithProvider(providerUserInfo);
         } else {
-          // Email/password login validation (Ensure loginValidate is implemented)
+          // Email/password login validation
           if (!loginValidate(email, password)) {
             throw new GraphQLError('Invalid email or password', {
               extensions: { code: 'INVALID_LOGIN' },
             });
           }
 
-          user = await localAuthService.login({ email, password });
+          // Find the user with email and password
+          user = await localAuthService.authenticateUser(email, password);
+          console.log("✅ User after authentication:", user); // Make sure this logs user correctly
         }
 
         if (!user) {
-          throw new AuthenticationError('Invalid credentials');
+          throw new GraphQLError("Incorrect password or email", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
         }
+
+        // 🛑 Check if `_id` exists before calling `.toString()`
+        if (!user._id) {
+          throw new Error("❌ User object is missing `_id`:", user);
+        }
+
+        const payload = { id: user._id.toString() };
+        const role = user.role;
+        const token = jwt.sign(payload, "good", { expiresIn: "1h" });
 
         // Generate and return JWT token
         return {
-          userId: user._id.toString(), // Ensure it's a string
-          token: tokenService.generateToken({
-            _id: user._id.toString(),
-            email: user.email,
-            role: user.role
-          }),
-          role: user.role,
+          code: 200,
+          success: true,
+          message: "Login successful",
+          token: token,
+          userId: user._id.toString(),
+          role: role,
         };
       } catch (error) {
         console.error('Error in signIn resolver:', error);

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
-import { hashPassword, checkPassword } from '../../infrastructure/helpers/passwords.js';
+import bcrypt from 'bcrypt';
 import BaseRepository from './baseRepository.js';
 import mongoose from 'mongoose';
 import User from '../models/user.js';
@@ -41,19 +41,6 @@ class UserRepository extends BaseRepository {
     }
   }
 
-  async save(user) {
-    try {
-      const result = await this.collection.insertOne(user);
-      if (!result.insertedId) {
-        throw new Error('Failed to insert user');
-      }
-      return { ...user, _id: result.insertedId };
-    } catch (error) {
-      console.error('Error during save:', error);
-      throw error;
-    }
-  }
-
   async findByIdAndDelete(id) {
     try {
       return await this.collection.findOneAndDelete({ _id: new ObjectId(id) });
@@ -74,17 +61,29 @@ class UserRepository extends BaseRepository {
 
   async getUserFromDb(id) {
     try {
-      const query = { _id: new ObjectId(id) };
-      return await this.collection.findOne(query);
+      if (!ObjectId.isValid(id)) {
+        throw new Error("Invalid ObjectId format");
+      }
+
+      return await this.collection.findOne({ _id: new ObjectId(id) });
     } catch (error) {
-      console.error('Error during getUserFromDb:', error);
+      console.error("Error during getUserFromDb:", error);
       throw error;
     }
   }
 
   async getUserByEmailFromDb(email) {
     try {
-      return await this.collection.findOne({ email });
+      console.log("🔍 Searching for user with email:", email);
+      console.log("📂 Collection name:", this.collection.collectionName);
+
+      const user = await this.collection.findOne({ email });
+
+      if (!user) {
+        console.warn("⚠️ No user found with email:", email);
+      }
+
+      return user;
     } catch (error) {
       console.error('Error during getUserByEmailFromDb:', error);
       throw error;
@@ -92,11 +91,28 @@ class UserRepository extends BaseRepository {
   }
 
   async checkPassword(password, hashedPassword) {
-    return await checkPassword(password, hashedPassword);
+    if (typeof password !== 'string' || typeof hashedPassword !== 'string') {
+      throw new TypeError('Arguments must be of type string');
+    }
+    try {
+      return await bcrypt.compare(password, hashedPassword);
+    } catch (error) {
+      console.error('Error comparing passwords:', error);
+      throw new Error('Error comparing passwords');
+    }
   }
 
   async hashPassword(password) {
-    return await hashPassword(password);
+    if (typeof password !== 'string') {
+      throw new TypeError('Argument must be of type string');
+    }
+    const saltRounds = 10;
+    try {
+      return await bcrypt.hash(password, saltRounds);
+    } catch (error) {
+      console.error('Error hashing password:', error);
+      throw new Error('Error hashing password');
+    }
   }
 
   async generateToken(payload) {
