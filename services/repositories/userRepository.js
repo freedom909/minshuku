@@ -143,14 +143,23 @@ class UserRepository extends BaseRepository {
 
   async insertUser(userData) {
     try {
-      const id = new ObjectId();
-      console.log("🛠️ Inserting User Data:", userData); // Debugging line
-      return await this.collection.insertOne({ _id: id, ...userData });
+      //const id = new ObjectId(); // ✅ Ensure _id is generated
+      console.log("🛠️ Inserting User Data:", userData);
+
+      const result = await this.collection.insertOne(userData);
+
+      if (result.acknowledged && result.insertedId) {
+        console.log("✅ User successfully inserted:", result.insertedId);
+        return { _id: result.insertedId, ...userData }; // ✅ Return _id properly
+      } else {
+        throw new Error("❌ Insert operation failed, no _id returned.");
+      }
     } catch (error) {
       console.error("❌ Error during insertOne:", error);
       throw error;
     }
   }
+
 }
 
 export default UserRepository;

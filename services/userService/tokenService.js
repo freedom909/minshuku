@@ -17,7 +17,7 @@ class TokenService {
 
     async generateToken(user) {
         const payload = {
-            userId: user._id, // Assuming user has an _id field
+            userId: user._id.toString(), // Assuming user has an _id field
             email: user.email,
             role: user.role,
         };

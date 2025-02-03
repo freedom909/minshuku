@@ -32,17 +32,22 @@ class LocalAuthService extends RESTDataSource {
   }
 
   async register(userData) {
-    // Similar to previous example
-    const hashedPassword = await this.userRepository.hashPassword(userData.password);
-    const user = await this.userRepository.insertUser({ ...userData, role: userData.role, password: hashedPassword });
-    const token = await this.userRepository.generateToken({ _id: user.insertedId, role: userData.role }); // Pass the correct _id
-    //await this.userRepository.sendVerificationEmail(userData.email, token);
+    const existingUser = await this.userRepository.getUserByEmailFromDb(userData.email);
+    if (existingUser) {
+      throw new Error("❌ Email already exists. Cannot create duplicate accounts.");
+    }
 
-    return {
-      userId: user.insertedId.toString(), // Convert ObjectId to string
-      token,
-      role: userData.role  // Include role in response
-    };
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const newUser = { ...userData, password: hashedPassword };
+
+    // Make sure insertUser returns the correct format
+    const createdUser = await this.userRepository.insertUser(newUser);
+
+    if (!createdUser || !createdUser._id) {
+      throw new Error("❌ Registration failed: No _id returned from insertUser.");
+    }
+
+    return createdUser; // ✅ Ensure _id is returned
   }
 
   async login(email, password) {

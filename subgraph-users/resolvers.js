@@ -173,6 +173,57 @@ const resolvers = {
       }
     },
 
+    signUp: async (_, { input }, { dataSources }) => {
+      console.log("🛠️ signUp called with input:", input);
+      if (!dataSources || !dataSources.userService) {
+        throw new Error('dataSources.userService is not defined');
+      }
+
+      const { localAuthService, tokenService } = dataSources.userService;
+      if (!localAuthService || !tokenService) {
+        throw new Error('Required authentication services are missing');
+      }
+      // Proceed with the sign-up logic
+      const { email, password, name, nickname, role, inviteCode, picture } = input;
+
+      // Run validations
+      await runValidations(input);
+
+      // Additional role validation
+      if (role === 'HOST') {
+        const isValidInviteCode = await validateInviteCode(inviteCode);
+        if (!isValidInviteCode) {
+          throw new GraphQLError('Invalid invite code', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
+      }
+
+      try {
+        const userData = {
+          email,
+          password,
+          name,
+          nickname,
+          role,
+          picture,
+        }
+
+        const user = await localAuthService.register(userData);
+        const token = await tokenService.generateToken(user);
+        const response = { userId: user._id.toString(), token: token, role: role }
+
+
+        return response;
+      } catch (error) {
+        console.error('Error during signUp:', error);
+        throw new GraphQLError('User registration failed', {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        });
+      }
+    },
+
+
 
     logout: async (_, { provider }, context) => {
       const { dataSources } = context;
