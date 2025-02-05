@@ -66,7 +66,10 @@ const startApolloServer = async () => {
 
     app.use(
       '/graphql',
-      cors(),
+      cors({
+        origin: "http://localhost:3000", // Allow frontend access
+        credentials: true, // Allow cookies if authentication is needed
+      }),
       express.json(),
       expressMiddleware(server, {
         context: async ({ req }) => createContext({ req, container }),

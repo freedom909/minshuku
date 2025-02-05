@@ -5,10 +5,10 @@ import FacebookLogin from "react-facebook-login";
 import TwitterLogin from "react-twitter-login";
 import dayjs from "dayjs";
 
-const googleId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID; // Add your Facebook App ID here
-const twitterConsumerKey = process.env.NEXT_PUBLIC_TWITTER_CONSUMER_KEY; // Add your Twitter Consumer Key here
-const twitterConsumerSecret = process.env.NEXT_PUBLIC_TWITTER_CONSUMER_SECRET; // Add your Twitter Consumer Secret here
+const googleId = process.env.GOOGLE_CLIENT_ID;
+const facebookAppId = process.env.FACEBOOK_APP_ID; // Add your Facebook App ID here
+const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY; // Add your Twitter Consumer Key here
+const twitterConsumerSecret = process.env.TWITTER_CONSUMER_SECRET; // Add your Twitter Consumer Secret here
 
 export default function OAuth() {
     const [authToken, setAuthToken] = useState(null);
