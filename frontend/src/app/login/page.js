@@ -18,10 +18,10 @@ export default function Login() {
 
         try {
             if (isSignUp) {
-                await localAuthService.signUp(email, password);
+                await localAuthService.register(email, password);// it skip the validation step, it should call the "resolvers.signUp()?"
                 alert("Sign up successful!");
             } else {
-                await localAuthService.signIn(email, password);
+                await localAuthService.login(email, password);
                 alert("Login successful!");
                 router.push("/dashboard"); // Adjust the route to your dashboard or intended page
             }

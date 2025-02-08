@@ -90,7 +90,7 @@ class OAuthService extends RESTDataSource {
             }
 
             // Generate JWT token
-            const jwtToken = this.tokenService.generateToken({ userId: user._id.toString() });
+            const jwtToken = this.tokenService.generateToken(user);
 
             return { token: jwtToken, user };
         } catch (error) {

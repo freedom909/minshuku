@@ -22,7 +22,7 @@ class LocalAuthService extends RESTDataSource {
     this.userRepository = userRepository;
   }
 
-  async authenticateUser(email, password) {
+  async login(email, password) {
     const user = await this.userRepository.getUserByEmailFromDb(email);
     console.log("user:", user); // user: null
 

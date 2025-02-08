@@ -98,7 +98,7 @@ const resolvers = {
           }
 
           // Find the user with email and password
-          user = await localAuthService.authenticateUser(email, password);
+          user = await localAuthService.login(email, password);
           console.log("✅ User after authentication:", user); // Make sure this logs user correctly
         }
 
