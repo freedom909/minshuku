@@ -75,17 +75,16 @@ class OAuthService extends RESTDataSource {
     /**
      * Logs in a user via OAuth provider.
      */
-    async loginWithProvider({ provider, token }) {
+    async loginWithProvider(providerUserInfo) {
         try {
-            const userInfo = await this.getUserInfo(provider, token);
-
-            let user = await this.userRepository.getUserByEmailFromDb(userInfo.email);
+            let user = await this.userRepository.getUserByEmailFromDb(providerUserInfo.email);
             if (!user) {
                 user = await this.userRepository.save({
                     email: userInfo.email,
                     name: userInfo.name,
                     provider,
                     picture: userInfo.picture,
+                    role: "GUEST", // Default role if user is new
                 });
             }
 

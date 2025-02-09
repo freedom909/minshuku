@@ -1,7 +1,8 @@
 "use client"
 import { useState } from "react";
-import { useRouter } from 'next/navigation';  // To navigate after successful login/signup
-import localAuthService from "../services/userService/localAuthService"; // Adjust path as needed
+import { useRouter } from "next/navigation";
+import localAuthService from "../services/userService/localAuthService";
+import { signIn } from "next-auth/react"; // 🔹 NextAuth.js for OAuth
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -11,6 +12,7 @@ export default function Login() {
     const [error, setError] = useState(null);
     const router = useRouter();
 
+    // 🔹 Handle traditional login/signup
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
@@ -18,17 +20,31 @@ export default function Login() {
 
         try {
             if (isSignUp) {
-                await localAuthService.register(email, password);// it skip the validation step, it should call the "resolvers.signUp()?"
+                await localAuthService.register(email, password);
                 alert("Sign up successful!");
             } else {
                 await localAuthService.login(email, password);
                 alert("Login successful!");
-                router.push("/dashboard"); // Adjust the route to your dashboard or intended page
+                router.push("/dashboard");
             }
         } catch (err) {
             setError(err.message || "An error occurred. Please try again.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 🔹 Handle SSO Login
+    const handleSSOLogin = async (provider) => {
+        try {
+            const result = await signIn(provider, { redirect: false });// is signIn a server side component?
+            if (result?.error) {
+                setError(result.error);
+            } else {
+                router.push("/dashboard");
+            }
+        } catch (error) {
+            setError("SSO Login failed. Please try again.");
         }
     };
 
@@ -61,12 +77,34 @@ export default function Login() {
                     {loading ? "Loading..." : isSignUp ? "Sign Up" : "Login"}
                 </button>
             </form>
+
+            {/* 🔹 SSO Login Buttons */}
+            <div className="mt-4">
+                <button
+                    onClick={() => handleSSOLogin("google")}
+                    className="p-2 bg-red-500 text-white rounded w-full mb-2"
+                >
+                    Sign in with Google
+                </button>
+                <button
+                    onClick={() => handleSSOLogin("github")}
+                    className="p-2 bg-gray-800 text-white rounded w-full"
+                >
+                    Sign in with GitHub
+                </button>
+                <button
+                    onClick={() => handleSSOLogin("facebook")}
+                    className="p-2 bg-gray-800 text-white rounded w-full"
+                >
+                    Sign in with facebook
+                </button>
+            </div>
+
             <button
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="mt-4 text-blue-500 underline"
             >
                 {isSignUp ? "Already have an account? Log in" : "Don't have an account? Sign up"}
-
             </button>
         </div>
     );

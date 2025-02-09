@@ -25,7 +25,7 @@ interface Response {
 
 interface User @key(fields: "id") {
   id: ID!
-  email: String! @shareable
+  email: String! 
   "The user's full name"
   name: String!
   "The user's role"
