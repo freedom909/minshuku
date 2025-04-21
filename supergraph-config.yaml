@@ -53,3 +53,7 @@ subgraphs:
     schema:
       file: ./subgraph-amenities/schema.graphql
 
+  ml:
+    routing_url: http://localhost:4100/graphql
+    schema:
+      file: ./MINSHUKU_ML/schema.graphql

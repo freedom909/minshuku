@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+dotenv.config();
 import path from 'path';
 import User from '../models/user.js';  // Adjust the path as necessary
 import fs from 'fs/promises';
 
 import { fileURLToPath } from 'url';
 
-dotenv.config();
+
 
 const models = { User };
 

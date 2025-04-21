@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useEffect, useState } from "react";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import FacebookLogin from "react-facebook-login";
@@ -6,15 +6,16 @@ import TwitterLogin from "react-twitter-login";
 import dayjs from "dayjs";
 
 const googleId = process.env.GOOGLE_CLIENT_ID;
-const facebookAppId = process.env.FACEBOOK_APP_ID; // Add your Facebook App ID here
-const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY; // Add your Twitter Consumer Key here
-const twitterConsumerSecret = process.env.TWITTER_CONSUMER_SECRET; // Add your Twitter Consumer Secret here
+const facebookAppId = process.env.FACEBOOK_APP_ID;
+const twitterConsumerKey = process.env.TWITTER_CONSUMER_KEY;
+const twitterConsumerSecret = process.env.TWITTER_CONSUMER_SECRET;
 
 export default function OAuth() {
     const [authToken, setAuthToken] = useState(null);
     const [isClient, setIsClient] = useState(false);
     const [time, setTime] = useState(null);
     const [date, setDate] = useState("");
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         setIsClient(true);
@@ -31,6 +32,7 @@ export default function OAuth() {
 
     // Google Login Error
     const handleGoogleError = () => {
+        setError("Google login failed. Please try again.");
         console.error("Google Login Failed");
     };
 
@@ -77,6 +79,8 @@ export default function OAuth() {
                     consumerSecret={twitterConsumerSecret}
                     buttonTheme="dark"
                 />
+
+                {error && <p className="text-red-500">{error}</p>}
             </div>
         </GoogleOAuthProvider>
     );

@@ -1,19 +1,20 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
 
-async function getToken(username, password) {
+dotenv.config();  // Load environment variables from .env file
+
+// Function to exchange authorization code for access token
+async function getToken(code) {
   const options = {
     method: 'POST',
-    url: `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
+    url: 'https://oauth2.googleapis.com/token',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     data: new URLSearchParams({
-      audience: process.env.AUTH0_AUDIENCE,
-      client_id: process.env.AUTH0_CLIENT_ID_GRAPHQL,
-      client_secret: process.env.AUTH0_CLIENT_SECRET_GRAPHQL,
-      grant_type: 'http://auth0.com/oauth/grant-type/password-realm',
-      password,
-      realm: 'Username-Password-Authentication',
-      scope: 'openid',
-      username
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI // Ensure this matches the redirect URI registered in your Google Cloud Console
     })
   };
 
