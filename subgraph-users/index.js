@@ -76,8 +76,8 @@ const startApolloServer = async () => {
       })
     );
 
-    httpServer.listen({ port: 4010 }, () =>
-      console.log('🚀 Server ready at http://localhost:4010/graphql')
+    httpServer.listen({ port: process.env.PORT || 4011 }, () =>
+      console.log(`🚀 Server ready at http://localhost:${process.env.PORT || 4011}/graphql`)
     );
   } catch (error) {
     console.error('❌ Error starting Apollo Server:', error);

@@ -6,11 +6,40 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { createLogger, format, transports } from 'winston';
 
 import initializeBookingContainer from '../services/DB/initBookingContainer.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
+
+// Configure debug logger
+const logger = createLogger({
+  level: process.env.DEBUG_LEVEL || 'info',
+  format: format.combine(
+    format.timestamp(),
+    format.errors({ stack: true }),
+    format.json()
+  ),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: 'logs/debug.log' })
+  ]
+});
+
+// Debug middleware
+const debugMiddleware = (req, res, next) => {
+  if (process.env.DEBUG_MODE === 'true') {
+    logger.debug({
+      message: 'Request received',
+      method: req.method,
+      url: req.originalUrl,
+      headers: req.headers,
+      body: req.body
+    });
+  }
+  next();
+};
 import ListingService from '../services/listingService.js';
 import BookingService from '../services/bookingService.js';
 import LocalAuthService from '../services/userService/localAuthService.js';
@@ -43,6 +72,9 @@ const startApolloServer = async () => {
     const app = express();
     const httpServer = http.createServer(app);
 
+    // Apply debug middleware
+    app.use(debugMiddleware);
+
     const server = new ApolloServer({
       schema: buildSubgraphSchema({ typeDefs, resolvers }),
       plugins: [
@@ -60,12 +92,24 @@ const startApolloServer = async () => {
         }
       ],
       introspection: true,  // Enable introspection for GraphQL Playground
-      context: async ({ req }) => ({
-        token: req.headers.authorization || '',
-        dataSources: {
-          reviewRepository: neo4jContainer.resolve('reviewRepository'),
+      context: async ({ req }) => {
+        const context = {
+          token: req.headers.authorization || '',
+          dataSources: {
+            reviewRepository: neo4jContainer.cradle.reviewRepository,
+            bookingService: new BookingService(),
+            listingService: new ListingService(),
+            reviewService: new ReviewService()
+          },
+          logger
+        };
+
+        if (process.env.DEBUG_MODE === 'true') {
+          logger.debug('Context created', { context });
         }
-      })
+
+        return context;
+      }
     });
 
     await server.start();

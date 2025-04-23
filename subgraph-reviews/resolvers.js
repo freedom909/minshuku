@@ -7,24 +7,110 @@ import ReviewRepository from "../services/repositories/reviewRepository.js";
 import getUserFromDb from "../services/repositories/userRepository.js";
 import connect from "../services/DB/connectNeo4jDB.js";
 
+// Enhanced error handler
+const handleError = (error, context, operation) => {
+  const { logger } = context;
+  const errorDetails = {
+    operation,
+    message: error.message,
+    stack: error.stack,
+    timestamp: new Date().toISOString()
+  };
+
+  if (process.env.DEBUG_MODE === 'true') {
+    logger.error('GraphQL operation failed', errorDetails);
+  }
+
+  // Return enhanced error information in debug mode
+  if (process.env.DEBUG_MODE === 'true') {
+    return {
+      message: error.message,
+      code: error.code || 'INTERNAL_ERROR',
+      stack: error.stack,
+      timestamp: errorDetails.timestamp
+    };
+  }
+
+  // Return sanitized error in production
+  return {
+    message: 'An error occurred',
+    code: 'INTERNAL_ERROR'
+  };
+};
 
 const resolvers = {
   Query: {
-    searchReviews: async (_, { criteria }, { dataSources }) => {
-      console.log("Input Arguments:", criteria);
-      const reviews = await dataSources.reviewRepository.searchReviews(criteria);//   "message": "Cannot read properties of undefined (reading 'reviewRepository')",
-      console.log("Fetched Reviews:", reviews);
-      return reviews
+    searchReviews: async (_, { criteria }, context) => {
+      const { dataSources, logger } = context;
+      try {
+        if (!dataSources?.reviewRepository) {
+          throw new Error('Review repository not available');
+        }
+        
+        if (process.env.DEBUG_MODE === 'true') {
+          logger.debug('Searching reviews', { criteria });
+        }
+
+        const reviews = await dataSources.reviewRepository.searchReviews(criteria);
+        
+        if (process.env.DEBUG_MODE === 'true') {
+          logger.debug('Reviews fetched successfully', {
+            count: reviews.length,
+            firstReview: reviews[0] ? reviews[0].id : null
+          });
+        }
+
+        return reviews;
+      } catch (error) {
+        return handleError(error, context, 'searchReviews');
+      }
     },
 
-    reviews: async (_, { id }, { dataSources }) => {
-      const review = await dataSources.reviewRepository.getReviewById(id);
-      if (!review) throw new ForbiddenError("Review not found");
-      return review;
+    reviews: async (_, { id }, context) => {
+      const { dataSources, logger } = context;
+      try {
+        if (process.env.DEBUG_MODE === 'true') {
+          logger.debug('Fetching review by ID', { reviewId: id });
+        }
+
+        const review = await dataSources.reviewRepository.getReviewById(id);
+        if (!review) {
+          throw new ForbiddenError("Review not found");
+        }
+
+        if (process.env.DEBUG_MODE === 'true') {
+          logger.debug('Review found', {
+            reviewId: review.id,
+            status: review.status
+          });
+        }
+
+        return review;
+      } catch (error) {
+        return handleError(error, context, 'reviews');
+      }
     },
 
-    getReviewForListing: async (_, { listingId }, { dataSources }) => {
-      return dataSources.reviewRepository.getReviewsByListingId(listingId);
+    getReviewForListing: async (_, { listingId }, context) => {
+      const { dataSources, logger } = context;
+      try {
+        if (process.env.DEBUG_MODE === 'true') {
+          logger.debug('Fetching reviews for listing', { listingId });
+        }
+
+        const reviews = await dataSources.reviewRepository.getReviewsByListingId(listingId);
+
+        if (process.env.DEBUG_MODE === 'true') {
+          logger.debug('Listing reviews fetched', {
+            listingId,
+            reviewCount: reviews.length
+          });
+        }
+
+        return reviews;
+      } catch (error) {
+        return handleError(error, context, 'getReviewForListing');
+      }
     },
   },
   Mutation: {

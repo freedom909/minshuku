@@ -93,6 +93,7 @@ enum OAuthProvider {
   GOOGLE
   FACEBOOK
   X
+  GITHUB
 }
 
 # Authentication Responses
@@ -171,4 +172,3 @@ type LoginWithOAuth {
   userId: ID! @shareable
   role: Role! @shareable
 }
-
