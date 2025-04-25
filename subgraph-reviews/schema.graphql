@@ -1,21 +1,19 @@
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.5"
-    import: ["@key", "@shareable", "@external"]
+    import: ["@key", "@shareable", "@external", "@extends"]
   )
-directive @relation(name: String!, direction: String!) on FIELD_DEFINITION
 
-### Queries
-type Query {
+type Query @extends {
   "Returns a list of reviews for a given listing"
-  searchReviews(criteria: SearchReviewsInput!): [Review]
-  reviewsForListing(listingId: ID!): [Review]
-  review(id: ID!): [Review]
-  
+  searchReviews(input: SearchReviewsInput!): [Review]
+  reviewsForListing(listingId: ID!): Review
+  review(id: ID!): Review
+  "Returns all reviews in the system"
+  allReviews: [Review]
 }
 
-### Mutations
-type Mutation {
+type Mutation @extends {
   "Creates a review for the guest - must be authored by the host of a past booking"
   submitGuestReview(
     guestReview: ReviewInput!
@@ -29,12 +27,13 @@ type Mutation {
     locationReview: ReviewInput!
   ): SubmitHostAndLocationReviewsResponse!
 }
+directive @relation(name: String!, direction: String!) on FIELD_DEFINITION
 
 ### Reviews
 type Review @key(fields: "id") {
   id: ID!
-  content: String!
-  rating: Float!
+  content: String
+  rating: Float
   author: User! @relation(name: "AUTHORED_BY", direction: OUT)
   booking: Booking! @relation(name: "ASSOCIATED_WITH", direction: OUT)
   location: Location @relation(name: "BELONGS_TO", direction: OUT)
@@ -48,6 +47,17 @@ type Review @key(fields: "id") {
   updatedAt: String!
 }
 
+enum ReviewSortField {
+  RATING
+  CREATED_AT
+  UPDATED_AT
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
 input SearchReviewsInput {
   id: ID
   guestId: ID
@@ -55,14 +65,19 @@ input SearchReviewsInput {
   listingId: ID
   hostId: ID
   targetType: String
-  comment: String
-  limit: Int
-  offset: Int
-  sortBy: String
+  content: String # full-text search support
+  rating: Float
   round: Int
   isPinned: Boolean
   isRecommended: Boolean
-  rating: Float
+
+  # Pagination
+  limit: Int
+  offset: Int
+
+  # Sorting
+  sortBy: ReviewSortField
+  sortOrder: SortOrder
 }
 
 ### Likes
