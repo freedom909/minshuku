@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.5", 
+  @link(url: "https://specs.apollo.dev/federation/v2.8", 
         import: ["@key", "@shareable"])
 enum CacheControlScope {  
   PUBLIC  
@@ -11,12 +11,25 @@ directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITI
 
 # Query type for fetching payment information
 type Query {
+  """
+  Fetch the payment information. The return value represents the payment amount.
+  """
   payment: Int @shareable
 }
 
 # Mutation type for wallet operations
 type Mutation {
+  """
+  Add funds to the user's wallet.
+  @param amount: The amount of funds to be added.
+  @returns: The response of adding funds to the wallet.
+  """
   addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
+  """
+  Cancel a booking and refund the guest.
+  @param id: The ID of the booking to be cancelled.
+  @returns: The response of cancelling the booking.
+  """
   cancelBooking(id: ID!): CancelBookingResponse! @shareable
 }
 

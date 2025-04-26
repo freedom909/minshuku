@@ -10,7 +10,6 @@ import BookingService from '../bookingService.js';
 import BookingRepository from '../repositories/bookingRepository.js';
 import LocationService from '../locationService.js';
 import LocationRepository from '../repositories/locationRepository.js';
-import index from '../userService/index.js';
 import LocalAuthService from '../userService/localAuthService.js';
 import OAuthService from '../userService/oauthService.js';
 import TokenService from '../userService/tokenService.js';
@@ -26,7 +25,6 @@ const initializeBookingContainer = async ({ services = [] } = {}) => {
   // Initializing the container and registering dependencies and services
   const container = createContainer();
 
-
   container.register({
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
@@ -39,8 +37,9 @@ const initializeBookingContainer = async ({ services = [] } = {}) => {
     listingService: asClass(ListingService).singleton(),
     locationRepository: asClass(LocationRepository).singleton(),
     locationService: asClass(LocationService).singleton(),
+    bookingRepository: asClass(BookingRepository).singleton(),
+    bookingService: asClass(BookingService).singleton(),
   });
-
 
   // Register services dynamically
   services.forEach(service => {

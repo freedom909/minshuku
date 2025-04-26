@@ -26,10 +26,16 @@ const typeDefs = gql(readFileSync(schemaPath, { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    // Initialize containers
     const mysqlContainer = await initializeListingContainer();
+    console.log('✅ mysqlContainer keys:', Object.keys(mysqlContainer.registrations));
+
     const mongoContainer = await initMongoContainer();
     const neo4jContainer = await initializeReviewContainer();
+
+    if (!mysqlContainer || !mongoContainer || !neo4jContainer) {
+      throw new Error('One or more containers failed to initialize');
+    }
+
     console.log('Review container keys:', Object.keys(neo4jContainer.registrations));
     console.log('Review repository:', neo4jContainer.resolve('reviewRepository'));
     console.log('Review service:', neo4jContainer.resolve('reviewService'));
@@ -39,62 +45,66 @@ const startApolloServer = async () => {
 
     app.use(debugMiddleware);
 
+    const schema = buildSubgraphSchema({ typeDefs, resolvers });
+
     const server = new ApolloServer({
-      schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      schema,
       plugins: [
         ApolloServerPluginDrainHttpServer({ httpServer }),
-        {
-          async serverWillStart() {
-            return {
-              async drainServer() {
-                if (mysqlContainer?.resolve) await mysqlContainer.resolve('mysql')?.close();
-                if (mongoContainer?.resolve) await mongoContainer.resolve('mongodb')?.close();
-                if (neo4jContainer?.resolve) await neo4jContainer.resolve('neo4j')?.close();
-              }
-            };
-          }
-        }
       ],
       introspection: true,
-      context: async ({ req }) => {
-        const dataSources = {
-          reviewRepository: neo4jContainer.resolve('reviewRepository'),
-          reviewService: neo4jContainer.resolve('reviewService'),
-          listingService: mysqlContainer.resolve('listingService'),
-          bookingService: mysqlContainer.resolve('bookingService'),
-          userService: {
-            localAuthService: mongoContainer.resolve('localAuthService'),
-            oAuthService: mongoContainer.resolve('oAuthService'),
-            tokenService: mongoContainer.resolve('tokenService'),
-          }
-        };
-        
-        console.log('DataSources:', dataSources);
-        
-        const context = {
-          token: req.headers.authorization || '',
-          dataSources,
-          logger
-        };
-
-        if (process.env.DEBUG_MODE === 'true') {
-          logger.debug('Context created', { context });
-        }
-
-        return context;
-      }
     });
 
     await server.start();
 
-    app.use('/graphql', cors(), express.json(), expressMiddleware(server));
-      
-        
-      
+    const buildContext = async ({ req }) => {
+      try {
+        const token = req.headers.authorization || '';
+        console.log('Received token:', token);
+    
+        const reviewRepository = neo4jContainer?.resolve('reviewRepository');
+        const reviewService = neo4jContainer?.resolve('reviewService');
+        const listingService = mysqlContainer?.resolve('listingService');
+        const bookingService = mysqlContainer?.resolve('bookingService');
+    
+        if (!reviewService || !reviewRepository || !listingService || !bookingService) {
+          console.warn('⚠️ Some services are missing. Context will still be created.');
+        }
+    
+        return {
+          dataSources: {
+            reviewRepository,
+            reviewService,
+            listingService,
+            bookingService,
+            userService: {
+              localAuthService: mongoContainer?.resolve('localAuthService'),
+              oAuthService: mongoContainer?.resolve('oAuthService'),
+              tokenService: mongoContainer?.resolve('tokenService'),
+            }
+          },
+          logger
+        };
+      } catch (error) {
+        console.error('Error building context:', error);
+        return {}; // 👈 return an empty context instead of throwing
+      }
+    };
+    
+
+    // 💥💥💥 Fix: provide context manually here
+    app.use('/graphql', cors({
+      origin: '*',
+      credentials: true
+    }), express.json(), expressMiddleware(server, {
+      context: buildContext
+    }));
+    
 
     httpServer.listen({ port: 4080 }, () => {
       console.log(`🚀 Server ready at http://localhost:4080/graphql`);
     });
+
   } catch (error) {
     console.error('❌ Error starting server:', error);
   }

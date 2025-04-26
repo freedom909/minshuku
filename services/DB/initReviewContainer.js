@@ -1,6 +1,5 @@
 // initializeAmenityContainer.js
 import { createContainer, asValue, asClass } from 'awilix';
-import dbConfig from './dbConfig.js';
 import ListingService from '../listingService.js';
 import ListingRepository from '../repositories/listingRepository.js';
 import LocalAuthService from '../userService/localAuthService.js';
@@ -24,10 +23,19 @@ const initializeReviewContainer = async () => {
     // Connect to databases
     const mysql = await connectMysql();
     const mongodb = await connectToMongoDB();
-    const neo4jdb = await connect();
+    const neo4jdb = await connect().catch(error => {
+      console.error('Failed to connect to Neo4j:', error);
+      throw error;
+    });
 
-    // Create and configure the container
     const container = createContainer();
+    if (!container) {
+      throw new Error("Failed to create container.");
+    }
+
+    console.log('Container created successfully');
+    
+  
     container.register({
       mysql: asValue(mysql),
       mongodb: asValue(mongodb),
@@ -38,17 +46,38 @@ const initializeReviewContainer = async () => {
       locationRepository: asClass(LocationRepository).singleton(),
       bookingRepository: asClass(BookingRepository).singleton(),
       reviewRepository: asClass(ReviewRepository).singleton(),
+      reviewService: asClass(ReviewService)
+      .inject(() => ({
+        reviewRepository: container.resolve('reviewRepository')
+      }))
+      .singleton(),
       listingService: asClass(ListingService).singleton(),
       bookingService: asClass(BookingService).singleton(),
       localAuthService: asClass(LocalAuthService).singleton(),
       oAuthService: asClass(OAuthService).singleton(),
       tokenService: asClass(TokenService).singleton(),
+    
       secretKey: asValue(process.env.JWT_SECRET || 'good'),
       expiresIn: asValue('1h'),
       axios: asValue(axios),
     });
+    // Verify critical services are registered
+    const requiredServices = [
+      'reviewRepository',
+      'reviewService',
+      'neo4jdb'
+    ];
 
-    console.log('Databases and container initialized');
+    for (const service of requiredServices) {
+      if (!container.hasRegistration(service)) {
+        throw new Error(`Failed to register required service: ${service}`);
+      }
+    }
+
+    console.log('All required services registered successfully');
+    console.log('Container registrations:', Object.keys(container.registrations));
+    console.log('Container services:', Object.keys(container.cradle));
+    
     return container;
   } catch (error) {
     console.error('Error initializing container:', error);

@@ -13,7 +13,7 @@ import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
 import ListingService from '../services/listingService.js';
 import BookingService from '../services/bookingService.js';
-import UserService from '../services/userService.js';
+import UserService from '../services/userService/index.js';
 import initMongoContainer from '../services/DB/initMongoContainer.js';
 import initializeCartContainer from '../services/DB/initCartContainer.js';
 import CartService from '../services/cartService.js';
@@ -73,6 +73,7 @@ const startApolloServer = async () => {
     );
 
     httpServer.listen({ port: 4070 }, () => {
+      // 修正引号使用，统一使用反引号
       console.log(`🚀 Server ready at http://localhost:4070/graphql`);
     });
   } catch (error) {

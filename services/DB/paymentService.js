@@ -10,9 +10,8 @@ class PaymentService extends RESTDataSource {
     if (!userId) {
       throw new Error('User ID is required to fetch payment information');
     }
-    // Fetch payment information from the payment repository
     const paymentInfo = await this.paymentRepository.getPaymentInfo(userId);
-    return paymentInfo || 0; // Example return value if no specific info is found
+    return paymentInfo || 0;
   }
 
   async addFunds({ userId, amount }) {
@@ -45,12 +44,7 @@ class PaymentService extends RESTDataSource {
       console.error('Error adding funds:', error);
       throw new Error('Error adding funds');
     }
-
   }
-
-
-
-
 }
 
 export default PaymentService;

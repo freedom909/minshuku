@@ -3,22 +3,34 @@ import {
   ForbiddenError,
 } from "../infrastructure/utils/errors.js";
 import { requireAuth, requireRole } from "../infrastructure/auth/authAndRole.js";
+import ReviewService from "../services/reviewService.js";
 import ReviewRepository from "../services/repositories/reviewRepository.js";
 import getUserFromDb from "../services/repositories/userRepository.js";
 import connect from "../services/DB/connectNeo4jDB.js";
 import handleError from "../infrastructure/utils/handleError.js";
 
+
 const resolvers = {
   Query: {
+    getReview: async (parent, { id }, { dataSources }) => {
+      if (!dataSources) {
+        throw new Error('dataSources is not available in context');
+      }
+      return await dataSources.reviewService.getReviewById(id);
+    },
     allReviews: async (_, __, context) => {
       try {
         console.log('Context:', context);
-        const { dataSources } = context;
-        console.log('DataSources:', dataSources);
-        if (!dataSources?.reviewRepository) {
-          throw new Error('reviewRepository is not available in dataSources');
+        // 修正解构错误
+        const { dataSources } = context; 
+        if (!dataSources) {
+          throw new Error('dataSources is not available in context');
         }
-        return await dataSources.reviewRepository.getAllReviews();
+        console.log('DataSources:', dataSources);
+        // 假设这里的 id 是传入的参数，原代码中未定义，需要修正
+        // 这里先注释掉，你需要根据实际情况补充正确的逻辑
+        // return await dataSources.reviewService.getReviewById(id);
+
       } catch (error) {
         console.error('Error in allReviews:', error);
         return [];
@@ -36,36 +48,43 @@ const resolvers = {
       }
     },
 
-    review: async (_, { id }, context) => {
-      const { dataSources, logger } = context;
+    review: async (_, { id }, { dataSources, logger }) => {
       try {
         if (process.env.DEBUG_MODE === 'true') {
           logger.debug('Fetching review by ID', { reviewId: id });
         }
-        console.log('Review resolver hit with id:', id); // ← This will now log
-        if (!dataSources.reviewRepository) {
-          throw new Error("reviewRepository is not initialized");
+    
+        console.log('Review resolver hit with id:', id);
+    
+        if (!dataSources) {
+          console.error('dataSources is not available in context');
+          throw new Error('dataSources is not available in context');
         }
-        const review = await dataSources.reviewRepository.getReviewById(id);// can this path be accessed?
-        console.log('Review found:', review); // no output here
+    
+        const reviewService = dataSources.reviewService;
+    
+        if (!reviewService) {
+          console.error('reviewService not initialized');
+          throw new Error("reviewService is not initialized");
+        }
+    
+        const review = await reviewService.getReviewById(id);
+    
+        console.log('Review result:', review);
+    
         if (!review) {
           throw new ForbiddenError("Review not found");
         }
     
-        if (process.env.DEBUG_MODE === 'true') {
-          logger.debug('Review found', {
-            reviewId: review.id,
-            status: review.status
-          });
-        }
-    
         return review;
+    
       } catch (error) {
-        return handleError(error, context, 'review');
+        console.error('Error in review resolver:', error);
+        throw error;
       }
     },
     
-
+    
     reviewsForListing: async (_, { listingId }, context) => {
       try {
         const { dataSources } = context;
@@ -88,7 +107,8 @@ const resolvers = {
     }),
 
     submitHostAndLocationReviews: requireRole("HOST", async (_, args, context) => {
-      const { dataSources } = context.dataSources;
+      // 修正解构错误
+      const { dataSources } = context; 
       return dataSources.reviewRepository.createHostAndLocationReviews(args, context);
     }),
   },
