@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import { loginValidate } from '../../infrastructure/helpers/loginValidator.js';
 import dotenv from 'dotenv';
 import TokenService from './tokenService.js';
-import OAuthService from './oauthService.js';
+import OAuthService from './oAuthService.js';
 
 dotenv.config();
 

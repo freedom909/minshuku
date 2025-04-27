@@ -84,7 +84,7 @@ input UpdatePasswordInput {
   password: String!
 }
 
-input ThirdPartyLoginInput {
+input OAuthLoginInput {
   provider: OAuthProvider # e.g., "GOOGLE", "FACEBOOK", etc.
   token: String! # Token from the third-party service
 }
@@ -92,8 +92,8 @@ input ThirdPartyLoginInput {
 enum OAuthProvider {
   GOOGLE
   FACEBOOK
-  X
-  GITHUB
+  APPLE
+   # Future: Add more here easily
 }
 
 # Authentication Responses
@@ -112,7 +112,7 @@ type SignInResponse implements Response {
   role: Role! @shareable
 }
 
-type ThirdPartyLoginResponse implements Response {
+type oauthLoginResponse implements Response {
   code: Int! @shareable
   success: Boolean! @shareable
   message: String! @shareable
@@ -146,7 +146,8 @@ type InviteCodeResponse implements Response {
 type Mutation {
   signUp(input: SignUpInput!): AuthPayload! 
   signIn(input: SignInInput!): SignInResponse!
-  thirdPartyLogin(input: ThirdPartyLoginInput!): ThirdPartyLoginResponse! @shareable
+  oauthLogin(input: OAuthLoginInput!): AuthPayload! @shareable
+  
   updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
   requestResetPassword(email: String!): ReqResetPwdResponse!
   forgotPassword(email: String!): ForgotPasswordResponse!
@@ -167,8 +168,3 @@ type _Service {
 scalar _Any
 union _Entity = Host | Guest 
 
-type LoginWithOAuth {
-  token: String! @shareable
-  userId: ID! @shareable
-  role: Role! @shareable
-}

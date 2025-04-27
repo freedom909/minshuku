@@ -8,7 +8,7 @@ import runValidations from '../infrastructure/helpers/runValidations.js';
 import validateInviteCode from '../infrastructure/helpers/validateInviteCode.js';
 import TokenService from '../services/userService/tokenService.js';
 import LocalAuthService from '../services/userService/localAuthService.js';
-import OAuthService from '../services/userService/oauthService.js';
+import OAuthService from '../services/userService/oAuthService.js';
 
 // Config and external dependencies
 dotenv.config();
@@ -402,60 +402,78 @@ const resolvers = {
       };
     },
 
-    thirdPartyLogin: async (_, { input }, context) => {
+    oauthLogin: async (_, { input }, context) => {
       try {
-        console.log('Resolver context:', context); // Debugging context
+        console.log('Resolver context:', context);
         const { dataSources } = context;
-
-        // Validate dataSources and services
+    
         if (!dataSources?.userService) {
           throw new GraphQLError('UserService is not defined in dataSources', {
             extensions: { code: 'SERVICE_UNAVAILABLE' },
           });
         }
-
-        const { oAuthService, tokenService } = dataSources.userService;
-        if (!oAuthService || !tokenService) {
+    
+        const { oAuthService, tokenService, userRepository } = dataSources.userService; // userRepository must exist!
+        if (!oAuthService || !tokenService || !userRepository) {
           throw new GraphQLError('Required authentication services are missing', {
             extensions: { code: 'SERVICE_UNAVAILABLE' },
           });
         }
-
-        // Validate the input
+    
         const { provider, providerToken } = input;
         if (!provider || !providerToken) {
           throw new GraphQLError("Invalid third-party login input", {
             extensions: { code: "BAD_USER_INPUT" },
           });
         }
-
-        // Validate the provider token
+    
+        // Validate the provider token and get user info
         const userInfo = await oAuthService.validateProviderToken(provider, providerToken);
         if (!userInfo) {
           throw new AuthenticationError("Invalid credentials");
         }
-
-        // Generate a JWT for the authenticated user
-        const jwtToken = await tokenService.generateToken(userInfo); // Ensure this method is correctly implemented
-
+    
+        const { email, name, picture } = userInfo; // Assuming these fields come from Google/Facebook/etc.
+    
+        // Find or create the user
+        let user = await userRepository.findByEmail(email);
+    
+        if (!user) {
+          // If the user doesn't exist, create one
+          user = await userRepository.createUser({
+            email,
+            name,
+            avatarUrl: picture, // or whatever your field is
+            provider,           // e.g., 'google', 'facebook'
+            providerId: userInfo.id, // Google user ID / Facebook user ID
+            role: 'USER',        // default role
+          });
+        }
+    
+        // Now generate a JWT token
+        const jwtToken = await tokenService.generateToken(user);
+    
         return {
           token: jwtToken,
           success: true,
+          code: 200,
+          message: "Login successful",
+          userId: user.id,
+          role: user.role,
         };
       } catch (error) {
-        console.error('Error in thirdPartyLogin resolver:', error);
-
-        // Rethrow GraphQL-specific errors directly
+        console.error('Error in oauthLogin resolver:', error);
+    
         if (error instanceof GraphQLError || error instanceof AuthenticationError) {
           throw error;
         }
-
-        // Wrap and throw unexpected errors
+    
         throw new GraphQLError('An unexpected error occurred', {
           extensions: { code: 'INTERNAL_SERVER_ERROR', originalError: error },
         });
       }
     }
+    
   },
   _Entity: {
     __resolveType(entity) {
