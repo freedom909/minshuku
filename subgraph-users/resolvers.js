@@ -8,7 +8,7 @@ import runValidations from '../infrastructure/helpers/runValidations.js';
 import validateInviteCode from '../infrastructure/helpers/validateInviteCode.js';
 import TokenService from '../services/userService/tokenService.js';
 import LocalAuthService from '../services/userService/localAuthService.js';
-import OAuthService from '../services/userService/oAuthService.js';
+import OAuthService from '../services/userService/oauthService.js';
 
 // Config and external dependencies
 dotenv.config();

@@ -11,11 +11,18 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const PROVIDERS = {
     GOOGLE: {
         decode: async (token) => {
-            const ticket = await googleClient.verifyIdToken({
-                idToken: token,
-                audience: process.env.GOOGLE_CLIENT_ID,
-            });
-            return ticket.getPayload();
+            console.log('开始验证 Google 令牌:', token); // 添加日志
+            try {
+                const ticket = await googleClient.verifyIdToken({
+                    idToken: token,
+                    audience: process.env.GOOGLE_CLIENT_ID,
+                });
+                console.log('Google 令牌验证成功:', ticket.getPayload()); // 添加日志
+                return ticket.getPayload();
+            } catch (error) {
+                console.error('Google 令牌验证失败:', error); // 添加错误日志
+                throw error;
+            }
         },
         validateUrl: (token) => `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`,
         validateCheck: (data) => data.aud === process.env.GOOGLE_CLIENT_ID,
@@ -40,16 +47,16 @@ const PROVIDERS = {
             needsAuthHeader: false,
         }
     },
-    // APPLE: {
-    //     decode: async (token) => { /* your apple decode logic */ },
-    //     validateUrl: (token) => `https://appleid.apple.com/auth/tokeninfo?id_token=${token}`,
-    //     validateCheck: (data) => /* check if apple id matches */,
-    //     revokeUrl: (token) => `https://appleid.apple.com/auth/revoke`,
-    //     userInfo: {
-    //         url: 'https://appleid.apple.com/auth/userinfo',
-    //         needsAuthHeader: true,
-    //     }
-    // }
+    APPLE: {
+        decode: async (token) => { /* your apple decode logic */ },
+        validateUrl: (token) => `https://appleid.apple.com/auth/tokeninfo?id_token=${token}`,
+        validateCheck: (data) => data.aud === process.env.APPLE_CLIENT_ID,
+        revokeUrl: (token) => `https://appleid.apple.com/auth/revoke`,
+        userInfo: {
+            url: 'https://appleid.apple.com/auth/userinfo',
+            needsAuthHeader: true,
+        }
+    }
     
     // 🔥 Add more providers here easily later...
 };

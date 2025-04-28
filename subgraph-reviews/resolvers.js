@@ -57,7 +57,7 @@ const resolvers = {
         console.log('Review resolver hit with id:', id);
     
         if (!dataSources) {
-          console.error('dataSources is not available in context');
+          console.error('dataSources is not available in context');// Error: dataSources is not available in context
           throw new Error('dataSources is not available in context');
         }
     

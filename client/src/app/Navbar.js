@@ -21,6 +21,7 @@ export default function Navbar() {
                 <li><Link href="/listing">Listing</Link></li>
                 <li><Link href="/oauth">OAuth</Link></li>
                 <li><Link href="/login">Login</Link></li>
+                <li><Link href="/dashboard">dashboard</Link></li>
             </ul>
         </nav>
     );
