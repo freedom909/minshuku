@@ -158,8 +158,10 @@ class OAuthService extends RESTDataSource {
 
     async loginWithProvider(providerUserInfo) {
         try {
+            console.log('尝试通过提供商登录，用户信息:', providerUserInfo);
             let user = await this.userRepository.getUserByEmailFromDb(providerUserInfo.email);
             if (!user) {
+                console.log('用户不存在，创建新用户:', providerUserInfo);
                 user = await this.userRepository.save({
                     email: providerUserInfo.email,
                     name: providerUserInfo.name,
@@ -170,9 +172,11 @@ class OAuthService extends RESTDataSource {
             }
 
             const jwtToken = this.tokenService.generateToken(user);
+            console.log('成功生成 JWT 令牌:', jwtToken);
             return { token: jwtToken, user };
         } catch (error) {
             console.error('❌ Error in loginWithProvider:', error.message);
+            console.error('错误堆栈:', error.stack);
             throw new Error("Failed to log in with the specified provider");
         }
     }

@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-// import localAuthService from "../../../../frontend/src/app/services/userService/localAuthService";
+import localAuthService from "../userService/localAuthService";
 import { signIn } from "next-auth/react"; // 🔹 NextAuth.js for OAuth
 
 export default function Login() {
@@ -37,7 +37,7 @@ export default function Login() {
     // 🔹 Handle SSO Login
     const handleSSOLogin = async (provider) => {
         try {
-            const result = await signIn(provider, { redirect: false });// is signIn a server side component?
+            const result = await signIn(provider, { callbackUrl: '/dashboard' });// is signIn a server side component?
             if (result?.error) {
                 setError(result.error);
             } else {

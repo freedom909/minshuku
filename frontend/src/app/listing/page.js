@@ -1,10 +1,8 @@
-
-
 "use client"
 import { useState, useEffect } from 'react';
 import Image from "next/image";
 
-export default function Home() {
+export default function Listing() {
   const [loggedInUser, setLoggedInUser] = useState('');
 
   // 模拟获取登录用户信息
