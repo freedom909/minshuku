@@ -31,5 +31,5 @@ export default NextAuth({
         },
     },
 });
-//console.log("NEXT_PUBLIC_GOOGLE_CLIENT_ID:", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
-//console.log("NEXT_PUBLIC_GOOGLE_CLIENT_SECRET:", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET);
+console.log("NEXT_PUBLIC_GOOGLE_CLIENT_ID:", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+console.log("NEXT_PUBLIC_GOOGLE_CLIENT_SECRET:", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET);

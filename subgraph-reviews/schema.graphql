@@ -7,8 +7,8 @@ extend schema
 type Query @extends {
   "Returns a list of reviews for a given listing"
   searchReviews(input: SearchReviewsInput!): [Review]
-  reviewsForListing(listingId: ID!): Review
-  review(id: ID!): Review
+  reviewsForListing(listingId: ID!): [Review]
+  review(id: ID!): [Review]
   "Returns all reviews in the system"
   allReviews: [Review]
 }
@@ -32,8 +32,8 @@ directive @relation(name: String!, direction: String!) on FIELD_DEFINITION
 ### Reviews
 type Review @key(fields: "id") {
   id: ID!
-  content: String
-  rating: Float
+  content: String!
+  rating: Float!
   author: User! @relation(name: "AUTHORED_BY", direction: OUT)
   booking: Booking! @relation(name: "ASSOCIATED_WITH", direction: OUT)
   location: Location @relation(name: "BELONGS_TO", direction: OUT)

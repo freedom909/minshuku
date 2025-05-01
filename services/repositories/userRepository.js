@@ -157,6 +157,10 @@ class UserRepository extends BaseRepository {
     }
   }
 
+  async findByOAuthId(oauthId) {
+    return await User.findOne({ oauthId });
+  }
+  
   async insertUser(userData) {
     try {
       //const id = new ObjectId(); // ✅ Ensure _id is generated

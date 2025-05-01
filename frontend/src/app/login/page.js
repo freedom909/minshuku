@@ -13,27 +13,48 @@ export default function Login() {
     const router = useRouter();
 
     // 🔹 Handle traditional login/signup
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setLoading(true);
-        setError(null);
+    // const handleSubmit = async (event) => {
+    //     event.preventDefault();
+    //     setLoading(true);
+    //     setError(null);
 
-        try {
-            if (isSignUp) {
-                await localAuthService.register(email, password);
-                alert("Sign up successful!");
-            } else {
-                await localAuthService.login(email, password);
-                alert("Login successful!");
-                router.push("/dashboard");
-            }
-        } catch (err) {
-            setError(err.message || "An error occurred. Please try again.");
-        } finally {
-            setLoading(false);
+    //     try {
+    //         if (isSignUp) {
+    //             await localAuthService.register(email, password);
+    //             alert("Sign up successful!");
+    //         } else {
+    //             await localAuthService.login(email, password);
+    //             alert("Login successful!");
+    //             router.push("/dashboard");
+    //         }
+    //     } catch (err) {
+    //         setError(err.message || "An error occurred. Please try again.");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+      
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+      
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+      
+        const result = await response.json();
+      
+        if (result.success) {
+          window.location.href = "/dashboard"; // or any protected page
+        } else {
+          alert("Login failed");
         }
-    };
-
+      };
+      
     // 🔹 Handle SSO Login
     const handleSSOLogin = async (provider) => {
         try {
@@ -48,10 +69,29 @@ export default function Login() {
         }
     };
 
+    const handleGoogleOAuthLogin = async (googleResponse) => {
+        const googleToken = googleResponse.credential;
+      
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: googleToken, provider: "google" }),
+        });
+      
+        const result = await response.json();
+      
+        if (result.success) {
+          window.location.href = "/dashboard";
+        } else {
+          alert("OAuth login failed");
+        }
+      };
+      
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen">
             <h1 className="text-2xl font-bold mb-4">{isSignUp ? "Sign Up" : "Login"}</h1>
-            <form onSubmit={handleSubmit} className="flex flex-col space-y-4 w-64">
+            <form onSubmit={handleLogin} className="flex flex-col space-y-4 w-64">
                 <input
                     type="email"
                     placeholder="Email"

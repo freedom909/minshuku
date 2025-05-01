@@ -406,53 +406,57 @@ const resolvers = {
       try {
         console.log('Resolver context:', context);
         const { dataSources } = context;
-    
+
         if (!dataSources?.userService) {
           throw new GraphQLError('UserService is not defined in dataSources', {
             extensions: { code: 'SERVICE_UNAVAILABLE' },
           });
         }
-    
-        const { oAuthService, tokenService, userRepository } = dataSources.userService; // userRepository must exist!
+
+        const { oAuthService, tokenService, userRepository } = dataSources.userService;
+
         if (!oAuthService || !tokenService || !userRepository) {
           throw new GraphQLError('Required authentication services are missing', {
             extensions: { code: 'SERVICE_UNAVAILABLE' },
           });
         }
-    
-        const { provider, providerToken } = input;
+
+        const { provider, token: providerToken } = input;
         if (!provider || !providerToken) {
           throw new GraphQLError("Invalid third-party login input", {
             extensions: { code: "BAD_USER_INPUT" },
           });
         }
-    
-        // Validate the provider token and get user info
+
         const userInfo = await oAuthService.validateProviderToken(provider, providerToken);
         if (!userInfo) {
           throw new AuthenticationError("Invalid credentials");
         }
-    
-        const { email, name, picture } = userInfo; // Assuming these fields come from Google/Facebook/etc.
-    
-        // Find or create the user
-        let user = await userRepository.findByEmail(email);
-    
+
+        const { email, name, picture, id: oauthId } = userInfo;
+
+        // Try finding user by oauthId
+        let user = await userRepository.findByOAuthId(oauthId);
+
+        // If not found, fall back to email check (optional, but cautious for migration edge cases)
         if (!user) {
-          // If the user doesn't exist, create one
+          user = await userRepository.findByEmail(email);
+        }
+
+        if (!user) {
           user = await userRepository.createUser({
             email,
             name,
-            avatarUrl: picture, // or whatever your field is
-            provider,           // e.g., 'google', 'facebook'
-            providerId: userInfo.id, // Google user ID / Facebook user ID
-            role: 'USER',        // default role
+            nickname: name,
+            picture,
+            provider,
+            oauthId,
+            role: 'GUEST',
           });
         }
-    
-        // Now generate a JWT token
+
         const jwtToken = await tokenService.generateToken(user);
-    
+
         return {
           token: jwtToken,
           success: true,
@@ -463,11 +467,11 @@ const resolvers = {
         };
       } catch (error) {
         console.error('Error in oauthLogin resolver:', error);
-    
+
         if (error instanceof GraphQLError || error instanceof AuthenticationError) {
           throw error;
         }
-    
+
         throw new GraphQLError('An unexpected error occurred', {
           extensions: { code: 'INTERNAL_SERVER_ERROR', originalError: error },
         });
