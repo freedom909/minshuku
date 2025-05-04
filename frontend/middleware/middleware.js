@@ -3,7 +3,10 @@ import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret-key"; // Use a strong secret in production
-
+export const config = {
+    matcher: ["/dashboard", "/account", "/settings"], // Adjust to your protected routes
+  };
+  
 // Define protected paths
 const protectedRoutes = ["/dashboard", "/account", "/settings"];
 

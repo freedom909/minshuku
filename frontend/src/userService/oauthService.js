@@ -1,9 +1,9 @@
-// src/app/userService/oauthService.js
+// src/userService/oauthService.js
 
 const config = {
     google: {
-        clientId: 'your-google-client-id',
-        clientSecret: 'your-google-client-secret',
+        clientId: 'process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID',
+        clientSecret: 'process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET',
         redirectUri: 'http://localhost:3000/auth/callback'
     },
     facebook: {
@@ -26,7 +26,30 @@ class OAuthService {
      */
     async validateProviderToken(provider, token) {
         console.log(`Validating ${provider} token: ${token}`);
-        // TODO: Add actual validation logic using provider APIs
+         // TODO: Add actual validation logic using provider APIs
+         if (!token) {
+            console.error(`No token provided for ${provider}`);
+            return false;
+         }
+         if (provider === 'google') {
+            // Example validation for Google (replace with actual logic)
+            if (!token.includes('google')) {
+                console.error(`Invalid Google token: ${token}`);
+                return false;
+            }
+         }
+         // Add similar validation for other providers
+         else if (provider === 'facebook') {
+            // Validate Facebook token
+            if (!token.includes('facebook')) {
+                console.error(`Invalid Facebook token: ${token}`);
+                return false;
+            }
+         }
+         else {
+            console.error(`Unsupported provider: ${provider}`);
+            return false;
+         }
         return true;
     }
 

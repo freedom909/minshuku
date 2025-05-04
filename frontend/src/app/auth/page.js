@@ -1,15 +1,18 @@
 "use client";
+//app/auth/page.js
 import { useEffect, useState } from "react";
-import { getSession, signIn } from "next-auth/react";
+import { getSession,useSession, signIn } from "next-auth/react";
 import Head from "next/head";
 import dayjs from "dayjs";
-import OAuthService from "../userService/oauthService";
+import OAuthService from "@/userService/oauthService";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 export default function Auth() {
     const [isClient, setIsClient] = useState(false);
     const [error, setError] = useState(null);
+    
 
     useEffect(() => {
         setIsClient(true);
@@ -40,6 +43,8 @@ export default function Auth() {
 
             if (result.success) {
                 localStorage.setItem("username", result.user.name);
+                const { data: session } = useSession();
+                console.log("🌐 Frontend session:", session);
                 window.location.href = "/dashboard";
             } else {
                 console.warn("OAuthService login failed, falling back to NextAuth.");
@@ -97,7 +102,7 @@ export default function Auth() {
                 >
                     Sign in with Google (Fallback)
                 </button>
-
+                <GoogleSignInButton useGIS={true} />
                 {/* Apple Login */}
                 <button
                     onClick={handleAppleLogin}

@@ -1,9 +1,12 @@
 "use client"
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import localAuthService from "../userService/localAuthService";
-import { signIn } from "next-auth/react"; // 🔹 NextAuth.js for OAuth
+//src/pages/login.js
 
+import { useRouter } from "next/navigation";
+import localAuthService from "@/userService/localAuthService";
+import { signIn } from "next-auth/react"; // 🔹 NextAuth.js for OAuth
+import Head from "next/head";
+import { useState, useEffect } from 'react';
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -11,28 +14,47 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const router = useRouter();
+    
 
-    // 🔹 Handle traditional login/signup
-    // const handleSubmit = async (event) => {
-    //     event.preventDefault();
-    //     setLoading(true);
-    //     setError(null);
+    useEffect(() => {
+        if (window.google && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+          window.google.accounts.id.initialize({
+            client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredentialResponse,
+          });
+      
+          window.google.accounts.id.renderButton(
+            document.getElementById("googleSignInDiv"),
+            { theme: "outline", size: "large" }
+          );
+        }
+      }, []);
 
-    //     try {
-    //         if (isSignUp) {
-    //             await localAuthService.register(email, password);
-    //             alert("Sign up successful!");
-    //         } else {
-    //             await localAuthService.login(email, password);
-    //             alert("Login successful!");
-    //             router.push("/dashboard");
-    //         }
-    //     } catch (err) {
-    //         setError(err.message || "An error occurred. Please try again.");
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+      const handleGoogleCredentialResponse = async (response) => {
+        const token = response.credential;
+        // same logic from /auth to use oauthService or fallback
+      };
+    //🔹 Handle traditional login/signup
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            if (isSignUp) {
+                await localAuthService.register(email, password);
+                alert("Sign up successful!");
+            } else {
+                await localAuthService.login(email, password);
+                alert("Login successful!");
+                router.push("/dashboard");
+            }
+        } catch (err) {
+            setError(err.message || "An error occurred. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -58,7 +80,7 @@ export default function Login() {
     // 🔹 Handle SSO Login
     const handleSSOLogin = async (provider) => {
         try {
-            const result = await signIn(provider, { callbackUrl: '/dashboard' });// is signIn a server side component?
+            const result = await signIn(provider, { callbackUrl: '/dashboard' });
             if (result?.error) {
                 setError(result.error);
             } else {
@@ -69,28 +91,16 @@ export default function Login() {
         }
     };
 
-    const handleGoogleOAuthLogin = async (googleResponse) => {
-        const googleToken = googleResponse.credential;
-      
-        const response = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: googleToken, provider: "google" }),
-        });
-      
-        const result = await response.json();
-      
-        if (result.success) {
-          window.location.href = "/dashboard";
-        } else {
-          alert("OAuth login failed");
-        }
-      };
       
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen">
             <h1 className="text-2xl font-bold mb-4">{isSignUp ? "Sign Up" : "Login"}</h1>
+            <Head>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</Head>
+<div id="googleSignInDiv" className="mb-2"></div>
+
             <form onSubmit={handleLogin} className="flex flex-col space-y-4 w-64">
                 <input
                     type="email"
@@ -120,12 +130,7 @@ export default function Login() {
 
             {/* 🔹 SSO Login Buttons */}
             <div className="mt-4">
-                <button
-                    onClick={() => handleSSOLogin("google")}
-                    className="p-2 bg-red-500 text-white rounded w-full mb-2"
-                >
-                    Sign in with Google
-                </button>
+            <GoogleSignInButton useGIS={false} />
                 <button
                     onClick={() => handleSSOLogin("github")}
                     className="p-2 bg-gray-800 text-white rounded w-full"
