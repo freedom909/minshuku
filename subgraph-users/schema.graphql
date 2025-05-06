@@ -87,8 +87,8 @@ input UpdatePasswordInput {
   password: String!
 }
 
-input OAuthLoginInput {
-  provider: OAuthProvider # e.g., "GOOGLE", "FACEBOOK", etc.
+input OAuthUserInput {
+  provider: OAuthProvider! # e.g., "GOOGLE", "FACEBOOK", etc.
   token: String! # Token from the third-party service
 }
 
@@ -115,7 +115,7 @@ type SignInResponse implements Response {
   role: Role! @shareable
 }
 
-type oauthLoginResponse implements Response {
+type OAuthLoginResponse implements Response {
   code: Int! @shareable
   success: Boolean! @shareable
   message: String! @shareable
@@ -147,10 +147,10 @@ type InviteCodeResponse implements Response {
 
 # Queries and Mutations
 type Mutation {
+  saveOAuthUser(input: OAuthUserInput!): Guest! 
   signUp(input: SignUpInput!): AuthPayload! 
   signIn(input: SignInInput!): SignInResponse!
-  oauthLogin(input: OAuthLoginInput!): AuthPayload! @shareable
-  
+  oauthLogin(input: OAuthUserInput!): AuthPayload! @shareable
   updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
   requestResetPassword(email: String!): ReqResetPwdResponse!
   forgotPassword(email: String!): ForgotPasswordResponse!
@@ -160,8 +160,13 @@ type Mutation {
 
 type Query {
   getUser(id: ID!): User @shareable
+  myProtectedData: ProtectedData!
 }
 
+type ProtectedData {
+  message: String!
+  userId: ID!
+}
 
 # Federation and Service-Related
 type _Service {

@@ -135,13 +135,13 @@ export default function Login() {
                     onClick={() => handleSSOLogin("github")}
                     className="p-2 bg-gray-800 text-white rounded w-full"
                 >
-                    Sign in with GitHub
+                     GitHub Sign in
                 </button>
                 <button
                     onClick={() => handleSSOLogin("facebook")}
                     className="p-2 bg-gray-800 text-white rounded w-full"
                 >
-                    Sign in with facebook
+                    facebook Sign in
                 </button>
             </div>
 

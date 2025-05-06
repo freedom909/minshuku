@@ -4,11 +4,11 @@ import { ApolloServer } from '@apollo/server';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import initUserContainer from '../services/DB/initUserContainer.js'; // Your container initialization function
 import { readFileSync } from 'fs';
-
 import { gql } from 'graphql-tag';
 import resolvers from './resolvers.js';
 import cors from 'cors';
 import { expressMiddleware } from '@apollo/server/express4';
+import { verifyToken } from '../infrastructure/utils/verifyToken.js';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import OAuthService from '../services/userService/oauthService.js';
 import dotenv from 'dotenv';
@@ -18,7 +18,7 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const createApolloServer = (container) => {
   return new ApolloServer({
-    schema: buildSubgraphSchema({ typeDefs, resolvers }),
+    schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
     introspection: true, // Ensure introspection is enabled
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer: container.httpServer }),
@@ -34,6 +34,19 @@ const createApolloServer = (container) => {
         },
       },
     ],
+    context: async ({ req }) => { 
+      const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const user = token ? verifyToken(token) : null;
+    try {
+      const decoded = jwt.decode(token); // Don't use `verify` if it's a Google JWT
+      // decoded will contain: { sub, email, name, picture, ... }
+      return { user: decoded };
+    } catch (err) {
+      console.error('JWT decode failed:', err);
+      return {};
+    }
+    },
   });
 };
 

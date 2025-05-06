@@ -3,8 +3,10 @@ import { RESTDataSource } from '@apollo/datasource-rest';
 import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
 import { OAuth2Client } from 'google-auth-library';
-
+// Since 'getUserByEmailFromDb' is declared but not used, remove the import statement.
+import getUserByEmailFromDb from '../repositories/userRepository.js'; // Import the function from userRepository.js
 dotenv.config();
+
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -116,6 +118,24 @@ class OAuthService extends RESTDataSource {
         }
     }
 
+
+    async refreshProviderToken(provider, refreshToken) {
+        const config = this.getProviderConfig(provider);
+        const { client_id, client_secret } = config;
+        const tokenUrl = config.tokenUrl;
+
+        try {
+            const { data } = await axios.post(tokenUrl, {
+                client_id,
+                client_secret,
+                refresh_token: refreshToken,
+                grant_type: 'refresh_token'
+            })
+        }catch (error) {
+            console.error(`❌ Error refreshing token for ${provider}:`, error.message);
+            throw new Error("Failed to refresh provider token");
+        }
+    }
     async revokeProviderToken(provider, context) {
         const config = this.getProviderConfig(provider);
         const { token } = context;
@@ -133,6 +153,43 @@ class OAuthService extends RESTDataSource {
             throw new GraphQLError(`Failed to revoke ${provider} token`, { extensions: { code: 'TOKEN_REVOCATION_FAILED' } });
         }
     }
+
+    async saveOAuthUser({ provider, token, email, name, picture, role = "GUEST" }) {
+        if (!provider || !token || !email || !name) {
+            throw new Error("Missing required OAuth user fields");
+        }
+    
+        try {
+            const existingUser = await this.userRepository.getUserByEmailFromDb(email);
+            if (existingUser) {
+                console.log(`✅ User already exists: ${email}`);
+                return existingUser;
+            }
+    
+            const newUser = await this.userRepository.insertUser({
+                email,
+                name,
+                picture,
+                provider,
+                role,
+            });
+    
+            if (!newUser) {
+                throw new Error("User creation failed");
+            }
+    
+            console.log(`✅ Created new user: ${email}`);
+            return newUser;
+        } catch (error) {
+            console.error("❌ Error saving OAuth user:", error);
+            throw new Error("Failed to save OAuth user");
+        }
+    }
+    
+    async insertUser({ email, name, picture, provider, role }) {
+        return await UserModel.create({ email, name, picture, provider, role });
+      }
+      
 
     async getUserInfoFromProvider(provider, token) {
         const config = this.getProviderConfig(provider);
@@ -159,7 +216,8 @@ class OAuthService extends RESTDataSource {
     async loginWithProvider(providerUserInfo) {
         try {
             console.log('尝试通过提供商登录，用户信息:', providerUserInfo);
-            let user = await this.userRepository.getUserByEmailFromDb(providerUserInfo.email);
+            const email=providerUserInfo.email;
+            let user = await this.userRepository.getUserByEmailFromDb(email);
             if (!user) {
                 console.log('用户不存在，创建新用户:', providerUserInfo);
                 user = await this.userRepository.save({

@@ -16,6 +16,7 @@ export default function Home() {
       <img src={session.user.image} alt="User Avatar" />
       <p>Signed in as {session.user.name}</p>
       <button onClick={handleLogout}>Logout</button>
+    
     </div>
   );
 }

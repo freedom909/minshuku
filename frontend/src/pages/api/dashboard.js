@@ -22,7 +22,7 @@ export default function Dashboard() {
       <p>Signed in as {session.user.email}</p>
       
       <img src={session.user.image} alt="User Avatar" />
-      {session.user.picture ? (
+      {session?.user?.picture ? (
         <img src={session.user.picture} alt="User Avatar" width={48} height={48} />
       ) : (
         <p>No profile picture available</p>
