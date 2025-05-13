@@ -3,7 +3,7 @@ import axios from "axios";
 import { sign } from "jsonwebtoken";
 import { serialize } from "cookie";
 
-const SUBGRAPH_USERS_URL = "http://localhost:4010";
+const SUBGRAPH_USERS_URL = "http://localhost:8010";
 const JWT_SECRET = process.env.JWT_SECRET || "good";
 
 

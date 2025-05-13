@@ -1,6 +1,6 @@
 "use client";
 //app/auth/page.js
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useCallback} from "react";
 import { getSession,useSession, signIn } from "next-auth/react";
 import Head from "next/head";
 import dayjs from "dayjs";
@@ -12,12 +12,43 @@ const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 export default function Auth() {
     const [isClient, setIsClient] = useState(false);
     const [error, setError] = useState(null);
-    
+    const { data: session } = useSession();
+
+    const fallbackGoogleLogin = async () => {
+        try {
+            const res = await signIn("google", { callbackUrl: "/dashboard" });
+            if (!res?.ok) {
+                setError("Google fallback login failed.");
+            }
+        } catch (err) {
+            console.error("Fallback Google login error:", err);
+            setError("An unexpected error occurred.");
+        }
+    };
+
+    const handleGoogleCredentialResponse = useCallback(async (response) => {
+        const token = response.credential;
+        try {
+            const oauthService = new OAuthService();
+            const result = await oauthService.loginWithProvider("google", token);
+
+            if (result.success) {
+                localStorage.setItem("username", result.user.name);
+                console.log("🌐 Frontend session:", session);
+                window.location.href = "/dashboard";
+            } else {
+                console.warn("OAuthService login failed, falling back to NextAuth.");
+                fallbackGoogleLogin();
+            }
+        } catch (err) {
+            console.error("OAuthService error:", err);
+            fallbackGoogleLogin();
+        }
+    }, [session]);
 
     useEffect(() => {
         setIsClient(true);
 
-        // Load Google Identity Services and render button
         if (window.google && googleClientId) {
             try {
                 window.google.accounts.id.initialize({
@@ -33,40 +64,7 @@ export default function Auth() {
                 console.warn("Google Identity Services failed to initialize. Fallback will be used.");
             }
         }
-    }, []);
-
-    const handleGoogleCredentialResponse = async (response) => {
-        const token = response.credential;
-        try {
-            const oauthService = new OAuthService();
-            const result = await oauthService.loginWithProvider("google", token);
-
-            if (result.success) {
-                localStorage.setItem("username", result.user.name);
-                const { data: session } = useSession();
-                console.log("🌐 Frontend session:", session);
-                window.location.href = "/dashboard";
-            } else {
-                console.warn("OAuthService login failed, falling back to NextAuth.");
-                fallbackGoogleLogin();
-            }
-        } catch (err) {
-            console.error("OAuthService error:", err);
-            fallbackGoogleLogin();
-        }
-    };
-
-    const fallbackGoogleLogin = async () => {
-        try {
-            const res = await signIn("google", { callbackUrl: "/dashboard" });
-            if (!res?.ok) {
-                setError("Google fallback login failed.");
-            }
-        } catch (err) {
-            console.error("Fallback Google login error:", err);
-            setError("An unexpected error occurred.");
-        }
-    };
+    }, [handleGoogleCredentialResponse]);
 
     const handleAppleLogin = async () => {
         try {

@@ -79,7 +79,7 @@ const startApolloServer = async () => {
             bookingService,
             userService: {
               localAuthService: mongoContainer?.resolve('localAuthService'),
-              oAuthService: mongoContainer?.resolve('oAuthService'),
+              oauthService: mongoContainer?.resolve('oauthService'),
               tokenService: mongoContainer?.resolve('tokenService'),
             }
           },

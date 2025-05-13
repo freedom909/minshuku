@@ -4,11 +4,11 @@ import { ApolloServer } from '@apollo/server';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import initUserContainer from '../services/DB/initUserContainer.js'; // Your container initialization function
 import { readFileSync } from 'fs';
-
 import { gql } from 'graphql-tag';
 import resolvers from './resolvers.js';
 import cors from 'cors';
 import { expressMiddleware } from '@apollo/server/express4';
+import { verifyToken } from '../infrastructure/utils/verifyToken.js';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import OAuthService from '../services/userService/oauthService.js';
 import dotenv from 'dotenv';
@@ -18,7 +18,7 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const createApolloServer = (container) => {
   return new ApolloServer({
-    schema: buildSubgraphSchema({ typeDefs, resolvers }),
+    schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
     introspection: true, // Ensure introspection is enabled
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer: container.httpServer }),
@@ -33,31 +33,36 @@ const createApolloServer = (container) => {
           };
         },
       },
-    ],
+    ]
   });
 };
 
 // 🔹 Express middleware context function
 const createContext = async ({ req, container }) => {
-  const token = req.headers.authorization || '';
-
-  return {
-    token,
-    dataSources: {
-      userService: {
-        localAuthService: container.resolve('localAuthService'),
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  
+    let decoded = null;
+    try {
+        decoded = token ? jwt.decode(token) : null;
+      } catch (err) {
+        console.error('JWT decode failed:', err);
+      }
+    
+      return {
+        user: decoded,
+        token,
         oauthService: container.resolve('oauthService'),
+        userRepository: container.resolve('userRepository'),
         tokenService: container.resolve('tokenService'),
-      },
-    },
-  };
-};
+        localAuthService: container.resolve('localAuthService'),
+      };
+    };
 
 // 🔹 Function to start Apollo Server
 const startApolloServer = async () => {
   try {
-    // 确保等待 initUserContainer 执行完成
-    const container = await initUserContainer(); 
+    const container = await initUserContainer();
     const app = express();
     const httpServer = http.createServer(app);
     container.httpServer = httpServer; // Store HTTP server reference
@@ -65,32 +70,20 @@ const startApolloServer = async () => {
     const server = createApolloServer(container);
     await server.start();
 
-    app.get('/health', (req, res) => {
-      res.status(200).send('OK');
-    });
-    
     app.use(
       '/graphql',
-      cors(),
+      cors({
+        origin: "http://localhost:3000", // Allow frontend access
+        credentials: true, // Allow cookies if authentication is needed
+      }),
       express.json(),
       expressMiddleware(server, {
         context: async ({ req }) => createContext({ req, container }),
-        onHealthCheck: async () => {
-          try {
-            // Check MongoDB connection status
-            const db = container.resolve('mongodb'); // Use the MongoDB connection from the container
-            await db.command({ ping: 1 }); // Ping the database to check connection status
-            return true; // Return true if the connection is healthy
-          } catch (error) {
-            console.error('Health check failed:', error);
-            return false; // Return false if the connection is unhealthy
-          }
-        }
       })
     );
 
-    httpServer.listen({ port: 4010 }, () =>
-      console.log('🚀 Server ready at http://localhost:4010/graphql')
+    httpServer.listen({ port: process.env.PORT || 5010 }, () =>
+      console.log(`🚀 Server ready at http://localhost:${process.env.PORT || 5010}/graphql`)
     );
   } catch (error) {
     console.error('❌ Error starting Apollo Server:', error);

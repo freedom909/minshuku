@@ -1,5 +1,5 @@
 import { GraphQLError } from 'graphql';
-import DateTimeType from '../infrastructure/scalar/dateTimeType.js';
+import DateTimeType from '../infrastructure/scalar/dateTime.js';
 import { authenticateJWT, checkPermissions } from '../infrastructure/middleware/auth.js';
 import { permissions } from '../infrastructure/auth/permission.js';
 

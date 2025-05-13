@@ -16,6 +16,13 @@ async function main() {
       // Pass the db object to your UserRepository
       const userRepository = new UserRepository(db);
       userRepository.findOne( {"email":"nuDdfaFA@gmail.com"})
+        .then(user => {
+          console.log('User found:', user);
+        })
+        .catch(error => {
+          // If UserRepository has improved error handling, the error information will be more detailed
+          console.error('Error finding user:', error); 
+        });
       console.log('UserRepository initialized successfully');
     } catch (e) {
       console.error('Error:', e);

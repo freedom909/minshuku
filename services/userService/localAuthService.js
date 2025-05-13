@@ -1,4 +1,4 @@
-
+//services/userService/localAuthService.js
 import UserRepository from '../repositories/userRepository.js';
 import { RESTDataSource } from "@apollo/datasource-rest";
 import { GraphQLError } from 'graphql';
@@ -56,9 +56,6 @@ class LocalAuthService extends RESTDataSource {
       const resetLink = `http://your-app.com/reset-password?token=${token}`;
       console.log(`Sending reset link to ${email}: ${resetLink}`);
 
-      // Call a method to send the email
-      await this.userRepository.sendResetEmail(email, resetLink);
-
       return { message: 'Password reset link sent successfully' };
     } catch (error) {
       console.error('Error in sendLinkToUser:', error);
@@ -67,6 +64,10 @@ class LocalAuthService extends RESTDataSource {
   }
 
   async createResetPasswordToken(id) {
+    const user = await this.userRepository.getUserFromDb(id);
+    if (!user) {
+      throw new GraphQLError("User not found", { extensions: { code: "BAD_USER_INPUT" } });
+    }
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     return token;
@@ -194,7 +195,17 @@ class LocalAuthService extends RESTDataSource {
     }
   }
   async getUserByEmailFromDb(email) {
-    return this.userRepository.findOne({ email });
+    const user = await this.userRepository.getUserById(id);
+    if (!user) return null;
+    return {
+      _id: user._id.toString(),  // or id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      nickname: user.nickname,
+      picture: user.picture,
+      // add other necessary fields
+    };
   }
 
   async updateUserRole(userId, role) {

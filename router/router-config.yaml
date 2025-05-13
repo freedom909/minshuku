@@ -17,7 +17,7 @@ cors:
 
 subgraphs:
   users:
-    routing_url: http://localhost:4010/graphql # Ensure this points to your subgraph-users
+    routing_url: http://localhost:8010/graphql # Ensure this points to your subgraph-users
     schema:
       file: ./subgraphs/users/schema.graphql  
   accounts:

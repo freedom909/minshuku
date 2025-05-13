@@ -600,7 +600,7 @@ enum join__Graph {
   PAYMENTS @join__graph(name: "payments", url: "http://localhost:4070/graphql")
   PROFILES @join__graph(name: "profiles", url: "http://localhost:4030/graphql")
   REVIEWS @join__graph(name: "reviews", url: "http://localhost:4080/graphql")
-  USERS @join__graph(name: "users", url: "http://localhost:4010")
+  USERS @join__graph(name: "users", url: "http://localhost:4010/graphql")
 }
 
 type Like
@@ -824,9 +824,10 @@ type Mutation
   Creates a review for the host and location - only authorized users (hosts) can submit
   """
   submitHostAndLocationReviews(bookingId: ID!, hostReview: ReviewInput!, locationReview: ReviewInput!): SubmitHostAndLocationReviewsResponse! @join__field(graph: REVIEWS)
+  saveOAuthUser(input: OAuthUserInput!): User! @join__field(graph: USERS)
   signUp(input: SignUpInput!): AuthPayload! @join__field(graph: USERS)
   signIn(input: SignInInput!): SignInResponse! @join__field(graph: USERS)
-  oauthLogin(input: OAuthLoginInput!): AuthPayload! @join__field(graph: USERS)
+  oauthLogin(input: OAuthUserInput!): AuthPayload! @join__field(graph: USERS)
   updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload! @join__field(graph: USERS)
   requestResetPassword(email: String!): ReqResetPwdResponse! @join__field(graph: USERS)
   forgotPassword(email: String!): ForgotPasswordResponse! @join__field(graph: USERS)
@@ -870,14 +871,7 @@ interface Node
   id: ID!
 }
 
-input OAuthLoginInput
-  @join__type(graph: USERS)
-{
-  provider: OAuthProvider
-  token: String!
-}
-
-type oauthLoginResponse implements Response
+type OAuthLoginResponse implements Response
   @join__implements(graph: USERS, interface: "Response")
   @join__type(graph: USERS)
 {
@@ -895,6 +889,13 @@ enum OAuthProvider
   GOOGLE @join__enumValue(graph: USERS)
   FACEBOOK @join__enumValue(graph: USERS)
   APPLE @join__enumValue(graph: USERS)
+}
+
+input OAuthUserInput
+  @join__type(graph: USERS)
+{
+  provider: OAuthProvider!
+  token: String!
 }
 
 type PriceRange
@@ -941,6 +942,13 @@ type Profile
 
   """Other users that have been added to the user's network."""
   network: [Profile]
+}
+
+type ProtectedData
+  @join__type(graph: USERS)
+{
+  message: String!
+  userId: ID!
 }
 
 type Query
@@ -1044,6 +1052,7 @@ type Query
 
   """Returns all reviews in the system"""
   allReviews: [Review] @join__field(graph: REVIEWS)
+  myProtectedData: ProtectedData! @join__field(graph: USERS)
 }
 
 type ReqResetPwdResponse implements Response

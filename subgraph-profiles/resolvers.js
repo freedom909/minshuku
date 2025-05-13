@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { ApolloServerErrorCode } from '@apollo/server/errors';
-import DateTimeType from '../infrastructure/scalar/dateTimeType.js';
+import DateTimeType from '../infrastructure/scalar/dateTime.js';
 
 const resolvers = {
     DateTime: DateTimeType,

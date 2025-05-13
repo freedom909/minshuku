@@ -4,16 +4,11 @@ const { MongoClient } = pkg;
 import { createContainer, asClass, asValue } from 'awilix';
 import connectToMongoDB from './connectMongoDB.js';
 
-
 const initMongoContainer = async () => {
   try {
-    const mongodb = connectToMongoDB();
+    const mongodb = await connectToMongoDB();
     console.log('MongoDB Database connected');
-    const container = createContainer();
-    container.register({
-      mongodb: asValue(mongodb),
-    });
-    return container;
+    return mongodb; // ✅ return the actual DB instance
   } catch (err) {
     console.error('Error connecting to MongoDB:', err);
   }

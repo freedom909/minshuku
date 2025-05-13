@@ -1,48 +1,41 @@
+// services/repositories/userRepository.js
 import dotenv from 'dotenv';
 dotenv.config();
 import bcrypt from 'bcrypt';
-import BaseRepository from './baseRepository.js';
-import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import connectToMongoDB from '../DB/connectMongoDB.js';
 import User from '../models/user.js';
-import pkg from 'jsonwebtoken';
-const { sign } = pkg;
-import { MongoClient, ObjectId } from 'mongodb';
-import EmailVerification from '../../infrastructure/email/emailVerification.js';
+import { ObjectId } from 'mongodb';
 
-class UserRepository extends BaseRepository {
-  constructor({ mongodb, emailVerification }) {
-    super();
+
+class UserRepository {
+  constructor({ mongodb }) {
+    if (!mongodb) {
+      console.error('mongodb 对象未正确传入');
+      return;
+    }
     this.model = User;
-    this.collection = mongodb.collection('users');
-    this.emailVerification = new EmailVerification();
+    this.collection = mongodb.collection('users');   
+  }
+
+  async mapMongoUser(userDoc) {
+    if (!userDoc) return null;
+    const { _id, ...rest } = userDoc;
+    return { id: _id.toString(), ...rest };
   }
 
   async findOne(query) {
     try {
-      return await this.collection.findOne(query);
+      return await this.model.findOne(query);
     } catch (error) {
       console.error('Error during findOne:', error);
       throw error;
     }
   }
 
-  async findById(id) {
-    try {
-      if (!ObjectId.isValid(id)) throw new Error("Invalid ObjectId");
-      return await this.collection.findOne({ _id: new ObjectId(id) });
-    } catch (error) {
-      console.error('Error during findById:', error);
-      throw error;
-    }
-  }
-
   async findByIdAndUpdate(id, update) {
     try {
-      return await this.collection.findOneAndUpdate(
-        { _id: new ObjectId(id) },
-        { $set: update },
-        { returnDocument: 'after' }
-      );
+      return await this.model.findByIdAndUpdate(id, update, { new: true });
     } catch (error) {
       console.error('Error during findByIdAndUpdate:', error);
       throw error;
@@ -51,7 +44,7 @@ class UserRepository extends BaseRepository {
 
   async findByIdAndDelete(id) {
     try {
-      return await this.collection.findOneAndDelete({ _id: new ObjectId(id) });
+      return await this.model.findByIdAndDelete(id);
     } catch (error) {
       console.error('Error during findByIdAndDelete:', error);
       throw error;
@@ -59,33 +52,44 @@ class UserRepository extends BaseRepository {
   }
 
   async getUserByNicknameFromDb(nickname) {
-    return await this.collection.findOne({ nickname });
+    return await this.model.findOne({ nickname });
   }
 
   async getUserFromDb(id) {
-    if (!ObjectId.isValid(id)) throw new Error("Invalid ObjectId format");
-    return await this.collection.findOne({ _id: new ObjectId(id) });
+    try {
+      const user = await this.model.findById(id);
+      return this.mapMongoUser(user);
+    } catch (error) {
+      console.error('Error during getUserFromDb:', error);
+      throw error;
+    }
   }
-
+  
   async getUserByEmailFromDb(email) {
-    return await this.collection.findOne({ email });
+    return await this.model.findOne({ email });
   }
 
   async findUserByProvider({ email, provider }) {
-    return await this.collection.findOne({ email, provider });
+    return await this.model.findOne({ email, provider });
   }
 
   async insertUser(userData) {
-    const result = await this.collection.insertOne(userData);
-    if (!result.insertedId) throw new Error('Failed to insert user');
-    return { ...userData, _id: result.insertedId };
+    try {
+      const newUser = new this.model(userData);
+      return await newUser.save();
+    } catch (error) {
+      console.error('Error during insertUser:', error);
+      throw error;
+    }
   }
 
   async updatePassword(id, hashedPassword) {
-    return await this.collection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { password: hashedPassword } }
-    );
+    try {
+      return await this.model.findByIdAndUpdate(id, { password: hashedPassword });
+    } catch (error) {
+      console.error('Error during updatePassword:', error);
+      throw error;
+    }
   }
 
   async checkPassword(password, hashedPassword) {
@@ -111,6 +115,10 @@ class UserRepository extends BaseRepository {
     );
   }
 
+  async sendVerification(email) {
+    return this.emailVerification.verify(email); // ✅ Call method when needed
+  }
+
   async sendVerificationEmail(email, token) {
     await this.emailVerification.sendVerificationEmail(email, token);
   }
@@ -119,5 +127,4 @@ class UserRepository extends BaseRepository {
     return await this.model.findOne({ oauthId });
   }
 }
-
 export default UserRepository;

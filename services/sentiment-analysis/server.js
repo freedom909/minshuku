@@ -1,7 +1,7 @@
 import express, { json } from "express";
 import axios from "axios";
 import dotenv from 'dotenv';
-import mongoose from "mongoose";
+import mongodb from 'mongodb';
 import { Sentiment } from "./models/Sentiment.js";
 import neo4j from "neo4j-driver";
 

@@ -45,7 +45,7 @@ function generateUniqueCode() {
 }
 
 // Use the function
-generateInviteCode('66dc30358791fb6291ca94ec').then(inviteCode => {
+generateInviteCode('681474a03bf9c08cd5ea3dfa').then(inviteCode => {
   console.log('Generated invite code:', inviteCode);
 }).catch(error => {
   console.error('Error:', error);

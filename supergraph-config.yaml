@@ -12,12 +12,9 @@ cors:
     - http://localhost:3000  # Allows any locally-running client to run against your Router
     - https://studio.apollographql.com  # Allows Apollo Studio to still run queries against your Router
 
-supergraph:
-  schema: ./subgraph.graphql
-
 subgraphs:
   users:
-    routing_url: http://localhost:4010
+    routing_url: http://localhost:4010/graphql
     schema:
       file: ./subgraph-users/schema.graphql
   accounts:
