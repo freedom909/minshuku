@@ -7,15 +7,12 @@ import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
-import initializeBookingContainer from '../services/DB/initBookingContainer.js';
+import initializeCartContainer from '../services/DB/initCartContainer.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
 import ListingService from '../services/listingService.js';
 import BookingService from '../services/bookingService.js';
-import UserService from '../services/userService/index.js';
-import initMongoContainer from '../services/DB/initMongoContainer.js';
-import initializeCartContainer from '../services/DB/initCartContainer.js';
 import CartService from '../services/cartService.js';
 
 dotenv.config();
@@ -24,13 +21,9 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    // Initialize MySQL and MongoDB containers
+    // Initialize MySQL container
     const mysqlContainer = await initializeCartContainer({
       services: [ListingService, BookingService, CartService]
-    });
-
-    const mongoContainer = await initMongoContainer({
-      services: [UserService]
     });
 
     const app = express();
@@ -45,20 +38,18 @@ const startApolloServer = async () => {
             return {
               async drainServer() {
                 await mysqlContainer.resolve('mysqldb').close();
-                await mongoContainer.resolve('mongodb').close();  // Ensure MongoDB client is closed properly
               }
             };
           }
         }
       ],
-      introspection: true,  // Enable introspection for GraphQL Playground
+      introspection: true,
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          listingService: mysqlContainer.resolve('listingService'),  // Ensure correct resolution of services
-          bookingService: mysqlContainer.resolve('bookingService'),  // Ensure correct resolution of services 
-          cartService: mysqlContainer.resolve('cartService'),
-          userService: mongoContainer.resolve('userService') // Ensure correct resolution of services
+          listingService: mysqlContainer.resolve('listingService'),
+          bookingService: mysqlContainer.resolve('bookingService'),
+          cartService: mysqlContainer.resolve('cartService')
         }
       })
     });

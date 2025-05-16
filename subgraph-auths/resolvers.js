@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { loginValidate, passwordValidate } from '../infrastructure/helpers/loginValidator.js';
 import runValidations from '../infrastructure/helpers/runValidations.js';
-import validateInviteCode from '../infrastructure/helpers/validateInviteCode.js';
+import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js';
 //import TokenService from '../services/userService/tokenService.js';
 // import LocalAuthService from '../services/userService/localAuthService.js';
 // import oauthService from '../services/userService/oauthService.js';

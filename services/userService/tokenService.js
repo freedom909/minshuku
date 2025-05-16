@@ -4,17 +4,17 @@ const { sign, verify, decode } = jwt;
 import dotenv from 'dotenv';
 import { RESTDataSource } from '@apollo/datasource-rest';
 import axios from 'axios';
+import { GraphQLError } from 'graphql';
 dotenv.config();
 
-// Secret key for signing tokens (replace this with your actual secret)
-const secretKey = process.env.JWT_SECRET || 'good';
-
-// Function to generate JWT token
+// 移除未使用的常量，避免混淆
 
 class TokenService extends RESTDataSource {
     constructor({ secretKey, expiresIn }) {
         if (!secretKey) {
-            throw new Error('Secret key is required');
+            throw new GraphQLError('Secret key is required for token service', {
+                extensions: { code: 'CONFIGURATION_ERROR' }
+            });
         }
         super();
         this.secretKey = secretKey;
@@ -22,69 +22,321 @@ class TokenService extends RESTDataSource {
     }
 
     async getUserFromToken(token) {
+        if (!token) {
+            throw new GraphQLError('No token provided', {
+                extensions: { code: 'AUTHENTICATION_ERROR' }
+            });
+        }
+
         try {
-            if (token) {
-                const user = jwt.verify(token, this.secretKey); // Verify the token using the secret key
-                console.log('User extracted from token:', user); // Optional: Log user info for debugging
-                return user; // Return the user object
+            // 验证并解码token
+            const decoded = jwt.verify(token, this.secretKey);
+            
+            // 验证token的必要字段
+            if (!decoded.userId || !decoded.email) {
+                throw new GraphQLError('Invalid token format', {
+                    extensions: { code: 'INVALID_TOKEN' }
+                });
             }
-            return null;
+
+            console.log('User extracted from token:', {
+                userId: decoded.userId,
+                email: decoded.email,
+                role: decoded.role
+            });
+
+            return decoded;
         } catch (error) {
-            console.error('Invalid token', error);
-            return null;
+            if (error instanceof jwt.TokenExpiredError) {
+                throw new GraphQLError('Token has expired', {
+                    extensions: { code: 'TOKEN_EXPIRED' }
+                });
+            }
+            if (error instanceof jwt.JsonWebTokenError) {
+                throw new GraphQLError('Invalid token', {
+                    extensions: { code: 'INVALID_TOKEN' }
+                });
+            }
+            throw new GraphQLError('Token verification failed', {
+                extensions: { 
+                    code: 'AUTHENTICATION_ERROR',
+                    error: error.message
+                }
+            });
         }
     }
 
     async generateToken(user) {
-        const payload = {
-            userId: user._id.toString(), // Assuming user has an _id field
-            email: user.email,
-            role: user.role,
-        };
-        return sign(payload, this.secretKey, { expiresIn: this.expiresIn });
+        if (!user || !user._id) {
+            throw new GraphQLError('Invalid user data for token generation', {
+                extensions: { code: 'INVALID_INPUT' }
+            });
+        }
+
+        try {
+            const payload = {
+                userId: typeof user._id === 'object' ? user._id.toString() : user._id,
+                email: user.email,
+                role: user.role || 'GUEST',
+                type: 'ACCESS_TOKEN'
+            };
+
+            const token = sign(payload, this.secretKey, { 
+                expiresIn: this.expiresIn,
+                algorithm: 'HS256' // 明确指定算法
+            });
+
+            console.log('Generated token for user:', {
+                userId: payload.userId,
+                role: payload.role
+            });
+
+            return token;
+        } catch (error) {
+            console.error('Token generation error:', error);
+            throw new GraphQLError('Failed to generate token', {
+                extensions: { 
+                    code: 'TOKEN_GENERATION_ERROR',
+                    error: error.message
+                }
+            });
+        }
     }
 
-    async getToken(code){ 
-        const options = {
-          method: 'POST',
-          url: 'https://oauth2.googleapis.com/token',
-          headers: { 'content-type': 'application/x-www-form-urlencoded' },
-          data: new URLSearchParams({ 
-            client_id: process.env.GOOGLE_CLIENT_ID,
-            client_secret: process.env.GOOGLE_CLIENT_SECRET,
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: process.env.GOOGLE_REDIRECT_URI // Ensure this matches the redirect URI registered in your Google Cloud Console
-          })
-        };
-      
-        try {
-          const response = await axios(options);
-          const { access_token } = response.data;
-      
-          if (!access_token) {
-            throw new Error(response.data.error_description || 'Cannot retrieve access token.');
-          }
-      
-          return access_token;
-        } catch (error) {
-          throw new Error(error.response ? error.response.data.error_description : error.message);
+    async getToken(code, provider = 'GOOGLE') { 
+        console.log(`Getting token for provider: ${provider} with code length: ${code?.length}`);
+        
+        if (!code) {
+            throw new GraphQLError('Authorization code is required', {
+                extensions: { code: 'INVALID_INPUT' }
+            });
         }
-      }
-      
-      
-    // Verify JWT Token
+
+        try {
+            let tokenEndpoint, tokenParams;
+
+            switch (provider.toUpperCase()) {
+                case 'GOOGLE':
+                    tokenEndpoint = 'https://oauth2.googleapis.com/token';
+                    tokenParams = {
+                        client_id: process.env.GOOGLE_CLIENT_ID,
+                        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                        grant_type: 'authorization_code',
+                        code,
+                        redirect_uri: process.env.GOOGLE_REDIRECT_URI
+                    };
+                    break;
+
+                case 'FACEBOOK':
+                    tokenEndpoint = 'https://graph.facebook.com/v12.0/oauth/access_token';
+                    tokenParams = {
+                        client_id: process.env.FB_APP_ID,
+                        client_secret: process.env.FB_APP_SECRET,
+                        code,
+                        redirect_uri: process.env.FB_REDIRECT_URI
+                    };
+                    break;
+
+                default:
+                    throw new GraphQLError(`Unsupported OAuth provider: ${provider}`, {
+                        extensions: { code: 'UNSUPPORTED_PROVIDER' }
+                    });
+            }
+
+            console.log(`Requesting token from ${tokenEndpoint}`);
+            
+            const response = await axios({
+                method: 'POST',
+                url: tokenEndpoint,
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                data: new URLSearchParams(tokenParams)
+            });
+
+            const { access_token, id_token } = response.data;
+
+            if (!access_token && !id_token) {
+                throw new GraphQLError('No token received from provider', {
+                    extensions: { 
+                        code: 'TOKEN_RETRIEVAL_ERROR',
+                        provider,
+                        error: response.data.error_description || 'Unknown error'
+                    }
+                });
+            }
+
+            console.log(`Successfully retrieved token for provider: ${provider}`);
+            return id_token || access_token;
+
+        } catch (error) {
+            console.error('Token retrieval error:', error);
+            
+            if (error instanceof GraphQLError) {
+                throw error;
+            }
+
+            throw new GraphQLError('Failed to retrieve token from provider', {
+                extensions: { 
+                    code: 'TOKEN_RETRIEVAL_ERROR',
+                    provider,
+                    error: error.response?.data?.error_description || error.message
+                }
+            });
+        }
+    }
+
     async verifyToken(token) {
+        if (!token) {
+            throw new GraphQLError('No token provided for verification', {
+                extensions: { code: 'INVALID_INPUT' }
+            });
+        }
+
         try {
-            return verify(token, this.secretKey);
+            const decoded = verify(token, this.secretKey);
+            
+            // 验证token类型和必要字段
+            if (!decoded.userId || !decoded.type) {
+                throw new GraphQLError('Invalid token format', {
+                    extensions: { code: 'INVALID_TOKEN' }
+                });
+            }
+
+            return decoded;
         } catch (error) {
-            throw new Error("Invalid or expired token");
+            console.error('Token verification error:', error);
+            
+            if (error instanceof jwt.TokenExpiredError) {
+                throw new GraphQLError('Token has expired', {
+                    extensions: { code: 'TOKEN_EXPIRED' }
+                });
+            }
+
+            throw new GraphQLError('Invalid or expired token', {
+                extensions: { 
+                    code: 'INVALID_TOKEN',
+                    error: error.message
+                }
+            });
         }
     }
 
-    // Decode JWT Token without verifying (useful for inspecting the token)
     decodeToken(token) {
-        return decode(token);
+        if (!token) {
+            return null;
+        }
+
+        try {
+            // 使用 complete: true 获取完整的token信息，包括header
+            const decoded = decode(token, { complete: true });
+            
+            if (!decoded) {
+                console.warn('Token could not be decoded');
+                return null;
+            }
+
+            return decoded;
+        } catch (error) {
+            console.error('Token decode error:', error);
+            return null;
+        }
+    }
+
+    // 用于验证token格式
+    isValidTokenFormat(token) {
+        return typeof token === 'string' 
+            && token.split('.').length === 3 
+            && token.trim().length > 0;
+    }
+    // 从HTTP请求头中提取token
+    extractTokenFromRequest(req) {
+        try {
+            const authHeader = req.headers.authorization || '';
+            
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                return null;
+            }
+            
+            const token = authHeader.replace('Bearer ', '');
+            
+            if (!this.isValidTokenFormat(token)) {
+                return null;
+            }
+            
+            return token;
+        } catch (error) {
+            console.error('Error extracting token from request:', error);
+            return null;
+        }
+    }
+
+    // 生成刷新token
+    async generateRefreshToken(user) {
+        if (!user || !user._id) {
+            throw new GraphQLError('Invalid user data for refresh token generation', {
+                extensions: { code: 'INVALID_INPUT' }
+            });
+        }
+
+        try {
+            const payload = {
+                userId: typeof user._id === 'object' ? user._id.toString() : user._id,
+                type: 'REFRESH_TOKEN'
+            };
+
+            return sign(payload, this.secretKey, { 
+                expiresIn: '7d', // 刷新token有效期更长
+                algorithm: 'HS256'
+            });
+        } catch (error) {
+            console.error('Refresh token generation error:', error);
+            throw new GraphQLError('Failed to generate refresh token', {
+                extensions: { 
+                    code: 'TOKEN_GENERATION_ERROR',
+                    error: error.message
+                }
+            });
+        }
+    }
+
+    // 使用刷新token生成新的访问token
+    async refreshAccessToken(refreshToken) {
+        try {
+            // 验证刷新token
+            const decoded = await this.verifyToken(refreshToken);
+            
+            // 确保是刷新token
+            if (decoded.type !== 'REFRESH_TOKEN') {
+                throw new GraphQLError('Invalid token type', {
+                    extensions: { code: 'INVALID_TOKEN_TYPE' }
+                });
+            }
+            
+            // 创建新的访问token
+            const payload = {
+                userId: decoded.userId,
+                email: decoded.email,
+                role: decoded.role || 'GUEST',
+                type: 'ACCESS_TOKEN'
+            };
+            
+            return sign(payload, this.secretKey, { 
+                expiresIn: this.expiresIn,
+                algorithm: 'HS256'
+            });
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            
+            if (error instanceof GraphQLError) {
+                throw error;
+            }
+            
+            throw new GraphQLError('Failed to refresh access token', {
+                extensions: { 
+                    code: 'TOKEN_REFRESH_ERROR',
+                    error: error.message
+                }
+            });
+        }
     }
 }
 

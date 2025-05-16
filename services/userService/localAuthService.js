@@ -23,13 +23,50 @@ class LocalAuthService extends RESTDataSource {
   }
 
   async login(email, password) {
-    const user = await this.userRepository.getUserByEmailFromDb(email);
-    console.log("user:", user); // user: null
+    try {
+      if (!email || !password) {
+        throw new GraphQLError('Email and password are required', {
+          extensions: { code: 'INVALID_INPUT' }
+        });
+      }
 
-    if (!user || !(await this.userRepository.checkPassword(password, user.password))) {
-      throw new Error('Invalid credentials');
+      console.log('Attempting login for email:', email);
+      const user = await this.userRepository.getUserByEmailFromDb(email);
+      
+      if (!user) {
+        console.error('No user found for email:', email);
+        throw new GraphQLError('Invalid credentials', {
+          extensions: { code: 'INVALID_CREDENTIALS' }
+        });
+      }
+
+      console.log('Found user:', { 
+        id: user._id?.toString(), 
+        email: user.email 
+      });
+
+      const isPasswordValid = await this.userRepository.checkPassword(password, user.password);
+      if (!isPasswordValid) {
+        console.error('Invalid password for user:', user._id?.toString());
+        throw new GraphQLError('Invalid credentials', {
+          extensions: { code: 'INVALID_CREDENTIALS' }
+        });
+      }
+
+      console.log('Login successful for user:', user._id?.toString());
+      return user;
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof GraphQLError) {
+        throw error;
+      }
+      throw new GraphQLError('Login failed', {
+        extensions: { 
+          code: 'LOGIN_FAILED',
+          error: error.message
+        }
+      });
     }
-    return user; // Return user object for further processing
   }
 
   async register(userData) {

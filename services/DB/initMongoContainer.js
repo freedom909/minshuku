@@ -1,18 +1,16 @@
 // services/DB/initMongoContainer.js
-import pkg from 'mongodb';
-const { MongoClient } = pkg;
-import { createContainer, asClass, asValue } from 'awilix';
+import mongoose from 'mongoose';
 import connectToMongoDB from './connectMongoDB.js';
 
 const initMongoContainer = async () => {
   try {
-    const mongodb = await connectToMongoDB();
-    console.log('MongoDB Database connected');
-    return mongodb; // ✅ return the actual DB instance
+    const connection = await connectToMongoDB();
+    console.log('MongoDB Database connected via Mongoose');
+    return connection;
   } catch (err) {
     console.error('Error connecting to MongoDB:', err);
+    throw err;
   }
 };
 
 export default initMongoContainer;
-

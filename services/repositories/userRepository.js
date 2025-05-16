@@ -66,7 +66,28 @@ class UserRepository {
   }
   
   async getUserByEmailFromDb(email) {
-    return await this.model.findOne({ email });
+    try {
+      if (!email || typeof email !== 'string') {
+        throw new TypeError('Email must be a valid string');
+      }
+      
+      console.log('Searching user by email:', email);
+      const user = await this.model.findOne({ email: email.toLowerCase().trim() });
+      
+      if (!user) {
+        console.log('No user found for email:', email);
+      } else {
+        console.log('User found:', { 
+          id: user._id?.toString(),
+          email: user.email 
+        });
+      }
+      
+      return user;
+    } catch (error) {
+      console.error('Error in getUserByEmailFromDb:', error);
+      throw error;
+    }
   }
 
   async findUserByProvider({ email, provider }) {
@@ -93,17 +114,36 @@ class UserRepository {
   }
 
   async checkPassword(password, hashedPassword) {
-    if (typeof password !== 'string' || typeof hashedPassword !== 'string') {
-      throw new TypeError('Arguments must be strings');
+    try {
+      if (typeof password !== 'string' || typeof hashedPassword !== 'string') {
+        throw new TypeError('Password and hash must be strings');
+      }
+      
+      if (password.length < 8) {
+        throw new Error('Password too short');
+      }
+      
+      const isValid = await bcrypt.compare(password, hashedPassword);
+      console.log('Password validation result:', isValid);
+      return isValid;
+    } catch (error) {
+      console.error('Error in checkPassword:', error);
+      throw error;
     }
-    return await bcrypt.compare(password, hashedPassword);
   }
 
   async hashPassword(password) {
-    if (typeof password !== 'string') {
-      throw new TypeError('Password must be a string');
+    try {
+      if (typeof password !== 'string' || password.length < 8) {
+        throw new Error('Password must be at least 8 characters');
+      }
+      
+      const saltRounds = 12; // Increased from 10 for better security
+      return await bcrypt.hash(password, saltRounds);
+    } catch (error) {
+      console.error('Error in hashPassword:', error);
+      throw error;
     }
-    return await bcrypt.hash(password, 10);
   }
 
   async generateToken(user) {

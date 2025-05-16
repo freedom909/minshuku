@@ -28,7 +28,7 @@ const createApolloServer = (container) => {
           return {
             async drainServer() {
               console.log('Draining server...');
-              await container.resolve('mongodb').end(); // Ensure proper cleanup
+              await mongoose.disconnect(); // Ensure proper cleanup with Mongoose
             },
           };
         },
@@ -77,9 +77,12 @@ const startApolloServer = async () => {
         context: async ({ req }) => createContext({ req, container }),
         onHealthCheck: async () => {
           try {
-            // Check MongoDB connection status
-            const db = container.resolve('mongodb'); // Use the MongoDB connection from the container
-            await db.command({ ping: 1 }); // Ping the database to check connection status
+            // Check MongoDB connection status using Mongoose
+            const mongooseConn = mongoose.connection;
+            if (mongooseConn.readyState !== 1) { // 1 means connected
+              throw new Error('MongoDB connection not ready');
+            }
+            await mongooseConn.db.admin().ping(); // Ping using Mongoose
             return true; // Return true if the connection is healthy
           } catch (error) {
             console.error('Health check failed:', error);

@@ -35,7 +35,9 @@ interface Response {
 interface User @key(fields: "id") {
   id: ID!
   email: String! 
-  name: String!
+  fullName: String
+  firstName: String!
+  lastName: String!
   role: Role!
   picture: String!
   nickname: String!
@@ -43,29 +45,40 @@ interface User @key(fields: "id") {
   oauthId: String!
 }
 
-# User Types
 type Guest implements User @key(fields: "id") {
   id: ID!
   email: String! @shareable
-  name: String! @shareable
+  fullName: String
+  firstName: String!
+  lastName: String!
   picture: String! @shareable
   nickname: String! @shareable
   role: Role! @shareable
   provider: OAuthProvider @shareable
   oauthId: String! @shareable
+  idToken: String! @shareable
+  accessToken: String! 
+  refreshToken: String 
 }
 
 type Host implements User @key(fields: "id") {
   id: ID!
   email: String! @shareable
-  name: String! @shareable
+  fullName: String
+  firstName: String!
+  lastName: String!
   picture: String! @shareable
   nickname: String! @shareable
   role: Role! @shareable
   provider: OAuthProvider @shareable
-  description: String @shareable
   oauthId: String! @shareable
+  idToken: String! @shareable
+  accessToken: String! 
+  refreshToken: String 
+  description: String @shareable
+  inviteCode: String! @shareable
 }
+
 
 # Input Types
 input SignInInput {
@@ -73,6 +86,10 @@ input SignInInput {
   password: String
   provider: OAuthProvider
   token: String
+  refreshToken: String
+  oauthId: String
+  idToken: String
+  accessToken: String
 }
 
 input SignUpInput {
@@ -99,12 +116,13 @@ type AuthPayload {
 }
 
 type SignInResponse implements Response {
-  code: Int! @shareable
+ code: Int! @shareable
   success: Boolean! @shareable
   message: String! @shareable
-  token: String! @shareable
-  userId: ID! @shareable
+  auth: AuthPayload @shareable
+  refreshToken: String @shareable
   role: Role! @shareable
+  userId: ID @shareable
 }
 
 # Password and Invite Management

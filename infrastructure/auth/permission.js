@@ -11,31 +11,31 @@ const isAuthenticated = rule()(async (parent, args, ctx, info) => {
 
 // Rule to check if the user is an admin
 const isAdmin = rule()(async (parent, args, ctx, info) => {
-  const user = await User.findOne({ where: { id: ctx.user.id } });
+  const user = await User.findById(ctx.user.id);
   return user && user.role === 'ADMIN';
 });
 
 // Rule to check if the user is the owner of the booking
 const isOwner = rule()(async (parent, args, ctx, info) => {
-  const booking = await Booking.findOne({ where: { id: args.id } });
-  return booking && booking.guestId === ctx.user.id;
+  const booking = await Booking.findById(args.id);
+  return booking && booking.guestId.toString() === ctx.user.id;
 });
 
 // Rule to check if the user is a host
 const isHost = rule()(async (parent, args, ctx, info) => {
-  const user = await User.findOne({ where: { id: ctx.user.id } });
+  const user = await User.findById(ctx.user.id);
   return user && user.role === 'HOST';
 });
 
 const isHostOfListing = rule()(async (_, __, ctx, info) => {
-  const listing = await Listing.findOne({ where: { id: __.id } })
-  return listing && listing.hostId === ctx.user.id
-})
+  const listing = await Listing.findById(__.id);
+  return listing && listing.hostId.toString() === ctx.user.id;
+});
 
 const isGuest = rule()(async (_, __, ctx, info) => {
-  const user = await User.findOne({ where: { id: ctx.user.id } })
-  return user && user.role === 'GUEST'
-})
+  const user = await User.findById(ctx.user.id);
+  return user && user.role === 'GUEST';
+});
 // Permissions
 // Define bookingsWithPermission and listingsWithPermission
 const bookingsWithPermission = or(isAdmin, isOwner);
