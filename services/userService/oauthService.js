@@ -338,7 +338,7 @@ class OAuthService extends RESTDataSource {
         if (user) {
           console.log("Existing user found");
           // 更新用户的OAuth信息
-          user = await this.userRepository.updateUser(user._id, {
+          user = await this.userRepository.findByIdAndUpdate(user._id, {
             lastLogin: new Date(),
             picture: userInfo.picture?.data?.url || userInfo.picture || user.picture,
             [`${normalizedProvider.toLowerCase()}Id`]: userInfo.sub || userInfo.id,
@@ -499,13 +499,27 @@ class OAuthService extends RESTDataSource {
 
       if (user) {
         console.log("Updating existing user:", user._id.toString());
-        // 更新用户信息
-        user = await this.userRepository.updateUser(user._id, {
+        
+        // 准备更新数据
+        const updateData = {
           lastLogin: new Date(),
-          picture: providerUserInfo.picture?.data?.url || providerUserInfo.picture || user.picture,
-          [`${(providerUserInfo.provider || 'oauth').toLowerCase()}Id`]: providerUserInfo.oauthId,
           isEmailVerified: true
-        });
+        };
+        
+        // 可选更新字段
+        if (providerUserInfo.picture) {
+          updateData.picture = providerUserInfo.picture?.data?.url || providerUserInfo.picture;
+        }
+        
+        if (providerUserInfo.provider && providerUserInfo.oauthId) {
+          updateData[`${providerUserInfo.provider.toLowerCase()}Id`] = providerUserInfo.oauthId;
+        }
+
+        // 使用 findByIdAndUpdate 替代 updateUser
+        user = await this.userRepository.findByIdAndUpdate(
+          user._id,
+          updateData
+        );
       } else {
         console.log("Creating new user for provider:", providerUserInfo.provider);
         // 创建新用户

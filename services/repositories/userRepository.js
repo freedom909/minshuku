@@ -42,6 +42,72 @@ class UserRepository {
     }
   }
 
+  async updateUser(id, updateData) {
+    try {
+      const startTime = Date.now();
+      const logData = {
+        userId: id,
+        action: 'updateUser',
+        timestamp: new Date().toISOString()
+      };
+      
+      if (!id) {
+        const error = new Error('User ID is required for update');
+        logData.error = error.message;
+        console.error(JSON.stringify(logData));
+        throw error;
+      }
+      
+      // 监控数据
+      logData.updateFields = Object.keys(updateData).filter(k => k !== 'password');
+      
+      // 移除敏感字段，除非明确要更新它们
+      const safeUpdateData = { ...updateData };
+      if (!safeUpdateData.password) {
+        delete safeUpdateData.password;
+      }
+      
+      const updatedUser = await this.model.findByIdAndUpdate(
+        id, 
+        { 
+          $set: safeUpdateData,
+          $inc: { version: 1 } // 乐观并发控制
+        },
+        { 
+          new: true,
+          runValidators: true,
+          // 确保版本匹配
+          ...(safeUpdateData.version && { 
+            version: safeUpdateData.version 
+          })
+        }
+      );
+      
+      if (!updatedUser) {
+        const error = new Error(`User not found with ID: ${id}`);
+        logData.error = error.message;
+        console.error(JSON.stringify(logData));
+        throw error;
+      }
+      
+      // 记录性能指标
+      logData.durationMs = Date.now() - startTime;
+      logData.status = 'success';
+      console.log(JSON.stringify(logData));
+      
+      return updatedUser;
+    } catch (error) {
+      console.error(JSON.stringify({
+        userId: id,
+        action: 'updateUser',
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      }));
+      throw error;
+    }
+  }
+
   async findByIdAndDelete(id) {
     try {
       return await this.model.findByIdAndDelete(id);
