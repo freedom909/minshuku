@@ -1,6 +1,7 @@
 import { GraphQLError } from 'graphql';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 import { loginValidate } from '../infrastructure/helpers/loginValidator.js';
 import runValidations from '../infrastructure/helpers/runValidations.js';
@@ -8,31 +9,173 @@ import validateInviteCode from '../infrastructure/helpers/validateInvitecode.js'
 
 dotenv.config();
 
+// Configure rate limiting for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later'
+});
+
+// Validate JWT_SECRET is properly configured
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'default') {
+  throw new Error('JWT_SECRET is not properly configured');
+}
+
 const resolvers = {
   Query: {
     user: async (_, { id }, { dataSources }) => {
-      const { localAuthService } = dataSources.userService;
-      const user = await localAuthService.getUserFromDb(id);
-      if (!user) throw new GraphQLError("No user found", { extensions: { code: "NO_USER_FOUND" } });
-      return user;
+      try {
+        if (!id) {
+          throw new GraphQLError('User ID is required', {
+            extensions: { code: 'BAD_USER_INPUT' }
+          });
+        }
+
+        const { localAuthService } = dataSources.userService;
+        const user = await localAuthService.getUserFromDb(id);
+        
+        if (!user) {
+          throw new GraphQLError('User not found', { 
+            extensions: { 
+              code: 'NOT_FOUND',
+              id 
+            }
+          });
+        }
+        
+        return user;
+      } catch (error) {
+        console.error('Error in user query:', error);
+        throw error;
+      }
+    },
+
+    users: async (_, __, { dataSources }) => {
+      try {
+        const { localAuthService } = dataSources.userService;
+        return await localAuthService.getAllUsers();
+      } catch (error) {
+        console.error('Error in users query:', error);
+        throw new GraphQLError('Failed to fetch users', {
+          extensions: { code: 'INTERNAL_SERVER_ERROR' }
+        });
+      }
     },
 
     getUserByEmail: async (_, { email }, { dataSources }) => {
-      return dataSources.userService.localAuthService.getUserByEmailFromDb(email);
+      try {
+        if (!email) {
+          throw new GraphQLError('Email is required', {
+            extensions: { code: 'BAD_USER_INPUT' }
+          });
+        }
+
+        const user = await dataSources.userService.localAuthService.getUserByEmailFromDb(email);
+        if (!user) {
+          throw new GraphQLError('User not found', {
+            extensions: { code: 'NOT_FOUND' }
+          });
+        }
+        return user;
+      } catch (error) {
+        console.error('Error in getUserByEmail:', error);
+        throw error;
+      }
     },
 
     me: async (_, __, { dataSources, userId }) => {
-      if (!userId) {
-        throw new GraphQLError("User not authenticated", {
-          extensions: { code: "BAD_REQUEST_ERROR" },
-        });
+      try {
+        if (!userId) {
+          throw new GraphQLError('Authentication required', {
+            extensions: { 
+              code: 'UNAUTHORIZED',
+              message: 'Please login to access this resource'
+            }
+          });
+        }
+
+        const user = await dataSources.userService.localAuthService.getUserFromDb(userId);
+        if (!user) {
+          throw new GraphQLError('User session invalid', {
+            extensions: { code: 'INVALID_SESSION' }
+          });
+        }
+
+        return user;
+      } catch (error) {
+        console.error('Error in me query:', error);
+        throw error;
       }
-      return dataSources.userService.localAuthService.getUserFromDb(userId);
     },
   },
 
   Mutation: {
-    signIn: async (_, { input }, { dataSources }) => {
+    createUser: async (_, { name, email }, { dataSources }) => {
+      try {
+        if (!name || !email) {
+          throw new GraphQLError('Name and email are required', {
+            extensions: { code: 'BAD_USER_INPUT' }
+          });
+        }
+
+        const { localAuthService } = dataSources.userService;
+        const newUser = await localAuthService.createUser({ name, email });
+        
+        return newUser;
+      } catch (error) {
+        console.error('Error in createUser:', error);
+        throw new GraphQLError('Failed to create user', {
+          extensions: { 
+            code: 'CREATE_FAILED',
+            error: error.message 
+          }
+        });
+      }
+    },
+
+    updateUser: async (_, { id, name }, { dataSources }) => {
+      try {
+        if (!id) {
+          throw new GraphQLError('User ID is required', {
+            extensions: { code: 'BAD_USER_INPUT' }
+          });
+        }
+
+        const { localAuthService } = dataSources.userService;
+        const updatedUser = await localAuthService.updateUser(id, { name });
+        
+        if (!updatedUser) {
+          throw new GraphQLError('User not found', {
+            extensions: { code: 'NOT_FOUND' }
+          });
+        }
+
+        return updatedUser;
+      } catch (error) {
+        console.error('Error in updateUser:', error);
+        throw new GraphQLError('Failed to update user', {
+          extensions: { 
+            code: 'UPDATE_FAILED',
+            error: error.message 
+          }
+        });
+      }
+    },
+
+    signIn: async (_, { input }, { dataSources, req }) => {
+      // Apply rate limiting
+      try {
+        await new Promise((resolve, reject) => {
+          authLimiter(req, {}, (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      } catch (rateLimitError) {
+        throw new GraphQLError(rateLimitError.message, {
+          extensions: { code: 'TOO_MANY_REQUESTS' }
+        });
+      }
       try {
         const {
           email,
@@ -126,14 +269,8 @@ const resolvers = {
           });
         }
 
-        // 验证 JWT_SECRET 是否已正确配置
+        // JWT_SECRET is already validated at startup
         const jwtSecret = process.env.JWT_SECRET;
-        if (!jwtSecret || jwtSecret === "default") {
-          console.error('JWT_SECRET not properly configured');
-          throw new GraphQLError("Server configuration error", {
-            extensions: { code: "CONFIGURATION_ERROR" }
-          });
-        }
 
         try {
           console.log('Generating JWT token for user:', user._id.toString());
@@ -184,23 +321,56 @@ const resolvers = {
     },
     
 
-    signUp: async (_, { input }, { dataSources }) => {
-      const { localAuthService, tokenService } = dataSources.userService;
-
-      await runValidations(input);
-
-      const { email, password, name, nickname, role, inviteCode, picture } = input;
-
-      if (role === 'HOST') {
-        const isValidInviteCode = await validateInviteCode(inviteCode);
-        if (!isValidInviteCode) {
-          throw new GraphQLError('Invalid invite code', {
-            extensions: { code: 'BAD_USER_INPUT' },
+    signUp: async (_, { input }, { dataSources, req }) => {
+      // Apply rate limiting
+      try {
+        await new Promise((resolve, reject) => {
+          authLimiter(req, {}, (err) => {
+            if (err) reject(err);
+            else resolve();
           });
-        }
+        });
+      } catch (rateLimitError) {
+        throw new GraphQLError(rateLimitError.message, {
+          extensions: { code: 'TOO_MANY_REQUESTS' }
+        });
       }
 
       try {
+        const { localAuthService, tokenService } = dataSources.userService;
+        
+        // Validate input
+        await runValidations(input);
+        const { email, password, name, nickname, role, inviteCode, picture } = input;
+
+        // Additional validation for HOST role
+        if (role === 'HOST') {
+          if (!inviteCode) {
+            throw new GraphQLError('Invite code is required for HOST role', {
+              extensions: { code: 'BAD_USER_INPUT' }
+            });
+          }
+          
+          const isValidInviteCode = await validateInviteCode(inviteCode);
+          if (!isValidInviteCode) {
+            throw new GraphQLError('Invalid invite code', {
+              extensions: { 
+                code: 'INVALID_INVITE_CODE',
+                inviteCode 
+              }
+            });
+          }
+        }
+
+        // Check if user already exists
+        const existingUser = await localAuthService.getUserByEmailFromDb(email);
+        if (existingUser) {
+          throw new GraphQLError('Email already registered', {
+            extensions: { code: 'DUPLICATE_EMAIL' }
+          });
+        }
+
+        // Create new user
         const newUser = await localAuthService.register({
           email,
           password,
@@ -210,7 +380,11 @@ const resolvers = {
           picture,
         });
 
+        // Generate token
         const token = await tokenService.generateToken(newUser);
+
+        // Log successful registration
+        console.log(`New user registered: ${email} (${newUser._id})`);
 
         return {
           userId: newUser._id.toString(),
@@ -219,29 +393,69 @@ const resolvers = {
         };
       } catch (error) {
         console.error('Error during signUp:', error);
-        throw new GraphQLError('User registration failed', {
-          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        
+        // Handle duplicate email error specifically
+        if (error.message.includes('duplicate') && error.message.includes('email')) {
+          throw new GraphQLError('Email already registered', {
+            extensions: { code: 'DUPLICATE_EMAIL' }
+          });
+        }
+
+        // Re-throw GraphQLError as is
+        if (error instanceof GraphQLError) {
+          throw error;
+        }
+
+        throw new GraphQLError('Registration failed: ' + error.message, {
+          extensions: { 
+            code: 'REGISTRATION_FAILED',
+            error: error.message 
+          }
         });
       }
     },
 
-    logout: async (_, { provider }, { dataSources, session }) => {
+    logout: async (_, { provider }, { dataSources, session, userId }) => {
       try {
-        const { oauthService } = dataSources.userService;
+        console.log(`Logout requested for user ${userId} (provider: ${provider || 'none'})`);
+        
+        const { oauthService, sessionService } = dataSources.userService;
 
+        // Revoke provider token if specified
         if (provider) {
-          await oauthService.revokeProviderToken(provider);
+          try {
+            await oauthService.revokeProviderToken(provider);
+            console.log(`Successfully revoked ${provider} token`);
+          } catch (revokeError) {
+            console.error(`Failed to revoke ${provider} token:`, revokeError);
+            // Continue with logout even if provider token revocation fails
+          }
         }
 
+        // Destroy session if exists
         if (session) {
           return new Promise((resolve, reject) => {
-            session.destroy(err => {
+            session.destroy(async (err) => {
               if (err) {
-                reject(new GraphQLError('Session termination failed', {
-                  extensions: { code: 'SESSION_ERROR' },
+                console.error('Session destruction error:', err);
+                reject(new GraphQLError('Failed to destroy session', {
+                  extensions: { 
+                    code: 'SESSION_ERROR',
+                    error: err.message 
+                  }
                 }));
               } else {
-                resolve(true);
+                try {
+                  // Clean up any expired sessions
+                  if (sessionService && sessionService.cleanExpiredSessions) {
+                    await sessionService.cleanExpiredSessions(userId);
+                  }
+                  console.log(`Session destroyed and cleaned for user ${userId}`);
+                  resolve(true);
+                } catch (cleanError) {
+                  console.error('Session cleanup error:', cleanError);
+                  resolve(true); // Still resolve as logout succeeded
+                }
               }
             });
           });
@@ -250,43 +464,101 @@ const resolvers = {
         return true;
       } catch (error) {
         console.error('Error during logout:', error);
-        throw error;
+        throw new GraphQLError('Logout failed', {
+          extensions: { 
+            code: 'LOGOUT_FAILED',
+            error: error.message 
+          }
+        });
       }
     },
 
-    forgotPassword: async (_, { email }, { dataSources }) => {
+    forgotPassword: async (_, { email }, { dataSources, req }) => {
+      // Apply rate limiting
+      try {
+        await new Promise((resolve, reject) => {
+          authLimiter(req, {}, (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      } catch (rateLimitError) {
+        throw new GraphQLError(rateLimitError.message, {
+          extensions: { code: 'TOO_MANY_REQUESTS' }
+        });
+      }
+
       try {
         if (!email) {
-          throw new GraphQLError("Email is required", {
-            extensions: { code: "BAD_USER_INPUT" },
+          throw new GraphQLError('Email is required', {
+            extensions: { code: 'BAD_USER_INPUT' }
           });
         }
 
-        const { localAuthService } = dataSources.userService;
+        const { localAuthService, accountLockService } = dataSources.userService;
+        
+        // Check if account is temporarily locked
+        if (accountLockService && await accountLockService.isAccountLocked(email)) {
+          throw new GraphQLError('Account temporarily locked due to too many attempts', {
+            extensions: { 
+              code: 'ACCOUNT_LOCKED',
+              retryAfter: await accountLockService.getLockTimeRemaining(email)
+            }
+          });
+        }
+
         const user = await localAuthService.getUserByEmailFromDb(email);
 
         if (!user) {
-          throw new GraphQLError("User not found", {
-            extensions: { code: "BAD_USER_INPUT" },
-          });
+          // Don't reveal whether email exists for security
+          console.log(`Password reset requested for non-existent email: ${email}`);
+          return {
+            code: 200,
+            success: true,
+            message: 'If an account exists, a password reset link has been sent',
+            email: email
+          };
         }
 
-        const token = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET || "default", {
-          expiresIn: "30m",
-        });
+        // Track password reset attempt
+        if (accountLockService) {
+          await accountLockService.recordAttempt(email);
+        }
 
-        await localAuthService.sendLinkToUser(user.email, token);
+        // Generate secure reset token
+        const resetToken = jwt.sign(
+          { 
+            id: user._id.toString(),
+            purpose: 'password_reset' 
+          }, 
+          process.env.JWT_SECRET,
+          { expiresIn: '30m' }
+        );
+
+        // Send reset email
+        await localAuthService.sendPasswordResetEmail(user.email, resetToken);
+
+        console.log(`Password reset email sent to: ${email}`);
 
         return {
           code: 200,
           success: true,
-          message: "Password reset link sent",
-          email: user.email,
+          message: 'Password reset link sent',
+          email: user.email
         };
       } catch (error) {
         console.error('Error in forgotPassword:', error);
-        throw new GraphQLError('Internal Server Error', {
-          extensions: { code: 'INTERNAL_SERVER_ERROR' },
+        
+        // Handle account locked error specifically
+        if (error.extensions?.code === 'ACCOUNT_LOCKED') {
+          throw error;
+        }
+
+        throw new GraphQLError('Failed to process password reset', {
+          extensions: { 
+            code: 'RESET_FAILED',
+            error: error.message 
+          }
         });
       }
     },

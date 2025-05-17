@@ -4,6 +4,11 @@ extend schema
     import: ["@key", "@shareable", "@external"]
   )
 
+schema {
+  query: Query
+  mutation: Mutation
+}
+
 # Enums
 enum Role {
   ADMIN
@@ -15,7 +20,6 @@ enum OAuthProvider {
   GOOGLE
   FACEBOOK
   APPLE
-  # Future: Add more here easily
 }
 
 # Scalars
@@ -24,61 +28,58 @@ scalar _Any
 
 # Interfaces
 interface Response {
-  "Represents the status of the response"
   code: Int!
-  "Indicates whether the operation was successful"
   success: Boolean!
-  "Human-readable message for UI"
   message: String!
 }
 
 interface User @key(fields: "id") {
   id: ID!
-  email: String! 
-  fullName: String
-  firstName: String!
-  lastName: String!
-  role: Role!
-  picture: String!
-  nickname: String!
-  provider: OAuthProvider
-  oauthId: String!
+  email: String! @shareable
+  fullName: String @shareable
+  firstName: String! @shareable
+  lastName: String! @shareable
+  role: Role! @shareable
+  picture: String! @shareable
+  nickname: String! @shareable
+  provider: OAuthProvider @shareable
+  oauthId: String! @shareable
 }
 
+# Entity Types
 type Guest implements User @key(fields: "id") {
   id: ID!
   email: String! @shareable
-  fullName: String
-  firstName: String!
-  lastName: String!
+  fullName: String @shareable
+  firstName: String! @shareable
+  lastName: String! @shareable
   picture: String! @shareable
   nickname: String! @shareable
   role: Role! @shareable
   provider: OAuthProvider @shareable
   oauthId: String! @shareable
   idToken: String! @shareable
-  accessToken: String! 
-  refreshToken: String 
+  accessToken: String! @shareable
+  refreshToken: String @shareable
 }
 
 type Host implements User @key(fields: "id") {
   id: ID!
   email: String! @shareable
-  fullName: String
-  firstName: String!
-  lastName: String!
+  fullName: String @shareable
+  firstName: String! @shareable
+  lastName: String! @shareable
   picture: String! @shareable
   nickname: String! @shareable
   role: Role! @shareable
   provider: OAuthProvider @shareable
   oauthId: String! @shareable
   idToken: String! @shareable
-  accessToken: String! 
-  refreshToken: String 
+  accessToken: String! @shareable
+  refreshToken: String @shareable
   description: String @shareable
   inviteCode: String! @shareable
 }
-
 
 # Input Types
 input SignInInput {
@@ -108,7 +109,7 @@ input UpdatePasswordInput {
   password: String!
 }
 
-# Auth Response Types
+# Response Types
 type AuthPayload {
   token: String! @shareable
   userId: ID! @shareable
@@ -116,7 +117,7 @@ type AuthPayload {
 }
 
 type SignInResponse implements Response {
- code: Int! @shareable
+  code: Int! @shareable
   success: Boolean! @shareable
   message: String! @shareable
   auth: AuthPayload @shareable
@@ -125,7 +126,6 @@ type SignInResponse implements Response {
   userId: ID @shareable
 }
 
-# Password and Invite Management
 type ReqResetPwdResponse implements Response {
   code: Int! @shareable
   success: Boolean! @shareable
@@ -148,23 +148,21 @@ type InviteCodeResponse implements Response {
 
 # Queries and Mutations
 type Mutation {
-  signUp(input: SignUpInput!): AuthPayload!
-  signIn(input: SignInInput!): SignInResponse!
-  updatePassword(newPassword: String!, password: String!, userId: ID!): AuthPayload!
-  requestResetPassword(email: String!): ReqResetPwdResponse!
-  forgotPassword(email: String!): ForgotPasswordResponse!
-  sendInviteCode(email: String!): InviteCodeResponse!
-  logout(provider: OAuthProvider): Boolean!
+  signUp(input: SignUpInput!): AuthPayload! @shareable
+  signIn(input: SignInInput!): SignInResponse! @shareable
+  updatePassword(input: UpdatePasswordInput!): AuthPayload! @shareable
+  requestResetPassword(email: String!): ReqResetPwdResponse! @shareable
+  forgotPassword(email: String!): ForgotPasswordResponse! @shareable
+  sendInviteCode(email: String!): InviteCodeResponse! @shareable
+  logout(provider: OAuthProvider): Boolean! @shareable
+  createUser(name: String!, email: String!): User @shareable
+  updateUser(id: ID!, name: String): User @shareable
 }
 
 type Query {
   getUser(id: ID!): User @shareable
-  myProtectedData: ProtectedData!
-}
-
-type ProtectedData {
-  message: String!
-  userId: ID!
+  user(id: ID!): User @shareable
+  users: [User]! @shareable
 }
 
 # Federation

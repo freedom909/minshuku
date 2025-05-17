@@ -2,10 +2,16 @@
 import { GraphQLError } from 'graphql';
 
 class UserService {
-  constructor({ localAuthService = null, oauthService = null, tokenService }) {
+  constructor({ 
+    localAuthService = null, 
+    oauthService = null, 
+    tokenService,
+    accountLockService = null 
+  }) {
     this.localAuthService = localAuthService;
     this.oauthService = oauthService;
     this.tokenService = tokenService;
+    this.accountLockService = accountLockService;
   }
 
   async login(email, password) {
@@ -28,13 +34,42 @@ class UserService {
         });
       }
 
+      // 检查账户是否被锁定
+      if (this.accountLockService) {
+        const isLocked = await this.accountLockService.isAccountLocked(email);
+        if (isLocked) {
+          const retryAfter = await this.accountLockService.getLockTimeRemaining(email);
+          throw new GraphQLError('Account temporarily locked due to too many failed attempts', {
+            extensions: {
+              code: 'ACCOUNT_LOCKED',
+              retryAfter
+            }
+          });
+        }
+      }
+
       // 尝试登录
       console.log('Attempting local login for email:', email);
       const user = await this.localAuthService.login(email, password);
 
+      // 登录成功后清除失败尝试记录
+      if (this.accountLockService) {
+        await this.accountLockService.clearAttempts(email);
+      }
+
       if (!user || !user._id) {
+        // 记录失败尝试
+        if (this.accountLockService) {
+          await this.accountLockService.recordAttempt(email);
+        }
+        
         throw new GraphQLError('Invalid credentials', {
-          extensions: { code: 'INVALID_CREDENTIALS' }
+          extensions: { 
+            code: 'INVALID_CREDENTIALS',
+            attemptsRemaining: this.accountLockService 
+              ? this.accountLockService.MAX_ATTEMPTS - await this.accountLockService.getAttemptCount(email)
+              : null
+          }
         });
       }
 
