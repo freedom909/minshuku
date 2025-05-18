@@ -194,7 +194,7 @@ type _Service {
 
 scalar _Any
 
-union _Entity = Listing | Host | Guest | Booking | Cart
+
 
 type Query {
   getUser(id: ID!): User @shareable
@@ -216,7 +216,7 @@ type Query {
   "Cart of the currently logged-in user."
   carts: [Cart]! @shareable
   _service: _Service!
-  _entities(representations: [_Any!]!): [_Entity]!
+  _entities(representations: [_Any!]!)
 }
 
 type Mutation {

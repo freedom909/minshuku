@@ -38,7 +38,7 @@ const PROVIDERS = {
         });
         return ticket.getPayload();
       } catch (error) {
-        throw new Error("Invalid Google token");
+        throw new Error("Invalid Google token");// errorr here
       }
     },
     validateUrl: (token) =>
@@ -93,6 +93,42 @@ class OAuthService extends RESTDataSource {
     this.tokenService = tokenService;
     this.userRepository = userRepository;
   }
+
+  async validateGoogleToken(token) {
+    try {
+      const parts = token.split('.');
+      
+      if (parts.length === 3) {
+        // ID token
+        const userPayload = await PROVIDERS.GOOGLE.decode(token);
+        console.log("✅ Decoded Google ID token payload:", userPayload);
+        return userPayload;
+      } else {
+        // Access token
+        console.log("⚠️ Access token detected, fetching user info...");
+        const response = await fetch(PROVIDERS.GOOGLE.userInfo.url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error("❌ Failed to fetch user info:", errorData);
+          throw new Error("Invalid Google access token");
+        }
+  
+        const userInfo = await response.json();
+        console.log("✅ Google user info:", userInfo);
+        return userInfo;
+      }
+    } catch (error) {
+      console.error("❌ Error validating Google token:", error);
+      throw new Error("Invalid Google token");
+    }
+  }
+  
+  
 
   normalizeProvider(provider) {
     if (!provider) {
@@ -389,31 +425,7 @@ class OAuthService extends RESTDataSource {
     }
   }
 
-  async validateGoogleToken(idToken) {
-    console.log("validateGoogleToken:", idToken);
-    try {
-      const { data } = await axios.get(
-        `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
-      );
-      console.log("data:", data); //no output, I didn't get any data from the api, do you find the data?
-      if (!data || !data.aud) return false;
-      console.log("data.aud:", data.aud);
-      console.log("env.CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
-      // Verify audience to ensure it matches your Google client ID for web applicatio
-      const expectedAud = process.env.GOOGLE_CLIENT_ID;
-      
-
-      if (data.aud !== expectedAud) {
-        console.warn("Invalid audience:", data.aud);
-        return false;
-      }
-
-      return true;
-    } catch (err) {
-      console.error("Google token validation failed:", err.message);
-      return false;
-    }
-  }
+ 
 
   async validateFacebookToken(token) {
     try {
@@ -499,11 +511,15 @@ class OAuthService extends RESTDataSource {
 
       if (user) {
         console.log("Updating existing user:", user._id.toString());
-        
+        if (!user.role) {
+          // Set default role, or throw an error
+          user.role = 'GUEST';
+        }
         // 准备更新数据
         const updateData = {
           lastLogin: new Date(),
-          isEmailVerified: true
+          isEmailVerified: true,
+          userRole: user.role,
         };
         
         // 可选更新字段
@@ -520,6 +536,7 @@ class OAuthService extends RESTDataSource {
           user._id,
           updateData
         );
+     
       } else {
         console.log("Creating new user for provider:", providerUserInfo.provider);
         // 创建新用户
@@ -529,7 +546,7 @@ class OAuthService extends RESTDataSource {
           email: providerUserInfo.email,
           fullName: providerUserInfo.name || 'Anonymous',
           picture: providerUserInfo.picture?.data?.url || providerUserInfo.picture,
-          role: "GUEST"
+          role: providerUserInfo.role ||'GUEST',
         });
       }
 
