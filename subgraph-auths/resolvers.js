@@ -2,10 +2,11 @@ import { GraphQLError } from "graphql";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
-
+import UserRepository from "../services/repositories/userRepository.js";
 import { loginValidate } from "../infrastructure/helpers/loginValidator.js";
 import runValidations from "../infrastructure/helpers/runValidations.js";
 import validateInviteCode from "../infrastructure/helpers/validateInvitecode.js";
+
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "default") {
 
 const resolvers = {
   Query: {
-    user: async (_, { id }, { dataSources }) => {
+    user: async (_, { id }, { container }) => {
       try {
         if (!id) {
           throw new GraphQLError("User ID is required", {
@@ -31,8 +32,7 @@ const resolvers = {
           });
         }
 
-        const { localAuthService } = dataSources.userService;
-        const user = await localAuthService.getUserFromDb(id);
+        const user = await container.resolve('userRepository').getUserById(id); 
 
         if (!user) {
           throw new GraphQLError("User not found", {
@@ -71,7 +71,7 @@ const resolvers = {
         }
 
         const user =
-          await dataSources.userService.localAuthService.getUserByEmailFromDb(
+          await UserRepository.localAuthService.getUserByEmailFromDb(
             email
           );
         if (!user) {
@@ -86,7 +86,7 @@ const resolvers = {
       }
     },
 
-    me: async (_, __, { dataSources, userId }) => {
+    me: async (_, __, { container, userId }) => {
       try {
         if (!userId) {
           throw new GraphQLError("Authentication required", {
@@ -97,8 +97,8 @@ const resolvers = {
           });
         }
 
-        const user =
-          await dataSources.userService.localAuthService.getUserFromDb(userId);
+        const user = await container.resolve('userRepository').getUserById(userId); ;
+
         if (!user) {
           throw new GraphQLError("User session invalid", {
             extensions: { code: "INVALID_SESSION" },

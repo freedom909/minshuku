@@ -231,19 +231,6 @@ class LocalAuthService extends RESTDataSource {
       throw new GraphQLError("Error deactivating user account", { extensions: { code: "INTERNAL_SERVER_ERROR" } });
     }
   }
-  async getUserByEmailFromDb(email) {
-    const user = await this.userRepository.getUserById(id);
-    if (!user) return null;
-    return {
-      _id: user._id.toString(),  // or id: user._id.toString(),
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      nickname: user.nickname,
-      picture: user.picture,
-      // add other necessary fields
-    };
-  }
 
   async updateUserRole(userId, role) {
     try {

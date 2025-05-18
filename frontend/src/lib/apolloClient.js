@@ -7,6 +7,7 @@ const client = new ApolloClient({
         credentials: "include", // Include cookies if authentication is needed
         middleware: [json()], // Add JSON middleware to parse request body
     }),
+    withCredentials: true, // Ensure cookies are sent with requests
     cache: new JSON.parse(JSON.stringify(new InMemoryCache())),
 });
 

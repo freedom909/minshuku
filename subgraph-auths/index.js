@@ -2,7 +2,7 @@ import express from 'express';
 import http from 'http';
 import { ApolloServer } from '@apollo/server';
 import { buildSubgraphSchema } from '@apollo/subgraph';
-import initUserContainer from '../services/DB/initUserContainer.js'; // Your container initialization function
+import initAuthContainer from '../services/DB/initAuthContainer.js'; // Your container initialization function
 import { readFileSync } from 'fs';
 import { gql } from 'graphql-tag';
 import resolvers from './resolvers.js';
@@ -43,8 +43,9 @@ const createContext = async ({ req, container }) => {
   const token = req.headers.authorization || '';
 
   return {
-    req,
+    //req,
     token,
+    container,
     dataSources: {
       userService: {
         localAuthService: container.resolve('localAuthService'),
@@ -59,7 +60,7 @@ const createContext = async ({ req, container }) => {
 const startApolloServer = async () => {
   try {
     // Ensure initUserContainer is executed
-    const container = await initUserContainer();
+    const container = await initAuthContainer();
     const app = express();
 
     // Apply express.json() middleware before Apollo Server middleware
@@ -79,8 +80,10 @@ const startApolloServer = async () => {
 
     app.use(
       '/graphql',
-      cors(),
-      
+      cors({
+        origin: ['http://localhost:3000'], // Your frontend URL
+        credentials: true
+      }),
       expressMiddleware(server, {
         context: async ({ req }) => createContext({ req, container }),
         onHealthCheck: async () => {
