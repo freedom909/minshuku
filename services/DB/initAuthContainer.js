@@ -65,7 +65,7 @@ const initAuthContainer = async () => {
       googleRedirectUri: asValue(process.env.GOOGLE_REDIRECT_URI),
     });
 
-    console.log("User container initialized successfully");
+    console.log("Auth container initialized successfully");
     return container;
   } catch (error) {
     console.error("Failed to initialize user container:", error);

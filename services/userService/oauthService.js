@@ -32,6 +32,8 @@ const PROVIDERS = {
   GOOGLE: {
     decode: async (token) => {
       try {
+        console.log('Expected Google Client ID:', process.env.GOOGLE_CLIENT_ID);
+
         const ticket = await googleClient.verifyIdToken({
           idToken: token,
           audience: process.env.GOOGLE_CLIENT_ID,
@@ -100,8 +102,11 @@ class OAuthService extends RESTDataSource {
       
       if (parts.length === 3) {
         // ID token
-        const userPayload = await PROVIDERS.GOOGLE.decode(token);
+        const userPayload = await PROVIDERS.GOOGLE.decode(token); // 
         console.log("✅ Decoded Google ID token payload:", userPayload);
+        if (!userPayload) {
+          throw new Error("Invalid Google ID token");// Invalid Google ID token
+        }
         return userPayload;
       } else {
         // Access token
@@ -124,7 +129,7 @@ class OAuthService extends RESTDataSource {
       }
     } catch (error) {
       console.error("❌ Error validating Google token:", error);
-      throw new Error("Invalid Google token");
+      throw new Error("Invalid Google token");// Invalid Google token
     }
   }
   

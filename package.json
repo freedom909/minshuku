@@ -34,6 +34,7 @@
     "kafkajs": "^2.2.4",
     "mongodb": "^6.8.0",
     "mongoose": "^8.5.1",
+    "morgan": "^1.10.0",
     "nodemailer": "^6.9.14",
     "paseto": "^3.1.4",
     "path": "^0.12.7",
