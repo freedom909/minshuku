@@ -8,13 +8,13 @@
  * 2. Then run: node verify-integration.js
  */
 
-const fetch = require('node-fetch');
-const { OAuth2Client } = require('google-auth-library');
-const fs = require('fs');
-const path = require('path');
+import fetch from 'node-fetch';
+import { OAuth2Client } from 'google-auth-library';
+import { writeFileSync } from 'fs';
+import path from 'path';
 
 // Configuration
-const BACKEND_URL = 'http://localhost:4001/graphql';
+const BACKEND_URL = 'http://localhost:4010/graphql';
 const FRONTEND_URL = 'http://localhost:3000';
 const TEST_REPORT_FILE = 'integration-test-report.json';
 
@@ -138,7 +138,7 @@ async function verifyIntegration() {
   }
 
   // Save test report
-  fs.writeFileSync(TEST_REPORT_FILE, JSON.stringify(report, null, 2));
+  writeFileSync(TEST_REPORT_FILE, JSON.stringify(report, null, 2));
   logger.success(`Test report saved to ${TEST_REPORT_FILE}`);
 
   // Print summary

@@ -21,6 +21,7 @@ const typeDefs = gql(readFileSync("./schema.graphql", { encoding: "utf-8" }));
 const createApolloServer = (container) => {
   return new ApolloServer({
     schema: buildSubgraphSchema({ typeDefs, resolvers }),
+    csrfPrevention:false,
     formatError: (error) => {
       console.error("GraphQL Error:", error);
       return error;
@@ -87,14 +88,12 @@ const startApolloServer = async () => {
 
     // Optional: Log all incoming requests (headers + body)
     app.use((req, res, next) => {
-      console.log("Incoming request:", {
-        method: req.method,
-        url: req.url,
-        headers: req.headers,
-        body: req.body,
-      });
+      if (req.body?.operationName === 'validateOAuthToken' || req.body?.operationName === 'signIn') {
+        console.log(`[Filtered Log] Operation: ${req.body.operationName}`);
+      }
       next();
     });
+    
 
     // 🔹 Health check endpoint — MUST be placed outside Apollo middleware
     app.get("/health", async (req, res) => {
@@ -121,6 +120,7 @@ const startApolloServer = async () => {
         allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true,
       }),
+   
       expressMiddleware(server, {
          context: createContext(container),
       })

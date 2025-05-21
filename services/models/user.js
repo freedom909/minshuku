@@ -16,8 +16,8 @@ const userSchema = new Schema({
     type: Number,
     default: 0
   },
-  fullName: { 
-    type: String, 
+  name: {
+    type: String,
     required: true,
     trim: true
   },
@@ -42,14 +42,14 @@ const userSchema = new Schema({
   },
   provider: { 
     type: String, 
-    enum: ['GOOGLE', 'FACEBOOK', 'APPLE', 'LOCAL'] 
+    enum: ['GOOGLE', 'FACEBOOK', 'APPLE'] 
   },
   oauthId: { 
     type: String,
     unique: true,
     sparse: true // Allow null for non-OAuth users
   },
-  accessToken: { 
+  accessToken: { //it is not useful for now
     type: String,
     select: false 
   },

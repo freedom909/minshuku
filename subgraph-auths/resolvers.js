@@ -1,8 +1,8 @@
-import { GraphQLError } from 'graphql';
-import jwt from 'jsonwebtoken';
-import authLimiter from '../infrastructure/middleware/authLimiter.js'
-
-
+import { GraphQLError } from "graphql";
+import jwt from "jsonwebtoken";
+import authLimiter from "../infrastructure/middleware/authLimiter.js";
+import sendOAuthRequestToSubgraph from "./utils/sendOAuthRequestToSubgraph.js";
+import withTimeout from "./utils/withTimeout.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -12,15 +12,15 @@ import validateInviteCode from "../infrastructure/helpers/validateInvitecode.js"
 
 // Simple logger
 const logger = {
-  info: (msg, data) => console.log(`[INFO] ${msg}`, data || ''),
+  info: (msg, data) => console.log(`[INFO] ${msg}`, data || ""),
+  warn: (msg, data) => console.warn(`[WARN] ${msg}`, data || ""),
   error: (msg, err) => console.error(`[ERROR] ${msg}`, err),
-  debug: (msg, data) => console.log(`[DEBUG] ${msg}`, data || ''),
+  debug: (msg, data) => console.log(`[DEBUG] ${msg}`, data || ""),
 };
 
-
 // Ensure secret is set
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'default') {
-  throw new Error('JWT_SECRET is not properly configured');
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "default") {
+  throw new Error("JWT_SECRET is not properly configured");
 }
 
 const resolvers = {
@@ -33,7 +33,7 @@ const resolvers = {
           });
         }
 
-        const user = await container.resolve('userRepository').getUserById(id); 
+        const user = await container.resolve("userRepository").getUserById(id);
 
         if (!user) {
           throw new GraphQLError("User not found", {
@@ -53,7 +53,7 @@ const resolvers = {
 
     users: async (_, __, { container }) => {
       try {
-        const userRepository = container.resolve('userRepository');
+        const userRepository = container.resolve("userRepository");
 
         return await userRepository.getAllUsers();
       } catch (error) {
@@ -61,30 +61,6 @@ const resolvers = {
         throw new GraphQLError("Failed to fetch users", {
           extensions: { code: "INTERNAL_SERVER_ERROR" },
         });
-      }
-    },
-
-    getUserByEmail: async (_, { email }, { container }) => {
-      try {
-        if (!email) {
-          throw new GraphQLError("Email is required", {
-            extensions: { code: "BAD_USER_INPUT" },
-          });
-        }
-        const userRepository = container.resolve('userRepository');
-        const user =
-          await userRepository.getUserByEmailFromDb(
-            email
-          );
-        if (!user) {
-          throw new GraphQLError("User not found", {
-            extensions: { code: "NOT_FOUND" },
-          });
-        }
-        return user;
-      } catch (error) {
-        console.error("Error in getUserByEmail:", error);
-        throw error;
       }
     },
 
@@ -99,7 +75,9 @@ const resolvers = {
           });
         }
 
-        const user = await container.resolve('userRepository').getUserById(userId); ;
+        const user = await container
+          .resolve("userRepository")
+          .getUserById(userId);
 
         if (!user) {
           throw new GraphQLError("User session invalid", {
@@ -115,22 +93,22 @@ const resolvers = {
     },
   },
   Mutation: {
-    createUser: async (_, { name, email }, { container}) => {
+    createUser: async (_, { name, email }, { container }) => {
       try {
         if (!name || !email) {
           throw new GraphQLError("Name and email are required", {
             extensions: { code: "BAD_USER_INPUT" },
           });
         }
- const userRepository = container.resolve('userRepository');
+        const userRepository = container.resolve("userRepository");
         const existingUser = await userRepository.getUserByEmailFromDb(email);
         if (existingUser) {
           throw new GraphQLError("User with this email already exists", {
             extensions: { code: "CONFLICT" },
           });
         }
-      
-        const newUser = await localAuthService.createUser({ name, email });
+
+        const newUser = await userRepository.createUser({ name, email });
 
         return newUser;
       } catch (error) {
@@ -144,17 +122,16 @@ const resolvers = {
       }
     },
 
-    updateUser: async (_, { id}, { container}) => {
+    updateUser: async (_, { id }, { container }) => {
       try {
-        
         if (!id) {
           throw new GraphQLError("User ID is required", {
             extensions: { code: "BAD_USER_INPUT" },
           });
         }
 
-        const userRepository = container.resolve('userRepository');
-        const updatedUser = await userRepository.updateUser(id, { name });
+        const userRepository = container.resolve("userRepository");
+        const updatedUser = await userRepository.updateUser(id);
 
         if (!updatedUser) {
           throw new GraphQLError("User not found", {
@@ -173,12 +150,32 @@ const resolvers = {
         });
       }
     },
+    validateOAuthToken: async (_, { provider, token }) => {
+      console.log(
+        `[validateOAuthToken] Provider: ${provider}, Token: ${token}`
+      );
+
+      // Fake validation (replace with actual logic)
+      if (!provider || !token) {
+        throw new Error("Invalid provider or token");
+      }
+
+      // Simulate a success/failure case
+      if (provider === "GOOGLE" && token === "test-token") {
+        return true;
+      }
+      throw new GraphQLError("Invalid token", {
+        extensions: { code: "INVALID_TOKEN" },
+      });
+    },
     signIn: async (_, { input }, { dataSources, req }) => {
-      logger.info('signIn mutation called', {
+      logger.info("signIn mutation called", {
         provider: input?.provider,
         hasEmail: !!input?.email,
         hasPassword: !!input?.password,
         hasToken: !!input?.token,
+        oauthId: input?.oauthId,
+        refreshToken: input?.refreshToken,
       });
 
       try {
@@ -196,10 +193,10 @@ const resolvers = {
         });
       } catch (rateLimitError) {
         throw new GraphQLError(
-          rateLimitError.error?.message || 'Too many requests',
+          rateLimitError.error?.message || "Too many requests",
           {
             extensions: {
-              code: 'TOO_MANY_REQUESTS',
+              code: "TOO_MANY_REQUESTS",
               ip: rateLimitError.ip || req.ip,
             },
           }
@@ -207,116 +204,45 @@ const resolvers = {
       }
 
       if (!input) {
-        throw new GraphQLError('Input is required', {
-          extensions: { code: 'BAD_USER_INPUT' },
+        throw new GraphQLError("Input is required", {
+          extensions: { code: "BAD_USER_INPUT" },
         });
       }
 
-      const { email, password, provider, idToken, accessToken } = input;
+      const { email, password, provider, token, refreshToken, oauthId } = input;
       const { localAuthService, oauthService } = dataSources.userService;
+      console.log("OAuth sign-in request:", input);
+
       let user;
 
       if (provider) {
-        logger.info(`OAuth login via ${provider}`);
-        const token = idToken || accessToken;
-
         if (!token) {
-          throw new GraphQLError('Provider token required', {
-            extensions: { code: 'INVALID_INPUT', provider },
-          });
+          throw new Error('Provider token required');
         }
-
-        try {
-          logger.debug(`Validating token for provider ${provider}`, { token });
-
-          await oauthService.validateProviderToken(provider, token);
-          const providerUserInfo = await oauthService.loginViaProvider(provider, token);
-
-          if (!providerUserInfo) {
-            throw new GraphQLError('Failed to get user info from provider', {
-              extensions: { code: 'PROVIDER_USER_INFO_ERROR', provider },
-            });
-          }
-
-          user = await oauthService.loginWithProvider(providerUserInfo);
-        } catch (error) {
-          logger.error('OAuth error', error);
-          throw new GraphQLError('OAuth authentication failed', {
-            extensions: {
-              code: 'PROVIDER_AUTH_ERROR',
-              provider,
-              error: error.message,
-            },
-          });
-        }
-      } else {
-        logger.info('Local login attempt');
-
-        if (!email || !password) {
-          throw new GraphQLError('Email and password are required', {
-            extensions: { code: 'INVALID_INPUT' },
-          });
-        }
-
-        if (!loginValidate(email, password)) {
-          throw new GraphQLError('Invalid email or password', {
-            extensions: { code: 'INVALID_LOGIN' },
-          });
-        }
-
-        user = await localAuthService.authenticateUser(email, password);
-      }
-
-      if (!user || !user._id) {
-        throw new GraphQLError('Authentication failed', {
-          extensions: {
-            code: 'AUTHENTICATION_ERROR',
-            details: 'User not found or invalid user data',
-          },
-        });
-      }
-
-      try {
-        const jwtSecret = process.env.JWT_SECRET;
-        const token = jwt.sign(
-          { id: user._id.toString(), role: user.role },
-          jwtSecret,
-          { expiresIn: '1h' }
-        );
-        const refreshToken = jwt.sign(
-          { id: user._id.toString() },
-          jwtSecret,
-          { expiresIn: '7d' }
-        );
-
-        user.refreshToken = refreshToken;
-        await user.save();
-
-        logger.info('Authentication successful', { userId: user._id });
-
-        return {
-          code: 200,
-          success: true,
-          message: 'Login successful',
-          auth: {
-            token,
-            userId: user._id.toString(),
-            role: user.role,
-          },
+        logger.info(`OAuth login via ${provider}`)        
+        user = await oauthService.signInWithProvider({
+          provider,
+          token,
           refreshToken,
-          role: user.role,
-          userId: user._id.toString(),
-        };
-      } catch (jwtError) {
-        logger.error('JWT generation failed', jwtError);
-        throw new GraphQLError('Failed to generate authentication token', {
-          extensions: {
-            code: 'TOKEN_GENERATION_ERROR',
-            error: jwtError.message,
-          },
+          oauthId,
+        });  
+        logger.info("Sign-in successful", { userId: user?.id });
+
+      } else {
+        if (!email || !password) {
+          throw new Error('Email and password required');
+        }   
+        user = await localAuthService.signIn(email, password);
+      }
+      if (!user) {
+        throw new GraphQLError("Authentication failed", {
+          extensions: { code: "UNAUTHORIZED" },
         });
       }
+      
+      return user; 
     },
+  
     signUp: async (_, { input }, { dataSources, req }) => {
       // Apply rate limiting
       try {
@@ -360,7 +286,7 @@ const resolvers = {
         }
 
         // Check if user already exists
-        const existingUser = await localAuthService.getUserByEmailFromDb(email);
+        const existingUser = await userRepository.getUserByEmailFromDb(email);
         if (existingUser) {
           throw new GraphQLError("Email already registered", {
             extensions: { code: "DUPLICATE_EMAIL" },
@@ -524,7 +450,7 @@ const resolvers = {
           );
         }
 
-        const user = await localAuthService.getUserByEmailFromDb(email);
+        const user = await userRepository.getUserByEmailFromDb(email);
 
         if (!user) {
           // Don't reveal whether email exists for security

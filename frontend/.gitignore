@@ -12,6 +12,12 @@
 
 # testing
 /coverage
+# .eslintignore
+pagefile.sys
+swapfile.sys
+System Volume Information/
+DumpStack.log.tmp
+
 
 # next.js
 /.next/

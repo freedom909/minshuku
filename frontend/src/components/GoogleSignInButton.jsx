@@ -19,7 +19,7 @@ export default function GoogleSignInButton() {
         }
       });
 
-      if (data.signIn.success) {
+      if (data?.signIn?.auth) {
         login(data.signIn.auth.token, data.signIn.auth.userId, {
           email: data.signIn.auth.email,
           name: data.signIn.auth.name,

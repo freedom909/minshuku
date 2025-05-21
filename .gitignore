@@ -3,3 +3,11 @@ node_modules
 .DS_Store
 .env
 .serverless
+# .eslintignore
+pagefile.sys
+swapfile.sys
+System Volume Information/
+DumpStack.log.tmp
+*.log
+*.tmp
+*.bak
