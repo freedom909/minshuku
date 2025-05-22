@@ -1,508 +1,258 @@
-import { GraphQLError } from "graphql";
-import jwt from "jsonwebtoken";
-import authLimiter from "../infrastructure/middleware/authLimiter.js";
-import sendOAuthRequestToSubgraph from "./utils/sendOAuthRequestToSubgraph.js";
-import withTimeout from "./utils/withTimeout.js";
-import dotenv from "dotenv";
-dotenv.config();
-import UserService from "../services/userService/index.js";
-import { loginValidate } from "../infrastructure/helpers/loginValidator.js";
-import runValidations from "../infrastructure/helpers/runValidations.js";
-import validateInviteCode from "../infrastructure/helpers/validateInvitecode.js";
+import { GraphQLError } from 'graphql';
+import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
+import AccountLockService from '../infrastructure/auth/accountLockService.js';
 
-// Simple logger
+// Initialize Google OAuth client
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Initialize account lock service
+const accountLockService = new AccountLockService({
+  redisUrl: process.env.REDIS_URL,
+  maxAttempts: parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5', 10),
+  lockDuration: parseInt(process.env.ACCOUNT_LOCK_DURATION || '900', 10) // 15 minutes in seconds
+});
+
+// Debug logger
 const logger = {
-  info: (msg, data) => console.log(`[INFO] ${msg}`, data || ""),
-  warn: (msg, data) => console.warn(`[WARN] ${msg}`, data || ""),
-  error: (msg, err) => console.error(`[ERROR] ${msg}`, err),
-  debug: (msg, data) => console.log(`[DEBUG] ${msg}`, data || ""),
+  info: (message, data) => {
+    console.log(`[INFO] ${message}`, data || '');
+  },
+  error: (message, error) => {
+    console.error(`[ERROR] ${message}`, error);
+  },
+  debug: (message, data) => {
+    console.log(`[DEBUG] ${message}`, data || '');
+  }
 };
 
-// Ensure secret is set
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "default") {
-  throw new Error("JWT_SECRET is not properly configured");
-}
-
-const resolvers = {
-  Query: {
-    user: async (_, { id }, { container }) => {
-      try {
-        if (!id) {
-          throw new GraphQLError("User ID is required", {
-            extensions: { code: "BAD_USER_INPUT" },
-          });
-        }
-
-        const user = await container.resolve("userRepository").getUserById(id);
-
-        if (!user) {
-          throw new GraphQLError("User not found", {
-            extensions: {
-              code: "NOT_FOUND",
-              id,
-            },
-          });
-        }
-
-        return user;
-      } catch (error) {
-        console.error("Error in user query:", error);
-        throw error;
-      }
-    },
-
-    users: async (_, __, { container }) => {
-      try {
-        const userRepository = container.resolve("userRepository");
-
-        return await userRepository.getAllUsers();
-      } catch (error) {
-        console.error("Error in users query:", error);
-        throw new GraphQLError("Failed to fetch users", {
-          extensions: { code: "INTERNAL_SERVER_ERROR" },
-        });
-      }
-    },
-
-    me: async (_, __, { container, userId }) => {
-      try {
-        if (!userId) {
-          throw new GraphQLError("Authentication required", {
-            extensions: {
-              code: "UNAUTHORIZED",
-              message: "Please login to access this resource",
-            },
-          });
-        }
-
-        const user = await container
-          .resolve("userRepository")
-          .getUserById(userId);
-
-        if (!user) {
-          throw new GraphQLError("User session invalid", {
-            extensions: { code: "INVALID_SESSION" },
-          });
-        }
-
-        return user;
-      } catch (error) {
-        console.error("Error in me query:", error);
-        throw error;
-      }
-    },
-  },
+export const resolvers = {
   Mutation: {
-    createUser: async (_, { name, email }, { container }) => {
-      try {
-        if (!name || !email) {
-          throw new GraphQLError("Name and email are required", {
-            extensions: { code: "BAD_USER_INPUT" },
-          });
-        }
-        const userRepository = container.resolve("userRepository");
-        const existingUser = await userRepository.getUserByEmailFromDb(email);
-        if (existingUser) {
-          throw new GraphQLError("User with this email already exists", {
-            extensions: { code: "CONFLICT" },
-          });
-        }
-
-        const newUser = await userRepository.createUser({ name, email });
-
-        return newUser;
-      } catch (error) {
-        console.error("Error in createUser:", error);
-        throw new GraphQLError("Failed to create user", {
-          extensions: {
-            code: "CREATE_FAILED",
-            error: error.message,
-          },
-        });
-      }
-    },
-
-    updateUser: async (_, { id }, { container }) => {
-      try {
-        if (!id) {
-          throw new GraphQLError("User ID is required", {
-            extensions: { code: "BAD_USER_INPUT" },
-          });
-        }
-
-        const userRepository = container.resolve("userRepository");
-        const updatedUser = await userRepository.updateUser(id);
-
-        if (!updatedUser) {
-          throw new GraphQLError("User not found", {
-            extensions: { code: "NOT_FOUND" },
-          });
-        }
-
-        return updatedUser;
-      } catch (error) {
-        console.error("Error in updateUser:", error);
-        throw new GraphQLError("Failed to update user", {
-          extensions: {
-            code: "UPDATE_FAILED",
-            error: error.message,
-          },
-        });
-      }
-    },
-    validateOAuthToken: async (_, { provider, token }) => {
-      console.log(
-        `[validateOAuthToken] Provider: ${provider}, Token: ${token}`
-      );
-
-      // Fake validation (replace with actual logic)
-      if (!provider || !token) {
-        throw new Error("Invalid provider or token");
-      }
-
-      // Simulate a success/failure case
-      if (provider === "GOOGLE" && token === "test-token") {
-        return true;
-      }
-      throw new GraphQLError("Invalid token", {
-        extensions: { code: "INVALID_TOKEN" },
+    signIn: async (_, { input }, { dataSources }) => {
+      logger.info('signIn mutation called with input:', {
+        provider: input?.provider,
+        hasEmail: !!input?.email,
+        hasPassword: !!input?.password,
+        hasToken: !!input?.token
       });
-    },
-  
-    signIn: async (_, { input }, { container }) => {
-      const isOAuth = !!input.provider && !!input.token;
-      const isLocal = !!input.email && !!input.password;
-    
-      if (!isOAuth && !isLocal) {
-        throw new GraphQLError("Invalid sign-in input: must provide either email/password or provider/token", {
-          extensions: {
-            code: "INVALID_INPUT"
-          }
-        });
-      }
-      const userService = container.resolve("userService");
-      const response = isOAuth
-        ? await userService.oauthLogin(input)
-        : await userService.login(input.email, input.password);
-    
-      return {
-        code: response.code,
-        success: response.success,
-        message: response.message,
-        auth: {
-          token: response.token,
-          userId: response.userId,
-          role: response.role,
-        },
-        refreshToken: response.refreshToken,
-        role: response.role,
-        userId: response.userId,
-      };
-    },
-    
-    signUp: async (_, { input }, { dataSources, req }) => {
-      // Apply rate limiting
-      try {
-        await new Promise((resolve, reject) => {
-          authLimiter(req, {}, (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-      } catch (rateLimitError) {
-        throw new GraphQLError(rateLimitError.message, {
-          extensions: { code: "TOO_MANY_REQUESTS" },
-        });
-      }
 
       try {
-        const { localAuthService, tokenService } = dataSources.userService;
-
-        // Validate input
-        await runValidations(input);
-        const { email, password, name, nickname, role, inviteCode, picture } =
-          input;
-
-        // Additional validation for HOST role
-        if (role === "HOST") {
-          if (!inviteCode) {
-            throw new GraphQLError("Invite code is required for HOST role", {
-              extensions: { code: "BAD_USER_INPUT" },
-            });
-          }
-
-          const isValidInviteCode = await validateInviteCode(inviteCode);
-          if (!isValidInviteCode) {
-            throw new GraphQLError("Invalid invite code", {
-              extensions: {
-                code: "INVALID_INVITE_CODE",
-                inviteCode,
-              },
-            });
-          }
-        }
-
-        // Check if user already exists
-        const existingUser = await userRepository.getUserByEmailFromDb(email);
-        if (existingUser) {
-          throw new GraphQLError("Email already registered", {
-            extensions: { code: "DUPLICATE_EMAIL" },
+        // Validate input exists
+        if (!input) {
+          logger.error('No input provided');
+          throw new GraphQLError('Input is required', {
+            extensions: { code: 'BAD_USER_INPUT' }
           });
         }
 
-        // Create new user
-        const newUser = await localAuthService.register({
-          email,
-          password,
-          name,
-          nickname,
-          role,
-          picture,
-        });
-
-        // Generate token
-        const token = await tokenService.generateToken(newUser);
-
-        // Log successful registration
-        console.log(`New user registered: ${email} (${newUser._id})`);
-
-        return {
-          userId: newUser._id.toString(),
-          token,
-          role: newUser.role,
-        };
-      } catch (error) {
-        console.error("Error during signUp:", error);
-
-        // Handle duplicate email error specifically
-        if (
-          error.message.includes("duplicate") &&
-          error.message.includes("email")
-        ) {
-          throw new GraphQLError("Email already registered", {
-            extensions: { code: "DUPLICATE_EMAIL" },
-          });
-        }
-
-        // Re-throw GraphQLError as is
-        if (error instanceof GraphQLError) {
-          throw error;
-        }
-
-        throw new GraphQLError("Registration failed: " + error.message, {
-          extensions: {
-            code: "REGISTRATION_FAILED",
-            error: error.message,
-          },
-        });
-      }
-    },
-
-    logout: async (_, { provider }, { dataSources, session, userId }) => {
-      try {
-        console.log(
-          `Logout requested for user ${userId} (provider: ${
-            provider || "none"
-          })`
-        );
-
-        const { oauthService, sessionService } = dataSources.userService;
-
-        // Revoke provider token if specified
-        if (provider) {
-          try {
-            await oauthService.revokeProviderToken(provider);
-            console.log(`Successfully revoked ${provider} token`);
-          } catch (revokeError) {
-            console.error(`Failed to revoke ${provider} token:`, revokeError);
-            // Continue with logout even if provider token revocation fails
-          }
-        }
-
-        // Destroy session if exists
-        if (session) {
-          return new Promise((resolve, reject) => {
-            session.destroy(async (err) => {
-              if (err) {
-                console.error("Session destruction error:", err);
-                reject(
-                  new GraphQLError("Failed to destroy session", {
-                    extensions: {
-                      code: "SESSION_ERROR",
-                      error: err.message,
-                    },
-                  })
-                );
-              } else {
-                try {
-                  // Clean up any expired sessions
-                  if (sessionService && sessionService.cleanExpiredSessions) {
-                    await sessionService.cleanExpiredSessions(userId);
-                  }
-                  console.log(
-                    `Session destroyed and cleaned for user ${userId}`
-                  );
-                  resolve(true);
-                } catch (cleanError) {
-                  console.error("Session cleanup error:", cleanError);
-                  resolve(true); // Still resolve as logout succeeded
-                }
+        // Check if account is locked (for email/password auth)
+        if (input.email && !input.provider) {
+          const isLocked = await accountLockService.isAccountLocked(input.email);
+          if (isLocked) {
+            const lockDetails = await accountLockService.getLockDetails(input.email);
+            logger.info(`Account locked: ${input.email}`, lockDetails);
+            
+            throw new GraphQLError('Account temporarily locked due to too many failed attempts', {
+              extensions: { 
+                code: 'ACCOUNT_LOCKED',
+                remainingTime: lockDetails.remainingTime
               }
             });
-          });
+          }
         }
 
-        return true;
-      } catch (error) {
-        console.error("Error during logout:", error);
-        throw new GraphQLError("Logout failed", {
-          extensions: {
-            code: "LOGOUT_FAILED",
-            error: error.message,
-          },
-        });
-      }
-    },
+        let authResult;
+        
+        // OAuth Flow
+        if (input.provider) {
+          logger.info(`Processing ${input.provider} OAuth login`);
+          
+          if (!input.token) {
+            logger.error('Missing OAuth token');
+            throw new GraphQLError('OAuth token required', {
+              extensions: { code: 'MISSING_OAUTH_TOKEN' }
+            });
+          }
 
-    forgotPassword: async (_, { email }, { dataSources, req }) => {
-      // Apply rate limiting
-      try {
-        await new Promise((resolve, reject) => {
-          authLimiter(req, {}, (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-      } catch (rateLimitError) {
-        throw new GraphQLError(rateLimitError.message, {
-          extensions: { code: "TOO_MANY_REQUESTS" },
-        });
-      }
+          try {
+            // Verify Google token
+            logger.debug('Verifying Google token');
+            const ticket = await googleClient.verifyIdToken({
+              idToken: input.token,
+              audience: process.env.GOOGLE_CLIENT_ID
+            });
+            
+            const payload = ticket.getPayload();
+            logger.debug('OAuth payload received', {
+              email: payload.email,
+              name: payload.name,
+              sub: payload.sub
+            });
 
-      try {
-        if (!email) {
-          throw new GraphQLError("Email is required", {
-            extensions: { code: "BAD_USER_INPUT" },
-          });
-        }
+            // Find or create user
+            logger.debug('Finding or creating user');
+            const user = {
+              id: payload.sub,
+              email: payload.email,
+              name: payload.name,
+              picture: payload.picture,
+              role: 'USER'
+            };
 
-        const { localAuthService, accountLockService } =
-          dataSources.userService;
+            // Generate token
+            logger.debug('Generating JWT token');
+            const token = jwt.sign(
+              { id: user.id, role: user.role },
+              process.env.JWT_SECRET || 'default-secret',
+              { expiresIn: '1h' }
+            );
 
-        // Check if account is temporarily locked
-        if (
-          accountLockService &&
-          (await accountLockService.isAccountLocked(email))
-        ) {
-          throw new GraphQLError(
-            "Account temporarily locked due to too many attempts",
-            {
-              extensions: {
-                code: "ACCOUNT_LOCKED",
-                retryAfter: await accountLockService.getLockTimeRemaining(
-                  email
-                ),
-              },
+            authResult = {
+              token,
+              userId: user.id,
+              role: user.role
+            };
+
+            // Clear any existing lock if user authenticates via OAuth
+            if (payload.email) {
+              await accountLockService.clearLock(payload.email);
             }
-          );
+
+            logger.info('OAuth authentication successful', {
+              userId: user.id,
+              email: user.email
+            });
+          } catch (oauthError) {
+            logger.error('OAuth verification failed', oauthError);
+            throw new GraphQLError('OAuth authentication failed', {
+              extensions: { code: 'OAUTH_FAILURE', originalError: oauthError.message }
+            });
+          }
+        } 
+        // Email/Password Flow
+        else {
+          logger.info('Processing email/password login');
+          
+          if (!input.email || !input.password) {
+            logger.error('Missing credentials');
+            throw new GraphQLError('Email and password required', {
+              extensions: { code: 'MISSING_CREDENTIALS' }
+            });
+          }
+
+          try {
+            // Attempt authentication (replace with your actual auth logic)
+            const user = await dataSources.userService.authenticate(input.email, input.password);
+            
+            if (!user) {
+              // Record failed attempt and check if account should be locked
+              const lockResult = await accountLockService.recordFailedAttempt(input.email);
+              logger.info(`Failed login attempt for ${input.email}`, lockResult);
+              
+              if (lockResult.locked) {
+                throw new GraphQLError('Account temporarily locked due to too many failed attempts', {
+                  extensions: { 
+                    code: 'ACCOUNT_LOCKED',
+                    remainingTime: lockResult.remainingTime
+                  }
+                });
+              }
+              
+              throw new GraphQLError('Invalid email or password', {
+                extensions: { 
+                  code: 'INVALID_CREDENTIALS',
+                  remainingAttempts: lockResult.remainingAttempts
+                }
+              });
+            }
+
+            // Generate token
+            const token = jwt.sign(
+              { id: user.id, role: user.role },
+              process.env.JWT_SECRET || 'default-secret',
+              { expiresIn: '1h' }
+            );
+
+            authResult = {
+              token,
+              userId: user.id,
+              role: user.role
+            };
+
+            // Clear failed attempts on successful login
+            await accountLockService.clearLock(input.email);
+            
+            logger.info('Email/password authentication successful', {
+              userId: user.id,
+              email: user.email
+            });
+          } catch (authError) {
+            // If it's already a GraphQLError, just rethrow it
+            if (authError instanceof GraphQLError) {
+              throw authError;
+            }
+            
+            // Otherwise wrap in a GraphQLError
+            logger.error('Authentication error', authError);
+            throw new GraphQLError('Authentication failed', {
+              extensions: { code: 'AUTH_FAILED', originalError: authError.message }
+            });
+          }
         }
 
-        const user = await userRepository.getUserByEmailFromDb(email);
+        if (!authResult) {
+          logger.error('Authentication failed - no authResult');
+          throw new GraphQLError('Authentication failed', {
+            extensions: { code: 'AUTH_FAILED' }
+          });
+        }
 
-        if (!user) {
-          // Don't reveal whether email exists for security
-          console.log(
-            `Password reset requested for non-existent email: ${email}`
-          );
+        logger.info('Authentication successful', {
+          userId: authResult.userId,
+          role: authResult.role
+        });
+        
+        return {
+          code: 200,
+          success: true,
+          message: 'Login successful',
+          auth: {
+            token: authResult.token,
+            userId: authResult.userId,
+            role: authResult.role
+          },
+          role: authResult.role,
+          userId: authResult.userId
+        };
+
+      } catch (error) {
+        logger.error('SignIn error', error);
+        
+        // Handle specific error types
+        if (error instanceof GraphQLError) {
           return {
-            code: 200,
-            success: true,
-            message:
-              "If an account exists, a password reset link has been sent",
-            email: email,
+            code: error.extensions?.code === 'ACCOUNT_LOCKED' ? 423 : // Locked
+                 error.extensions?.code === 'INVALID_CREDENTIALS' ? 401 : // Unauthorized
+                 400, // Bad Request
+            success: false,
+            message: error.message,
+            role: 'GUEST',
+            userId: null,
+            auth: null
           };
         }
-
-        // Track password reset attempt
-        if (accountLockService) {
-          await accountLockService.recordAttempt(email);
-        }
-
-        // Generate secure reset token
-        const resetToken = jwt.sign(
-          {
-            id: user._id.toString(),
-            purpose: "password_reset",
-          },
-          process.env.JWT_SECRET,
-          { expiresIn: "30m" }
-        );
-
-        // Send reset email
-        await localAuthService.sendPasswordResetEmail(user.email, resetToken);
-
-        console.log(`Password reset email sent to: ${email}`);
-
+        
         return {
-          code: 200,
-          success: true,
-          message: "Password reset link sent",
-          email: user.email,
+          code: 500,
+          success: false,
+          message: error.message || 'Authentication failed',
+          role: 'GUEST',
+          userId: null,
+          auth: null
         };
-      } catch (error) {
-        console.error("Error in forgotPassword:", error);
-
-        // Handle account locked error specifically
-        if (error.extensions?.code === "ACCOUNT_LOCKED") {
-          throw error;
-        }
-
-        throw new GraphQLError("Failed to process password reset", {
-          extensions: {
-            code: "RESET_FAILED",
-            error: error.message,
-          },
-        });
       }
-    },
-
-    updatePassword: async (
-      _,
-      { userId, password, newPassword },
-      { dataSources }
-    ) => {
-      if (!userId || !password || !newPassword) {
-        throw new GraphQLError("Missing input for password update", {
-          extensions: { code: "BAD_USER_INPUT" },
-        });
-      }
-
-      const { localAuthService } = dataSources.userService;
-      try {
-        const success = await localAuthService.updatePassword(
-          userId,
-          password,
-          newPassword
-        );
-        if (!success) {
-          throw new GraphQLError("Password update failed", {
-            extensions: { code: "UPDATE_FAILED" },
-          });
-        }
-
-        return {
-          code: 200,
-          success: true,
-          message: "Password updated successfully",
-        };
-      } catch (error) {
-        console.error("Error in updatePassword:", error);
-        throw new GraphQLError("Internal Server Error", {
-          extensions: { code: "INTERNAL_SERVER_ERROR" },
-        });
-      }
-    },
-  },
+    }
+  }
 };
 
 export default resolvers;
