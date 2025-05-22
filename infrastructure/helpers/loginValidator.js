@@ -22,7 +22,7 @@ const loginValidate = async (email, password) => {
 // New password validation function
 const passwordValidate = async (password) => {
   const errors = [];
-  if (!password || password.length < 8 || password.length > 88 || !/\d/.test(password)) {
+  if (!password || password.length < 12 || password.length > 88 || !/\d/.test(password)) {
     errors.push('Password must contain at least 8 characters and include a number');
   }
 

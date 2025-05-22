@@ -5,6 +5,7 @@ import LocalAuthService from "../userService/localAuthService.js";
 import OAuthService from "../userService/oauthService.js";
 import TokenService from "../userService/tokenService.js";
 import initMongoContainer from "../DB/initMongoContainer.js";
+import UserService from "../userService/index.js";
 
 const validateEnvironment = () => {
   const requiredVars = [
@@ -51,9 +52,19 @@ const initAuthContainer = async () => {
       // Repositories
       userRepository: asClass(UserRepository).singleton(),
       // Services
+      userService: asClass(UserService).singleton(),
       localAuthService: asClass(LocalAuthService).singleton(),
       oauthService: asClass(OAuthService).singleton(),
       tokenService: asClass(TokenService).singleton(),
+      // 环境变量配置
+      expiresIn: asValue(process.env.JWT_EXPIRES_IN || "1h"),
+      secretKey: asValue(process.env.JWT_SECRET),
+
+      // OAuth配置
+      googleClientId: asValue(process.env.GOOGLE_CLIENT_ID),
+      googleClientSecret: asValue(process.env.GOOGLE_CLIENT_SECRET),
+      googleRedirectUri: asValue(process.env.GOOGLE_REDIRECT_URI),
+     
 
       // 环境变量配置
       expiresIn: asValue(process.env.JWT_EXPIRES_IN || "1h"),

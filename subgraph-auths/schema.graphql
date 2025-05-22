@@ -80,6 +80,7 @@ input SignInInput {
   oauthId: String       # Optional, for providers that return it
 }
 
+
 input SignUpInput {
   email: String!
   password: String!
@@ -115,6 +116,8 @@ type SignInResponse implements Response {
   refreshToken: String @shareable
   role: Role! @shareable
   userId: ID !@shareable
+  email: String! @shareable
+  picture: String! @shareable
 }
 
 type ReqResetPwdResponse implements Response {
@@ -139,6 +142,7 @@ type InviteCodeResponse implements Response {
 
 # Queries and Mutations
 type Mutation {
+  signInWithOAuth(input: SignInInput!): SignInResponse! @shareable
   signUp(input: SignUpInput!): AuthPayload! @shareable
   signIn(input: SignInInput!): SignInResponse! @shareable
   updatePassword(input: UpdatePasswordInput!): AuthPayload! @shareable

@@ -1,58 +1,163 @@
-import { GraphQLError } from 'graphql';
 import Redis from 'ioredis';
 
 class AccountLockService {
-  constructor() {
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-    this.MAX_ATTEMPTS = 5;
-    this.LOCK_TIME_MINUTES = 15;
-  }
+    constructor({
+        redisUrl = process.env.REDIS_URL || 'redis://localhost:6379',
+        maxAttempts = 5,
+        lockDuration = 15 * 60, // 15 minutes in seconds
+        namespace = 'auth:lockout:'
+    } = {}) {
+        this.redis = new Redis(redisUrl);
+        this.maxAttempts = maxAttempts;
+        this.lockDuration = lockDuration;
+        this.namespace = namespace;
 
-  async recordAttempt(email) {
-    const key = `lockout:${email}`;
-    const attempts = await this.redis.incr(key);
-    
-    // Set expiration if this is the first attempt
-    if (attempts === 1) {
-      await this.redis.expire(key, this.LOCK_TIME_MINUTES * 60);
+        // Bind methods
+        this.getKey = this.getKey.bind(this);
+        this.isAccountLocked = this.isAccountLocked.bind(this);
+        this.recordFailedAttempt = this.recordFailedAttempt.bind(this);
+        this.clearLock = this.clearLock.bind(this);
+        this.getLockDetails = this.getLockDetails.bind(this);
     }
 
-    return attempts;
-  }
+    // Generate Redis key for an email
+    getKey(email) {
+        return `${this.namespace}${email}`;
+    }
 
-  async isAccountLocked(email) {
-    const attempts = await this.getAttemptCount(email);
-    return attempts >= this.MAX_ATTEMPTS;
-  }
-
-  async getAttemptCount(email) {
-    const key = `lockout:${email}`;
-    const attempts = await this.redis.get(key);
-    return parseInt(attempts || 0, 10);
-  }
-
-  async getLockTimeRemaining(email) {
-    const key = `lockout:${email}`;
-    const ttl = await this.redis.ttl(key);
-    return Math.max(0, Math.ceil(ttl / 60)); // Return in minutes
-  }
-
-  async clearAttempts(email) {
-    const key = `lockout:${email}`;
-    await this.redis.del(key);
-  }
-
-  async handleFailedLogin(email) {
-    const attempts = await this.recordAttempt(email);
-    if (attempts >= this.MAX_ATTEMPTS) {
-      throw new GraphQLError('Too many failed attempts. Account temporarily locked.', {
-        extensions: {
-          code: 'ACCOUNT_LOCKED',
-          retryAfter: await this.getLockTimeRemaining(email)
+    // Check if account is locked
+    async isAccountLocked(email) {
+        try {
+            const key = this.getKey(email);
+            const attempts = await this.redis.get(key);
+            
+            if (!attempts) return false;
+            
+            const numAttempts = parseInt(attempts, 10);
+            if (numAttempts >= this.maxAttempts) {
+                // Check if lock has expired
+                const ttl = await this.redis.ttl(key);
+                if (ttl <= 0) {
+                    await this.clearLock(email);
+                    return false;
+                }
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('Error checking account lock:', error);
+            return false; // Fail open to prevent lockouts due to Redis errors
         }
-      });
     }
-  }
+
+    // Record a failed login attempt
+    async recordFailedAttempt(email) {
+        try {
+            const key = this.getKey(email);
+            const attempts = await this.redis.incr(key);
+            
+            // Set expiration on first attempt
+            if (attempts === 1) {
+                await this.redis.expire(key, this.lockDuration);
+            }
+
+            // Check if account should be locked
+            if (attempts >= this.maxAttempts) {
+                // Reset expiration to ensure full lock duration
+                await this.redis.expire(key, this.lockDuration);
+                return {
+                    locked: true,
+                    attempts,
+                    remainingTime: this.lockDuration
+                };
+            }
+
+            return {
+                locked: false,
+                attempts,
+                remainingAttempts: this.maxAttempts - attempts
+            };
+        } catch (error) {
+            console.error('Error recording failed attempt:', error);
+            return {
+                locked: false,
+                attempts: 0,
+                error: error.message
+            };
+        }
+    }
+
+    // Clear lock and reset attempts
+    async clearLock(email) {
+        try {
+            await this.redis.del(this.getKey(email));
+            return true;
+        } catch (error) {
+            console.error('Error clearing lock:', error);
+            return false;
+        }
+    }
+
+    // Get lock details including attempts and remaining time
+    async getLockDetails(email) {
+        try {
+            const key = this.getKey(email);
+            const attempts = await this.redis.get(key);
+            
+            if (!attempts) {
+                return {
+                    isLocked: false,
+                    attempts: 0,
+                    remainingTime: 0
+                };
+            }
+
+            const numAttempts = parseInt(attempts, 10);
+            const ttl = await this.redis.ttl(key);
+
+            return {
+                isLocked: numAttempts >= this.maxAttempts,
+                attempts: numAttempts,
+                remainingTime: ttl > 0 ? ttl : 0,
+                remainingAttempts: Math.max(0, this.maxAttempts - numAttempts)
+            };
+        } catch (error) {
+            console.error('Error getting lock details:', error);
+            return {
+                isLocked: false,
+                attempts: 0,
+                remainingTime: 0,
+                error: error.message
+            };
+        }
+    }
+
+    // Close Redis connection
+    async close() {
+        await this.redis.quit();
+    }
 }
 
 export default AccountLockService;
+
+// Usage example:
+/*
+const lockService = new AccountLockService({
+    redisUrl: 'redis://localhost:6379',
+    maxAttempts: 5,
+    lockDuration: 900 // 15 minutes
+});
+
+// Check if account is locked
+const isLocked = await lockService.isAccountLocked('user@example.com');
+
+// Record failed attempt
+const result = await lockService.recordFailedAttempt('user@example.com');
+
+// Get lock details
+const details = await lockService.getLockDetails('user@example.com');
+
+// Clear lock
+await lockService.clearLock('user@example.com');
+*/

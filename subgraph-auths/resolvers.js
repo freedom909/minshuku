@@ -5,7 +5,7 @@ import sendOAuthRequestToSubgraph from "./utils/sendOAuthRequestToSubgraph.js";
 import withTimeout from "./utils/withTimeout.js";
 import dotenv from "dotenv";
 dotenv.config();
-
+import UserService from "../services/userService/index.js";
 import { loginValidate } from "../infrastructure/helpers/loginValidator.js";
 import runValidations from "../infrastructure/helpers/runValidations.js";
 import validateInviteCode from "../infrastructure/helpers/validateInvitecode.js";
@@ -168,81 +168,38 @@ const resolvers = {
         extensions: { code: "INVALID_TOKEN" },
       });
     },
-    signIn: async (_, { input }, { dataSources, req }) => {
-      logger.info("signIn mutation called", {
-        provider: input?.provider,
-        hasEmail: !!input?.email,
-        hasPassword: !!input?.password,
-        hasToken: !!input?.token,
-        oauthId: input?.oauthId,
-        refreshToken: input?.refreshToken,
-      });
-
-      try {
-        // Rate limiting
-        const ip = req.ip;
-        await new Promise((resolve, reject) => {
-          const fakeRes = {
-            setHeader: () => {},
-            status: () => fakeRes,
-            send: () => {},
-          };
-          authLimiter(req, fakeRes, (err) =>
-            err ? reject({ error: err, ip }) : resolve()
-          );
-        });
-      } catch (rateLimitError) {
-        throw new GraphQLError(
-          rateLimitError.error?.message || "Too many requests",
-          {
-            extensions: {
-              code: "TOO_MANY_REQUESTS",
-              ip: rateLimitError.ip || req.ip,
-            },
-          }
-        );
-      }
-
-      if (!input) {
-        throw new GraphQLError("Input is required", {
-          extensions: { code: "BAD_USER_INPUT" },
-        });
-      }
-
-      const { email, password, provider, token, refreshToken, oauthId } = input;
-      const { localAuthService, oauthService } = dataSources.userService;
-      console.log("OAuth sign-in request:", input);
-
-      let user;
-
-      if (provider) {
-        if (!token) {
-          throw new Error('Provider token required');
-        }
-        logger.info(`OAuth login via ${provider}`)        
-        user = await oauthService.signInWithProvider({
-          provider,
-          token,
-          refreshToken,
-          oauthId,
-        });  
-        logger.info("Sign-in successful", { userId: user?.id });
-
-      } else {
-        if (!email || !password) {
-          throw new Error('Email and password required');
-        }   
-        user = await localAuthService.signIn(email, password);
-      }
-      if (!user) {
-        throw new GraphQLError("Authentication failed", {
-          extensions: { code: "UNAUTHORIZED" },
-        });
-      }
-      
-      return user; 
-    },
   
+    signIn: async (_, { input }, { container }) => {
+      const isOAuth = !!input.provider && !!input.token;
+      const isLocal = !!input.email && !!input.password;
+    
+      if (!isOAuth && !isLocal) {
+        throw new GraphQLError("Invalid sign-in input: must provide either email/password or provider/token", {
+          extensions: {
+            code: "INVALID_INPUT"
+          }
+        });
+      }
+      const userService = container.resolve("userService");
+      const response = isOAuth
+        ? await userService.oauthLogin(input)
+        : await userService.login(input.email, input.password);
+    
+      return {
+        code: response.code,
+        success: response.success,
+        message: response.message,
+        auth: {
+          token: response.token,
+          userId: response.userId,
+          role: response.role,
+        },
+        refreshToken: response.refreshToken,
+        role: response.role,
+        userId: response.userId,
+      };
+    },
+    
     signUp: async (_, { input }, { dataSources, req }) => {
       // Apply rate limiting
       try {

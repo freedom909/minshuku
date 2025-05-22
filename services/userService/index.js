@@ -1,208 +1,22 @@
 //services/userService/index.js
+
+
 import { GraphQLError } from 'graphql';
 
 class UserService {
-  constructor({ 
-    localAuthService = null, 
-    oauthService = null, 
-    tokenService,
-    accountLockService = null 
-  }) {
+  constructor({ localAuthService = null, oauthService, tokenService, accountLockService = null }) {
     this.localAuthService = localAuthService;
     this.oauthService = oauthService;
     this.tokenService = tokenService;
     this.accountLockService = accountLockService;
   }
 
-  async login(email, password) {
-    console.log('Starting local login process for email:', email);
-
-    if (!this.localAuthService) {
-      throw new GraphQLError('Local authentication service is not configured', {
-        extensions: { code: 'SERVICE_UNAVAILABLE' }
-      });
-    }
-  
-    try {
-      // 验证输入
-      if (!email || !password) {
-        throw new GraphQLError('Email and password are required', {
-          extensions: { 
-            code: 'INVALID_INPUT',
-            requiredFields: ['email', 'password']
-          }
-        });
-      }
-
-      // 检查账户是否被锁定
-      if (this.accountLockService) {
-        const isLocked = await this.accountLockService.isAccountLocked(email);
-        if (isLocked) {
-          const retryAfter = await this.accountLockService.getLockTimeRemaining(email);
-          throw new GraphQLError('Account temporarily locked due to too many failed attempts', {
-            extensions: {
-              code: 'ACCOUNT_LOCKED',
-              retryAfter
-            }
-          });
-        }
-      }
-
-      // 尝试登录
-      console.log('Attempting local login for email:', email);
-      const user = await this.localAuthService.login(email, password);
-
-      // 登录成功后清除失败尝试记录
-      if (this.accountLockService) {
-        await this.accountLockService.clearAttempts(email);
-      }
-
-      if (!user || !user._id) {
-        // 记录失败尝试
-        if (this.accountLockService) {
-          await this.accountLockService.recordAttempt(email);
-        }
-        
-        throw new GraphQLError('Invalid credentials', {
-          extensions: { 
-            code: 'INVALID_CREDENTIALS',
-            attemptsRemaining: this.accountLockService 
-              ? this.accountLockService.MAX_ATTEMPTS - await this.accountLockService.getAttemptCount(email)
-              : null
-          }
-        });
-      }
-
-      // 生成访问令牌和刷新令牌
-      console.log('Generating tokens for user:', user._id.toString());
-      const [accessToken, refreshToken] = await Promise.all([
-        this.tokenService.generateToken(user),
-        this.tokenService.generateRefreshToken(user)
-      ]);
-  
-      console.log('Local login successful for user:', user._id.toString());
-      return {
-        code: 200,
-        success: true,
-        message: "Login successful",
-        token: accessToken,
-        refreshToken,
-        userId: user._id?.toString?.() || user.id,
-        role: user.role,
-        user: {
-          id: user._id?.toString?.() || user.id,
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-          picture: user.picture
-        }
-      };
-    } catch (error) {
-      console.error('Local login error:', error);
-      
-      if (error instanceof GraphQLError) {
-        throw error;
-      }
-
-      throw new GraphQLError('Authentication failed', {
-        extensions: { 
-          code: 'AUTHENTICATION_FAILED',
-          error: error.message
-        }
-      });
-    }
-  }
-  
-
   async oauthLogin(input) {
-    console.log('Starting OAuth login process:', { provider: input.provider });
+    return await this.oauthService.authenticate(input);
+  }
 
-    if (!this.oauthService) {
-      throw new GraphQLError('OAuth service is not configured', {
-        extensions: { code: 'SERVICE_UNAVAILABLE' }
-      });
-    }
-
-    try {
-      // 验证输入
-      if (!input.provider || !input.token) {
-        throw new GraphQLError('Provider and token are required', {
-          extensions: { 
-            code: 'INVALID_INPUT',
-            requiredFields: ['provider', 'token']
-          }
-        });
-      }
-
-      // 验证提供商token并获取用户信息
-      console.log('Authenticating with provider:', input.provider);
-      const providerUser = await this.oauthService.authenticate(input.provider, input.token);
-
-      if (!providerUser || !providerUser.email) {
-        throw new GraphQLError('Invalid provider response', {
-          extensions: { 
-            code: 'INVALID_PROVIDER_RESPONSE',
-            provider: input.provider
-          }
-        });
-      }
-
-      // 使用提供商信息登录或创建用户
-      console.log('Processing provider user:', { 
-        email: providerUser.email,
-        provider: input.provider 
-      });
-      const user = await this.oauthService.loginWithProvider(providerUser);
-
-      if (!user || !user._id) {
-        throw new GraphQLError('Failed to process user data', {
-          extensions: { 
-            code: 'USER_PROCESSING_ERROR',
-            provider: input.provider
-          }
-        });
-      }
-
-      // 生成访问令牌和刷新令牌
-      console.log('Generating tokens for user:', user._id.toString());
-      const [accessToken, refreshToken] = await Promise.all([
-        this.tokenService.generateToken(user),
-        this.tokenService.generateRefreshToken(user)
-      ]);
-
-      console.log('OAuth login successful for user:', user._id.toString());
-      return {
-        code: 200,
-        success: true,
-        message: "Login successful",
-        token: accessToken,
-        refreshToken,
-        userId: user._id.toString(),
-        role: user.role,
-        user: {
-          id: user._id.toString(),
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-          picture: user.picture
-        }
-      };
-
-    } catch (error) {
-      console.error('OAuth login error:', error);
-      
-      if (error instanceof GraphQLError) {
-        throw error;
-      }
-
-      throw new GraphQLError('OAuth login failed', {
-        extensions: { 
-          code: 'OAUTH_LOGIN_FAILED',
-          provider: input.provider,
-          error: error.message
-        }
-      });
-    }
+  async login(input) {
+    return await this.localAuthService.login(input);
   }
 }
 

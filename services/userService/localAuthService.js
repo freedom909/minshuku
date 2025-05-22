@@ -1,20 +1,21 @@
 //services/userService/localAuthService.js
 import UserRepository from '../repositories/userRepository.js';
-import { RESTDataSource } from "@apollo/datasource-rest";
+
 import { GraphQLError } from 'graphql';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { loginValidate } from '../../infrastructure/helpers/loginValidator.js';
 import dotenv from 'dotenv';
 import TokenService from './tokenService.js';
-import OAuthService from './oauthService.js';
+
 
 dotenv.config();
 
 
-class LocalAuthService extends RESTDataSource {
+class LocalAuthService  {
+  
   constructor({ userRepository }) {
-    super();
+    
     this.baseURL = "http://localhost:4000/";
     if (!userRepository) {
       throw new Error("UserRepository not provided to UserService");
@@ -54,7 +55,10 @@ class LocalAuthService extends RESTDataSource {
       }
 
       console.log('Login successful for user:', user._id?.toString());
-      return user;
+      const token = await TokenService.generateToken({ id: user._id.toString(), email: user.email });
+      return { user, token };
+
+      
     } catch (error) {
       console.error('Login error:', error);
       if (error instanceof GraphQLError) {
