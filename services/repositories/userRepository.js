@@ -102,6 +102,10 @@ class UserRepository {
   }
 
   async createUser(userData) {
+    console.log('Creating user with data:', userData); // Agrega este log para verificar los datos de usuari
+    if (!userData || typeof userData !== 'object') {
+      throw new TypeError('User data must be an object');
+    }
     try {
       const newUser = new this.model(userData);
       const savedUser = await newUser.save();
@@ -246,6 +250,10 @@ class UserRepository {
 
   async findByOAuthId(provider, oauthId) {
     return await this.model.findOne({ provider, oauthId });
+  }
+
+  async updateRefreshToken(id, refreshToken) {
+    return await this.model.findByIdAndUpdate(id, { refreshToken });
   }
 }
 

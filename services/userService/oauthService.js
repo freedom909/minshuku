@@ -11,6 +11,7 @@ dotenv.config();
 import pkg from "jsonwebtoken";
 const { verify } = pkg;
 import jwksClient from "jwks-rsa";
+import generateRefreshToken from "./tokenService.js";
 
 function getAppleKey(header, callback) {
   const appleClient = jwksClient({
@@ -35,74 +36,82 @@ class OAuthService extends RESTDataSource {
     this.userRepository = userRepository;
   }
 
-  loginWithProvider({ provider, token, refreshToken, oauthId }) {
-    switch (provider) {
-      case "GOOGLE":
-        return this.signInWithGoogle({ token, refreshToken, oauthId });
-      case "APPLE":
-        return this.signInWithApple({ token, refreshToken, oauthId });
-      case "FACEBOOK":
-        return this.signInWithFacebook({ token, refreshToken, oauthId });
-      default:
-        throw new GraphQLError("Unsupported provider", {
-          extensions: {
-            code: "UNSUPPORTED_PROVIDER",
-            provider,
-          },
-        });
-    }
-  }
-
-  async authenticate(provider, accessToken) {
+  async authenticate(provider, token) {
     try {
-      if (!provider || !accessToken) {
+      if (!provider || !token) {
         throw new GraphQLError("Provider and access token are required", {
           extensions: { code: "INVALID_INPUT" },
         });
       }
+
       let userInfo;
-      switch (provider) {
+      switch (provider.toLowerCase()) {
         case "google":
-          userInfo = await this.verifyGoogleToken(accessToken);
+          userInfo = await this.verifyGoogleToken(token);
           break;
         case "facebook":
-          userInfo = await this.verifyFacebookToken(accessToken);
+          userInfo = await this.verifyFacebookToken(token);
           break;
         case "apple":
-          userInfo = await this.verifyAppleToken(accessToken);
+          userInfo = await this.verifyAppleToken(token);
           break;
         default:
           throw new GraphQLError("Unsupported OAuth provider", {
             extensions: { code: "UNSUPPORTED_PROVIDER" },
           });
       }
+
       if (!userInfo || !userInfo.email) {
-        throw new GraphQLError(
-          "Failed to retrieve user info from OAuth provider",
-          {
-            extensions: { code: "INVALID_OAUTH_TOKEN" },
-          }
-        );
-      }
-      let user = await this.userRepository.getUserByEmailFromDb(userInfo.email);
-      if (!user) {
-        newUser = await this.userRepository.createUser({
-          email: userInfo.email,
-          name: userInfo.name || "",
-          picture: userInfo.picture,
-          password: null,
-          provider: provider,
-          role: "GUEST",
-          active: true,
-          oauthId: userInfo.id || null,
+        throw new GraphQLError("Failed to retrieve user info", {
+          extensions: { code: "INVALID_OAUTH_TOKEN" },
         });
       }
-      user = await this.userRepository.insertUser(newUser);
 
-      // Generate tokens and return
-      const token = this.tokenService.generateToken(user);
-      const refreshToken = this.tokenService.generateRefreshToken(user);
-      return { user, token, refreshToken };
+      let user = await this.userRepository.findByOAuthId(
+        provider.toUpperCase(),
+        userInfo.id
+      );
+      if (!user) {
+        // 🟡 New logic: Check if the email already exists
+        const existingUser = await this.userRepository.getUserByEmailFromDb(
+          userInfo.email
+        );
+        if (existingUser) {
+          // Optionally update oauthId / provider info here if needed
+          user = existingUser;
+        } else {
+          const fullName =
+            userInfo.name?.trim() ||
+            userInfo.fullName?.trim() ||
+            `${userInfo.given_name || ""} ${
+              userInfo.family_name || ""
+            }`.trim() ||
+            "Unnamed User";
+
+          user = await this.userRepository.createOAuthUser({
+            email: userInfo.email,
+            name: fullName,
+            picture: userInfo.picture,
+            oauthId: userInfo.id,
+            provider,
+            role: "GUEST",
+            refreshToken: null,
+          });
+        }
+      }
+
+      const accessToken = this.tokenService.generateToken(user);
+      const refreshToken = await this.tokenService.generateRefreshToken(user);
+
+      user.refreshToken = refreshToken;
+      await this.userRepository.updateRefreshToken(user._id, refreshToken);
+
+      return { 
+        code:200,
+        success:true,
+        message: "Authentication successful",
+        user, token: accessToken, refreshToken, userId: user._id, role: user.role,
+       };
     } catch (error) {
       console.error("Authentication error:", error);
       throw new GraphQLError("Authentication failed", {
@@ -111,216 +120,7 @@ class OAuthService extends RESTDataSource {
     }
   }
 
-  async verifyGoogleToken(accessToken) {
-    const response = await axios.get(
-      `https://www.googleapis.com/oauth2/v3/userinfo`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-    return response.data;
-  }
-
-  async login(email, password) {
-    console.log('Starting local login process for email:', email);
-
-    if (!this.localAuthService) {
-      throw new GraphQLError('Local authentication service is not configured', {
-        extensions: { code: 'SERVICE_UNAVAILABLE' }
-      });
-    }
-  
-    try {
-      // 验证输入
-      if (!email || !password) {
-        throw new GraphQLError('Email and password are required', {
-          extensions: { 
-            code: 'INVALID_INPUT',
-            requiredFields: ['email', 'password']
-          }
-        });
-      }
-
-      // 检查账户是否被锁定
-      if (this.accountLockService) {
-        const isLocked = await this.accountLockService.isAccountLocked(email);
-        if (isLocked) {
-          const retryAfter = await this.accountLockService.getLockTimeRemaining(email);
-          throw new GraphQLError('Account temporarily locked due to too many failed attempts', {
-            extensions: {
-              code: 'ACCOUNT_LOCKED',
-              retryAfter
-            }
-          });
-        }
-      }
-
-      // 尝试登录
-      console.log('Attempting local login for email:', email);
-      const user = await this.localAuthService.login(email, password);
-
-      // 登录成功后清除失败尝试记录
-      if (this.accountLockService) {
-        await this.accountLockService.clearAttempts(email);
-      }
-
-      if (!user || !user._id) {
-        // 记录失败尝试
-        if (this.accountLockService) {
-          await this.accountLockService.recordAttempt(email);
-        }
-        
-        throw new GraphQLError('Invalid credentials', {
-          extensions: { 
-            code: 'INVALID_CREDENTIALS',
-            attemptsRemaining: this.accountLockService 
-              ? this.accountLockService.MAX_ATTEMPTS - await this.accountLockService.getAttemptCount(email)
-              : null
-          }
-        });
-      }
-
-      // 生成访问令牌和刷新令牌
-      console.log('Generating tokens for user:', user._id.toString());
-      const [accessToken, refreshToken] = await Promise.all([
-        this.tokenService.generateToken(user),
-        this.tokenService.generateRefreshToken(user)
-      ]);
-  
-      console.log('Local login successful for user:', user._id.toString());
-      return {
-        code: 200,
-        success: true,
-        message: "Login successful",
-        token: accessToken,
-        refreshToken,
-        userId: user._id?.toString?.() || user.id,
-        role: user.role,
-        user: {
-          id: user._id?.toString?.() || user.id,
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-          picture: user.picture
-        }
-      };
-    } catch (error) {
-      console.error('Local login error:', error);
-      
-      if (error instanceof GraphQLError) {
-        throw error;
-      }
-
-      throw new GraphQLError('Authentication failed', {
-        extensions: { 
-          code: 'AUTHENTICATION_FAILED',
-          error: error.message
-        }
-      });
-    }
-  }
-  
-
-  async oauthLogin(input) { //  'TypeError: userService.oauthLogin is not a function',
-    console.log('Starting OAuth login process:', { provider: input.provider });
-
-    if (!this.oauthService) {
-      throw new GraphQLError('OAuth service is not configured', {
-        extensions: { code: 'SERVICE_UNAVAILABLE' }
-      });
-    }
-
-    try {
-      // 验证输入
-      if (!input.provider || !input.token) {
-        throw new GraphQLError('Provider and token are required', {
-          extensions: { 
-            code: 'INVALID_INPUT',
-            requiredFields: ['provider', 'token']
-          }
-        });
-      }
-     const supportedProviders = ['GOOGLE', 'FACEBOOK', 'APPLE']; // 支持的提供商列表
-      if (!supportedProviders.includes(input.provider.toUpperCase())) {
-        throw new GraphQLError('Unsupported OAuth provider', {
-          extensions: {
-            code: 'UNSUPPORTED_PROVIDER',
-            supportedProviders
-          }
-        });
-      }
-      // 验证提供商token并获取用户信息
-      console.log('Authenticating with provider:', input.provider);
-      const providerUser = await this.oauthService.authenticate(input.provider, input.token);
-
-      if (!providerUser || !providerUser.email) {
-        throw new GraphQLError('Invalid provider response', {
-          extensions: { 
-            code: 'INVALID_PROVIDER_RESPONSE',
-            provider: input.provider
-          }
-        });
-      }
-
-      // 使用提供商信息登录或创建用户
-      console.log('Processing provider user:', { 
-        email: providerUser.email,
-        provider: input.provider 
-      });
-      const user = await this.oauthService.loginWithProvider(providerUser);
-
-      if (!user || !user._id) {
-        throw new GraphQLError('Failed to process user data', {
-          extensions: { 
-            code: 'USER_PROCESSING_ERROR',
-            provider: input.provider
-          }
-        });
-      }
-
-      // 生成访问令牌和刷新令牌
-      console.log('Generating tokens for user:', user._id.toString());
-      const [accessToken, refreshToken] = await Promise.all([
-        this.tokenService.generateToken(user),
-        this.tokenService.generateRefreshToken(user)
-      ]);
-
-      console.log('OAuth login successful for user:', user._id.toString());
-      return {
-        code: 200,
-        success: true,
-        message: "Login successful",
-        token: accessToken,
-        refreshToken,
-        userId: user._id.toString(),
-        role: user.role,
-        user: {
-          id: user._id.toString(),
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-          picture: user.picture
-        }
-      };
-
-    } catch (error) {
-      console.error('OAuth login error:', error);
-      
-      if (error instanceof GraphQLError) {
-        throw error;
-      }
-
-      throw new GraphQLError('OAuth login failed', {
-        extensions: { 
-          code: 'OAUTH_LOGIN_FAILED',
-          provider: input.provider,
-          error: error.message
-        }
-      });
-    }
-  }
-
-  async signInWithGoogle({ token, refreshToken, oauthId }) {
+  async verifyGoogleToken(token) {
     try {
       this.googleClient = googleClient;
 
@@ -328,33 +128,20 @@ class OAuthService extends RESTDataSource {
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
-      console.log("Google token verified successfully");
+
       const payload = ticket.getPayload();
-      const email = payload.email;
-      const name = payload.name;
-      const picture = payload.picture;
-      const googleOAuthId = payload.sub;
 
-      const finalOAuthId = oauthId || googleOAuthId;
+      const name =
+        payload.name ||
+        payload.fullName ||
+        `${payload.given_name || ""} ${payload.family_name || ""}`.trim();
 
-      let user = await this.userRepository.findByOAuthId(
-        "GOOGLE",
-        finalOAuthId
-      );
-
-      if (!user) {
-        user = await this.userRepository.createOAuthUser({
-          email,
-          name,
-          picture,
-          oauthId: finalOAuthId,
-          provider: "GOOGLE",
-          role: "GUEST",
-          refreshToken,
-        });
-      }
-
-      return user;
+      return {
+        email: payload.email,
+        name,
+        picture: payload.picture,
+        id: payload.sub,
+      };
     } catch (error) {
       throw new GraphQLError("Invalid Google token", {
         extensions: {
@@ -383,18 +170,22 @@ class OAuthService extends RESTDataSource {
         "FACEBOOK",
         finalOAuthId
       );
+      const fullName =
+        userInfo.name?.trim() ||
+        userInfo.fullName?.trim() ||
+        `${userInfo.given_name || ""} ${userInfo.family_name || ""}`.trim() ||
+        "Unnamed User";
 
-      if (!user) {
-        user = await this.userRepository.createOAuthUser({
-          email,
-          name,
-          picture: response.data.picture?.data?.url,
-          oauthId: finalOAuthId,
-          provider: "FACEBOOK",
-          role: "GUEST",
-          refreshToken,
-        });
-      }
+      user = await this.userRepository.createOAuthUser({
+        email: userInfo.email,
+        name: fullName,
+        picture: userInfo.picture,
+        oauthId: userInfo.id,
+        provider,
+        role: "GUEST",
+        refreshToken: null,
+      });
+      console.log("Creating user with:", userInfo);
 
       return user;
     } catch (error) {

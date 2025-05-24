@@ -24,55 +24,103 @@ class LocalAuthService  {
   }
 
   async login(email, password) {
+    console.log('Starting local login process for email:', email);
+
+    if (!this.localAuthService) {
+      throw new GraphQLError('Local authentication service is not configured', {
+        extensions: { code: 'SERVICE_UNAVAILABLE' }
+      });
+    }
+  
     try {
+      // 验证输入
       if (!email || !password) {
         throw new GraphQLError('Email and password are required', {
-          extensions: { code: 'INVALID_INPUT' }
+          extensions: { 
+            code: 'INVALID_INPUT',
+            requiredFields: ['email', 'password']
+          }
         });
       }
 
-      console.log('Attempting login for email:', email);
-      const user = await this.userRepository.getUserByEmailFromDb(email);
-      
-      if (!user) {
-        console.error('No user found for email:', email);
+      // 检查账户是否被锁定
+      if (this.accountLockService) {
+        const isLocked = await this.accountLockService.isAccountLocked(email);
+        if (isLocked) {
+          const retryAfter = await this.accountLockService.getLockTimeRemaining(email);
+          throw new GraphQLError('Account temporarily locked due to too many failed attempts', {
+            extensions: {
+              code: 'ACCOUNT_LOCKED',
+              retryAfter
+            }
+          });
+        }
+      }
+
+      // 尝试登录
+      console.log('Attempting local login for email:', email);
+      const user = await this.localAuthService.login(email, password);
+
+      // 登录成功后清除失败尝试记录
+      if (this.accountLockService) {
+        await this.accountLockService.clearAttempts(email);
+      }
+
+      if (!user || !user._id) {
+        // 记录失败尝试
+        if (this.accountLockService) {
+          await this.accountLockService.recordAttempt(email);
+        }
+        
         throw new GraphQLError('Invalid credentials', {
-          extensions: { code: 'INVALID_CREDENTIALS' }
+          extensions: { 
+            code: 'INVALID_CREDENTIALS',
+            attemptsRemaining: this.accountLockService 
+              ? this.accountLockService.MAX_ATTEMPTS - await this.accountLockService.getAttemptCount(email)
+              : null
+          }
         });
       }
 
-      console.log('Found user:', { 
-        id: user._id?.toString(), 
-        email: user.email 
-      });
-
-      const isPasswordValid = await this.userRepository.checkPassword(password, user.password);
-      if (!isPasswordValid) {
-        console.error('Invalid password for user:', user._id?.toString());
-        throw new GraphQLError('Invalid credentials', {
-          extensions: { code: 'INVALID_CREDENTIALS' }
-        });
-      }
-
-      console.log('Login successful for user:', user._id?.toString());
-      const token = await TokenService.generateToken({ id: user._id.toString(), email: user.email });
-      return { user, token };
-
-      
+      // 生成访问令牌和刷新令牌
+      console.log('Generating tokens for user:', user._id.toString());
+      const [accessToken, refreshToken] = await Promise.all([
+        this.tokenService.generateToken(user),
+        this.tokenService.generateRefreshToken(user)
+      ]);
+  
+      console.log('Local login successful for user:', user._id.toString());
+      return {
+        code: 200,
+        success: true,
+        message: "Login successful",
+        token: accessToken,
+        refreshToken,
+        userId: user._id?.toString?.() || user.id,
+        role: user.role,
+        user: {
+          id: user._id?.toString?.() || user.id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          picture: user.picture
+        }
+      };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Local login error:', error);
+      
       if (error instanceof GraphQLError) {
         throw error;
       }
-      throw new GraphQLError('Login failed', {
+
+      throw new GraphQLError('Authentication failed', {
         extensions: { 
-          code: 'LOGIN_FAILED',
+          code: 'AUTHENTICATION_FAILED',
           error: error.message
         }
       });
     }
   }
-
   async register(userData) {
     const existingUser = await this.userRepository.getUserByEmailFromDb(userData.email);
     if (existingUser) {

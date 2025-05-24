@@ -11,12 +11,12 @@ class UserService {
     this.accountLockService = accountLockService;
   }
 
-  async oauthLogin(input) {
-    return await this.oauthService.authenticate(input);
+  async oauthLogin(provider, token) {
+    return await this.oauthService.authenticate(provider, token);
   }
 
-  async login(input) {
-    return await this.localAuthService.login(input);
+  async login(email, password) {
+    return await this.localAuthService.login(email, password);
   }
 }
 
