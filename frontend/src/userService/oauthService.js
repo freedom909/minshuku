@@ -28,78 +28,101 @@ class OAuthService {
     }
 
     /**
-     * 验证提供商令牌
+     * 检查令牌基本格式是否有效
      * @param {string} provider - 提供商名称，如 'google', 'facebook' 等
      * @param {string} token - OAuth 令牌
-     * @returns {Promise<boolean>} - 令牌是否有效
+     * @returns {boolean} - 令牌格式是否有效
      */
-    async validateProviderToken(provider, token) {
-        console.log(`Validating ${provider} token: ${token}`);
-         // TODO: Add actual validation logic using provider APIs
-         if (!token) {
+    validateTokenFormat(provider, token) {
+        if (!token) {
             console.error(`No token provided for ${provider}`);
             return false;
-         }
-         if (provider === 'google') {
-            // Example validation for Google (replace with actual logic)
-            if (!token.includes('google')) {
-                console.error(`Invalid Google token: ${token}`);
-                return false;
-            }
-         }
-         // Add similar validation for other providers
-         else if (provider === 'facebook') {
-            // Validate Facebook token
-            if (!token.includes('facebook')) {
-                console.error(`Invalid Facebook token: ${token}`);
-                return false;
-            }
-         }
-         else if (provider === 'github') {
-            // Validate GitHub token
-            try {
-                // In a real implementation, you would verify the token with GitHub API
-                // For example: https://api.github.com/user with Authorization header
-                if (!token) {
-                    console.error('Invalid GitHub token');
-                    return false;
-                }
-                return true;
-            } catch (error) {
-                console.error('GitHub token validation error:', error);
-                return false;
-            }
-         }
-         else {
+        }
+        
+        // 简单的格式检查，实际验证将在后端进行
+        if (provider === 'google' && token.startsWith('ya29.')) {
+            return true;
+        } else if (provider === 'facebook' && token.length > 20) {
+            return true;
+        } else if (provider === 'github' && token.length > 20) {
+            return true;
+        } else if (!['google', 'facebook', 'github'].includes(provider)) {
             console.error(`Unsupported provider: ${provider}`);
             return false;
-         }
+        }
+        
         return true;
     }
 
     /**
-     * 从提供商获取用户信息
-     * @param {string} provider - 提供商名称
-     * @param {string} token - OAuth 令牌
+     * 检查用户是否已登录
+     * @returns {boolean} - 用户是否已登录
+     */
+    isLoggedIn() {
+        const token = this.getToken();
+        return !!token;
+    }
+    
+    /**
+     * 获取存储的JWT令牌
+     * @returns {string|null} - JWT令牌或null
+     */
+    getToken() {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem('jwt_token');
+    }
+    
+    /**
+     * 获取当前用户信息
      * @returns {Promise<Object>} - 用户信息
      */
-    async getUserInfoFromProvider(provider, token) {
-        console.log(`Getting user info from ${provider} with token: ${token}`);
-        // TODO: Replace this with real API call
-        return {
-            email: 'test@example.com',
-            name: 'Test User',
-            picture: 'https://example.com/avatar.jpg',
-            oauthId: `${provider}-mock-oauth-id`
-        };
+    async getCurrentUser() {
+        const token = this.getToken();
+        if (!token) return null;
+        
+        try {
+            const query = `
+                query Me {
+                    me {
+                        id
+                        email
+                        name
+                        profilePicture
+                        role
+                    }
+                }
+            `;
+            
+            const response = await fetch(SUBGRAPH_AUTH_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ query }),
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.errors) {
+                console.error('GraphQL errors:', result.errors);
+                this.logout();
+                return null;
+            }
+            
+            return result.data.me;
+        } catch (error) {
+            console.error('Failed to get current user:', error);
+            this.logout();
+            return null;
+        }
     }
 
-    /**
-     * 使用提供商登录
-     * @param {string} provider - 提供商名称
-     * @param {string} token - OAuth 令牌
-     * @returns {Promise<Object>} - 登录结果
-     */
     /**
      * 使用提供商登录
      * @param {string} provider - 提供商名称
@@ -111,10 +134,9 @@ class OAuthService {
             console.log(`Attempting to login with ${provider}...`);
             console.log('Auth URL:', SUBGRAPH_AUTH_URL);
             
-            // Validate the token first
-            const isValid = await this.validateProviderToken(provider, token);
-            if (!isValid) {
-                throw new Error(`Invalid ${provider} token`);
+            // 验证令牌格式
+            if (!this.validateTokenFormat(provider, token)) {
+                throw new Error(`Invalid ${provider} token format`);
             }
 
             const query = `
@@ -183,6 +205,20 @@ class OAuthService {
                 error: error.message || `Failed to login with ${provider}`
             };
         }
+    }
+
+    /**
+     * 登出用户
+     * @returns {void}
+     */
+    logout() {
+        if (typeof window === 'undefined') return;
+        
+        // 清除本地存储的令牌
+        localStorage.removeItem('jwt_token');
+        
+        // 可以在这里添加其他清理操作，如清除用户状态等
+        console.log('User logged out');
     }
 }
 

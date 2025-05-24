@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import oauthService from "@/userService/oauthService";
+import { signIn } from "next-auth/react";
 
 export default function GoogleSignInButton() {
     const [isLoading, setIsLoading] = useState(false);
@@ -10,49 +10,19 @@ export default function GoogleSignInButton() {
     const handleSignIn = async () => {
         setIsLoading(true);
         setError(null);
-        console.log('Starting Google sign-in process...');
         
         try {
-            // Create a more structured mock token
-            const mockPayload = {
-                email: 'test@example.com',
-                name: 'Test User',
-                sub: '12345',
-                iat: Math.floor(Date.now() / 1000)
-            };
-            
-            const mockToken = btoa(JSON.stringify(mockPayload));
-            console.log('Generated mock token:', mockToken);
-            
-            console.log('Calling loginWithProvider...');
-            const result = await oauthService.loginWithProvider("google", mockToken);
-            console.log('Login result:', result);
-            
-            if (!result.success) {
-                console.error('Login failed with result:', result);
-                throw new Error(result.error || "Google login failed");
-            }
-
-            console.log("Login successful, user data:", result.user);
-            
-            // Store any necessary data before redirect
-            if (result.token) {
-                console.log("JWT token received, storing...");
-                localStorage.setItem('jwt_token', result.token);
-            }
-            
-            // Redirect to dashboard on success
-            console.log("Redirecting to dashboard...");
-            window.location.href = "/dashboard";
-            
-        } catch (err) {
-            console.error("Detailed error information:", {
-                message: err.message,
-                stack: err.stack,
-                error: err
+            const result = await signIn("google", {
+                callbackUrl: "/dashboard",
+                redirect: true
             });
-            
-            setError("Failed to sign in with Google");
+
+            if (result?.error) {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            setError(err.message || "Failed to sign in with Google");
+            console.error("Google sign-in error:", err);
         } finally {
             setIsLoading(false);
         }
