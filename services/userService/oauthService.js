@@ -11,7 +11,7 @@ dotenv.config();
 import pkg from "jsonwebtoken";
 const { verify } = pkg;
 import jwksClient from "jwks-rsa";
-import generateRefreshToken from "./tokenService.js";
+import sendOAuthRequestToSubgraph  from "./utils/sendOAuthRequestToSubgraph.js";
 
 function getAppleKey(header, callback) {
   const appleClient = jwksClient({
@@ -37,6 +37,9 @@ class OAuthService extends RESTDataSource {
   }
 
   async authenticate(provider, token) {
+        console.log("Token type:", typeof token); // Should print: string
+    console.log("Token value:", token);       // Should print the JWT string
+
     try {
       if (!provider || !token) {
         throw new GraphQLError("Provider and access token are required", {
@@ -80,13 +83,22 @@ class OAuthService extends RESTDataSource {
           // Optionally update oauthId / provider info here if needed
           user = existingUser;
         } else {
-          const fullName =
-            userInfo.name?.trim() ||
-            userInfo.fullName?.trim() ||
-            `${userInfo.given_name || ""} ${
+          let fullName = "";
+
+          if (typeof userInfo.name === "string" && userInfo.name.trim()) {
+            fullName = userInfo.name.trim();
+          } else if (
+            typeof userInfo.fullName === "string" &&
+            userInfo.fullName.trim()
+          ) {
+            fullName = userInfo.fullName.trim();
+          } else {
+            const constructed = `${userInfo.given_name || ""} ${
               userInfo.family_name || ""
-            }`.trim() ||
-            "Unnamed User";
+            }`.trim();
+            fullName = constructed || "Unnamed User";
+          }
+          console.log("Resolved fullName:", fullName);
 
           user = await this.userRepository.createOAuthUser({
             email: userInfo.email,
@@ -99,19 +111,22 @@ class OAuthService extends RESTDataSource {
           });
         }
       }
-
-      const accessToken = this.tokenService.generateToken(user);
+      if (user) {
+        console.log("User:", user);
+      }
+      const accessToken = await this.tokenService.generateToken(user);
       const refreshToken = await this.tokenService.generateRefreshToken(user);
 
       user.refreshToken = refreshToken;
       await this.userRepository.updateRefreshToken(user._id, refreshToken);
+      
+      console.log("Preparing to call sendOAuthRequestToSubgraph...");
 
-      return { 
-        code:200,
-        success:true,
-        message: "Authentication successful",
-        user, token: accessToken, refreshToken, userId: user._id, role: user.role,
-       };
+      const signInResponse = await sendOAuthRequestToSubgraph(provider, accessToken);
+      
+      console.log("signInResponse received:", signInResponse);
+      
+      return signInResponse;
     } catch (error) {
       console.error("Authentication error:", error);
       throw new GraphQLError("Authentication failed", {
@@ -121,26 +136,24 @@ class OAuthService extends RESTDataSource {
   }
 
   async verifyGoogleToken(token) {
+    console.log("Google token:", token);
     try {
       this.googleClient = googleClient;
-
+  
       const ticket = await this.googleClient.verifyIdToken({
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
+      console.log("Expected audience:", process.env.GOOGLE_CLIENT_ID);
 
       const payload = ticket.getPayload();
-
-      const name =
-        payload.name ||
-        payload.fullName ||
-        `${payload.given_name || ""} ${payload.family_name || ""}`.trim();
-
+      console.log("User payload from Google:", payload);
+  
       return {
-        email: payload.email,
-        name,
-        picture: payload.picture,
         id: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
       };
     } catch (error) {
       throw new GraphQLError("Invalid Google token", {
@@ -152,6 +165,8 @@ class OAuthService extends RESTDataSource {
       });
     }
   }
+  
+  
 
   async signInWithFacebook({ token, refreshToken, oauthId }) {
     try {
@@ -162,7 +177,7 @@ class OAuthService extends RESTDataSource {
         },
       });
 
-      const { id: facebookOAuthId, name, email } = response.data;
+      const { id: facebookOAuthId, fullName, email } = response.data;
 
       const finalOAuthId = oauthId || facebookOAuthId;
 
@@ -170,22 +185,21 @@ class OAuthService extends RESTDataSource {
         "FACEBOOK",
         finalOAuthId
       );
-      const fullName =
-        userInfo.name?.trim() ||
-        userInfo.fullName?.trim() ||
-        `${userInfo.given_name || ""} ${userInfo.family_name || ""}`.trim() ||
+      const name =
+        fullName?.trim() ||
+        `${response.data.given_name || ""} ${response.data.family_name || ""}`.trim() ||
         "Unnamed User";
 
       user = await this.userRepository.createOAuthUser({
-        email: userInfo.email,
+        email: payload.email,
         name: fullName,
-        picture: userInfo.picture,
-        oauthId: userInfo.id,
+        picture: payload.picture,
+        oauthId: payload.id,
         provider,
         role: "GUEST",
         refreshToken: null,
       });
-      console.log("Creating user with:", userInfo);
+      console.log("Creating user with:", payload);
 
       return user;
     } catch (error) {

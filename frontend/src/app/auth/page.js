@@ -30,7 +30,7 @@ export default function Auth() {
         const token = response.credential;
         try {
             const oauthService = new OAuthService();
-            const result = await oauthService.loginWithProvider("google", token);
+            const result = await oauthService.loginWithProvider("google", token); 
 
             if (result.success) {
                 localStorage.setItem("username", result.user.name);
@@ -57,9 +57,10 @@ export default function Auth() {
                 });
 
                 window.google.accounts.id.renderButton(
-                    document.getElementById("googleSignInDiv"),
+                    document.getElementById("google-login-button"),
                     { theme: "outline", size: "large" }
                 );
+                window.google.accounts.id.prompt();
             } catch (e) {
                 console.warn("Google Identity Services failed to initialize. Fallback will be used.");
             }

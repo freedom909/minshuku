@@ -19,7 +19,7 @@ npm install google-auth-library jsonwebtoken cors
 ### Frontend `.env.local`
 ```env
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-NEXT_PUBLIC_API_URL=http://localhost:4001/graphql
+NEXT_PUBLIC_API_URL=http://localhost:4010/graphql
 ```
 
 ### Backend `.env`
@@ -62,7 +62,7 @@ JWT_SECRET=your-jwt-secret
 ### Frontend Testing
 ```bash
 # Test backend connection
-curl -X POST http://localhost:4001/graphql \
+curl -X POST http://localhost:4010/graphql \
   -H "Content-Type: application/json" \
   -d '{"query":"query { __typename }"}'
 ```

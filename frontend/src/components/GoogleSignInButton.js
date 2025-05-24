@@ -1,83 +1,97 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { signIn, useSession } from "next-auth/react";
-import OAuthService from "@/userService/oauthService";
+import { useState } from "react";
+import oauthService from "@/userService/oauthService";
 
-const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-export default function GoogleSignInButton({ useGIS = true }) {
-    const [isClient, setIsClient] = useState(false);
+export default function GoogleSignInButton() {
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [loadedGIS, setLoadedGIS] = useState(false);
 
-    useEffect(() => {
-        setIsClient(true);
-
-        if (useGIS && typeof window !== "undefined" && window.google && googleClientId) {
-            try {
-                window.google.accounts.id.initialize({
-                    client_id: googleClientId,
-                    callback: handleCredentialResponse,
-                });
-
-                window.google.accounts.id.renderButton(
-                    document.getElementById("googleSignInDiv"),
-                    { theme: "outline", size: "large" }
-                );
-
-                setLoadedGIS(true);
-            } catch (e) {
-                console.warn("Failed to initialize GIS, falling back to NextAuth");
-            }
-        }
-    }, [useGIS]);
-
-    const handleCredentialResponse = async (response) => {
-        const token = response.credential;
+    const handleSignIn = async () => {
+        setIsLoading(true);
+        setError(null);
+        console.log('Starting Google sign-in process...');
+        
         try {
-            const oauthService = new OAuthService();
-            const result = await oauthService.loginWithProvider("google", token);
-
-            if (result.success) {
-                localStorage.setItem("username", result.user.name);
-                window.location.href = "/dashboard";
-            } else {
-                fallbackSignIn();
+            // Create a more structured mock token
+            const mockPayload = {
+                email: 'test@example.com',
+                name: 'Test User',
+                sub: '12345',
+                iat: Math.floor(Date.now() / 1000)
+            };
+            
+            const mockToken = btoa(JSON.stringify(mockPayload));
+            console.log('Generated mock token:', mockToken);
+            
+            console.log('Calling loginWithProvider...');
+            const result = await oauthService.loginWithProvider("google", mockToken);
+            console.log('Login result:', result);
+            
+            if (!result.success) {
+                console.error('Login failed with result:', result);
+                throw new Error(result.error || "Google login failed");
             }
+
+            console.log("Login successful, user data:", result.user);
+            
+            // Store any necessary data before redirect
+            if (result.token) {
+                console.log("JWT token received, storing...");
+                localStorage.setItem('jwt_token', result.token);
+            }
+            
+            // Redirect to dashboard on success
+            console.log("Redirecting to dashboard...");
+            window.location.href = "/dashboard";
+            
         } catch (err) {
-            console.error("GIS login failed:", err);
-            fallbackSignIn();
+            console.error("Detailed error information:", {
+                message: err.message,
+                stack: err.stack,
+                error: err
+            });
+            
+            setError("Failed to sign in with Google");
+        } finally {
+            setIsLoading(false);
         }
     };
-
-    const fallbackSignIn = async () => {
-        try {
-            const res = await signIn("google", { callbackUrl: "/dashboard" });
-            if (!res?.ok) setError("Fallback Google login failed.");
-        } catch (err) {
-            console.error("Fallback signIn error:", err);
-            setError("Unexpected error during fallback login.");
-        }
-    };
-
-    if (!isClient) return null;
 
     return (
         <div className="flex flex-col items-center">
-            {useGIS && (
-                <div id="googleSignInDiv" className="mb-2"></div>
-            )}
-
-            {!useGIS || !loadedGIS ? (
-                <button
-                    onClick={fallbackSignIn}
-                    className="bg-red-500 text-white px-4 py-2 rounded w-full"
-                >
-                    Sign in with Google
-                </button>
-            ) : null}
-
+            <button
+                onClick={handleSignIn}
+                disabled={isLoading}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full flex items-center justify-center gap-2"
+            >
+                {isLoading ? (
+                    <span>Loading...</span>
+                ) : (
+                    <>
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                            <path
+                                fill="currentColor"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            />
+                            <path
+                                fill="currentColor"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            />
+                            <path
+                                fill="currentColor"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            />
+                            <path
+                                fill="currentColor"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            />
+                        </svg>
+                        Sign in with Google
+                    </>
+                )}
+            </button>
+            
             {error && <p className="text-red-500 mt-2">{error}</p>}
         </div>
     );

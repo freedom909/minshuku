@@ -15,7 +15,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 
 // Configuration
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4001/graphql';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4010/graphql';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 

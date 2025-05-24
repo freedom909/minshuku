@@ -496,7 +496,7 @@ scalar join__DirectiveArguments
 scalar join__FieldSet
 
 enum join__Graph {
-  ACCOUNTS @join__graph(name: "accounts", url: "http://localhost:4001")
+  ACCOUNTS @join__graph(name: "accounts", url: "http://localhost:4010")
   BOOKINGS @join__graph(name: "bookings", url: "http://localhost:4004")
   CARTS @join__graph(name: "carts", url: "http://localhost:4005")
   LISTINGS @join__graph(name: "listings", url: "http://localhost:4003")

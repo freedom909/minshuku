@@ -44,11 +44,11 @@ app.use(cors({
 - Network tab shows failed requests
 
 **Solutions**:
-1. Verify backend is running on correct port (default 4001)
+1. Verify backend is running on correct port (default 4010)
 2. Check frontend `NEXT_PUBLIC_API_URL` matches backend URL
 3. Test backend directly with curl:
 ```bash
-curl -X POST http://localhost:4001/graphql \
+curl -X POST http://localhost:4010/graphql \
   -H "Content-Type: application/json" \
   -d '{"query":"query { __typename }"}'
 ```

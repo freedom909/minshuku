@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Configuration
-const BACKEND_PORT = 4001;
+const BACKEND_PORT = 4010;
 const FRONTEND_PORT = 3000;
 const REQUIRED_ENV_VARS = {
   frontend: ['NEXT_PUBLIC_GOOGLE_CLIENT_ID', 'NEXT_PUBLIC_API_URL'],

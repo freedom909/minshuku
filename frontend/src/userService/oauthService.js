@@ -2,16 +2,25 @@
 
 const config = {
     google: {
-        clientId: 'process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID',
-        clientSecret: 'process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET',
-        redirectUri: 'http://localhost:3000/auth/callback'
+        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET,
+        redirectUri: process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback'
     },
     facebook: {
-        clientId: 'your-facebook-app-id',
-        clientSecret: 'your-facebook-app-secret',
-        redirectUri: 'http://localhost:3000/auth/callback'
+        clientId: process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_ID,
+        clientSecret: process.env.NEXT_PUBLIC_FACEBOOK_CLIENT_SECRET,
+        redirectUri: process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback'
+    },
+    github: {
+        clientId: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
+        clientSecret: process.env.NEXT_PUBLIC_GITHUB_CLIENT_SECRET,
+        redirectUri: process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback'
     }
 };
+
+// Define the GraphQL endpoint URL
+const SUBGRAPH_AUTH_URL = process.env.NEXT_PUBLIC_SUBGRAPH_AUTH_URL || 'http://localhost:4010/graphql';
+console.log('SUBGRAPH_AUTH_URL:', SUBGRAPH_AUTH_URL);
 
 class OAuthService {
     constructor(configOverrides = {}) {
@@ -46,6 +55,21 @@ class OAuthService {
                 return false;
             }
          }
+         else if (provider === 'github') {
+            // Validate GitHub token
+            try {
+                // In a real implementation, you would verify the token with GitHub API
+                // For example: https://api.github.com/user with Authorization header
+                if (!token) {
+                    console.error('Invalid GitHub token');
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('GitHub token validation error:', error);
+                return false;
+            }
+         }
          else {
             console.error(`Unsupported provider: ${provider}`);
             return false;
@@ -76,50 +100,91 @@ class OAuthService {
      * @param {string} token - OAuth 令牌
      * @returns {Promise<Object>} - 登录结果
      */
-    async loginWithProvider(provider, token) {
-        const isValid = await this.validateProviderToken(provider, token);
-        if (!isValid) {
-            throw new Error('Invalid OAuth token');
-        }
-
-        const userInfo = await this.getUserInfoFromProvider(provider, token);
-        console.log(`Logging in with ${provider} using user info:`, userInfo);
-
-        return {
-            success: true,
-            user: userInfo,
-            token: 'mock-jwt-token'
-        };
-    }
-
     /**
-     * 向 subgraph-users 发送 OAuth 登录请求
+     * 使用提供商登录
      * @param {string} provider - 提供商名称
      * @param {string} token - OAuth 令牌
-     * @returns {Promise<Object>} - 服务器响应
+     * @returns {Promise<Object>} - 登录结果
      */
-    async sendOAuthRequestToSubgraph(provider, token) {
-        const SUBGRAPH_USERS_URL = 'http://localhost:4010/oauthLogin'; // Adjust if needed
-
+    async loginWithProvider(provider, token) {
         try {
-            const response = await fetch(SUBGRAPH_USERS_URL, {
+            console.log(`Attempting to login with ${provider}...`);
+            console.log('Auth URL:', SUBGRAPH_AUTH_URL);
+            
+            // Validate the token first
+            const isValid = await this.validateProviderToken(provider, token);
+            if (!isValid) {
+                throw new Error(`Invalid ${provider} token`);
+            }
+
+            const query = `
+                mutation SignIn($provider: String!, $token: String!) {
+                    signIn(input: { provider: $provider, token: $token }) {
+                        success
+                        token
+                        user {
+                            id
+                            email
+                            name
+                        }
+                        error
+                    }
+                }
+            `;
+
+            const response = await fetch(SUBGRAPH_AUTH_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ provider, token })
+                body: JSON.stringify({
+                    query,
+                    variables: {
+                        provider,
+                        token
+                    }
+                }),
+                credentials: 'include'
             });
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('Auth response structure:', Object.keys(result));
+            
+            if (result.errors) {
+                console.error('GraphQL errors:', result.errors);
+                throw new Error(result.errors[0].message);
+            }
+
+            const authResult = result.data.signIn;
+            
+            if (!authResult.success) {
+                throw new Error(authResult.error || 'Authentication failed');
+            }
+
+            // Store the JWT token
+            if (authResult.token) {
+                console.log('Storing JWT token...');
+                localStorage.setItem('jwt_token', authResult.token);
+            }
+
+            return {
+                success: true,
+                user: authResult.user,
+                token: authResult.token
+            };
         } catch (error) {
-            console.error('Error sending request to subgraph-users:', error);
-            throw error;
+            console.error(`${provider} login failed:`, error);
+            return {
+                success: false,
+                error: error.message || `Failed to login with ${provider}`
+            };
         }
     }
 }
 
-export default OAuthService;
+// Create and export the singleton instance
+export const oauthService = new OAuthService();

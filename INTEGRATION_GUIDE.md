@@ -29,7 +29,7 @@
 **Frontend `.env.local`**:
 ```env
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-NEXT_PUBLIC_API_URL=http://localhost:4001/graphql
+NEXT_PUBLIC_API_URL=http://localhost:4010/graphql
 ```
 
 **Backend `.env`**:

@@ -164,14 +164,15 @@ class UserRepository {
     }
   }
 
-  async createOAuthUser({ email, name, picture, oauthId, provider, role }) {
+  async createOAuthUser( {email, name, picture, oauthId, provider, role, refreshToken=null} ) {
     return await this.model.create({
       email,
-      fullName: name,
+      name,
       picture,
       oauthId,
       provider,
       role,
+      refreshToken
     });
   }
 

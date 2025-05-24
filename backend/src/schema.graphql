@@ -1,0 +1,68 @@
+# GraphQL Schema for Minshuku Backend
+
+type Query {
+  # Health check query
+  ping: String!
+  
+  # Get current authenticated user
+  me: User
+  
+  # Get user by ID (admin only)
+  user(id: ID!): User
+}
+
+type Mutation {
+  # OAuth authentication
+  signIn(input: SignInInput!): AuthResult!
+  
+  # Sign out current user
+  signOut: Boolean!
+}
+
+# Input for OAuth sign in
+input SignInInput {
+  # OAuth provider (google, facebook, etc.)
+  provider: String!
+  
+  # OAuth token from the provider
+  token: String!
+}
+
+# Result of authentication attempts
+type AuthResult {
+  # Whether authentication was successful
+  success: Boolean!
+  
+  # JWT token for authenticated sessions
+  token: String
+  
+  # User data if authentication was successful
+  user: User
+  
+  # Error message if authentication failed
+  error: String
+}
+
+# User model
+type User {
+  # Unique identifier
+  id: ID!
+  
+  # User's email address
+  email: String!
+  
+  # User's display name
+  name: String
+  
+  # User's profile picture URL
+  profilePicture: String
+  
+  # User's role (user, admin)
+  role: String!
+  
+  # When the user was created
+  createdAt: String!
+  
+  # When the user was last updated
+  updatedAt: String!
+}
