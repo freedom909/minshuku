@@ -41,14 +41,14 @@ const handleGoogleLoginSuccess = async (response) => {
     const decoded = jwtDecode(token);
     const provider = "GOOGLE";
 
-    const { data } = await signIn({ //where do signIn come from?
+    const { data } = await signIn({ 
       mutation: SIGN_IN,
       variables: {
         input: {
           provider,
           token,
           oauthId: decoded.sub,
-          refreshToken: null, // optional
+          refreshToken: null, 
         },
       },
     });

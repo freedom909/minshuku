@@ -107,7 +107,12 @@ export const resolvers = {
         });
       }
     
-      const user = response.user; // "Cannot read properties of undefined (reading 'user')",
+      const userId = response.userId;
+      const role = response.role;
+
+      // Optional: Fetch full user if needed
+      const user = { id: userId, role };
+
       if (!user) {
         logger.error("Authentication failed - no user returned");
         throw new GraphQLError("Authentication failed", {

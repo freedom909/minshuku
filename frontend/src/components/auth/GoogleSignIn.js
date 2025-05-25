@@ -18,9 +18,9 @@ export default function GoogleSignIn({ buttonText = "Continue with Google" }) {/
             provider: 'GOOGLE',
             token: credentialResponse.credential
           }
-        }
+        } 
       });
-      
+      console.log("google sign in:", data);
       if (data?.oauthLogin) {
         login(data.oauthLogin.token, data.oauthLogin.userId);
       }

@@ -1,14 +1,29 @@
-import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
-import { json } from "express";
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
+import { getSession } from 'next-auth/react';
+import config from '../config/config';
+
+const httpLink = createHttpLink({
+  uri: `${config.API_URL}/graphql`,
+});
+
+const authLink = setContext(async (_, { headers }) => {
+  // Get the authentication token from session if it exists
+  const session = await getSession();
+  const token = session?.accessToken;
+  
+  // Return the headers to the context so httpLink can read them
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : "",
+    }
+  };
+});
 
 const client = new ApolloClient({
-    link: new HttpLink({
-        uri: "http://localhost:4010/graphql", // Your GraphQL backend
-        credentials: "include", // Include cookies if authentication is needed
-        middleware: [json()], // Add JSON middleware to parse request body
-    }),
-    withCredentials: true, // Ensure cookies are sent with requests
-    cache: new JSON.parse(JSON.stringify(new InMemoryCache())),
+  link: authLink.concat(httpLink),
+  cache: new InMemoryCache()
 });
 
 export default client;

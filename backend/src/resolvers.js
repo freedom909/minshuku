@@ -17,6 +17,7 @@ async function verifyGoogleToken(token) {
         });
         
         const payload = ticket.getPayload();
+        console.log('Google token verified:', payload);
         return {
             email: payload.email,
             name: payload.name,

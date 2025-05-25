@@ -30,6 +30,8 @@ async function startServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    introspection: true,
+    allowBatchedHttpRequests: true,
     context: ({ req }) => {
       // Pass user from auth middleware to resolvers
       return { user: req.user };

@@ -28,9 +28,12 @@ export default function Auth() {
 
     const handleGoogleCredentialResponse = useCallback(async (response) => {
         const token = response.credential;
+        console.log('🔑 Received Google credential token:', token);
         try {
             const oauthService = new OAuthService();
-            const result = await oauthService.loginWithProvider("google", token); 
+            console.log('📡 Sending Google token to backend...');// I did not find output in the terminal
+            const result = await oauthService.loginWithProvider("google", token);
+            console.log('📬 Backend response:', result);
 
             if (result.success) {
                 localStorage.setItem("username", result.user.name);
