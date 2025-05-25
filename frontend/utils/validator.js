@@ -1,5 +1,5 @@
 // File: backend/src/utils/validators.js
-exports.validatePassword = (password) => {
+export function validatePassword(password) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     
     if (!passwordRegex.test(password)) {
@@ -8,4 +8,4 @@ exports.validatePassword = (password) => {
       );
     }
     return true;
-  };
+  }

@@ -144,6 +144,7 @@ type InviteCodeResponse implements Response {
 type Mutation {
   signInWithOAuth(input: SignInInput!): SignInResponse! @shareable
   signUp(input: SignUpInput!): AuthPayload! @shareable
+  signupWithToken(token: String!): SignInResponse! @shareable
   signIn(input: SignInInput!): SignInResponse! @shareable
   updatePassword(input: UpdatePasswordInput!): AuthPayload! @shareable
   requestResetPassword(email: String!): ReqResetPwdResponse! @shareable
@@ -163,6 +164,7 @@ enum OAuthProvider {
 
 type Query {
   user(id: ID!): User @shareable
+  UserExists(email: String!): Boolean! @shareable
   users: [User]! @shareable
 }
 

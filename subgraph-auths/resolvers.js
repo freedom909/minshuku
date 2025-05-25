@@ -143,7 +143,17 @@ export const resolvers = {
         role: response.role,
         userId: response.userId,
       };
-    },   
+    },  
+    
+    signupWithToken: async (_, { token }, { dataSources }) => {
+      const userInfo = await verifyToken(token); // Validate token
+      const user = await dataSources.userAPI.findOrCreateUser(userInfo);
+      return {
+        success: true,
+        message: "Signed up successfully",
+        user
+      };
+    }
   },
 };
 
