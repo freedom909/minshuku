@@ -107,12 +107,7 @@ export const resolvers = {
         });
       }
     
-      const userId = response.userId;
-      const role = response.role;
-
-      // Optional: Fetch full user if needed
-      const user = { id: userId, role };
-
+      const user = response.user; // "Cannot read properties of undefined (reading 'user')",
       if (!user) {
         logger.error("Authentication failed - no user returned");
         throw new GraphQLError("Authentication failed", {
@@ -143,17 +138,7 @@ export const resolvers = {
         role: response.role,
         userId: response.userId,
       };
-    },  
-    
-    signupWithToken: async (_, { token }, { dataSources }) => {
-      const userInfo = await verifyToken(token); // Validate token
-      const user = await dataSources.userAPI.findOrCreateUser(userInfo);
-      return {
-        success: true,
-        message: "Signed up successfully",
-        user
-      };
-    }
+    },   
   },
 };
 

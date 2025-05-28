@@ -142,9 +142,9 @@ type InviteCodeResponse implements Response {
 
 # Queries and Mutations
 type Mutation {
-  signInWithOAuth(input: SignInInput!): SignInResponse! @shareable
+  signInWithToken(input: SignInInput!): SignInResponse! @shareable
   signUp(input: SignUpInput!): AuthPayload! @shareable
-  signupWithToken(token: String!): SignInResponse! @shareable
+  signupWithMagicLink(token: String!): SignInResponse! @shareable
   signIn(input: SignInInput!): SignInResponse! @shareable
   updatePassword(input: UpdatePasswordInput!): AuthPayload! @shareable
   requestResetPassword(email: String!): ReqResetPwdResponse! @shareable

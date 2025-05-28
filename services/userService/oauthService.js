@@ -99,7 +99,7 @@ class OAuthService extends RESTDataSource {
             fullName = constructed || "Unnamed User";
           }
           console.log("Resolved fullName:", fullName);
-
+          console.log("Before user creation...");
           user = await this.userRepository.createOAuthUser({
             email: userInfo.email,
             name: fullName,
@@ -109,21 +109,32 @@ class OAuthService extends RESTDataSource {
             role: "GUEST",
             refreshToken: null,
           });
+          console.log("After user creation...");
         }
       }
       if (user) {
         console.log("User:", user);
       }
+      console.log("Before token generation...");
+      try {
       const accessToken = await this.tokenService.generateToken(user);
+      console.log("after token generation...");
       const refreshToken = await this.tokenService.generateRefreshToken(user);
 
       user.refreshToken = refreshToken;
       await this.userRepository.updateRefreshToken(user._id, refreshToken);
-      
+    } catch (err) {
+      console.error("Token generation or update failed:", err);
+    }
       console.log("Preparing to call sendOAuthRequestToSubgraph...");
-
+      console.log("Calling subgraph with accessToken:", accessToken);
+try {
+      console.log("Google login resolver hit before");
       const signInResponse = await sendOAuthRequestToSubgraph(provider, accessToken);
-      
+      console.log("Google login resolver hit after" );
+    } catch (e) {
+      console.error("Subgraph call failed:", e);
+    }
       console.log("signInResponse received:", signInResponse);
       
       return signInResponse;

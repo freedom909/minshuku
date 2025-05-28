@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
+//frontend/src/components/OAuthHandler.jsx
+// 'use client';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { oauthService } from '../userService/oauthService';
+import OAuthService from '../userService/oauthService';
 
 const providerInfo = {
   google: {
@@ -19,6 +21,8 @@ const providerInfo = {
 
 const OAuthHandler = ({ code }) => {
   const navigate = useNavigate();
+  
+  const oauthService = useMemo(() => new OAuthService(), []);
 
   useEffect(() => {
     const authenticateWithSubgraph = async () => {
@@ -32,14 +36,26 @@ const OAuthHandler = ({ code }) => {
 
         const token = code[providerInfo[provider].tokenKey];
 
-        // 使用 oauthService 发送认证请求到 subgraph-auths
-        const authResponse = await oauthService.sendOAuthRequestToSubgraph(provider, token);
+        // 构造用户数据对象
+        const userData = {
+          email: code.email || '',
+          name: code.name || '',
+          image: code.picture || '',
+          provider: provider,
+          accessToken: token, // 确保这里是正确的 token 键名 idToken?
+          id: code.sub || code.id || ''
+        };
+
+        // 使用 oauthService 发送认证请求
+        const authResponse = await oauthService.signIn(userData);
 
         if (authResponse.success) {
+          console.log('✅ OAuth登录成功');
           // 登录成功，重定向到仪表板
           navigate('/dashboard');
         } else {
-          throw new Error(authResponse.error || 'Authentication failed');
+          console.error('❌ OAuth登录失败:', authResponse.error);
+          throw new Error(authResponse.error || '认证失败');
         }
       } catch (err) {
         console.error('❌ Failed to authenticate with OAuth:', err.message);

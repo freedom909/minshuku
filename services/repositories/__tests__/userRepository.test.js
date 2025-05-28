@@ -1,5 +1,5 @@
-const { UserRepository } = require('../userRepository');
-const User = require('../../models/user');
+import { UserRepository } from '../userRepository';
+import User, { findByIdAndUpdate } from '../../models/user';
 
 jest.mock('../../models/user');
 
@@ -14,11 +14,11 @@ describe('UserRepository', () => {
   describe('updateUser', () => {
     it('should update user with valid data', async () => {
       const mockUser = { _id: '1', email: 'new@test.com', version: 1 };
-      User.findByIdAndUpdate.mockResolvedValue(mockUser);
+      findByIdAndUpdate.mockResolvedValue(mockUser);
       
       const result = await repo.updateUser('1', { email: 'new@test.com' });
       expect(result).toEqual(mockUser);
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+      expect(findByIdAndUpdate).toHaveBeenCalledWith(
         '1',
         { 
           $set: { email: 'new@test.com' },
@@ -29,12 +29,12 @@ describe('UserRepository', () => {
     });
 
     it('should handle version conflicts', async () => {
-      User.findByIdAndUpdate.mockResolvedValue(null);
+      findByIdAndUpdate.mockResolvedValue(null);
       
       await expect(repo.updateUser('1', { email: 'new@test.com', version: 1 }))
         .rejects.toThrow('User not found');
       
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+      expect(findByIdAndUpdate).toHaveBeenCalledWith(
         '1',
         {
           $set: { email: 'new@test.com' },
@@ -55,10 +55,10 @@ describe('UserRepository', () => {
 
     it('should filter out password unless explicitly updating', async () => {
       const mockUser = { _id: '1' };
-      User.findByIdAndUpdate.mockResolvedValue(mockUser);
+      findByIdAndUpdate.mockResolvedValue(mockUser);
       
       await repo.updateUser('1', { password: 'should-not-update' });
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+      expect(findByIdAndUpdate).toHaveBeenCalledWith(
         '1',
         { $set: {} }, // password filtered out
         expect.anything()
@@ -69,10 +69,10 @@ describe('UserRepository', () => {
   describe('findByIdAndUpdate', () => {
     it('should update with valid options', async () => {
       const mockUser = { _id: '1' };
-      User.findByIdAndUpdate.mockResolvedValue(mockUser);
+      findByIdAndUpdate.mockResolvedValue(mockUser);
       
       await repo.findByIdAndUpdate('1', { name: 'Test' });
-      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+      expect(findByIdAndUpdate).toHaveBeenCalledWith(
         '1',
         { name: 'Test' },
         { new: true }

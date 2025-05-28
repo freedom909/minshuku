@@ -24,8 +24,20 @@ input SignInInput {
   # OAuth provider (google, facebook, etc.)
   provider: String!
   
-  # OAuth token from the provider
-  token: String!
+  # User's email from OAuth provider
+  email: String!
+  
+  # User's name from OAuth provider
+  name: String
+  
+  # User's profile picture URL from OAuth provider
+  picture: String
+  
+  # Provider-specific user ID
+  providerId: String
+  
+  # OAuth access token from the provider
+  accessToken: String
 }
 
 # Result of authentication attempts

@@ -1,34 +1,8 @@
 const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require('google-auth-library');
 const { AuthenticationError, ForbiddenError } = require('apollo-server-express');
-
-// Initialize Google OAuth client
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // In-memory user store (replace with database in production)
 const users = {};
-
-// Verify Google OAuth token
-async function verifyGoogleToken(token) {
-    try {
-        const ticket = await googleClient.verifyIdToken({
-            idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID
-        });
-        
-        const payload = ticket.getPayload();
-        console.log('Google token verified:', payload);
-        return {
-            email: payload.email,
-            name: payload.name,
-            profilePicture: payload.picture,
-            googleId: payload.sub
-        };
-    } catch (error) {
-        console.error('Google token verification failed:', error);
-        return null;
-    }
-}
 
 // Generate JWT token
 function generateToken(user) {
@@ -44,35 +18,41 @@ function generateToken(user) {
 }
 
 // Find or create user from OAuth data
-async function findOrCreateUser(oauthData, provider) {
+async function findOrCreateUser(oauthInput) {
+    const { provider, email, name, picture, providerId } = oauthInput;
+    
     // In a real app, you would query your database here
     
     // For demo purposes, we'll use the email as a unique identifier
-    let user = Object.values(users).find(u => u.email === oauthData.email);
+    let user = Object.values(users).find(u => u.email === email);
     
     if (!user) {
         // Create new user
         const id = `user_${Date.now()}`;
         user = {
             id,
-            email: oauthData.email,
-            name: oauthData.name,
-            profilePicture: oauthData.profilePicture,
+            email,
+            name: name || '',
+            profilePicture: picture || '',
             role: 'user',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            [provider + 'Id']: oauthData[provider + 'Id']
+            [provider + 'Id']: providerId
         };
         
         // Save user (in a real app, this would be a database operation)
         users[id] = user;
+        console.log(`Created new user: ${id} with email: ${email}`);
     } else {
         // Update existing user with new OAuth info
-        user[provider + 'Id'] = oauthData[provider + 'Id'];
+        user.name = name || user.name;
+        user.profilePicture = picture || user.profilePicture;
+        user[provider + 'Id'] = providerId;
         user.updatedAt = new Date().toISOString();
         
         // Update user in store
         users[user.id] = user;
+        console.log(`Updated existing user: ${user.id} with email: ${email}`);
     }
     
     return user;
@@ -100,33 +80,26 @@ const resolvers = {
     
     Mutation: {
         signIn: async (_, { input }) => {
-            const { provider, token } = input;
+            const { provider } = input;
             
             try {
-                let oauthData;
-                
-                // Verify token based on provider
-                switch (provider.toLowerCase()) {
-                    case 'google':
-                        oauthData = await verifyGoogleToken(token);
-                        break;
-                    // Add other providers here
-                    default:
-                        throw new Error(`Unsupported provider: ${provider}`);
+                // Validate required fields
+                if (!input.email) {
+                    throw new Error('Email is required');
                 }
                 
-                if (!oauthData) {
-                    return {
-                        success: false,
-                        error: 'Invalid authentication token'
-                    };
+                // Currently only supporting Google
+                if (provider.toLowerCase() !== 'google') {
+                    throw new Error(`Unsupported provider: ${provider}`);
                 }
                 
-                // Find or create user
-                const user = await findOrCreateUser(oauthData, provider.toLowerCase());
+                // Find or create user using the OAuth data
+                const user = await findOrCreateUser(input);
                 
                 // Generate JWT
                 const jwtToken = generateToken(user);
+                
+                console.log(`Successfully signed in user: ${user.id} with email: ${user.email}`);
                 
                 return {
                     success: true,

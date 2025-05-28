@@ -30,6 +30,26 @@ class UserRepository {
     }
   }
 
+  async findOrCreateUser(userInfo) {
+    const { email } = userInfo;
+    if (!email || typeof email!=='string') {
+      throw new TypeError('Email must be a valid string');
+    }
+    try {
+      const user = await this.model.findOne(email);
+      if (user) {
+        return user;
+      }
+      const newUser = new this.model(userInfo);
+      if (!newUser) {
+        throw new Error('Failed to create new user');
+      }
+      return await newUser.save();
+    } catch (error) {
+      console.error('Error during findOrCreateUser:', error);
+      throw error;
+    }
+  }
   async findByIdAndUpdate(id, update) {
     try {
       return await this.model.findByIdAndUpdate(id, {
@@ -139,7 +159,7 @@ class UserRepository {
     }
   }
 
-  async getUserByEmailFromDb(email) {
+  async getUserByEmail(email) {
     try {
       if (!email || typeof email !== 'string') {
         throw new TypeError('Email must be a valid string');

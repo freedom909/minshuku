@@ -1,3 +1,4 @@
+//frontend/src/userService/localAuthService.js
 import { authenticate } from "@/lib/auth";
 import axios from "axios";
 import bcrypt from 'bcryptjs';
@@ -16,26 +17,21 @@ const getUserForAuthQuery = `
 `;
 
 const loginRequestToSubgraph = `
-  mutation Login($input: SignInInput!) {
-    signIn(input: $input) {
-      success
-      message
-      token {
-        accessToken {
-          token
-          expiresAt
-        }
-      }
-      user {
-        id
-        email
-        name
-        nickname
-        role
-        picture
+mutation SignIn($input: SignInInput!) {
+  signIn(input: $input) {
+    role
+    success
+    userId
+    refreshToken
+    email
+    token {
+      accessToken {
+        token
+        expiresAt
       }
     }
   }
+}
 `;
 
 const registerRequestToSubgraph = `
@@ -50,6 +46,7 @@ const registerRequestToSubgraph = `
         nickname
         role
         picture
+        
       }
       token {
         accessToken {
@@ -62,7 +59,7 @@ const registerRequestToSubgraph = `
 `;
 
 const localAuthService = {
-  authenticate: async (email, password) => {
+  login: async (email, password) => {
     try {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -105,7 +102,8 @@ const localAuthService = {
           name: user.name || user.email.split('@')[0],
           nickname: user.nickname,
           role: user.role,
-          picture: user.picture
+          picture: user.picture,
+          
         },
         token: token?.accessToken?.token,
         message: "Authentication successful"
