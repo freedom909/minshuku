@@ -75,11 +75,12 @@ input SignInInput {
   email: String
   password: String
   provider: OAuthProvider
-  token: String         # Used by all OAuth providers
-  refreshToken: String  # Optional, for providers that return it
-  oauthId: String       # Optional, for providers that return it
+  token: String
+  refreshToken: String
+  oauthId: String
+  idToken: String
+  accessToken: String
 }
-
 
 input SignUpInput {
   email: String!
@@ -102,11 +103,7 @@ type AuthPayload {
   token: String! @shareable
   userId: ID! @shareable
   role: Role! @shareable
-  email: String! @shareable
-  name: String! @shareable
-  picture: String! @shareable
 }
-
 
 type SignInResponse implements Response {
   code: Int! @shareable
@@ -116,8 +113,6 @@ type SignInResponse implements Response {
   refreshToken: String @shareable
   role: Role! @shareable
   userId: ID !@shareable
-  email: String! @shareable
-  picture: String! @shareable
 }
 
 type ReqResetPwdResponse implements Response {
@@ -142,17 +137,16 @@ type InviteCodeResponse implements Response {
 
 # Queries and Mutations
 type Mutation {
-  signInWithOAuth(input: SignInInput!): SignInResponse! @shareable
   signUp(input: SignUpInput!): AuthPayload! @shareable
   signIn(input: SignInInput!): SignInResponse! @shareable
+  oauthSaveUser(input: OAuthInput!): AuthPayload! @shareable
   updatePassword(input: UpdatePasswordInput!): AuthPayload! @shareable
   requestResetPassword(email: String!): ReqResetPwdResponse! @shareable
   forgotPassword(email: String!): ForgotPasswordResponse! @shareable
   sendInviteCode(email: String!): InviteCodeResponse! @shareable
   logout(provider: OAuthProvider): Boolean! @shareable
   createUser(name: String!, email: String!): User @shareable
-  updateUser(id: ID!): User @shareable
-  validateOAuthToken(provider: String!, token: String!): Boolean! @shareable
+  updateUser(id: ID!, name: String): User @shareable
 }
 
 enum OAuthProvider {
@@ -161,7 +155,16 @@ enum OAuthProvider {
   APPLE
 }
 
+
+input OAuthInput {
+  provider: OAuthProvider!
+  token: String!
+  refreshToken: String
+  email: String
+  name: String
+}
 type Query {
+  getUser(id: ID!): User @shareable
   user(id: ID!): User @shareable
   users: [User]! @shareable
 }

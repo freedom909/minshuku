@@ -1,6 +1,6 @@
 //services/userService/index.js
 
-
+import validateLoginResponse from './utils/validateLoginResponse.js';
 import { GraphQLError } from 'graphql';
 
 class UserService {
@@ -16,8 +16,10 @@ class UserService {
   }
 
   async login(email, password) {
-    return await this.localAuthService.login(email, password);
+    const response = await this.localAuthService.login(email, password);
+    return await validateLoginResponse(response);
   }
+
 }
 
 export default UserService;

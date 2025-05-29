@@ -1,8 +1,10 @@
-import NextAuth from "next-auth/next"
-import GoogleProvider from "next-auth/providers/google"
-import CredentialsProvider from "next-auth/providers/credentials"
+import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import localAuthService from "@/userService/localAuthService";
 
-export const authOptions = {
+const handler = NextAuth({
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -23,54 +25,51 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
-          // TODO: 实现实际的用户验证逻辑
-          // 这里是示例实现，你需要替换为实际的用户验证逻辑
-          if (credentials.email && credentials.password) {
-            return {
-              id: "1",
-              email: credentials.email,
-              role: "user"
-            }
+          const user = await localAuthService.authenticate(
+            credentials.email,
+            credentials.password
+          );
+          
+          if (!user) {
+            throw new Error("Invalid credentials");
           }
-          return null
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name
+          };
         } catch (error) {
-          console.error("Auth error:", error)
-          return null
+          throw new Error(error.message || "Authentication failed");
         }
       }
     })
   ],
-  callbacks: {
-    async jwt({ token, account, profile, user }) {
-      if (account) {
-        token.accessToken = account.access_token
-        if (profile) {
-          token.role = profile.role || "user"
-        }
-        if (user) {
-          token.role = user.role || "user"
-        }
-      }
-      return token
-    },
-    async session({ session, token }) {
-      session.accessToken = token.accessToken
-      session.user.role = token.role || "user"
-      return session
-    }
-  },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-    signOut: "/"
-  },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60 // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: true // 启用调试模式以获取更多错误信息
-}
+  callbacks: {
+    async jwt({ token, user, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.user.id = token.id;
+      session.accessToken = token.accessToken;
+      return session;
+    }
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login"
+  },
+  secret: process.env.NEXTAUTH_SECRET
+});
 
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
+export { handler as GET, handler as POST };

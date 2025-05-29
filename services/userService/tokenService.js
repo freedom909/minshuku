@@ -1,10 +1,11 @@
 //services/userService/tokenService.js
 import jwt from 'jsonwebtoken';
 const { sign, verify, decode } = jwt;
-import dotenv from 'dotenv';
+
 import { RESTDataSource } from '@apollo/datasource-rest';
 import axios from 'axios';
 import { GraphQLError } from 'graphql';
+import dotenv from 'dotenv';
 dotenv.config();
 
 // 移除未使用的常量，避免混淆
@@ -66,7 +67,99 @@ class TokenService extends RESTDataSource {
         }
     }
 
+    async refreshToken(token) {
+        if (!token) {
+            throw new GraphQLError('No token provided', {
+                extensions: { code: 'AUTHENTICATION_ERROR' }
+            });
+        }
 
+        try {
+            // 验证并解码token
+            const decoded = jwt.verify(token, this.secretKey);
+            
+            // 验证token的必要字段
+            if (!decoded.userId || !decoded.email) {
+                throw new GraphQLError('Invalid token format', {
+                    extensions: { code: 'INVALID_TOKEN' }
+                });
+            }
+
+            console.log('User extracted from token:', {
+                userId: decoded.userId,
+                email: decoded.email,
+                role: decoded.role
+            });
+
+            // 生成新的token
+            const newToken = await this.generateToken(decoded);
+
+            console.log('New token generated:', {
+                userId: decoded.userId,
+                role: decoded.role
+            });
+
+            return newToken;
+        } catch (error) {
+            if (error instanceof jwt.TokenExpiredError) {
+                throw new GraphQLError('Token has expired', {   
+                    extensions: { code: 'TOKEN_EXPIRED' }
+                });
+            }
+            if (error instanceof jwt.JsonWebTokenError) {
+                throw new GraphQLError('Invalid token', {
+                    extensions: { code: 'INVALID_TOKEN' }
+                });
+            }
+            throw new GraphQLError('Token refresh failed', {
+                extensions: {
+                    code: 'AUTHENTICATION_ERROR',
+                    error: error.message
+                }
+            });
+        }
+    }
+
+    async revokeProviderToken(provider, token) {
+        if (!token) {
+          throw new GraphQLError("No token provided", {
+            extensions: { code: "AUTHENTICATION_ERROR" }
+          });
+        }
+      
+        try {
+          switch (provider) {
+            case "google":
+              await axios.post(`https://oauth2.googleapis.com/revoke?token=${token}`);
+              break;
+      
+            case "facebook":
+              await axios.delete(`https://graph.facebook.com/me/permissions?access_token=${token}`);
+              break;
+      
+            case "github":
+              await axios.delete("https://api.github.com/applications/:client_id/token", {
+                auth: {
+                  username: process.env.GITHUB_CLIENT_ID,
+                  password: process.env.GITHUB_CLIENT_SECRET,
+                },
+                data: { access_token: token },
+              });
+              break;
+      
+            default:
+              throw new Error(`Unsupported provider: ${provider}`);
+          }
+        } catch (error) {
+          throw new GraphQLError("Token revocation failed", {
+            extensions: {
+              code: "AUTHENTICATION_ERROR",
+              error: error.message,
+            },
+          });
+        }
+      }
+      
 
     async generateToken(user) {
         if (!user || !user._id) {
