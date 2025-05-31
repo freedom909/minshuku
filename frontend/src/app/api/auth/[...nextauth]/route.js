@@ -3,6 +3,8 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import localAuthService from "@/userService/localAuthService";
+import oauthService from "@/userService/oauthService";
+
 
 const handler = NextAuth({
   providers: [
@@ -50,18 +52,48 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60 // 30 days
   },
   callbacks: {
-    async jwt({ token, user, account }) {
-      if (account) {
-        token.accessToken = account.access_token;
+    async signIn({ user, account }) {
+      if (!user) throw new Error("No user found");
+    
+      if (account.provider === "google") {
+        // call your backend here (e.g., subgraph-users)
+        try {
+          const response = await oauthService.sendOAuthRequestToSubgraph(
+            "google",
+            account.id_token || account.access_token
+          );
+          console.log(response)
+          if (!response?.success) {
+            console.error("OAuth login failed:", response);
+            return false; // ⛔ Login will fail and redirect
+          }
+    
+          return true;
+        } catch (err) {
+          console.error("OAuth backend call failed:", err);
+          return false;
+        }
       }
+    
+      return true;
+    
+    },
+    jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = user.picture;
+        token.accessToken = user.token; // Optional
       }
       return token;
+    
     },
-    async session({ session, token }) {
+    session: async ({ session, token }) => {
       session.user.id = token.id;
-      session.accessToken = token.accessToken;
+      session.user.name = token.name;
+      session.user.email = token.email;
+      session.user.image = token.picture;
       return session;
     }
   },

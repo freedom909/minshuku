@@ -2,7 +2,7 @@
 import config from '@/config/config.js'
 
 // Define the GraphQL endpoint URL
-const SUBGRAPH_AUTH_URL = `${config.API_URL}/graphql`;
+const SUBGRAPH_USER_URL = `${config.API_URL}/graphql`;
 
 class OAuthService {
     constructor() {
@@ -11,7 +11,24 @@ class OAuthService {
             this.token = localStorage.getItem('jwt_token');
         }
     }
-
+   async sendOAuthRequestToSubgraph(provider, token) {
+        try {
+          const response = await fetch('http://localhost:4010/auth/google', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (!response.ok) throw new Error('Request failed');
+          const data = await response.json();
+          return { success: true, data }; // ✅ must include success: true
+        } catch (err) {
+          console.error('OAuth request failed:', err);
+          return { success: false }; // ✅ must return this on failure
+        }
+      }
+      
     async login(email, password) {
         try {
             const query = `
@@ -32,7 +49,7 @@ class OAuthService {
                 }
             `;
 
-            const response = await fetch(SUBGRAPH_AUTH_URL, {
+            const response = await fetch(SUBGRAPH_USER_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -127,7 +144,7 @@ class OAuthService {
                 }
             `;
             
-            const response = await fetch(SUBGRAPH_AUTH_URL, {
+            const response = await fetch(SUBGRAPH_USER_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -184,5 +201,6 @@ class OAuthService {
     }
 }
 
-// Create and export the singleton instance
-export default OAuthService;
+// ✅ create and export a singleton instance
+const oauthService = new OAuthService();
+export default oauthService;

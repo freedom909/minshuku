@@ -11,8 +11,8 @@ import Image from 'next/image';
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} `}>
-      <body className="antialiased">
+    <html lang="en" className={`${GeistSans.variable} ${GeistSans.css}`}>
+      <body >
         <SessionProvider>
           {children}
         </SessionProvider>

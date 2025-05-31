@@ -156,7 +156,7 @@ try {
         audience: process.env.GOOGLE_CLIENT_ID,
       });
       console.log("Expected audience:", process.env.GOOGLE_CLIENT_ID);
-
+  
       const payload = ticket.getPayload();
       console.log("User payload from Google:", payload);
   
@@ -176,8 +176,6 @@ try {
       });
     }
   }
-  
-  
 
   async signInWithFacebook({ token, refreshToken, oauthId }) {
     try {
@@ -224,4 +222,7 @@ try {
     }
   }
 }
+
+
 export default OAuthService;
+

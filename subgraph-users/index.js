@@ -13,6 +13,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import morgan from "morgan";
+import router from "./router.js";
 import authLimiter from '../infrastructure/middleware/authLimiter.js'; // Adjust path as needed
 
 dotenv.config();
@@ -85,6 +86,8 @@ const startApolloServer = async () => {
     // 🔹 Middleware setup
     // Apply middleware in correct order
 app.use(morgan("dev")); // HTTP logger
+app.use(router); // <--- Moved here (AFTER await server.start)
+app.use(authLimiter); // <--- Moved here (AFTER await server.start)
  app.use(express.json())// <--- Moved here (AFTER await server.start)
 
    

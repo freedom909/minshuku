@@ -13,10 +13,13 @@ export default function GoogleSignInButton() {
     
     try {
       const result = await signIn('google', { 
-        callbackUrl: '/', // where should I use this one? callb/sigIn/
-        redirect: false 
+        callbackUrl: '/dashboard', // 
       });
 
+      if (result?.url) {
+        window.location.href = result.url;
+      }
+      
       if (result?.error) {
         throw new Error(result.error);
       }

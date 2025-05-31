@@ -2,7 +2,7 @@ import { authenticate } from "@/lib/auth";
 import axios from "axios";
 import bcrypt from 'bcryptjs';
 
-const SUBGRAPH_USERS_URL = "http://localhost:8010";
+const SUBGRAPH_USERS_URL = "http://localhost:4010";
 const SALT_ROUNDS = 12;
 
 const getUserForAuthQuery = `
