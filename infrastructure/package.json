@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "migrate": "npx migrate-mongoose up",
-    "start": "babel-node models/seq.js"
+    "start": "babel-node models/seq.js",
+    "postinstall": "patch-package"
   },
   "author": "",
   "license": "ISC",
@@ -41,6 +42,7 @@
     "@babel/node": "^7.24.7",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-decorators": "^7.24.7",
-    "@babel/preset-env": "^7.24.7"
+    "@babel/preset-env": "^7.24.7",
+    "patch-package": "^8.0.0"
   }
 }

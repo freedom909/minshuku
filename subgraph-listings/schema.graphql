@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7",
+  @link(url: "https://specs.apollo.dev/federation/v2.8",
    import: ["@key", "@shareable","@external"])
 
 scalar DateTime

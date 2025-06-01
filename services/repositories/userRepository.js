@@ -217,8 +217,8 @@ class UserRepository {
   
   async createOAuthUser({ email, name, picture, oauthId, provider, role = "GUEST", refreshToken = null }) {
     console.log('Creating OAuth user with data:', { email, name, picture, oauthId, provider, role });
-    if (!oauthId) throw new Error('Missing OAuth ID (sub)');
-    if (!email || !name || !picture  || !provider || !role) {
+  
+    if (!oauthId||!email || !name || !picture  || !provider || !role) {
       throw new Error('All fields are required');
     }
   
