@@ -75,13 +75,13 @@ class OAuthService extends RESTDataSource {
         provider.toUpperCase(),
         userInfo.id
       );
-  
+      console.log("👀 Existing google user by email?", user);
       // ⚠️ Step 2: If not found, fallback to email check
       if (!user) {
         const existingUser = await this.userRepository.getUserByEmailFromDb(
           userInfo.email
         );
-  
+        console.log("👀 Existing user by email?", existingUser); // no output here
         if (existingUser) {
           // You can optionally update the OAuth identity info
           user = existingUser;

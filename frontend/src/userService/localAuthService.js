@@ -15,6 +15,8 @@ const getUserForAuthQuery = `
   }
 `;
 
+
+
 const loginRequestToSubgraph = `
   mutation Login($input: SignInInput!) {
     signIn(input: $input) {
@@ -60,6 +62,8 @@ const registerRequestToSubgraph = `
     }
   }
 `;
+
+
 
 const localAuthService = {
   authenticate: async (email, password) => {
@@ -208,7 +212,82 @@ const localAuthService = {
         message: "Registration failed"
       };
     }
-  }
+  },
+  async login(email, password) {
+    try {
+        const query = `
+            mutation Login($input: LoginInput!) {
+                login(input: $input) {
+                    success
+                    message
+                    user {
+                        id
+                        email
+                        name
+                        nickname
+                        role
+                        picture
+                    }
+                    token
+                }
+            }
+        `;
+
+        const response = await fetch(SUBGRAPH_USERS_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query,
+                variables: {
+                    input: {
+                        email,
+                        password
+                    }
+                }
+            }),
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.errors) {
+            console.error('GraphQL errors:', result.errors);
+            throw new Error(result.errors[0].message);
+        }
+
+        const loginResult = result.data.login;
+
+        if (!loginResult.success) {
+            throw new Error(loginResult.message || '登录失败');
+        }
+
+        // Store JWT token
+        if (loginResult.token) {
+            localStorage.setItem('jwt_token', loginResult.token);
+            this.token = loginResult.token;
+        }
+
+        return {
+            success: true,
+            user: loginResult.user,
+            token: loginResult.token
+        };
+    } catch (error) {
+        console.error('登录失败:', error);
+        return {
+            success: false,
+            error: error.message || '登录过程中发生错误'
+        };
+    }
+}
+
+
 };
 
 export default localAuthService;

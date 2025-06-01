@@ -13,8 +13,8 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import morgan from "morgan";
-import router from "./router.js";
-import authLimiter from '../infrastructure/middleware/authLimiter.js'; // Adjust path as needed
+// import router from "./router.js";
+import authLimiter from "../infrastructure/middleware/authLimiter.js"; // Adjust path as needed
 
 dotenv.config();
 
@@ -23,7 +23,7 @@ const typeDefs = gql(readFileSync("./schema.graphql", { encoding: "utf-8" }));
 const createApolloServer = (container) => {
   return new ApolloServer({
     schema: buildSubgraphSchema({ typeDefs, resolvers }),
-    csrfPrevention:false,
+    csrfPrevention: false,
     formatError: (error) => {
       console.error("GraphQL Error:", error);
       return error;
@@ -47,36 +47,37 @@ const createApolloServer = (container) => {
   });
 };
 
-const createContext = (container) => async ({ req }) => {
-  if (!req) {
-    console.error("Request object is missing in context creation.");
-    return {};
-  }
+const createContext =
+  (container) =>
+  async ({ req }) => {
+    if (!req) {
+      console.error("Request object is missing in context creation.");
+      return {};
+    }
 
-  const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-  console.log("Client IP:", ip);
+    const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
+    console.log("Client IP:", ip);
 
-  return {
-    token: req.headers.authorization || "",
-    container,
-    ip,
-    req,
-    dataSources: {
-      userService: {
-        localAuthService: container.resolve("localAuthService"),
-        oauthService: container.resolve("oauthService"),
-        tokenService: container.resolve("tokenService"),
+    return {
+      token: req.headers.authorization || "",
+      container,
+      ip,
+      req,
+      dataSources: {
+        userService: {
+          localAuthService: container.resolve("localAuthService"),
+          oauthService: container.resolve("oauthService"),
+          tokenService: container.resolve("tokenService"),
+        },
       },
-    },
+    };
   };
-};
-
 
 const startApolloServer = async () => {
   try {
     const container = await initAuthContainer();
     const app = express();
-    
+
     const httpServer = http.createServer(app);
     container.httpServer = httpServer;
 
@@ -85,21 +86,21 @@ const startApolloServer = async () => {
 
     // 🔹 Middleware setup
     // Apply middleware in correct order
-app.use(morgan("dev")); // HTTP logger
-app.use(router); // <--- Moved here (AFTER await server.start)
-app.use(authLimiter); // <--- Moved here (AFTER await server.start)
- app.use(express.json())// <--- Moved here (AFTER await server.start)
-
-   
+    app.use(morgan("dev")); // HTTP logger
+    // app.use(router); // <--- Moved here (AFTER await server.start)
+    app.use(authLimiter); // <--- Moved here (AFTER await server.start)
+    app.use(express.json()); // <--- Moved here (AFTER await server.start)
 
     // Optional: Log all incoming requests (headers + body)
     app.use((req, res, next) => {
-      if (req.body?.operationName === 'validateOAuthToken' || req.body?.operationName === 'signIn') {
+      if (
+        req.body?.operationName === "validateOAuthToken" ||
+        req.body?.operationName === "signIn"
+      ) {
         console.log(`[Filtered Log] Operation: ${req.body.operationName}`);
       }
       next();
     });
-    
 
     // 🔹 Health check endpoint — MUST be placed outside Apollo middleware
     app.get("/health", async (req, res) => {
@@ -126,9 +127,9 @@ app.use(authLimiter); // <--- Moved here (AFTER await server.start)
         allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true,
       }),
-   
+
       expressMiddleware(server, {
-         context: createContext(container),
+        context: createContext(container),
       })
     );
 

@@ -215,9 +215,10 @@ class UserRepository {
     }
   }
   
-  async createOAuthUser( {email, name, picture, oauthId, provider, role="GUEST", refreshToken=null} ) {
-    console.log('Creating OAuth user with data:', { email, name, picture, oauthId, provider, role }); // Agrega este log para verificar los datos del usuari
-    if (!email || !name || !picture || !oauthId || !provider || !role) {
+  async createOAuthUser({ email, name, picture, oauthId, provider, role = "GUEST", refreshToken = null }) {
+    console.log('Creating OAuth user with data:', { email, name, picture, oauthId, provider, role });
+    if (!oauthId) throw new Error('Missing OAuth ID (sub)');
+    if (!email || !name || !picture  || !provider || !role) {
       throw new Error('All fields are required');
     }
   
@@ -225,13 +226,14 @@ class UserRepository {
       email,
       name,
       picture,
+      sub: oauthId,           // ✅ This line ensures sub is not null
       oauthId,
       provider,
       role,
       refreshToken
     });
-    
   }
+  
 
   async findUserByProvider({ email, provider }) {
     return await this.model.findOne({ email, provider }).lean();

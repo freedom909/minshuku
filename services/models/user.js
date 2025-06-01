@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'GUEST' },
   picture: { type: String },
   provider: { type: String, required: true },
+  oauthId: { type: String },
   sub: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
