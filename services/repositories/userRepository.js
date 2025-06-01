@@ -5,14 +5,10 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 
+
 class UserRepository {
-  constructor({ mongodb }) {
-    if (!mongodb) {
-      console.error('mongodb 对象未正确传入');
-      return;
-    }
+  constructor() {
     this.model = User;
-    this.collection = mongodb.collection('users');
   }
 
   async mapMongoUser(userDoc) {
@@ -121,6 +117,29 @@ class UserRepository {
     }
   }
 
+  async upsertUser({ email, name, picture, provider, sub }) {
+    try {
+      const query = { provider, sub };
+      const update = {
+        email,
+        name,
+        picture,
+        updatedAt: new Date()
+      };
+      const options = {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true
+      };
+  
+      const user = await this.model.findOneAndUpdate(query, update, options);
+      return user;
+    } catch (error) {
+      console.error('⚠️ upsertUser failed:', error);
+      throw error;
+    }
+  }
+  
   async createUser(userData) {
     console.log('Creating user with data:', userData); // Agrega este log para verificar los datos de usuari
     if (!userData || typeof userData !== 'object') {
@@ -184,7 +203,24 @@ class UserRepository {
     }
   }
 
-  async createOAuthUser( {email, name, picture, oauthId, provider, role, refreshToken=null} ) {
+  async getUserByEmailFromDb(email) {
+    try {
+      if (!email || typeof email !== 'string') {
+        throw new TypeError('Email must be a valid string');
+      }
+      return await this.model.findOne({ email: email.toLowerCase().trim() });
+    } catch (error) {
+      console.error('Error in getUserByEmailFromDb:', error);
+      throw error;
+    }
+  }
+  
+  async createOAuthUser( {email, name, picture, oauthId, provider, role="GUEST", refreshToken=null} ) {
+    console.log('Creating OAuth user with data:', { email, name, picture, oauthId, provider, role }); // Agrega este log para verificar los datos del usuari
+    if (!email || !name || !picture || !oauthId || !provider || !role) {
+      throw new Error('All fields are required');
+    }
+  
     return await this.model.create({
       email,
       name,
@@ -194,6 +230,7 @@ class UserRepository {
       role,
       refreshToken
     });
+    
   }
 
   async findUserByProvider({ email, provider }) {

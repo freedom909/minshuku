@@ -8,7 +8,6 @@ import { GraphQLError } from 'graphql';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// 移除未使用的常量，避免混淆
 
 class TokenService extends RESTDataSource {
     constructor({ secretKey, expiresIn }) {

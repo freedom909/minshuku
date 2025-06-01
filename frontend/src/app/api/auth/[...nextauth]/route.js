@@ -58,11 +58,15 @@ const handler = NextAuth({
       if (account.provider === "google") {
         // call your backend here (e.g., subgraph-users)
         try {
+          const token = account.id_token || account.access_token;
+         
+          console.log("Calling subgraph with id_token:", token);
           const response = await oauthService.sendOAuthRequestToSubgraph(
             "google",
-            account.id_token || account.access_token
+            token
           );
-          console.log(response)
+          
+          console.log("OAuth response from subgraph:", response);
           if (!response?.success) {
             console.error("OAuth login failed:", response);
             return false; // ⛔ Login will fail and redirect
@@ -70,7 +74,7 @@ const handler = NextAuth({
     
           return true;
         } catch (err) {
-          console.error("OAuth backend call failed:", err);
+          console.error("OAuth backend call failed:",  err?.message || err);
           return false;
         }
       }

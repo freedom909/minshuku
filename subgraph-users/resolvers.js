@@ -21,19 +21,25 @@ const logger = {
 export const resolvers = {
   Mutation: {
     signIn: async (_, { input }, { container }) => {
+
       const logger = container.resolve("logger");// Assuming you have a logger service registered in the container?
       const accountLockService = container.resolve("accountLockService");
 
       const userService = container.resolve("userService");
-    
-      const { provider, token, email, password } = input;
-    
-      // logger.info("signIn mutation called with input:", {
-      //   provider: provider,
-      //   email: email,
-      //   password: password,
-      //   token: token,
-      // });
+      console.log("SIGN-IN INPUT:", input); // no output in the terminal
+
+      let { provider, token, email, password, idToken, accessToken } = input;
+      // Normalize token regardless of provider
+       token = token || idToken || accessToken;
+
+      logger.info("signIn mutation called with input:", {
+        provider: provider,
+        email: email,
+        password: password,
+        token: token,
+        idToken: idToken,
+        accessToken: accessToken,
+      });
     
       const isOAuth = !!provider && !!token;
       const isLocal = !!email && !!password;
@@ -140,7 +146,6 @@ export const resolvers = {
       };
     },   
    
-
     logout: async (_, { input }, { container, req, logger, user }) => {
       try {
         const { provider, token } = input;
@@ -173,106 +178,6 @@ export const resolvers = {
         });
       }
     },
-    
-    
-
-    signUp: async (_, { input }, { dataSources, req }) => {
-      // Apply rate limiting
-      try {
-        await new Promise((resolve, reject) => {
-          authLimiter(req, {}, (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-      } catch (rateLimitError) {
-        throw new GraphQLError(rateLimitError.message, {
-          extensions: { code: "TOO_MANY_REQUESTS" },
-        });
-      }
-
-      try {
-        const { localAuthService, tokenService } = dataSources.userService;
-
-        // Validate input
-        await runValidations(input);
-        const { email, password, name, nickname, role, inviteCode, picture } =
-          input;
-
-        // Additional validation for HOST role
-        if (role === "HOST") {
-          if (!inviteCode) {
-            throw new GraphQLError("Invite code is required for HOST role", {
-              extensions: { code: "BAD_USER_INPUT" },
-            });
-          }
-
-          const isValidInviteCode = await validateInviteCode(inviteCode);
-          if (!isValidInviteCode) {
-            throw new GraphQLError("Invalid invite code", {
-              extensions: {
-                code: "INVALID_INVITE_CODE",
-                inviteCode,
-              },
-            });
-          }
-        }
-
-        // Check if user already exists
-        const existingUser = await userRepository.getUserByEmailFromDb(email);
-        if (existingUser) {
-          throw new GraphQLError("Email already registered", {
-            extensions: { code: "DUPLICATE_EMAIL" },
-          });
-        }
-
-        // Create new user
-        const newUser = await localAuthService.register({
-          email,
-          password,
-          name,
-          nickname,
-          role,
-          picture,
-        });
-
-        // Generate token
-        const token = await tokenService.generateToken(newUser);
-
-        // Log successful registration
-        console.log(`New user registered: ${email} (${newUser._id})`);
-
-        return {
-          userId: newUser._id.toString(),
-          token,
-          role: newUser.role,
-        };
-      } catch (error) {
-        console.error("Error during signUp:", error);
-
-        // Handle duplicate email error specifically
-        if (
-          error.message.includes("duplicate") &&
-          error.message.includes("email")
-        ) {
-          throw new GraphQLError("Email already registered", {
-            extensions: { code: "DUPLICATE_EMAIL" },
-          });
-        }
-
-        // Re-throw GraphQLError as is
-        if (error instanceof GraphQLError) {
-          throw error;
-        }
-
-        throw new GraphQLError("Registration failed: " + error.message, {
-          extensions: {
-            code: "REGISTRATION_FAILED",
-            error: error.message,
-          },
-        });
-      }
-    },
 
     validateOAuthToken: async (_, { provider, token }) => {
       console.log(
@@ -293,7 +198,6 @@ export const resolvers = {
       });
     },
    
-  
     signUp: async (_, { input }, { dataSources, req }) => {
       // Apply rate limiting
       try {
@@ -494,7 +398,6 @@ export const resolvers = {
       }
     },
 
-
     updatePassword: async (
       _,
       { userId, password, newPassword },
@@ -549,7 +452,24 @@ export const resolvers = {
           extensions: { code: "INTERNAL_SERVER_ERROR" },
         });
       }
-    }
+    },
+ 
+    verifyGoogleToken: async (_, { token }, { dataSources }) => {
+      return dataSources.oauthService.verifyGoogleToken(token);
+    },
+
+    verifyFacebookToken: async (_, { token }, { dataSources }) => {
+      return dataSources.oauthService.verifyFacebookToken(token);
+    },
+    verifyTwitterToken: async (_, { token }, { dataSources }) => {
+      return dataSources.oauthService.verifyTwitterToken(token);
+    },
+    verifyGithubToken: async (_, { token }, { dataSources }) => {
+      return dataSources.oauthService.verifyGithubToken(token);
+    },
+   verifyAppleToken: async (_, { token }, { dataSources }) => {
+      return dataSources.oauthService.verifyAppleToken(token);
+    },
   },
 };
 

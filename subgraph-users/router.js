@@ -1,9 +1,12 @@
-// src/router/auth.js or wherever you define routes
 import express from 'express';
+import handleGoogleOAuth from './utils/handGoogleOAuth.js';
+
+
 const router = express.Router();
-; // Adjust path as needed
 
 router.post('/auth/google', async (req, res) => {
+  console.log("✅ Google auth route hit");
+
   const authHeader = req.headers.authorization;
   const token = authHeader?.split(' ')[1];
 
@@ -12,13 +15,8 @@ router.post('/auth/google', async (req, res) => {
   }
 
   try {
-    // Call Google's API or your internal logic to validate the token
-    // Example only: replace this with real token verification
-    const user = await verifyGoogleToken(token); 
-
-    if (!user) {
-      return res.status(403).json({ success: false, message: 'Invalid token' });
-    }
+    // Delegate OAuth handling to the service
+    const user = await handleGoogleOAuth(token);
 
     return res.json({ success: true, user });
   } catch (err) {
@@ -26,22 +24,5 @@ router.post('/auth/google', async (req, res) => {
     return res.status(500).json({ success: false, message: 'OAuth processing failed' });
   }
 });
-
-export async function verifyGoogleToken(token) {
-  // Your actual logic to validate token with Google
-  const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-  if (!response.ok) return null;
-  const userData = await response.json();
-
-  // You can add checks like domain, audience, etc.
-  if (!userData || !userData.email_verified) return null;
-
-  return {
-    email: userData.email,
-    name: userData.name,
-    picture: userData.picture,
-    sub: userData.sub, // Google user ID
-  };
-}
 
 export default router;

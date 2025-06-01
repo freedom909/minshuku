@@ -1,6 +1,7 @@
 // lib/auth.js
 import jwt from 'jsonwebtoken';
-import cookie from 'cookie';
+import * as cookie from 'cookie'; 
+
 
 const SECRET = process.env.JWT_SECRET;
 

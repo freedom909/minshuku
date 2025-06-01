@@ -11,7 +11,8 @@ class OAuthService {
             this.token = localStorage.getItem('jwt_token');
         }
     }
-   async sendOAuthRequestToSubgraph(provider, token) {
+   async sendOAuthRequestToSubgraph(provider, token) { //provider is dark, no use?
+    console.log("🔄 Sending request to subgraph..."); // no output
         try {
           const response = await fetch('http://localhost:4010/auth/google', {
             method: 'POST',
@@ -22,6 +23,10 @@ class OAuthService {
           });
           if (!response.ok) throw new Error('Request failed');
           const data = await response.json();
+          console.log('OAuth response:', data); //no output in the terminal
+          if (!data.success) {
+            throw new Error(data.message || 'OAuth login failed');
+          }
           return { success: true, data }; // ✅ must include success: true
         } catch (err) {
           console.error('OAuth request failed:', err);

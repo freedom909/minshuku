@@ -11,7 +11,7 @@ dotenv.config();
 import pkg from "jsonwebtoken";
 const { verify } = pkg;
 import jwksClient from "jwks-rsa";
-import sendOAuthRequestToSubgraph  from "./utils/sendOAuthRequestToSubgraph.js";
+
 
 function getAppleKey(header, callback) {
   const appleClient = jwksClient({
@@ -34,21 +34,21 @@ class OAuthService extends RESTDataSource {
     }
     this.tokenService = tokenService;
     this.userRepository = userRepository;
+    this.googleClient = googleClient;
   }
 
   async authenticate(provider, token) {
-        console.log("Token type:", typeof token); // Should print: string
-    console.log("Token value:", token);       // Should print the JWT string
-
     try {
       if (!provider || !token) {
         throw new GraphQLError("Provider and access token are required", {
           extensions: { code: "INVALID_INPUT" },
         });
       }
-
+  
+      const providerKey = provider.toLowerCase();
       let userInfo;
-      switch (provider.toLowerCase()) {
+  
+      switch (providerKey) {
         case "google":
           userInfo = await this.verifyGoogleToken(token);
           break;
@@ -63,81 +63,60 @@ class OAuthService extends RESTDataSource {
             extensions: { code: "UNSUPPORTED_PROVIDER" },
           });
       }
-
-      if (!userInfo || !userInfo.email) {
+  
+      if (!userInfo || !userInfo.id || !userInfo.email) {
         throw new GraphQLError("Failed to retrieve user info", {
           extensions: { code: "INVALID_OAUTH_TOKEN" },
         });
       }
-
+  
+      // 🔍 Step 1: Try to find user by provider + id (OAuth sub)
       let user = await this.userRepository.findByOAuthId(
         provider.toUpperCase(),
         userInfo.id
       );
+  
+      // ⚠️ Step 2: If not found, fallback to email check
       if (!user) {
-        // 🟡 New logic: Check if the email already exists
         const existingUser = await this.userRepository.getUserByEmailFromDb(
           userInfo.email
         );
+  
         if (existingUser) {
-          // Optionally update oauthId / provider info here if needed
+          // You can optionally update the OAuth identity info
           user = existingUser;
+          // Optional: persist new provider info here
         } else {
-          let fullName = "";
-
-          if (typeof userInfo.name === "string" && userInfo.name.trim()) {
-            fullName = userInfo.name.trim();
-          } else if (
-            typeof userInfo.fullName === "string" &&
-            userInfo.fullName.trim()
-          ) {
-            fullName = userInfo.fullName.trim();
-          } else {
-            const constructed = `${userInfo.given_name || ""} ${
-              userInfo.family_name || ""
-            }`.trim();
-            fullName = constructed || "Unnamed User";
-          }
-          console.log("Resolved fullName:", fullName);
-          console.log("Before user creation...");
+          // 🆕 Step 3: Create a new user
           user = await this.userRepository.createOAuthUser({
             email: userInfo.email,
-            name: fullName,
+            name: userInfo.name || "Unnamed User",
             picture: userInfo.picture,
             oauthId: userInfo.id,
-            provider,
-            role: "GUEST",
+            provider: provider.toUpperCase(),
+            role: userInfo.role || "GUEST",
             refreshToken: null,
           });
-          console.log("After user creation...");
         }
       }
-      if (user) {
-        console.log("User:", user);
-      }
-      console.log("Before token generation...");
-      try {
-      const accessToken = await this.tokenService.generateToken(user);
-      console.log("after token generation...");
+  
+      // 🔐 Generate tokens
+      const accessToken = this.tokenService.generateToken(user);
       const refreshToken = await this.tokenService.generateRefreshToken(user);
-
+  
       user.refreshToken = refreshToken;
       await this.userRepository.updateRefreshToken(user._id, refreshToken);
-    } catch (err) {
-      console.error("Token generation or update failed:", err);
-    }
-      console.log("Preparing to call sendOAuthRequestToSubgraph...");
-      console.log("Calling subgraph with accessToken:", accessToken);
-try {
-      console.log("Google login resolver hit before");
-      const signInResponse = await sendOAuthRequestToSubgraph(provider, accessToken);
-      console.log("Google login resolver hit after" );
-    } catch (e) {
-      console.error("Subgraph call failed:", e);
-    }
-      console.log("signInResponse received:", signInResponse);
-      
-      return signInResponse;
+  
+      return {
+        code: 200,
+        success: true,
+        message: "Authentication successful",
+        user,
+        token: accessToken,
+        refreshToken,
+        userId: user._id,
+        role: user.role,
+      };
     } catch (error) {
       console.error("Authentication error:", error);
       throw new GraphQLError("Authentication failed", {
@@ -147,24 +126,23 @@ try {
   }
 
   async verifyGoogleToken(token) {
-    console.log("Google token:", token);
     try {
       this.googleClient = googleClient;
-  
       const ticket = await this.googleClient.verifyIdToken({
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
-      console.log("Expected audience:", process.env.GOOGLE_CLIENT_ID);
   
       const payload = ticket.getPayload();
-      console.log("User payload from Google:", payload);
   
       return {
-        id: payload.sub,
         email: payload.email,
-        name: payload.name,
+        name:
+          payload.name ||
+          payload.fullName ||
+          `${payload.given_name || ""} ${payload.family_name || ""}`.trim(),
         picture: payload.picture,
+        id: payload.sub,
       };
     } catch (error) {
       throw new GraphQLError("Invalid Google token", {
@@ -175,6 +153,41 @@ try {
         },
       });
     }
+  }
+  
+
+  async verifyFacebookToken(_, { token }, { dataSources }) {
+    try {
+      const {
+        email,
+        name,
+        picture,
+        id: facebookId,
+      } = await fetch(
+        `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${token}`
+      )
+        .then((res) => res.json())
+        .then((data) => data);
+
+      const user =
+        (await dataSources.userService.findUserByEmail(email)) ||
+        (await dataSources.userService.createUser({
+          email,
+          name,
+          picture,
+          facebookId,
+        }));
+
+      return { success: true, user };
+    } catch (error) {
+      console.error("Error verifying Facebook token:", error);
+      throw new GraphQLError("Failed to verify Facebook token", {
+        extensions: { code: "TOKEN_VERIFICATION_FAILED" },
+      });
+    }
+  }
+  async findUserByEmail(email) {
+    return await this.userRepository.getUserByEmailFromDb(email);
   }
 
   async signInWithFacebook({ token, refreshToken, oauthId }) {
@@ -196,7 +209,9 @@ try {
       );
       const name =
         fullName?.trim() ||
-        `${response.data.given_name || ""} ${response.data.family_name || ""}`.trim() ||
+        `${response.data.given_name || ""} ${
+          response.data.family_name || ""
+        }`.trim() ||
         "Unnamed User";
 
       user = await this.userRepository.createOAuthUser({
@@ -223,6 +238,4 @@ try {
   }
 }
 
-
 export default OAuthService;
-

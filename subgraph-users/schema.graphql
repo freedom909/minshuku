@@ -147,12 +147,17 @@ type Mutation {
   logout(provider: OAuthProvider): Boolean! @shareable
   createUser(name: String!, email: String!): User @shareable
   updateUser(id: ID!, name: String): User @shareable
+  verifyGoogleToken(token: String): AuthPayload @shareable
+  verifyFacebookToken(token: String): AuthPayload @shareable
+  verifyAppleToken(token: String): AuthPayload @shareable
+  verifyTwitterToken(token: String): AuthPayload @shareable
 }
 
 enum OAuthProvider {
   GOOGLE
   FACEBOOK
   APPLE
+  TWITTER
 }
 
 

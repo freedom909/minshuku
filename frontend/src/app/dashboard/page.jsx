@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const syncAuth = async () => {
-      if (status === "loading") return <div>Loading...</div>;
+    
       if (status === 'authenticated' && session?.accessToken) {
         try {
           const result = await sendOAuthRequestToSubgraph('google', session.accessToken);
@@ -37,10 +37,12 @@ export default function Dashboard() {
     return null;
   }
 
-  let imageSrc = session?.user?.image || '/default-avatar.png';
-  if (imageSrc && !imageSrc.startsWith('http')) {
-    imageSrc = `https://${imageSrc}`;
+ 
+  let imageSrc = session?.user?.image;
+  if (!imageSrc || !imageSrc.startsWith('http')) {
+    imageSrc = '/chart.png';
   }
+  
 
   const handleLogout = () => {
     signOut({ callbackUrl: '/login' });
