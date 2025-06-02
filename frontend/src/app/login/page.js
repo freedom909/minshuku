@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import FacebookSignInButton from "@/components/FacebookSignInButton";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -65,6 +66,7 @@ export default function Login() {
             required
             className="w-full p-2 border rounded"
           />
+         
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -91,6 +93,8 @@ export default function Login() {
         </div>
 
         <GoogleSignInButton />
+        <FacebookSignInButton />
+    
       </div>
 
       <button

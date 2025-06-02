@@ -156,29 +156,33 @@ class OAuthService extends RESTDataSource {
   }
   
 
-  async verifyFacebookToken(_, { token }, { dataSources }) {
+  async verifyFacebookToken(token) {
     try {
-      const {
+      const response = await fetch(
+        `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${token}`
+      );
+      const data = await response.json();
+  
+      if (!data || data.error) {
+        throw new Error(data?.error?.message || "Invalid Facebook token");
+      }
+  
+      const { id, email, name, picture, role } = data; 
+
+  
+      if (!email || !id) {
+        throw new GraphQLError("Facebook token did not return required fields", {
+          extensions: { code: "INVALID_FACEBOOK_TOKEN" },
+        });
+      }
+  
+      return {
+        id,
         email,
         name,
-        picture,
-        id: facebookId,
-      } = await fetch(
-        `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${token}`
-      )
-        .then((res) => res.json())
-        .then((data) => data);
-
-      const user =
-        (await dataSources.userService.findUserByEmail(email)) ||
-        (await dataSources.userService.createUser({
-          email,
-          name,
-          picture,
-          facebookId,
-        }));
-
-      return { success: true, user };
+        picture: picture?.data?.url || null,
+        role: role ||"GUEST", // Or customize based on your logic
+      };
     } catch (error) {
       console.error("Error verifying Facebook token:", error);
       throw new GraphQLError("Failed to verify Facebook token", {
@@ -186,6 +190,8 @@ class OAuthService extends RESTDataSource {
       });
     }
   }
+
+  
   async findUserByEmail(email) {
     return await this.userRepository.getUserByEmailFromDb(email);
   }

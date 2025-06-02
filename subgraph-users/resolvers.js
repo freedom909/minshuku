@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
-
+import validateInviteCode from "../infrastructure/helpers/validateInvitecode.js";
 // Initialize Google OAuth client
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -145,6 +145,7 @@ export const resolvers = {
         userId: response.userId,
       };
     },   
+    
    
     logout: async (_, { input }, { container, req, logger, user }) => {
       try {
