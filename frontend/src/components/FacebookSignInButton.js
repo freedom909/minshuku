@@ -1,108 +1,61 @@
-"use client";
-
-import { useEffect, useState } from "react";
+'use client';
 import { signIn } from "next-auth/react";
-import oauthService from "@/userService/oauthService";
-
-const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
+import { useState } from "react";
 
 export default function FacebookSignInButton() {
-    const [error, setError] = useState(null);
-    const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        // 加载 Facebook SDK
-        if (!window.FB) {
-            window.fbAsyncInit = function() {
-                window.FB.init({
-                    appId: facebookAppId,
-                    cookie: true,
-                    xfbml: true,
-                    version: 'v18.0'
-                });
-                setIsSDKLoaded(true);
-            };
+  const handleFacebookSignIn = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await signIn('facebook', { 
+        callbackUrl: '/dashboard',
+      });
 
-            (function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "https://connect.facebook.net/en_US/sdk.js";
-                fjs.parentNode.insertBefore(js, fjs);
-            }(document, 'script', 'facebook-jssdk'));
-        } else {
-            setIsSDKLoaded(true);
-        }
-    }, []);
+      if (result?.url) {
+        window.location.href = result.url;
+      }
+      
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to sign in with Facebook');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleFacebookLogin = async () => {
-        if (!window.FB) {
-            setError("Facebook SDK not loaded");
-            return;
-        }
-
-        try {
-            const fbResponse = await new Promise((resolve, reject) => {
-                window.FB.login((response) => {
-                    if (response.authResponse) {
-                        resolve(response.authResponse);
-                    } else {
-                        reject(new Error('User cancelled login or did not fully authorize.'));
-                    }
-                }, { scope: 'public_profile,email' });
-            });
-
-            const { accessToken } = fbResponse;
-
-            try {
-                const result = await oauthService.loginWithProvider("facebook", accessToken);
-
-                if (result.success) {
-                    localStorage.setItem("username", result.user.name);
-                    window.location.href = "/dashboard";
-                } else {
-                    fallbackSignIn();
-                }
-            } catch (err) {
-                console.error("Facebook login failed:", err);
-                fallbackSignIn();
-            }
-        } catch (err) {
-            console.error("Facebook SDK login error:", err);
-            fallbackSignIn();
-        }
-    };
-
-    const fallbackSignIn = async () => {
-        try {
-            const result = await signIn("facebook", {
-                callbackUrl: "/dashboard",
-                redirect: false
-            });
-
-            if (result?.error) {
-                setError("Facebook login failed.");
-                console.error("Facebook login error:", result.error);
-            }
-        } catch (err) {
-            console.error("Facebook signIn error:", err);
-            setError("Unexpected error during Facebook login.");
-        }
-    };
-
-    return (
-        <div className="flex flex-col items-center">
-            <button
-                onClick={handleFacebookLogin}
-                disabled={!isSDKLoaded}
-                className="bg-blue-600 text-white px-4 py-2 rounded w-full flex items-center justify-center gap-2"
-            >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-                </svg>
-                Sign in with Facebook
-            </button>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
-    );
+  return (
+    <div className="w-full">
+      <button
+        onClick={handleFacebookSignIn}
+        disabled={loading}
+        className={`w-full flex items-center justify-center gap-2 bg-[#1877F2] text-white py-2 px-4 rounded-md ${
+          loading ? 'opacity-70' : 'hover:bg-[#166FE5]'
+        } transition-colors`}
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="currentColor"
+        >
+          <path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z" />
+        </svg>
+        <span>
+          {loading ? 'Signing in...' : 'Continue with Facebook'}
+        </span>
+      </button>
+      {error && (
+        <p className="mt-2 text-sm text-red-500 text-center">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }

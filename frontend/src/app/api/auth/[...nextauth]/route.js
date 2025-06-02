@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import localAuthService from "@/userService/localAuthService";
@@ -18,6 +19,10 @@ const handler = NextAuth({
           response_type: "code"
         }
       }
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -55,14 +60,14 @@ const handler = NextAuth({
     async signIn({ user, account }) {
       if (!user) throw new Error("No user found");
     
-      if (account.provider === "google") {
+      if (account.provider === "google" || account.provider === "facebook") {
         // call your backend here (e.g., subgraph-users)
         try {
           const token = account.id_token || account.access_token;
          
-          console.log("Calling subgraph with id_token:", token);
+          console.log(`Calling subgraph with ${account.provider} token:`, token);
           const response = await oauthService.sendOAuthRequestToSubgraph(
-            "google",
+            account.provider,
             token
           );
           
