@@ -5,7 +5,17 @@ import LocalAuthService from '../userService/localAuthService.js';
 import OAuthService from '../userService/oauthService.js';
 import TokenService from '../userService/tokenService.js';
 import initMongoContainer from '../DB/initMongoContainer.js';
+import UserService from '../userService/index.js';
+import logger from '../../infrastructure/utils/logger.js'
+import AccountLockService from '../userService/accountLockService.js';
+import initRedisClient from '../../infrastructure/DB/initRedisClient.js';
+import { config } from 'dotenv';
+import bcrypt from 'bcryptjs';
+config();
 
+/**
+ * 验证环境变量是否配置正确
+ */
 const validateEnvironment = () => {
   const requiredVars = [
     'JWT_SECRET',
@@ -39,11 +49,23 @@ const initUserContainer = async () => {
 
     // 注册服务和依赖
     container.register({
+      redisClient: asValue(await initRedisClient()),
       mongodb: asValue(mongodb),
+      logger: asValue(logger),
+      accountLockService: asClass(AccountLockService).singleton(),
       userRepository: asClass(UserRepository).singleton(),
+      maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '15')),
+      lockDuration: asValue(parseInt(process.env.LOCK_DURATION || '900')),
+      namespace: asValue(process.env.REDIS_NAMESPACE || 'auth'),
       localAuthService: asClass(LocalAuthService).singleton(),
-      oauthService: asClass(OAuthService).singleton(),
       tokenService: asClass(TokenService).singleton(),
+      oauthService: asClass(OAuthService).singleton(),
+      passwordHasher: asValue({
+        compare: bcrypt.compare,
+        hash: bcrypt.hash
+      }),
+      userService: asClass(UserService).singleton(),
+      bcrypt: asValue(bcrypt),
       
       // 环境变量配置
       expiresIn: asValue(process.env.JWT_EXPIRES_IN || '1h'),
@@ -53,6 +75,11 @@ const initUserContainer = async () => {
       googleClientId: asValue(process.env.GOOGLE_CLIENT_ID),
       googleClientSecret: asValue(process.env.GOOGLE_CLIENT_SECRET),
       googleRedirectUri: asValue(process.env.GOOGLE_REDIRECT_URI),
+      facebookClientId: asValue(process.env.FACEBOOK_CLIENT_ID),
+      facebookClientSecret: asValue(process.env.FACEBOOK_CLIENT_SECRET),
+      facebookRedirectUri: asValue(process.env.FACEBOOK_REDIRECT_URI),
+      githubId: asValue(process.env.GITHUB_ID),
+      githubSecret: asValue(process.env.GITHUB_SECRET),
     });
 
     console.log('User container initialized successfully');

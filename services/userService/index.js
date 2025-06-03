@@ -1,26 +1,39 @@
 //services/userService/index.js
 
-import validateLoginResponse from './utils/validateLoginResponse.js';
-import { GraphQLError } from 'graphql';
+import validateLoginResponse from "./utils/validateLoginResponse.js";
+
 
 class UserService {
-  constructor({ localAuthService = null, oauthService, tokenService, accountLockService = null }) {
+  constructor({ localAuthService, userRepository, passwordHasher, tokenService, accountLockService,oauthService }) {
     this.localAuthService = localAuthService;
-    this.oauthService = oauthService;
+    this.userRepository = userRepository;
+    this.passwordHasher = passwordHasher;
     this.tokenService = tokenService;
     this.accountLockService = accountLockService;
+    this.oauthService = oauthService;
   }
+
+  async localLogin(email, password) {
+    console.log('Starting local login process for email:', email);
+
+    if (!this.localAuthService) {
+      throw new GraphQLError('Local authentication service is not configured', {
+        extensions: { code: 'SERVICE_UNAVAILABLE' }
+      });
+    }
+    return await this.localAuthService.localLogin(email, password);
+  }
+
+
 
   async oauthLogin(provider, token) {
     console.log("Authenticating with provider:", provider); //no output, maybe the frontend did not send the anything
-console.log("Token received:", token);
+    console.log("Token received:", token);
     return await this.oauthService.authenticate(provider, token);
   }
 
-  async login(email, password) {
-    const response = await this.localAuthService.login(email, password);
-    return await validateLoginResponse(response);
-  }
+
+
   async handleGoogleOAuth(token) {
     return await this.oauthService.handleGoogleOAuth(token);
   }

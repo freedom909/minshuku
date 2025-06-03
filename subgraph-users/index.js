@@ -13,6 +13,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import morgan from "morgan";
+import UserService from "../services/userService/index.js";
 // import router from "./router.js";
 import authLimiter from "../infrastructure/middleware/authLimiter.js"; // Adjust path as needed
 
@@ -59,21 +60,19 @@ const createContext =
 
     const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
     console.log("Client IP:", ip);
-
     return {
       token: req.headers.authorization || "",
       container,
       ip,
       req,
-      dataSources: {
-        userService: {
-          localAuthService: container.resolve("localAuthService"),
-          oauthService: container.resolve("oauthService"),
-          tokenService: container.resolve("tokenService"),
-          userRepository:container.resolve("userRepository"),
-        },
-      },
+      userService: new UserService({
+        accountLockService: container.resolve("accountLockService"),
+        localAuthService: container.resolve("localAuthService"),
+        oauthService: container.resolve("oauthService"),
+        tokenService: container.resolve("tokenService"),
+      }),
     };
+    
   };
 
 const startApolloServer = async () => {

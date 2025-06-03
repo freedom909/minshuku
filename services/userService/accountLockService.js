@@ -19,6 +19,10 @@ class AccountLockService {
         return `${this.namespace}${email}`;
     }
 
+    async lockAccount(userId) {
+        await this.redisClient.set(`lock:${userId}`, 'true', { EX: 3600 }); // expire in 1 hour
+      }
+
     // Check if account is locked
     async isAccountLocked(email) {
         try {
@@ -45,6 +49,9 @@ class AccountLockService {
         }
     }
 
+    async isAccountLocked(userId) {
+        return await this.redis.get(`lock:${userId}`);
+      }
     // Record a failed login attempt
     async recordFailedAttempt(email) {
         try {
@@ -82,6 +89,15 @@ class AccountLockService {
         }
     }
 
+    async clearAttempts(email) {
+        try {
+            await this.redis.del(this.getKey(email));
+            return true;
+        } catch (error) {
+            console.error('Error clearing attempts:', error);
+            return false;
+        }
+    }
     // Clear lock and reset attempts
     async clearLock(email) {
         try {

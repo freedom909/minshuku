@@ -9,39 +9,37 @@ import dotenv from 'dotenv';
 import TokenService from './tokenService.js';
 
 
+
 dotenv.config();
 
 
+/**
+ * Local authentication service class.
+ * @class LocalAuthService
+ * @param {Object} dependencies - Dependencies for the service.
+ * @param {Object} dependencies.userRepository - User repository.
+ * @param {Object} dependencies.logger - Logger instance.
+ * @param {Object} dependencies.passwordHasher - Password hashing utility.
+ */
 class LocalAuthService  {
-  
-  constructor({ userRepository }) {
+  constructor({ userRepository, logger, passwordHasher, tokenService, accountLockService }) {
     
     this.baseURL = "http://localhost:4000/";
     if (!userRepository) {
       throw new Error("UserRepository not provided to UserService");
     }
     this.userRepository = userRepository;
+    this.logger = logger;
+    this.passwordHasher = passwordHasher;
+    this.tokenService = tokenService;
+    this.accountLockService = accountLockService;
   }
 
-  async login(email, password) {
-    console.log('Starting local login process for email:', email);
 
-    if (!this.localAuthService) {
-      throw new GraphQLError('Local authentication service is not configured', {
-        extensions: { code: 'SERVICE_UNAVAILABLE' }
-      });
-    }
+  async localLogin(email, password) {
+    console.log('Starting local login process for email:', email);
   
     try {
-      // 验证输入
-      if (!email || !password) {
-        throw new GraphQLError('Email and password are required', {
-          extensions: { 
-            code: 'INVALID_INPUT',
-            requiredFields: ['email', 'password']
-          }
-        });
-      }
 
       // 检查账户是否被锁定
       if (this.accountLockService) {
@@ -59,7 +57,7 @@ class LocalAuthService  {
 
       // 尝试登录
       console.log('Attempting local login for email:', email);
-      const user = await this.localAuthService.login(email, password);
+      const user = await this.login(email, password);
 
       // 登录成功后清除失败尝试记录
       if (this.accountLockService) {
@@ -120,6 +118,18 @@ class LocalAuthService  {
         }
       });
     }
+  
+  }
+  async login(email, password) {
+    console.log('Starting login process for email:', email);
+    console.log('Password received:', password);//no output
+    const user = await this.userRepository.getUserByEmailFromDb(email);
+    if (!user) return null;
+    console.log('User password:', user.password);
+    const isMatch = await this.passwordHasher.compare(password, user.password); 
+    if (!isMatch) return null;
+
+    return user;
   }
   async register(userData) {
     const existingUser = await this.userRepository.getUserByEmailFromDb(userData.email);
@@ -137,7 +147,7 @@ class LocalAuthService  {
     if (!createdUser || !createdUser._id) {
       throw new Error("❌ Registration failed: No _id returned from insertUser.");
     }
-
+    this.logger.info(`Registering user: ${userInput.email}`);
     return createdUser; // ✅ Ensure _id is returned
   }
 

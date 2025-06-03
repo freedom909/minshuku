@@ -6,6 +6,7 @@ import runValidations from "../infrastructure/helpers/runValidations.js";
 import applyRateLimiting from "../infrastructure/middleware/rateLimitStore.js";
 import { loginValidate } from "../infrastructure/helpers/loginValidator.js";
 import handleSignUpError from "../infrastructure/utils/handleSignUpError.js";
+import userService from "../services/userService/index.js";
 
 ;
 // Initialize Google OAuth client
@@ -28,10 +29,10 @@ export const resolvers = {
   Mutation: {
     signIn: async (_, { input }, { container }) => {
 
-      const logger = container.resolve("logger");// Assuming you have a logger service registered in the container?
+      const logger = container.resolve("logger");
       const accountLockService = container.resolve("accountLockService");
 
-      const userService = container.resolve("userService");
+      // const userService = container.resolve("userService");
       console.log("SIGN-IN INPUT:", input); // no output in the terminal
 
       let { provider, token, email, password, idToken, accessToken } = input;
@@ -81,10 +82,11 @@ export const resolvers = {
       }
     
       let response;
+      const userService = container.resolve('userService');
       try {
         response = isOAuth
           ? await userService.oauthLogin(provider, token)
-          : await userService.login(email, password);
+          : await userService.localLogin(email, password);
       } catch (err) {
         logger.error("Login error:", err);
     
@@ -257,37 +259,7 @@ export const resolvers = {
       }
     },
     
-    
-
-    login: async (_, { input }, { container, dataSources, req }) => {
-      const { email, password } = input;
-      const { userRepository } = container.resolve("userRepository");
-      const { localAuthService, tokenService } = dataSources.userService;
-    
-      try {
-        await applyRateLimiting(req);
-        await loginValidate(input);
-    
-        const user = await userRepository.getUserByEmailFromDb(email);
-        if (!user || !(await userRepository.checkPassword(user, password))) {
-          throw new GraphQLError("Invalid credentials", {
-            extensions: { code: "INVALID_CREDENTIALS" },
-          });
-        }
-    
-        const token = await tokenService.generateToken(user);
-        console.log(`User logged in: ${email} (${user._id})`);
-    
-        return {
-          userId: user._id.toString(),
-          token,
-          role: user.role,
-        };
-      } catch (error) {
-        handleLoginError(error);
-      }
-    
-    },    
+     
 
     forgotPassword: async (_, { email }, { dataSources, req }) => {
       // Apply rate limiting

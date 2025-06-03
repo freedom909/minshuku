@@ -15,17 +15,6 @@ const logger = createLogger({
   });
 
   // Debug middleware
-  const debugMiddleware = (req, res, next) => {
-    if (process.env.DEBUG_MODE === 'true') {
-      logger.debug({
-        message: 'Request received',
-        method: req.method,
-        url: req.originalUrl,
-        headers: req.headers,
-        body: req.body
-      });
-    }
-    next();
-  };
 
-  export { logger, debugMiddleware };
+
+  export default logger;

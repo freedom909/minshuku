@@ -1,3 +1,4 @@
+import { registerCommonServices } from './commonContainer.js';
 import { createContainer, asValue, asClass } from 'awilix';
 import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
@@ -51,6 +52,7 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
   });
 
   console.log('Database connected');
+  registerCommonServices(container);
   return container;
 };
 
