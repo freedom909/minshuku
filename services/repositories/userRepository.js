@@ -258,8 +258,9 @@ class UserRepository {
     }
   }
 
-  async checkPassword(password, hashedPassword) {
+  async checkPassword(password, user) {
     try {
+      const hashedPassword = user.hashedPassword;
       if (typeof password !== 'string' || typeof hashedPassword !== 'string') {
         throw new TypeError('Password and hash must be strings');
       }

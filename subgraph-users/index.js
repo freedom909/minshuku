@@ -2,7 +2,7 @@ import express from "express";
 import http from "http";
 import { ApolloServer } from "@apollo/server";
 import { buildSubgraphSchema } from "@apollo/subgraph";
-import initAuthContainer from "../services/DB/initAuthContainer.js";
+import initUserContainer from "../services/DB/initUserContainer.js";
 import { readFileSync } from "fs";
 import { gql } from "graphql-tag";
 import resolvers from "./resolvers.js";
@@ -15,6 +15,8 @@ import bodyParser from "body-parser";
 import morgan from "morgan";
 // import router from "./router.js";
 import authLimiter from "../infrastructure/middleware/authLimiter.js"; // Adjust path as needed
+
+
 
 dotenv.config();
 
@@ -68,6 +70,7 @@ const createContext =
           localAuthService: container.resolve("localAuthService"),
           oauthService: container.resolve("oauthService"),
           tokenService: container.resolve("tokenService"),
+          userRepository:container.resolve("userRepository"),
         },
       },
     };
@@ -75,7 +78,7 @@ const createContext =
 
 const startApolloServer = async () => {
   try {
-    const container = await initAuthContainer();
+    const container = await initUserContainer();
     const app = express();
 
     const httpServer = http.createServer(app);
@@ -121,6 +124,7 @@ const startApolloServer = async () => {
     // 🔹 CORS + Apollo Middleware
     app.use(
       "/graphql",
+      authLimiter,
       cors({
         origin: ["http://localhost:3000", "http://localhost:4010"],
         methods: ["GET", "POST", "OPTIONS"],

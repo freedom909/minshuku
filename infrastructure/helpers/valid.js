@@ -26,11 +26,4 @@ export const validRegister = [
     .withMessage('Picture must be a valid URL'),
 ];
 
-export const validLogin = [
-  check('email')
-    .isEmail()
-    .withMessage('Must be a valid email'),
-  check('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long'),
-];
+

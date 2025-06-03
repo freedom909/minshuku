@@ -1,6 +1,6 @@
 //services/userService/localAuthService.js
 import UserRepository from '../repositories/userRepository.js';
-
+import mongoose from 'mongoose';
 import { GraphQLError } from 'graphql';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -128,7 +128,8 @@ class LocalAuthService  {
     }
 
     const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const newUser = { ...userData, password: hashedPassword };
+    const newUser = { ...userData, password: hashedPassword,provider: 'local',sub:new mongoose.Types.ObjectId().toString()};
+
 
     // Make sure insertUser returns the correct format
     const createdUser = await this.userRepository.insertUser(newUser);
@@ -175,6 +176,21 @@ class LocalAuthService  {
     }
   }
 
+  async handleSignUpError(error) {
+    console.error("Error during signUp:", error);
+
+  if (error instanceof GraphQLError) throw error;
+
+  if (error.message.includes("duplicate") && error.message.includes("email")) {
+    throw new GraphQLError("Email already registered", {
+      extensions: { code: "DUPLICATE_EMAIL" },
+    });
+  }
+
+  throw new GraphQLError("Registration failed: " + error.message, {
+    extensions: { code: "REGISTRATION_FAILED", error: error.message },
+  });
+  }
   async updateUser(userId, newPassword) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     try {

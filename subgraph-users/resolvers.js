@@ -1,7 +1,13 @@
 import { GraphQLError } from "graphql";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
-import validateInviteCode from "../infrastructure/helpers/validateInvitecode.js";
+import validateHostInviteCode from "../infrastructure/helpers/validateHostInviteCode.js";
+import runValidations from "../infrastructure/helpers/runValidations.js";
+import applyRateLimiting from "../infrastructure/middleware/rateLimitStore.js";
+import { loginValidate } from "../infrastructure/helpers/loginValidator.js";
+import handleSignUpError from "../infrastructure/utils/handleSignUpError.js";
+
+;
 // Initialize Google OAuth client
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -199,57 +205,33 @@ export const resolvers = {
       });
     },
    
-    signUp: async (_, { input }, { dataSources, req }) => {
-      // Apply rate limiting
+    signUp: async (_, { input }, { container,dataSources, req }) => {
+      const { email, password, name, nickname, role, inviteCode, picture } = input;
+    
+      // Optional debug log to verify resolver is reached
+      console.log("SIGN-UP CALLED with:", email, role);
+    
       try {
-        await new Promise((resolve, reject) => {
-          authLimiter(req, {}, (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-      } catch (rateLimitError) {
-        throw new GraphQLError(rateLimitError.message, {
-          extensions: { code: "TOO_MANY_REQUESTS" },
-        });
-      }
-
-      try {
+        
+        const userRepository  = container.resolve("userRepository");
+    
         const { localAuthService, tokenService } = dataSources.userService;
-
-        // Validate input
+    
+        // Apply rate limiting
+        await applyRateLimiting(req);
         await runValidations(input);
-        const { email, password, name, nickname, role, inviteCode, picture } =
-          input;
-
-        // Additional validation for HOST role
+    
         if (role === "HOST") {
-          if (!inviteCode) {
-            throw new GraphQLError("Invite code is required for HOST role", {
-              extensions: { code: "BAD_USER_INPUT" },
-            });
-          }
-
-          const isValidInviteCode = await validateInviteCode(inviteCode);
-          if (!isValidInviteCode) {
-            throw new GraphQLError("Invalid invite code", {
-              extensions: {
-                code: "INVALID_INVITE_CODE",
-                inviteCode,
-              },
-            });
-          }
+          await validateHostInviteCode(inviteCode);
         }
-
-        // Check if user already exists
+    
         const existingUser = await userRepository.getUserByEmailFromDb(email);
         if (existingUser) {
           throw new GraphQLError("Email already registered", {
             extensions: { code: "DUPLICATE_EMAIL" },
           });
         }
-
-        // Create new user
+    
         const newUser = await localAuthService.register({
           email,
           password,
@@ -258,44 +240,54 @@ export const resolvers = {
           role,
           picture,
         });
-
-        // Generate token
+    
         const token = await tokenService.generateToken(newUser);
-
-        // Log successful registration
-        console.log(`New user registered: ${email} (${newUser._id})`);
-
+    
+        console.log(`✅ Registered new user: ${email} (${newUser._id})`);
+    
         return {
+          success: true,
+          message: "Registration successful",
           userId: newUser._id.toString(),
           token,
           role: newUser.role,
         };
       } catch (error) {
-        console.error("Error during signUp:", error);
-
-        // Handle duplicate email error specifically
-        if (
-          error.message.includes("duplicate") &&
-          error.message.includes("email")
-        ) {
-          throw new GraphQLError("Email already registered", {
-            extensions: { code: "DUPLICATE_EMAIL" },
-          });
-        }
-
-        // Re-throw GraphQLError as is
-        if (error instanceof GraphQLError) {
-          throw error;
-        }
-
-        throw new GraphQLError("Registration failed: " + error.message, {
-          extensions: {
-            code: "REGISTRATION_FAILED",
-            error: error.message,
-          },
-        });
+        return handleSignUpError(error);
       }
     },
+    
+    
+
+    login: async (_, { input }, { container, dataSources, req }) => {
+      const { email, password } = input;
+      const { userRepository } = container.resolve("userRepository");
+      const { localAuthService, tokenService } = dataSources.userService;
+    
+      try {
+        await applyRateLimiting(req);
+        await loginValidate(input);
+    
+        const user = await userRepository.getUserByEmailFromDb(email);
+        if (!user || !(await userRepository.checkPassword(user, password))) {
+          throw new GraphQLError("Invalid credentials", {
+            extensions: { code: "INVALID_CREDENTIALS" },
+          });
+        }
+    
+        const token = await tokenService.generateToken(user);
+        console.log(`User logged in: ${email} (${user._id})`);
+    
+        return {
+          userId: user._id.toString(),
+          token,
+          role: user.role,
+        };
+      } catch (error) {
+        handleLoginError(error);
+      }
+    
+    },    
 
     forgotPassword: async (_, { email }, { dataSources, req }) => {
       // Apply rate limiting
