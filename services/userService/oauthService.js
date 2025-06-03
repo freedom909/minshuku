@@ -58,6 +58,9 @@ class OAuthService extends RESTDataSource {
         case "apple":
           userInfo = await this.verifyAppleToken(token);
           break;
+        case "github":
+          userInfo = await this.verifyGithubToken(token);
+          break;
         default:
           throw new GraphQLError("Unsupported OAuth provider", {
             extensions: { code: "UNSUPPORTED_PROVIDER" },
@@ -149,6 +152,56 @@ class OAuthService extends RESTDataSource {
         extensions: {
           code: "INVALID_GOOGLE_TOKEN",
           provider: "GOOGLE",
+          error,
+        },
+      });
+    }
+  }
+  
+  async verifyGithubToken(token) {
+    try {
+      const response = await fetch(`https://api.github.com/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+        },
+      });
+  
+      const data = await response.json();
+  
+      if (!data || data.error) {
+        throw new Error(data?.error?.message || "Invalid Github token");
+      }
+  
+      // Optionally get email if not public
+      let email = data.email;
+      let role=data.role;
+  
+      if (!email) {
+        const emailResponse = await fetch(`https://api.github.com/user/emails`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github+json",
+          },
+        });
+  
+        const emails = await emailResponse.json();
+        const primaryEmail = emails.find((e) => e.primary && e.verified);
+        email = primaryEmail?.email;
+      }
+  
+      return {
+        id: data.id,
+        email: email,
+        name: data.name || data.login,
+        picture: data.avatar_url,
+        role: role ||"GUEST", // Or customize based on your logic
+      };
+    } catch (error) {
+      throw new GraphQLError("Invalid Github token", {
+        extensions: {
+          code: "INVALID_GITHUB_TOKEN",
+          provider: "GITHUB",
           error,
         },
       });

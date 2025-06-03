@@ -15,7 +15,7 @@ class OAuthService {
         console.log("🔄 Sending request to subgraph...");
       
         try {
-          const response = await fetch('http://localhost:4010/graphql', {
+          const response = await fetch('http://localhost:4010/graphql', { //it did not use post
             method: 'POST',
             headers: {
               Authorization: `Bearer ${token}`,

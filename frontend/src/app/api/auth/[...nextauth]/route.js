@@ -1,11 +1,13 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
+import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import localAuthService from "@/userService/localAuthService";
 import oauthService from "@/userService/oauthService";
-
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import clientPromise from "@/lib/mongodb";
 
 const handler = NextAuth({
   providers: [
@@ -23,6 +25,10 @@ const handler = NextAuth({
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET
+    }),
+    GithubProvider({
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -57,36 +63,40 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60 // 30 days
   },
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
+      console.log("👤 Sign-in callback:", user, account, profile);
+      
       if (!user) throw new Error("No user found");
     
-      if (account.provider === "google" || account.provider === "facebook") {
-        // call your backend here (e.g., subgraph-users)
+      if (["google", "facebook", "github"].includes(account.provider)) {
         try {
           const token = account.id_token || account.access_token;
-         
+    
           console.log(`Calling subgraph with ${account.provider} token:`, token);
+    
           const response = await oauthService.sendOAuthRequestToSubgraph(
             account.provider,
             token
           );
-          
+    
           console.log("OAuth response from subgraph:", response);
+    
+          // ✅ Allow login to continue and still let adapter save user
           if (!response?.success) {
             console.error("OAuth login failed:", response);
-            return false; // ⛔ Login will fail and redirect
+            return false;
           }
-    
-          return true;
         } catch (err) {
-          console.error("OAuth backend call failed:",  err?.message || err);
+          console.error("OAuth backend call failed:", err?.message || err);
           return false;
         }
       }
-    
+     
       return true;
-    
     },
+    
+    adapter: MongoDBAdapter(clientPromise),
+
     jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id;

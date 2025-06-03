@@ -34,9 +34,9 @@ export default function FacebookSignInButton() {
       <button
         onClick={handleFacebookSignIn}
         disabled={loading}
-        className={`w-full flex items-center justify-center gap-2 bg-[#1877F2] text-white py-2 px-4 rounded-md ${
+        className={`w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white px-6 py-2.5 rounded-lg ${
           loading ? 'opacity-70' : 'hover:bg-[#166FE5]'
-        } transition-colors`}
+        } shadow-sm transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1877F2]`}
       >
         <svg 
           xmlns="http://www.w3.org/2000/svg" 

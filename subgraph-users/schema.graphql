@@ -157,7 +157,7 @@ enum OAuthProvider {
   GOOGLE
   FACEBOOK
   APPLE
-  TWITTER
+  GITHUB
 }
 
 

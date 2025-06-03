@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import FacebookSignInButton from "@/components/FacebookSignInButton";
+import GithubSignInButton from "@/components/GithubSignInButton";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -82,8 +83,8 @@ export default function Login() {
         </button>
       </form>
 
-      <div className="w-full max-w-xs mt-6">
-        <div className="relative my-4">
+      <div className="w-full max-w-xs mt-8">
+        <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
           </div>
@@ -92,9 +93,11 @@ export default function Login() {
           </div>
         </div>
 
-        <GoogleSignInButton />
-        <FacebookSignInButton />
-    
+        <div className="space-y-4">
+          <GoogleSignInButton />
+          <FacebookSignInButton />
+          <GithubSignInButton />
+        </div>
       </div>
 
       <button

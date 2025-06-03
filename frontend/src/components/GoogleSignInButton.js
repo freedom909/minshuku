@@ -33,7 +33,7 @@ export default function GoogleSignInButton() {
             <button
                 onClick={handleSignIn}
                 disabled={isLoading}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full flex items-center justify-center gap-2"
+                className="bg-[#1877F2] hover:bg-[#166FE5] text-white px-6 py-2.5 rounded-lg w-full flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1877F2]"
             >
                 {isLoading ? (
                     <span>Loading...</span>
