@@ -1,21 +1,6 @@
-import { authenticate } from "@/lib/auth";
 import axios from "axios";
-import bcrypt from 'bcryptjs';
 
-const SUBGRAPH_USERS_URL = "http://localhost:4010";
-const SALT_ROUNDS = 12;
-
-const getUserForAuthQuery = `
-  query GetUserForAuth($email: String!) {
-    users(where: { email: $email }) {
-      id
-      email
-      password
-    }
-  }
-`;
-
-
+const SUBGRAPH_USERS_URL = "http://localhost:4010/graphql"; // ✅ point directly to /graphql
 
 const loginRequestToSubgraph = `
   mutation Login($input: SignInInput!) {
@@ -41,246 +26,132 @@ const loginRequestToSubgraph = `
 `;
 
 const registerRequestToSubgraph = `
- mutation Mutation($input: SignUpInput!) {
-  signUp(input: $input) {
-    role
-    userId
-    code
-    message
-    refreshToken
-    success
-    auth {
-      token
+  mutation Register($input: SignUpInput!) {
+    signUp(input: $input) {
+      role
+      userId
+      code
+      message
+      refreshToken
+      success
+      auth {
+        token
+      }
     }
   }
-}
 `;
 
-
-
 const localAuthService = {
-  authenticate: async (email, password) => {
+  async authenticate(email, password) {
     try {
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         throw new Error("Please enter a valid email address");
       }
 
-      // Validate password presence
-      if (!password || password.trim() === '') {
+      if (!password || password.trim() === "") {
         throw new Error("Password is required");
       }
 
-      const result = await axios.post(`${SUBGRAPH_USERS_URL}/graphql`, {
+      const response = await axios.post(SUBGRAPH_USERS_URL, {
         query: loginRequestToSubgraph,
-        variables: {
-          input: { email, password }
-        }
+        variables: { input: { email, password } },
       });
-      console.log("Authentication result:", result.data);
-      
-      if (result.data.errors) {
-        throw new Error(result.data.errors[0].message);
+
+      const result = response.data;
+
+      if (result.errors) {
+        throw new Error(result.errors[0].message);
       }
 
-      const { user, token } = result.data.data.signIn;
+      const { user, token } = result.data.signIn;
       if (!user || !token) {
         throw new Error("Authentication failed");
       }
 
-      // Store the token
       if (token?.accessToken?.token) {
-        localStorage.setItem('jwt_token', token.accessToken.token);
+        localStorage.setItem("jwt_token", token.accessToken.token);
       }
 
       return {
         success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name || user.email.split('@')[0],
-          nickname: user.nickname,
-          role: user.role,
-          picture: user.picture
-        },
-        token: token?.accessToken?.token,
-        message: "Authentication successful"
+        user,
+        token: token.accessToken.token,
+        message: "Authentication successful",
       };
     } catch (error) {
       console.error("Authentication error:", error);
       return {
         success: false,
-        error: error.response?.data?.errors?.[0]?.message || 
-               error.message || 
-               "Authentication failed",
-        message: "Authentication failed"
+        error: error.message || "Authentication failed",
+        message: "Authentication failed",
       };
     }
   },
 
-  register: async (userData) => {
+  async register(data) {
+    console.log("➡️ calling register()");
+    return await this.sendRegisterToSubgraph(data);
+  },
+
+  async sendRegisterToSubgraph(data) {
     try {
-      // Validate required fields
-      if (!userData.email || !userData.password || !userData.name) {
-        throw new Error("Email, password, and name are required");
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userData.email)) {
-        throw new Error("Please enter a valid email address");
-      }
-
-      // Validate password strength
-      if (userData.password.length < 8) {
-        throw new Error("Password must be at least 8 characters");
-      }
-      if (!/[A-Z]/.test(userData.password)) {
-        throw new Error("Password must contain at least one uppercase letter");
-      }
-      if (!/[0-9]/.test(userData.password)) {
-        throw new Error("Password must contain at least one number");
-      }
-      if (!/[^A-Za-z0-9]/.test(userData.password)) {
-        throw new Error("Password must contain at least one special character");
-      }
-
-      // Set default avatar if not provided
-      if (!userData.picture) {
-        userData.picture = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`;
-      }
-
-      const result = await axios.post(`${SUBGRAPH_USERS_URL}/graphql`, {
-        query: registerRequestToSubgraph,
-        variables: {
-          input: {
-            email: userData.email,
-            password: userData.password,
-            name: userData.name,
-            nickname: userData.nickname || userData.name,
-            picture: userData.picture,
-            role: userData.role || 'USER'
-          }
-        }
+      const response = await fetch(SUBGRAPH_USERS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: registerRequestToSubgraph,
+          variables: {
+            input: {
+              email: data.email,
+              password: data.password,
+              name: data.name,
+              nickname: data.nickname,
+              role: data.role,
+              picture: data.picture,
+            },
+          },
+        }),
       });
 
-      console.log("Registration result:", result.data);
-      
-      if (result.data.errors) {
-        throw new Error(result.data.errors[0].message);
+      const text = await response.text();
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (err) {
+        console.error("非JSON响应:", text);
+        return {
+          success: false,
+          error: "Server response is not valid JSON",
+        };
       }
 
-      const { user, token, success, message } = result.data.data.signUp;
-      
-      if (!success || !user) {
-        throw new Error(message || "Registration failed");
-      }
-
-      // 如果有token，存储它
-      if (token?.accessToken?.token) {
-        localStorage.setItem('jwt_token', token.accessToken.token);
+      if (!response.ok || result.errors) {
+        const errorMessage = result?.errors?.[0]?.message || `HTTP Error ${response.status}`;
+        console.error("GraphQL error:", errorMessage);
+        return {
+          success: false,
+          error: errorMessage,
+        };
       }
 
       return {
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          nickname: user.nickname,
-          role: user.role,
-          picture: user.picture
-        },
-        token: token?.accessToken?.token,
-        message: message || "Registration successful"
+        success: result.data.signUp.success,
+        userId: result.data.signUp.userId,
+        message: result.data.signUp.message,
+        token: result.data.signUp.auth?.token || null,
       };
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Registration failed:", error);
       return {
         success: false,
-        error: error.response?.data?.errors?.[0]?.message || 
-               error.message || 
-               "Registration failed",
-        message: "Registration failed"
+        error: error.message || "Registration error",
       };
     }
   },
-  async login(email, password) {
-    try {
-        const query = `
-            mutation Login($input: LoginInput!) {
-                login(input: $input) {
-                    success
-                    message
-                    user {
-                        id
-                        email
-                        name
-                        nickname
-                        role
-                        picture
-                    }
-                    token
-                }
-            }
-        `;
-
-        const response = await fetch(SUBGRAPH_USERS_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                query,
-                variables: {
-                    input: {
-                        email,
-                        password
-                    }
-                }
-            }),
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.errors) {
-            console.error('GraphQL errors:', result.errors);
-            throw new Error(result.errors[0].message);
-        }
-
-        const loginResult = result.data.login;
-
-        if (!loginResult.success) {
-            throw new Error(loginResult.message || '登录失败');
-        }
-
-        // Store JWT token
-        if (loginResult.token) {
-            localStorage.setItem('jwt_token', loginResult.token);
-            this.token = loginResult.token;
-        }
-
-        return {
-            success: true,
-            user: loginResult.user,
-            token: loginResult.token
-        };
-    } catch (error) {
-        console.error('登录失败:', error);
-        return {
-            success: false,
-            error: error.message || '登录过程中发生错误'
-        };
-    }
-}
-
-
 };
 
 export default localAuthService;

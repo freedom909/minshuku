@@ -34,6 +34,22 @@ const SIGN_IN = gql`
   }
 `;
 
+const REGISTER_USER = gql`
+mutation Mutation($input: SignUpInput!) {
+  signUp(input: $input) {
+    role
+    userId
+    code
+    message
+    refreshToken
+    success
+    auth {
+      token
+    }
+  }
+}
+`;
+
 const handleGoogleLoginSuccess = async (response) => {
   try {
     const token = response.credential; // from Google
@@ -58,4 +74,5 @@ const handleGoogleLoginSuccess = async (response) => {
     console.log("Error signing in with Google:", error);
   }
 };
+
 

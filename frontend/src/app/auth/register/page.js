@@ -63,33 +63,42 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
+    await handleRegister({
+      email: formData.email,
+      password: formData.password,
+      name: formData.name,
+      nickname: formData.nickname || formData.name,
+      role: formData.role || 'GUEST',
+      picture: formData.picture || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp"
+    });
+    setLoading(false);
+  };
 
+
+  const handleRegister = async (formData) => {
     try {
-      const result = await localAuthService.register({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
-        nickname: formData.nickname || formData.name,
-        role:formData.role || 'GUEST',
-        picture: formData.picture || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp?d=https%3A%2F%2Fwww.gravatar.com%2Favatar%2F00000000000000000000000000000000%3Fd%3Dmp"
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
 
-      if (result.success) {
-        router.push('/dashboard');
-      } else {
-        setError(result.error || '注册失败，请重试');
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || '注册失败');
+        return;
       }
+
+      router.push('/dashboard');
     } catch (err) {
-      setError(err.message || '注册过程中发生错误');
-    } finally {
-      setLoading(false);
+      setError(err.message || '注册失败');
     }
   };
+
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900">

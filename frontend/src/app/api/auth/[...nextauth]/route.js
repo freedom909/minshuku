@@ -1,3 +1,4 @@
+//frontend/src/pages/api/auth/[...nextauth].js
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
@@ -42,7 +43,7 @@ const handler = NextAuth({
             credentials.email,
             credentials.password
           );
-          
+
           if (!user) {
             throw new Error("Invalid credentials");
           }
@@ -65,22 +66,22 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       console.log("👤 Sign-in callback:", user, account, profile);
-      
+
       if (!user) throw new Error("No user found");
-    
+
       if (["google", "facebook", "github"].includes(account.provider)) {
         try {
           const token = account.id_token || account.access_token;
-    
+
           console.log(`Calling subgraph with ${account.provider} token:`, token);
-    
+
           const response = await oauthService.sendOAuthRequestToSubgraph(
             account.provider,
             token
           );
-    
+
           console.log("OAuth response from subgraph:", response);
-    
+
           // ✅ Allow login to continue and still let adapter save user
           if (!response?.success) {
             console.error("OAuth login failed:", response);
@@ -91,11 +92,12 @@ const handler = NextAuth({
           return false;
         }
       }
-     
+
       return true;
     },
-    
+
     adapter: MongoDBAdapter(clientPromise),
+
 
     jwt: async ({ token, user }) => {
       if (user) {
@@ -106,7 +108,7 @@ const handler = NextAuth({
         token.accessToken = user.token; // Optional
       }
       return token;
-    
+
     },
     session: async ({ session, token }) => {
       session.user.id = token.id;
