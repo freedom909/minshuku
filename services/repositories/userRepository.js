@@ -185,7 +185,7 @@ class UserRepository {
       }
 
       console.log('Searching user by email:', email);
-      const user = await this.model.findOne({ email: email.toLowerCase().trim() });
+      const user = await this.model.findOne({ email: email.trim() });
 
       if (!user) {
         console.log('No user found for email:', email);
@@ -205,10 +205,8 @@ class UserRepository {
 
   async getUserByEmailFromDb(email) {
     try {
-      if (!email || typeof email !== 'string') {
-        throw new TypeError('Email must be a valid string');
-      }
-      return await this.model.findOne({ email: email.toLowerCase().trim() });
+
+      return await this.model.findOne({ email: email});
     } catch (error) {
       console.error('Error in getUserByEmailFromDb:', error);
       throw error;

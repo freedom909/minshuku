@@ -160,7 +160,7 @@ class TokenService extends RESTDataSource {
       }
       
 
-    async generateToken(user) {
+    async generateToken(user) { // Invalid user data for token generation
         if (!user || !user._id) {
             throw new GraphQLError('Invalid user data for token generation', {
                 extensions: { code: 'INVALID_INPUT' }

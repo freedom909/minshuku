@@ -54,7 +54,7 @@ const initUserContainer = async () => {
       logger: asValue(logger),
       accountLockService: asClass(AccountLockService).singleton(),
       userRepository: asClass(UserRepository).singleton(),
-      maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '15')),
+      maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '25')),
       lockDuration: asValue(parseInt(process.env.LOCK_DURATION || '900')),
       namespace: asValue(process.env.REDIS_NAMESPACE || 'auth'),
       localAuthService: asClass(LocalAuthService).singleton(),

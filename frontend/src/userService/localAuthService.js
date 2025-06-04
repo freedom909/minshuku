@@ -41,26 +41,19 @@ const loginRequestToSubgraph = `
 `;
 
 const registerRequestToSubgraph = `
-  mutation Register($input: SignUpInput!) {
-    signUp(input: $input) {
-      success
-      message
-      user {
-        id
-        email
-        name
-        nickname
-        role
-        picture
-      }
-      token {
-        accessToken {
-          token
-          expiresAt
-        }
-      }
+ mutation Mutation($input: SignUpInput!) {
+  signUp(input: $input) {
+    role
+    userId
+    code
+    message
+    refreshToken
+    success
+    auth {
+      token
     }
   }
+}
 `;
 
 

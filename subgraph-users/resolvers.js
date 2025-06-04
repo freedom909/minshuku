@@ -2,13 +2,13 @@ import { GraphQLError } from "graphql";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import validateHostInviteCode from "../infrastructure/helpers/validateHostInviteCode.js";
-import runValidations from "../infrastructure/helpers/runValidations.js";
+import  loginValidate  from "../infrastructure/helpers/loginValidator.js";
 import applyRateLimiting from "../infrastructure/middleware/rateLimitStore.js";
-import { loginValidate } from "../infrastructure/helpers/loginValidator.js";
+
 import handleSignUpError from "../infrastructure/utils/handleSignUpError.js";
 import userService from "../services/userService/index.js";
+import registerValidate from "../infrastructure/helpers/registerValidator.js";
 
-;
 // Initialize Google OAuth client
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -207,21 +207,19 @@ export const resolvers = {
       });
     },
    
-    signUp: async (_, { input }, { container,dataSources, req }) => {
+    signUp: async (_, { input }, { container, req }) => {
       const { email, password, name, nickname, role, inviteCode, picture } = input;
-    
-      // Optional debug log to verify resolver is reached
-      console.log("SIGN-UP CALLED with:", email, role);
     
       try {
         
         const userRepository  = container.resolve("userRepository");
-    
-        const { localAuthService, tokenService } = dataSources.userService;
+       const userService  = container.resolve("userService");
+        const { localAuthService, tokenService } = userService;
     
         // Apply rate limiting
         await applyRateLimiting(req);
-        await runValidations(input);
+        // await loginValidate(email, password);
+        // await registerValidate(name, nickname, picture, role);
     
         if (role === "HOST") {
           await validateHostInviteCode(inviteCode);
@@ -234,33 +232,31 @@ export const resolvers = {
           });
         }
     
-        const newUser = await localAuthService.register({
-          email,
-          password,
-          name,
-          nickname,
-          role,
-          picture,
-        });
-    
-        const token = await tokenService.generateToken(newUser);
-    
-        console.log(`✅ Registered new user: ${email} (${newUser._id})`);
-    
+        const registrationResult = await localAuthService.register(
+          email, password, name, nickname, role, picture
+        );
+        const user = registrationResult.user;
+        if (!user || !user.id) {
+          throw new GraphQLError("Registration failed: Missing user ID");
+        }
+        console.log(`✅ Registered new user: ${email} (${user.id})`);
+  
         return {
+          code: 200,
           success: true,
           message: "Registration successful",
-          userId: newUser._id.toString(),
-          token,
-          role: newUser.role,
+          userId: user.id,
+          auth: {
+            token: user.auth.token,
+            refreshToken: user.auth.refreshToken,
+          },
+          role: user.role,
         };
       } catch (error) {
         return handleSignUpError(error);
       }
     },
     
-     
-
     forgotPassword: async (_, { email }, { dataSources, req }) => {
       // Apply rate limiting
       try {

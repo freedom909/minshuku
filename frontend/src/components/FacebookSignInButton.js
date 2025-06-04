@@ -34,9 +34,9 @@ export default function FacebookSignInButton() {
       <button
         onClick={handleFacebookSignIn}
         disabled={loading}
-        className={`w-full flex items-center justify-center gap-3 bg-[#1877F2] text-white px-6 py-2.5 rounded-lg ${
-          loading ? 'opacity-70' : 'hover:bg-[#166FE5]'
-        } shadow-sm transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1877F2]`}
+        className={`w-full flex items-center justify-center gap-3 bg-blue-700 text-white px-6 py-1.5 rounded ${
+          loading ? 'opacity-70' : 'hover:bg-blue-800'
+        } transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400`}
       >
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
@@ -48,7 +48,7 @@ export default function FacebookSignInButton() {
           <path d="M9.19795 21.5H13.198V13.4901H16.8021L17.198 9.50977H13.198V7.5C13.198 6.94772 13.6457 6.5 14.198 6.5H17.198V2.5H14.198C11.4365 2.5 9.19795 4.73858 9.19795 7.5V9.50977H7.19795L6.80206 13.4901H9.19795V21.5Z" />
         </svg>
         <span>
-          {loading ? 'Signing in...' : 'Continue with Facebook'}
+          {loading ? '登录中...' : '使用Facebook登录'}
         </span>
       </button>
       {error && (
