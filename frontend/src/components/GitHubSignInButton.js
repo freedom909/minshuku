@@ -1,15 +1,33 @@
 "use client";
-import { signIn } from "next-auth/react";
+import { useState } from "react";
 import { FaGithub } from "react-icons/fa";
 
-export default function GithubSignInButton() {
+export default function GitHubSignInButton({ onClick }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      await onClick?.();
+    } catch (error) {
+      console.error("Github sign-in error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <button
-      onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
-      className="bg-[#1877F2] hover:bg-[#166FE5] text-white px-6 py-2.5 rounded-lg w-full flex items-center justify-center gap-3 shadow-sm transition-all duration-200 hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1877F2]"
+      onClick={handleClick}
+      disabled={loading}
+      className={`w-full flex items-center justify-center gap-3 bg-[#3b82f6] text-white px-4 py-3 rounded h-12 ${
+        loading ? 'opacity-70' : 'hover:bg-[#2563eb]'
+      } transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400`}
     >
       <FaGithub className="w-5 h-5" />
-      <span>Continue with GitHub</span>
+      <span>
+        {loading ? '登录中...' : '使用GitHub登录'}
+      </span>
     </button>
   );
 }

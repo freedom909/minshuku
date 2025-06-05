@@ -218,7 +218,7 @@ export const resolvers = {
     
         // Apply rate limiting
         await applyRateLimiting(req);
-   await loginValidate(email, password);
+        await loginValidate(email, password);
         await registerValidate({name, nickname, picture, role});
     
         if (role === "HOST") {

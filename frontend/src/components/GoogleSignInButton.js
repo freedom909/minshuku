@@ -29,11 +29,10 @@ export default function GoogleSignInButton() {
     };
 
     return (
-        <div className="flex flex-col items-center">
-            <button
+        <button
                 onClick={handleSignIn}
                 disabled={isLoading}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-1.5 rounded w-full flex items-center justify-center gap-3 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={`w-full flex items-center justify-center gap-3 bg-[#3b82f6] text-white px-4 py-3 rounded h-12 ${isLoading ? 'opacity-70' : 'hover:bg-[#2563eb]'} transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400`}
             >
                 {isLoading ? (
                     <span>加载中...</span>
@@ -61,8 +60,5 @@ export default function GoogleSignInButton() {
                     </>
                 )}
             </button>
-            
-            {error && <p className="text-red-500 mt-2">{error}</p>}
-        </div>
     );
 }

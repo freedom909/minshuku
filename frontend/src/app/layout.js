@@ -1,20 +1,18 @@
-// app/layout.js
 'use client';
 
-'use client';
-// import { GeistSans, GeistMono } from 'geist/font';
 import { GeistSans } from 'geist/font/sans';
-
 import './globals.css';
 import { SessionProvider } from 'next-auth/react';
-import Image from 'next/image';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistSans.css}`}>
-      <body >
+    <html lang="zh" className={GeistSans.variable}>
+      <body className="bg-gray-900 text-white">
         <SessionProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </SessionProvider>
       </body>
     </html>

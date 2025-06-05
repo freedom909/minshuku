@@ -1,5 +1,6 @@
 import UserRepository from './repositories/userRepository.js'
 // import AccountRepository from './repositories/accountRepository.js';
+import LocalAuthService from './userService/localAuthService.js';
 import UserService from './userService.js';
 // import BookingService from './bookingService.js';
 // import AccountService from './accountService.js';
@@ -28,7 +29,9 @@ async function initializeServices() {
 
     const userRepository = new UserRepository(db);
     // const accountRepository = new AccountRepository(db);
-    const userService = new UserService(userRepository);
+
+const localAuthService = new LocalAuthService({/* Provide necessary dependencies here */});
+const userService = new UserService({ localAuthService, userRepository });
     // const accountService= new AccountService(accountRepository);
     // const bookingService= new BookingService(bookingRepository);
     // const listingService= new ListingService(listingRepository);

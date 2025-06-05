@@ -9,10 +9,6 @@ const registerValidate = async ({ name, nickname, picture,role }) => {
   if (!nickname) {
     errors.push('Nickname is required');
   }
-
-  if (!picture || !/^https?:\/\/.*\.(jpg|jpeg|png|gif)$/.test(picture)) {
-    errors.push('Picture must be a valid URL');
-  }
   if (!role) {
     errors.push('Role is required');
   }

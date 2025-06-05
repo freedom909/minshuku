@@ -32,7 +32,7 @@ class UserRepository {
       throw new TypeError('Email must be a valid string');
     }
     try {
-      const user = await this.model.findOne(email);
+      const user = await this.model.findOne({ email });
       if (user) {
         return user;
       }
@@ -141,7 +141,7 @@ class UserRepository {
   }
   
   async createUser(userData) {
-    console.log('Creating user with data:', userData); // Agrega este log para verificar los datos de usuari
+    console.log('Creating user with data:', userData); 
     if (!userData || typeof userData !== 'object') {
       throw new TypeError('User data must be an object');
     }
@@ -178,13 +178,12 @@ class UserRepository {
     }
   }
 
-  async getUserByEmail(email) {
+  async getUserByEmail({email}) {
     try {
       if (!email || typeof email !== 'string') {
         throw new TypeError('Email must be a valid string');
       }
 
-      console.log('Searching user by email:', email);
       const user = await this.model.findOne({ email: email.trim() });
 
       if (!user) {
@@ -203,10 +202,21 @@ class UserRepository {
     }
   }
 
-  async getUserByEmailFromDb(email) {
+  async getUserByEmailFromDb(email) { 
+    console.log('Fetching user with email:', email);// Fetching user with email: undefined
+    if (!email || typeof email!=='string') {
+      throw new TypeError('Email must be a valid string');
+    }
     try {
-
-      return await this.model.findOne({ email: email});
+      const user = await this.model.findOne({ email: email.trim() });
+      console.log('User found:', {
+        id: user._id?.toString(),
+        email: user.email
+      });
+      if (!user) {
+        console.log('No user found for email:', email);
+      }
+      return user;
     } catch (error) {
       console.error('Error in getUserByEmailFromDb:', error);
       throw error;

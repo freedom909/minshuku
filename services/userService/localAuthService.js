@@ -71,7 +71,7 @@ class LocalAuthService {
       if (!user || !user._id) {
         // 记录失败尝试
         if (this.accountLockService) {
-          await this.accountLockService.recordAttempt(email);
+          await this.accountLockService.recordAttempt(user.userId);
         }
 
         throw new GraphQLError("Invalid credentials", {
@@ -126,17 +126,17 @@ class LocalAuthService {
   }
   async login(email, password) {
     console.log("Starting login process for email:", email);
-    console.log("Password received:", password); //no output
+   
     const user = await this.userRepository.getUserByEmailFromDb(email);
     if (!user) return null;
-    console.log("User password:", user.password);
+ 
     const isMatch = await this.passwordHasher.compare(password, user.password);
     if (!isMatch) return null;
-
+    await this.accountLockService.recordAttempt(user.userId);
     return user;
   }
   async register(email, password, name, nickname, role, picture) {
-    console.log("PASSWORD BEFORE HASHING:", password); //no output
+    
     const existingUser = await this.userRepository.getUserByEmailFromDb(email);
     if (existingUser) {
       throw new Error(
@@ -248,7 +248,7 @@ class LocalAuthService {
     });
   }
   async updateUser(userId, newPassword) {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await this.passwordHasher.hash(password);
     try {
       const updatedUser = await this.userRepository.findByIdAndUpdate(
         userId,

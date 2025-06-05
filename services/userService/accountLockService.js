@@ -1,11 +1,19 @@
-import Redis from 'ioredis';
+import Redis from 'redis';
+import { promisify } from 'util';
 
 class AccountLockService {
-        constructor({ redisClient, maxAttempts = 5, lockDuration = 15 * 60, namespace = 'auth:lockout:' }) {
+    
+        constructor({ redisClient, maxAttempts = 5,lockDuration = 15 * 60, namespace = 'auth:lockout:' }) {
+            if (!redisClient || typeof redisClient.get !== 'function') {
+                throw new Error('Invalid Redis client provided to AccountLockService');//  'Error: Invalid Redis client provided to AccountLockService',
+              }
+              
             this.redis = redisClient;
             this.maxAttempts = maxAttempts;
             this.lockDuration = lockDuration;
-            this.namespace = namespace;      
+            this.namespace = namespace; 
+             // Default to class method if not provided     
+
         // Bind methods
         this.getKey = this.getKey.bind(this);
         this.isAccountLocked = this.isAccountLocked.bind(this);
@@ -20,7 +28,16 @@ class AccountLockService {
     }
 
     async lockAccount(userId) {
-        await this.redisClient.set(`lock:${userId}`, 'true', { EX: 3600 }); // expire in 1 hour
+        await this.redis.set(`lock:${userId}`, 'true', { EX: 3600 }); // expire in 1 hour
+      }
+    
+      async recordAttempt(userId) { 
+        const key = `attempts:${userId}`;
+        const attempts = await this.redis.incr(key);
+        if (attempts === 1) {
+          await this.redis.expire(key, 3600); // expire in 1 hour
+        }
+        return attempts;
       }
 
     // Check if account is locked
@@ -50,7 +67,7 @@ class AccountLockService {
     }
 
     async isAccountLocked(userId) {
-        return await this.redis.get(`lock:${userId}`);
+        return await this.redis.get(`lock:${userId}`);//  "TypeError: Cannot read properties of undefined (reading 'get')"
       }
     // Record a failed login attempt
     async recordFailedAttempt(email) {

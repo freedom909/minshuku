@@ -1,5 +1,5 @@
 //services/DB/initUserContainer.js
-import { createContainer, asClass, asValue } from 'awilix';
+import { createContainer, asClass, asValue, asFunction } from 'awilix';
 import UserRepository from '../repositories/userRepository.js';
 import LocalAuthService from '../userService/localAuthService.js';
 import OAuthService from '../userService/oauthService.js';
@@ -8,9 +8,10 @@ import initMongoContainer from '../DB/initMongoContainer.js';
 import UserService from '../userService/index.js';
 import logger from '../../infrastructure/utils/logger.js'
 import AccountLockService from '../userService/accountLockService.js';
-import initRedisClient from '../../infrastructure/DB/initRedisClient.js';
+import initRedisClient from './initRedisClient.js';
 import { config } from 'dotenv';
 import bcrypt from 'bcryptjs';
+
 config();
 
 /**
@@ -35,6 +36,8 @@ const validateEnvironment = () => {
   }
 };
 
+
+
 const initUserContainer = async () => {
   try {
     // 验证环境变量
@@ -46,15 +49,20 @@ const initUserContainer = async () => {
     }
 
     const container = createContainer();
-
+    const redisClient = await initRedisClient();
+    console.log('Redis client initialized:', typeof redisClient.get);// should be 'function'
     // 注册服务和依赖
     container.register({
-      redisClient: asValue(await initRedisClient()),
+      redisClient: asValue(redisClient),
       mongodb: asValue(mongodb),
       logger: asValue(logger),
-      accountLockService: asClass(AccountLockService).singleton(),
       userRepository: asClass(UserRepository).singleton(),
-      maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '25')),
+      accountLockService: asFunction(
+        ({ redisClient, maxAttempts, lockDuration, namespace }) =>
+          new AccountLockService({ redisClient, maxAttempts, lockDuration, namespace })
+      ).singleton(),      
+      maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '50')),
+      recordAttempts: asValue(parseInt(process.env.RECORD_ATTEMPTS || '10')),
       lockDuration: asValue(parseInt(process.env.LOCK_DURATION || '900')),
       namespace: asValue(process.env.REDIS_NAMESPACE || 'auth'),
       localAuthService: asClass(LocalAuthService).singleton(),
