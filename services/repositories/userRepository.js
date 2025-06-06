@@ -37,6 +37,12 @@ class UserRepository {
         return user;
       }
       const newUser = new this.model(userInfo);
+      const token = tokenService.generateToken({ id: newUser._id, role: newUser.role });
+      const refreshToken = tokenService.generateRefreshToken({ id: newUser._id });
+      newUser.auth={
+        token,
+        refreshToken
+      }
       if (!newUser) {
         throw new Error('Failed to create new user');
       }
@@ -147,8 +153,16 @@ class UserRepository {
     }
     try {
       const newUser = new this.model(userData);
+      const token = tokenService.generateToken({ id: newUser._id, role: newUser.role });
+      const refreshToken = tokenService.generateRefreshToken({ id: newUser._id });
+      newUser.auth={
+        token,
+        refreshToken
+      }
       const savedUser = await newUser.save();
-      return this.mapMongoUser(savedUser);
+      await this.mapMongoUser(savedUser);
+      return savedUser;
+      console.log('User created successfully:', savedUser);
     } catch (error) {
       console.error('Error during createUser:', error);
       throw error;
@@ -203,19 +217,20 @@ class UserRepository {
   }
 
   async getUserByEmailFromDb(email) { 
-    console.log('Fetching user with email:', email);// Fetching user with email: undefined
     if (!email || typeof email!=='string') {
       throw new TypeError('Email must be a valid string');
     }
     try {
       const user = await this.model.findOne({ email: email.trim() });
-      console.log('User found:', {
-        id: user._id?.toString(),
-        email: user.email
-      });
       if (!user) {
         console.log('No user found for email:', email);
+        return null;
       }
+      console.log('User found:', {
+        id: user?._id?.toString() ?? 'N/A',
+        email: user?.email ?? 'N/A'
+      });
+      
       return user;
     } catch (error) {
       console.error('Error in getUserByEmailFromDb:', error);

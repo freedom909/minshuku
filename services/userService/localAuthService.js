@@ -142,8 +142,9 @@ class LocalAuthService {
       throw new Error(
         "❌ Email already exists. Cannot create duplicate accounts."
       );
+      return
     }
-
+    
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUserInfo = {
       email,
@@ -154,6 +155,7 @@ class LocalAuthService {
       picture,
       provider: "local",
       sub: new mongoose.Types.ObjectId().toString(),
+  
     };
 
     // Make sure insertUser returns the correct format
@@ -166,25 +168,23 @@ class LocalAuthService {
     }
     const token=await this.tokenService.generateToken(newUser);
     const refreshToken = await this.tokenService.generateRefreshToken(newUser);
+    newUser.token=token;
+    newUser.refreshToken=refreshToken;
     this.logger.info(`Registering user: ${email}`);
+    console.log("User registered successfully:", newUser);
     return {
       code: 200,
       success: true,
       message: "Registration successful",
-      user: {
-        id: newUser._id?.toString?.() || newUser.id,
-        email: newUser.email,
-        fullName: newUser.fullName,
-        role: newUser.role,
-        picture: newUser.picture,
-        auth:{
-          token,
-          refreshToken,
-        }
-      },
+      user:newUser,
+      token:token,
+      refreshToken:refreshToken,
+      role: newUser.role||"GUEST",
+      userId: newUser._id?.toString?.() || newUser.id,
 
       // ✅ Ensure _id is returned
     };
+    
   }
   async sendLinkToUser(email, token) {
     try {

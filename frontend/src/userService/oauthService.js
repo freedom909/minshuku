@@ -1,5 +1,8 @@
-// Define the GraphQL endpoint URL - use a default value if config is not available
-const SUBGRAPH_USER_URL = 'http://localhost:4010/graphql';
+//frontend/ src/userService/oauthService.js
+import config from '@/config/config.js'
+
+// Define the GraphQL endpoint URL
+const SUBGRAPH_USER_URL = `${config.API_URL}/graphql`;
 
 class OAuthService {
     constructor() {
@@ -8,149 +11,90 @@ class OAuthService {
             this.token = localStorage.getItem('jwt_token');
         }
     }
-
     async sendOAuthRequestToSubgraph(provider, token) {
-        console.log("🔄 Sending OAuth request to subgraph...");
-        console.log("Provider:", provider);
-        console.log("Token:", token ? `${token.substring(0, 10)}...` : 'No token');
-
-        if (!provider || !token) {
-            console.error('Missing provider or token');
-            return { 
-                success: false, 
-                error: 'Missing provider or token' 
-            };
-        }
+        console.log("🔄 Sending request to subgraph...");
 
         try {
-            console.log(`Sending request to ${SUBGRAPH_USER_URL}`);
-            const response = await fetch(SUBGRAPH_USER_URL, {
+            const response = await fetch('http://localhost:4010/graphql', { //it did not use post
                 method: 'POST',
                 headers: {
+                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     query: `
-                        mutation OAuthSignIn($input: OAuthSignInInput!) {
-                            oauthSignIn(input: $input) {
-                                success
-                                userId
-                                role
-                                code
-                                message
-                                user {
-                                    id
-                                    email
-                                    name
-                                    nickname
-                                    role
-                                    picture
-                                }
-                                token {
-                                    accessToken {
-                                        token
-                                        expiresAt
-                                    }
-                                }
-                            }
-                        }
-                    `,
+                mutation SignIn($input: SignInInput!) {
+                  signIn(input: $input) {
+                    success
+                    userId
+                    role
+                    code
+                  }
+                }
+              `,
                     variables: {
                         input: {
                             provider: provider.toUpperCase(),
-                            token
+                            token,// pass empty input object if your backend extracts info from token
                         }
                     }
                 })
             });
 
-            const text = await response.text();
-            console.log('Raw response:', text);
+            if (!response.ok) throw new Error('Request failed');
 
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (err) {
-                console.error('Failed to parse JSON response:', err);
-                return { 
-                    success: false, 
-                    error: 'Invalid JSON response from server' 
-                };
+            const data = await response.json();
+            console.log('OAuth response:', data);
+
+            if (!data.data?.signIn?.success) {
+                throw new Error(data.errors?.[0]?.message || 'OAuth login failed');
             }
 
-            console.log('Parsed OAuth response:', data);
-
-            if (data.errors) {
-                const errorMessage = data.errors[0]?.message || 'GraphQL error occurred';
-                console.error('GraphQL errors:', data.errors);
-                return { 
-                    success: false, 
-                    error: errorMessage 
-                };
-            }
-
-            const signInResult = data.data?.oauthSignIn;
-            if (!signInResult?.success) {
-                return { 
-                    success: false, 
-                    error: signInResult?.message || 'OAuth login failed' 
-                };
-            }
-
-            // Store the JWT token if provided
-            if (signInResult.token?.accessToken?.token) {
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('jwt_token', signInResult.token.accessToken.token);
-                    this.token = signInResult.token.accessToken.token;
-                }
-            }
-
-            return { 
-                success: true, 
-                user: signInResult.user,
-                token: signInResult.token?.accessToken?.token,
-                expiresAt: signInResult.token?.accessToken?.expiresAt
-            };
+            return { success: true, data: data.data.signIn };
         } catch (err) {
             console.error('OAuth request failed:', err);
-            return { 
-                success: false, 
-                error: err.message || 'OAuth request failed' 
-            };
+            return { success: false };
         }
     }
+
 
     logout() {
         if (typeof window === 'undefined') return;
 
-        // Clear stored token
+        // 清除本地存储的令牌
         localStorage.removeItem('jwt_token');
         this.token = null;
 
+        // 可以在这里添加其他清理操作，如清除用户状态等
         console.log('User logged out');
     }
 
+    /**
+     * 注册新用户
+     * @param {Object} userData - 用户注册数据
+     * @returns {Promise<Object>} - 注册结果
+     */
     async registerUser(userData) {
         try {
-            // Set default avatar if not provided
+            // 如果没有提供头像，使用默认头像
             if (!userData.picture) {
                 userData.picture = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`;
             }
 
             const query = `
-                mutation Mutation($input: SignUpInput!) {
-                    signUp(input: $input) {
-                        role
-                        userId
-                        code
-                        message
-                        refreshToken
-                        success
-                        auth {
-                            token
-                        }
-                    }
-                }
+               mutation Mutation($input: SignUpInput!) {
+  signUp(input: $input) {
+    role
+    userId
+    code
+    message
+    refreshToken
+    success
+    auth {
+      token
+    }
+  }
+}
             `;
 
             const response = await fetch(SUBGRAPH_USER_URL, {
@@ -178,31 +122,29 @@ class OAuthService {
                 throw new Error(result.errors[0].message);
             }
 
-            const registerResult = result.data.signUp;
+            const registerResult = result.data.register;
 
             if (!registerResult.success) {
                 throw new Error(registerResult.message || '注册失败');
             }
 
-            // Store JWT token
-            if (registerResult.auth?.token) {
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('jwt_token', registerResult.auth.token);
-                    this.token = registerResult.auth.token;
-                }
+            // 存储JWT令牌
+            if (registerResult.token) {
+                localStorage.setItem('jwt_token', registerResult.token);
+                this.token = registerResult.token;
             }
 
             return {
                 success: true,
-                user: registerResult,
-                token: registerResult.auth?.token,
+                user: registerResult.user,
+                token: registerResult.token,
                 message: registerResult.message
             };
         } catch (error) {
-            console.error('Registration failed:', error);
+            console.error('注册失败:', error);
             return {
                 success: false,
-                error: error.message || 'Registration process failed'
+                error: error.message || '注册过程中发生错误'
             };
         }
     }
@@ -212,6 +154,6 @@ class OAuthService {
     }
 }
 
-// Create and export a singleton instance
+// ✅ create and export a singleton instance
 const oauthService = new OAuthService();
 export default oauthService;

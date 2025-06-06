@@ -1,26 +1,31 @@
 //services/userService/tokenService.js
 import jwt from 'jsonwebtoken';
 const { sign, verify, decode } = jwt;
+import logger from '../utils/logger.js';
 
-import { RESTDataSource } from '@apollo/datasource-rest';
 import axios from 'axios';
 import { GraphQLError } from 'graphql';
 import dotenv from 'dotenv';
 dotenv.config();
 
 
-class TokenService extends RESTDataSource {
-    constructor({ secretKey, expiresIn }) {
+class TokenService {
+    constructor({ secretKey, expiresIn ,options = {}}) {
         if (!secretKey) {
             throw new GraphQLError('Secret key is required for token service', {
                 extensions: { code: 'CONFIGURATION_ERROR' }
             });
         }
-        super();
+        if (!expiresIn) {
+            throw new GraphQLError('Expires in is required for token service', {
+                extensions: { code: 'CONFIGURATION_ERROR' }
+            });
+        }
         this.secretKey = secretKey;
         this.expiresIn = expiresIn || '1h';
+        this.algorithm = options.algorithm || "HS256";//  'ReferenceError: options is not defined',
     }
-
+   
     async getUserFromToken(token) {
         if (!token) {
             throw new GraphQLError('No token provided', {
@@ -30,7 +35,7 @@ class TokenService extends RESTDataSource {
 
         try {
             // 验证并解码token
-            const decoded = jwt.verify(token, this.secretKey);
+            const decoded = jwt.verify(token, this.secretKey, { clockTolerance: 300 });
             
             // 验证token的必要字段
             if (!decoded.userId || !decoded.email) {
@@ -39,7 +44,7 @@ class TokenService extends RESTDataSource {
                 });
             }
 
-            console.log('User extracted from token:', {
+            logger.info('User extracted from token:', {
                 userId: decoded.userId,
                 email: decoded.email,
                 role: decoded.role
@@ -84,7 +89,7 @@ class TokenService extends RESTDataSource {
                 });
             }
 
-            console.log('User extracted from token:', {
+            logger.info('User extracted from token:', {
                 userId: decoded.userId,
                 email: decoded.email,
                 role: decoded.role
@@ -93,7 +98,7 @@ class TokenService extends RESTDataSource {
             // 生成新的token
             const newToken = await this.generateToken(decoded);
 
-            console.log('New token generated:', {
+            logger.info('New token generated:', {
                 userId: decoded.userId,
                 role: decoded.role
             });
@@ -177,10 +182,10 @@ class TokenService extends RESTDataSource {
 
             const token = sign(payload, this.secretKey, { 
                 expiresIn: this.expiresIn,
-                algorithm: 'HS256' // 明确指定算法
+                algorithm: this.algorithm
             });
 
-            console.log('Generated token for user:', {
+            logger.info('Generated token for user:', {
                 userId: payload.userId,
                 role: payload.role
             });
@@ -198,7 +203,7 @@ class TokenService extends RESTDataSource {
     }
 
     async getToken(code, provider = 'GOOGLE') { 
-        console.log(`Getting token for provider: ${provider} with code length: ${code?.length}`);
+        logger.info(`Getting token for provider: ${provider} with code length: ${code?.length}`);
         
         if (!code) {
             throw new GraphQLError('Authorization code is required', {
@@ -237,7 +242,7 @@ class TokenService extends RESTDataSource {
                     });
             }
 
-            console.log(`Requesting token from ${tokenEndpoint}`);
+            logger.info(`Requesting token from ${tokenEndpoint}`);
             
             const response = await axios({
                 method: 'POST',
@@ -258,7 +263,7 @@ class TokenService extends RESTDataSource {
                 });
             }
 
-            console.log(`Successfully retrieved token for provider: ${provider}`);
+            logger.info(`Successfully retrieved token for provider: ${provider}`);
             return id_token || access_token;
 
         } catch (error) {
@@ -278,6 +283,33 @@ class TokenService extends RESTDataSource {
         }
     }
 
+    getTokenParams(code, provider) {
+        switch (provider.toUpperCase()) {
+          case 'GOOGLE': return this.getGoogleTokenParams(code);
+          case 'FACEBOOK': return this.getFacebookTokenParams(code);
+          
+        }
+      }
+
+    getGoogleTokenParams(code) {
+        return {
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: process.env.GOOGLE_REDIRECT_URI
+        };
+    }
+
+    getFacebookTokenParams(code) {
+        return {
+            client_id: process.env.FB_APP_ID,
+            client_secret: process.env.FB_APP_SECRET,
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: process.env.FB_REDIRECT_URI
+        }
+    }
     async verifyToken(token) {
         if (!token) {
             throw new GraphQLError('No token provided for verification', {
@@ -314,6 +346,9 @@ class TokenService extends RESTDataSource {
         }
     }
 
+    generateSignedToken(payload, expiresIn = this.expiresIn) {
+        return sign(payload, this.secretKey, { expiresIn , algorithm: this.algorithm});
+    }
     decodeToken(token) {
         if (!token) {
             return null;
@@ -376,10 +411,10 @@ class TokenService extends RESTDataSource {
                 userId: typeof user._id === 'object' ? user._id.toString() : user._id,
                 type: 'REFRESH_TOKEN'
             };
-
+           
             return sign(payload, this.secretKey, { 
                 expiresIn: '7d', // 刷新token有效期更长
-                algorithm: 'HS256'
+                algorithm: this.algorithm
             });
         } catch (error) {
             console.error('Refresh token generation error:', error);
@@ -415,7 +450,7 @@ class TokenService extends RESTDataSource {
             
             return sign(payload, this.secretKey, { 
                 expiresIn: this.expiresIn,
-                algorithm: 'HS256'
+                algorithm: this.algorithm
             });
         } catch (error) {
             console.error('Token refresh error:', error);

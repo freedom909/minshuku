@@ -1,3 +1,4 @@
+
 const config = {
     google: {
         clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
@@ -13,10 +14,10 @@ const config = {
         clientId: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
         clientSecret: process.env.NEXT_PUBLIC_GITHUB_CLIENT_SECRET,
         redirectUri: process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback'
-    },
-    API_URL: process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || 'http://localhost:4010/graphql'
+    }
 };
 
-console.log('API_URL:', config.API_URL);
+const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || 'http://localhost:4010/graphql';
+console.log('SUBGRAPH_USER_URL:', SUBGRAPH_USER_URL);
 
 export default config;

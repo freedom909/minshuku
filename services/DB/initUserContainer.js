@@ -61,7 +61,7 @@ const initUserContainer = async () => {
         ({ redisClient, maxAttempts, lockDuration, namespace }) =>
           new AccountLockService({ redisClient, maxAttempts, lockDuration, namespace })
       ).singleton(),      
-      maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '50')),
+      maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '500')),
       recordAttempts: asValue(parseInt(process.env.RECORD_ATTEMPTS || '10')),
       lockDuration: asValue(parseInt(process.env.LOCK_DURATION || '900')),
       namespace: asValue(process.env.REDIS_NAMESPACE || 'auth'),
@@ -78,6 +78,7 @@ const initUserContainer = async () => {
       // 环境变量配置
       expiresIn: asValue(process.env.JWT_EXPIRES_IN || '1h'),
       secretKey: asValue(process.env.JWT_SECRET),
+      options: asValue({ expiresIn: process.env.options || 'HS256' }),
       
       // OAuth配置
       googleClientId: asValue(process.env.GOOGLE_CLIENT_ID),

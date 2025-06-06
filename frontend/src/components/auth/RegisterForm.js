@@ -1,17 +1,14 @@
-'use client';
+// File: frontend/src/components/auth/RegisterForm.js
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import styles from './LoginForm.module.css';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function RegisterForm() {
-  const { register, loading, error: authError } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const [passwordErrors, setPasswordErrors] = useState([]);
+  const { register } = useAuth();
 
   const validatePassword = (password) => {
     const errors = [];
-    if (password.length < 8|| password.length > 200) errors.push('8+ characters');
+    if (password.length < 8) errors.push('8+ characters');
     if (!/[A-Z]/.test(password)) errors.push('1 uppercase letter');
     if (!/[a-z]/.test(password)) errors.push('1 lowercase letter');
     if (!/\d/.test(password)) errors.push('1 number');
