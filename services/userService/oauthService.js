@@ -81,26 +81,16 @@ class OAuthService extends RESTDataSource {
       console.log("👀 Existing google user by email?", user);
       // ⚠️ Step 2: If not found, fallback to email check
       if (!user) {
-        const existingUser = await this.userRepository.getUserByEmailFromDb(
-          userInfo.email
-        );
-        console.log("👀 Existing user by email?", existingUser); // no output here
-        if (existingUser) {
-          // You can optionally update the OAuth identity info
-          user = existingUser;
-          // Optional: persist new provider info here
-        } else {
-          // 🆕 Step 3: Create a new user
-          user = await this.userRepository.createOAuthUser({
-            email: userInfo.email,
-            name: userInfo.name || "Unnamed User",
-            picture: userInfo.picture,
-            oauthId: userInfo.id,
-            provider: provider.toUpperCase(),
-            role: userInfo.role || "GUEST",
-            refreshToken: null,
-          });
-        }
+        user = await this.userRepository.createOAuthUser({
+          email: userInfo.email,
+          name: userInfo.name || "Unnamed User",
+          picture: userInfo.picture,
+          oauthId: userInfo.id,
+          provider: provider.toUpperCase(),
+          role: userInfo.role || "GUEST",
+          refreshToken: null,
+        });
+        console.log("🚀 New user created:", user);
       }
   
       // 🔐 Generate tokens
@@ -108,7 +98,10 @@ class OAuthService extends RESTDataSource {
       const refreshToken = await this.tokenService.generateRefreshToken(user);
   
       user.refreshToken = refreshToken;
-      await this.userRepository.updateRefreshToken(user._id, refreshToken);
+      if (user._id) {
+        await this.userRepository.upsertUser(user._id, { refreshToken });    
+      }
+      
   
       return {
         code: 200,
@@ -137,7 +130,7 @@ class OAuthService extends RESTDataSource {
       });
   
       const payload = ticket.getPayload();
-  
+    
       return {
         email: payload.email,
         name:

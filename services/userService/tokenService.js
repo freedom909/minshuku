@@ -164,6 +164,7 @@ class TokenService {
         }
       }
       
+    
 
     async generateToken(user) { // Invalid user data for token generation
         if (!user || !user._id) {
