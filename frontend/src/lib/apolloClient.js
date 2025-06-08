@@ -17,6 +17,7 @@ const authLink = setContext(async (_, { headers }) => {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : "",
+      'x-api-key': process.env.API_KEY || 'unkown'
     }
   };
 });

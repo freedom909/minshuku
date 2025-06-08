@@ -1,4 +1,4 @@
-import { registerCommonServices } from './commonContainer.js';
+
 import { createContainer, asValue, asClass } from 'awilix';
 import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
@@ -30,6 +30,7 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
     sequelize: asValue(sequelize),
+    
     userRepository: asClass(UserRepository).singleton(),
     localAuthService: asClass(LocalAuthService).singleton(),
     oAuthService: asClass(OAuthService).singleton(),
@@ -37,8 +38,9 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
     listingRepository: asClass(ListingRepository).singleton(),
     listingService: asClass(ListingService).singleton(),
     locationRepository: asClass(LocationRepository).singleton(),
+    amenityRepository: asValue(AmenityRepository).singleton(),
     locationService: asClass(LocationService).singleton(),
-    amenityRepository: asValue(AmenityRepository),// ❌ Error starting server: AwilixTypeError: asClass: expected Type to be class, but got [object Object].
+    
     amenityService: asClass(AmenityService).singleton(),
     bookingRepository: asClass(BookingRepository).singleton(),    // 👈 ADD THIS
     bookingService: asClass(BookingService).singleton(),          // 👈 ADD THIS
@@ -52,7 +54,7 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
   });
 
   console.log('Database connected');
-  registerCommonServices(container);
+ 
   return container;
 };
 

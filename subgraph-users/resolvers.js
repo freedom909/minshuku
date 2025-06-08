@@ -2,13 +2,12 @@ import { GraphQLError } from "graphql";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import validateHostInviteCode from "../infrastructure/helpers/validateHostInviteCode.js";
-import loginValidate from "../infrastructure/helpers/loginValidator.js";
+import  loginValidate  from "../infrastructure/helpers/loginValidator.js";
 import applyRateLimiting from "../infrastructure/middleware/rateLimitStore.js";
 
 import handleSignUpError from "../infrastructure/utils/handleSignUpError.js";
 import userService from "../services/userService/index.js";
 import registerValidate from "../infrastructure/helpers/registerValidator.js";
-import { token } from "morgan";
 
 // Initialize Google OAuth client
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -38,7 +37,7 @@ export const resolvers = {
 
       let { provider, token, email, password, idToken, accessToken } = input;
       // Normalize token regardless of provider
-      token = token || idToken || accessToken;
+       token = token || idToken || accessToken;
 
       logger.info("signIn mutation called with input:", {
         provider: provider,
@@ -48,10 +47,10 @@ export const resolvers = {
         idToken: idToken,
         accessToken: accessToken,
       });
-
+    
       const isOAuth = !!provider && !!token;
       const isLocal = !!email && !!password;
-
+    
       if (!isOAuth && !isLocal) {
         throw new GraphQLError(
           "Invalid sign-in input: must provide either email/password or provider/token",
@@ -62,14 +61,14 @@ export const resolvers = {
           }
         );
       }
-
+    
       // Only check account lock for local auth
       if (isLocal) {
         const isLocked = await accountLockService.isAccountLocked(email);
         if (isLocked) {
           const lockDetails = await accountLockService.getLockDetails(email);
           logger.info(`Account locked: ${email}`, lockDetails);
-
+    
           throw new GraphQLError(
             "Account temporarily locked due to too many failed attempts",
             {
@@ -81,7 +80,7 @@ export const resolvers = {
           );
         }
       }
-
+    
       let response;
       const userService = container.resolve('userService');
       try {
@@ -90,12 +89,12 @@ export const resolvers = {
           : await userService.localLogin(email, password);
       } catch (err) {
         logger.error("Login error:", err);
-
+    
         // Handle failed attempt for local login
         if (isLocal) {
           const lockResult = await accountLockService.recordFailedAttempt(email);
           logger.info(`Failed login attempt for ${email}`, lockResult);
-
+    
           if (lockResult.locked) {
             throw new GraphQLError(
               "Account temporarily locked due to too many failed attempts",
@@ -107,7 +106,7 @@ export const resolvers = {
               }
             );
           }
-
+    
           throw new GraphQLError("Invalid email or password", {
             extensions: {
               code: "INVALID_CREDENTIALS",
@@ -115,13 +114,13 @@ export const resolvers = {
             },
           });
         }
-
+    
         // OAuth-specific error
         throw new GraphQLError("OAuth authentication failed", {
           extensions: { code: "OAUTH_FAILED" },
         });
       }
-
+    
       const user = response.user;
       if (!user) {
         logger.error("Authentication failed - no user returned");
@@ -129,17 +128,17 @@ export const resolvers = {
           extensions: { code: "AUTH_FAILED" },
         });
       }
-
+    
       // On successful login, clear account lock
       if (isLocal) {
         await accountLockService.clearLock(email);
       }
-
+    
       logger.info("Authentication successful", {
         userId: user.id,
         role: user.role,
       });
-
+    
       return {
         code: response.code,
         success: response.success,
@@ -153,17 +152,17 @@ export const resolvers = {
         role: response.role,
         userId: response.userId,
       };
-    },
-
-
+    },   
+    
+   
     logout: async (_, { input }, { container, req, logger, user }) => {
       try {
         const { provider, token } = input;
         const userService = container.resolve("userService");
-
+    
         // Revoke token if applicable
         await userService.tokenService.revokeProviderToken(provider, token);
-
+    
         // Destroy session if it exists
         if (req.session) {
           await new Promise((resolve, reject) => {
@@ -173,13 +172,13 @@ export const resolvers = {
             });
           });
         }
-
+    
         logger.info("Logout successful", { userId: user?.id, role: user?.role });
-
+    
         return { success: true, message: "Logout successful" };
       } catch (error) {
         logger.error("Error during logout", { error: error.message });
-
+    
         throw new GraphQLError("Logout failed", {
           extensions: {
             code: "LOGOUT_FAILED",
@@ -207,71 +206,59 @@ export const resolvers = {
         extensions: { code: "INVALID_TOKEN" },
       });
     },
-
+   
     signUp: async (_, { input }, { container, req }) => {
       const { email, password, name, nickname, role, inviteCode, picture } = input;
-
+    
       try {
-
-        const userRepository = container.resolve("userRepository");
-        const userService = container.resolve("userService");
+        
+        const userRepository  = container.resolve("userRepository");
+       const userService  = container.resolve("userService");
         const { localAuthService, tokenService } = userService;
-
+    
         // Apply rate limiting
         await applyRateLimiting(req);
         await loginValidate(email, password);
-        await registerValidate({ name, nickname, picture, role });
-
+        await registerValidate({name, nickname, picture, role});
+    
         if (role === "HOST") {
           await validateHostInviteCode(inviteCode);
         }
-
+    
         const existingUser = await userRepository.getUserByEmailFromDb(email);
         if (existingUser) {
           throw new GraphQLError("Email already registered", {
             extensions: { code: "DUPLICATE_EMAIL" },
           });
         }
-
+    
         const registrationResult = await localAuthService.register(
           email, password, name, nickname, role, picture
         );
         const user = registrationResult.user;
-        if (!user || !user._id) {
+        if (!user || !user.id) {
           throw new GraphQLError("Registration failed: Missing user ID");
         }
-        // const token = tokenService.generateToken(user._id.toString(), role);
-        // const refreshToken = tokenService.generateRefreshToken(
-        //   user._id.toString(), role
-        // );
         console.log(`✅ Registered new user: ${email} (${user.id})`);
-        
-        const auth={
-          token: user.auth?.token,
-          refreshToken: user.auth?.refreshToken,
-          id: user._id.toString(),
-          role: user.role || "GUEST"
-        };
-        console.log('user.auth:', user.auth);
+  
         return {
-          code: registrationResult.code,
-          success: registrationResult.success,
-          message: registrationResult.message,
-          auth: {
-            token: registrationResult.token,
-            userId: registrationResult.userId,
-            role: registrationResult.role,
-          },
-          refreshToken: registrationResult.refreshToken,
-          role: registrationResult.role,
-          userId: registrationResult.userId,
+          code: 200,
+          success: true,
+          message: "Registration successful",
+          userId: user.id,
+          name: user.name,
+          email: user.email,
+          // auth: {
+          //   token: user.auth.token,
+          //   refreshToken: user.auth.refreshToken,
+          // },
+          role: user.role||"GUEST",
         };
-        
       } catch (error) {
         return handleSignUpError(error);
       }
     },
-
+    
     forgotPassword: async (_, { email }, { dataSources, req }) => {
       // Apply rate limiting
       try {
@@ -411,7 +398,7 @@ export const resolvers = {
       }
     },
 
-    oauthSaveUser: async (_, { input }, { dataSources }) => {
+    oauthSaveUser: async (_, { input }, { dataSources }) => {   
       const { provider, token } = input;
       const { oauthService } = dataSources.userService;
       try {
@@ -430,22 +417,44 @@ export const resolvers = {
       }
     },
 
-    verifyGoogleToken: async (_, { token }, { dataSources }) => {
-      return dataSources.oauthService.verifyGoogleToken(token);
+    __resolveType: (user) => {
+      if (user.role === 'GUEST') {
+        return 'Guest';
+      } else if (user.role === 'HOST') {
+        return 'Host';
+      }
+      throw new Error('User role is not recognized');
     },
 
-    verifyFacebookToken: async (_, { token }, { dataSources }) => {
-      return dataSources.oauthService.verifyFacebookToken(token);
+    // This is a custom resolver that is used to check if a user is logged in
+    isLoggedIn: async (_, __, { dataSources }) => {
+      const { userService } = dataSources;
+      const user = await userService.getCurrentUser();
+      return !!user;
     },
-    verifyTwitterToken: async (_, { token }, { dataSources }) => {
-      return dataSources.oauthService.verifyTwitterToken(token);
+
+    // This is a custom resolver that is used to check if a user is logged in
+    isHost: async (_, __, { dataSources }) => {
+      const { userService } = dataSources;
+      const user = await userService.getCurrentUser();
+      return user?.role === 'HOST';
     },
-    verifyGithubToken: async (_, { token }, { dataSources }) => {
-      return dataSources.oauthService.verifyGithubToken(token);
+
+    // This is a custom resolver that is used to check if a user is logged in
+    isGuest: async (_, __, { dataSources }) => {
+      const { userService } = dataSources;
+      const user = await userService.getCurrentUser();
+      return user?.role === 'GUEST';
     },
-    verifyAppleToken: async (_, { token }, { dataSources }) => {
-      return dataSources.oauthService.verifyAppleToken(token);
+
+    // This is a custom resolver that is used to check if a user is logged in
+    isUser: async (_, __, { dataSources }) => {
+      const { userService } = dataSources;
+      const user = await userService.getCurrentUser();
+      return user?.role === 'USER';
     },
+
+    // This is a custom resolver that is used to check if a user
   },
 };
 

@@ -17,41 +17,58 @@ class UserRepository {
     return { id: _id.toString(), ...rest };
   }
 
-  async findOne(query) {
+  async createOAuthUser({ email, name, picture, oauthId, provider, role = "GUEST", refreshToken = null }) {
+    console.log('Creating OAuth user with data:', { email, name, picture, oauthId, provider, role });
+  
+    if (!oauthId||!email || !name || !picture  || !provider || !role) {
+      throw new Error('All fields are required');
+    }
+  
+    return await this.model.create({
+      email,
+      name,
+      picture,
+      sub: oauthId,           // ✅ This line ensures sub is not null
+      oauthId,
+      provider,
+      role,
+      refreshToken
+    });
+  }
+
+  async insertUser(userData) {
     try {
-      return await this.model.findOne(query);
+      const newUser = new this.model(userData);
+      return await newUser.save();
     } catch (error) {
-      console.error('Error during findOne:', error);
+      console.error('Error during insertUser:', error);
       throw error;
     }
   }
 
-  async findOrCreateUser(userInfo) {
-    const { email } = userInfo;
-    if (!email || typeof email!=='string') {
-      throw new TypeError('Email must be a valid string');
-    }
+  async updatePassword(id, hashedPassword) {
     try {
-      const user = await this.model.findOne({ email });
-      if (user) {
-        return user;
-      }
-      const newUser = new this.model(userInfo);
-      const token = tokenService.generateToken({ id: newUser._id, role: newUser.role });
-      const refreshToken = tokenService.generateRefreshToken({ id: newUser._id });
-      newUser.auth={
-        token,
-        refreshToken
-      }
-      if (!newUser) {
-        throw new Error('Failed to create new user');
-      }
-      return await newUser.save();
+      return await this.model.findByIdAndUpdate(id, { password: hashedPassword });
     } catch (error) {
-      console.error('Error during findOrCreateUser:', error);
+      console.error('Error during updatePassword:', error);
       throw error;
     }
   }
+
+  async hashPassword(password) {
+    try {
+      if (typeof password !== 'string' || password.length < 8) {
+        throw new Error('Password must be at least 8 characters');
+      }
+
+      const saltRounds = 12;
+      return await bcrypt.hash(password, saltRounds);
+    } catch (error) {
+      console.error('Error in hashPassword:', error);
+      throw error;
+    }
+  }
+
   async findByIdAndUpdate(id, update) {
     try {
       return await this.model.findByIdAndUpdate(id, {
@@ -123,6 +140,19 @@ class UserRepository {
     }
   }
 
+  async findOne(query) {
+    try {
+      return await this.model.findOne(query);
+    } catch (error) {
+      console.error('Error during findOne:', error);
+      throw error;
+    }
+  }
+
+  async findByOAuthId(provider, oauthId) {
+    return await this.model.findOne({ provider, oauthId });
+  }
+
   async upsertUser({ email, name, picture, provider, sub }) {
     try {
       const query = { provider, sub };
@@ -145,76 +175,7 @@ class UserRepository {
       throw error;
     }
   }
-  
-  async createUser(userData) {
-    console.log('Creating user with data:', userData); 
-    if (!userData || typeof userData !== 'object') {
-      throw new TypeError('User data must be an object');
-    }
-    try {
-      const newUser = new this.model(userData);
-      const token = tokenService.generateToken({ id: newUser._id, role: newUser.role });
-      const refreshToken = tokenService.generateRefreshToken({ id: newUser._id });
-      newUser.auth={
-        token,
-        refreshToken
-      }
-      const savedUser = await newUser.save();
-      await this.mapMongoUser(savedUser);
-      return savedUser;
-      console.log('User created successfully:', savedUser);
-    } catch (error) {
-      console.error('Error during createUser:', error);
-      throw error;
-    }
-  }
 
-  async findByIdAndDelete(id) {
-    try {
-      return await this.model.findByIdAndDelete(id);
-    } catch (error) {
-      console.error('Error during findByIdAndDelete:', error);
-      throw error;
-    }
-  }
-
-  async getUserByNicknameFromDb(nickname) {
-    return await this.model.findOne({ nickname });
-  }
-
-  async getUserFromDb(id) {
-    try {
-      const user = await this.model.findById(id);
-      return this.mapMongoUser(user);
-    } catch (error) {
-      console.error('Error during getUserFromDb:', error);
-      throw error;
-    }
-  }
-
-  async getUserByEmail({email}) {
-    try {
-      if (!email || typeof email !== 'string') {
-        throw new TypeError('Email must be a valid string');
-      }
-
-      const user = await this.model.findOne({ email: email.trim() });
-
-      if (!user) {
-        console.log('No user found for email:', email);
-      } else {
-        console.log('User found:', {
-          id: user._id?.toString(),
-          email: user.email
-        });
-      }
-
-      return user;
-    } catch (error) {
-      console.error('Error in getUserByEmailFromDb:', error);
-      throw error;
-    }
-  }
 
   async getUserByEmailFromDb(email) { 
     if (!email || typeof email!=='string') {
@@ -237,108 +198,50 @@ class UserRepository {
       throw error;
     }
   }
-  
-  async createOAuthUser({ email, name, picture, oauthId, provider, role = "GUEST", refreshToken = null }) {
-    console.log('Creating OAuth user with data:', { email, name, picture, oauthId, provider, role });
-  
-    if (!oauthId||!email || !name || !picture  || !provider || !role) {
-      throw new Error('All fields are required');
+
+  async findByIdAndDelete(id) {
+    try {
+      return await this.model.findByIdAndDelete(id);
+    } catch (error) {
+      console.error('Error during findByIdAndDelete:', error);
+      throw error;
     }
-  
-    return await this.model.create({
-      email,
-      name,
-      picture,
-      sub: oauthId,           // ✅ This line ensures sub is not null
-      oauthId,
-      provider,
-      role,
-      refreshToken
-    });
   }
-  
 
   async findUserByProvider({ email, provider }) {
     return await this.model.findOne({ email, provider }).lean();
   }
 
-  async insertUser(userData) {
-    try {
-      const newUser = new this.model(userData);
-      return await newUser.save();
-    } catch (error) {
-      console.error('Error during insertUser:', error);
-      throw error;
+  async checkUserExists(email) {
+    const isUserExists = await this.getUserByEmailFromDb(email);
+    if (isUserExists) {
+      throw new Error('User already exists');
     }
   }
 
-  async updatePassword(id, hashedPassword) {
-    try {
-      return await this.model.findByIdAndUpdate(id, { password: hashedPassword });
-    } catch (error) {
-      console.error('Error during updatePassword:', error);
-      throw error;
+  async createUser(userData) {
+    console.log('Creating user with data:', userData); 
+    if (!userData || typeof userData !== 'object') {
+      throw new TypeError('User data must be an object');
     }
-  }
-
-  async checkPassword(password, user) {
     try {
-      const hashedPassword = user.hashedPassword;
-      if (typeof password !== 'string' || typeof hashedPassword !== 'string') {
-        throw new TypeError('Password and hash must be strings');
+      await this.checkUserExists(userData.email);
+      const newUser = new this.model.create(userData);
+      const token = tokenService.generateToken({ id: newUser._id, role: newUser.role });
+      const refreshToken = tokenService.generateRefreshToken({ id: newUser._id });
+      newUser.auth={
+        token,
+        refreshToken
       }
-
-      if (password.length < 8) {
-        throw new Error('Password too short');
-      }
-
-      const isValid = await bcrypt.compare(password, hashedPassword);
-      console.log('Password validation result:', isValid);
-      return isValid;
+      const savedUser = await newUser.save();
+      await this.mapMongoUser(savedUser);
+      return savedUser;
+      console.log('User created successfully:', savedUser);
     } catch (error) {
-      console.error('Error in checkPassword:', error);
+      console.error('Error during createUser:', error);
       throw error;
     }
   }
 
-  async hashPassword(password) {
-    try {
-      if (typeof password !== 'string' || password.length < 8) {
-        throw new Error('Password must be at least 8 characters');
-      }
-
-      const saltRounds = 12;
-      return await bcrypt.hash(password, saltRounds);
-    } catch (error) {
-      console.error('Error in hashPassword:', error);
-      throw error;
-    }
-  }
-
-  async generateToken(user) {
-    if (!user || !user._id) throw new Error('User must have _id');
-    return jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || 'good',
-      { algorithm: 'HS256', expiresIn: '1h' }
-    );
-  }
-
-  async sendVerification(email) {
-    return this.emailVerification.verify(email);
-  }
-
-  async sendVerificationEmail(email, token) {
-    await this.emailVerification.sendVerificationEmail(email, token);
-  }
-
-  async findByOAuthId(provider, oauthId) {
-    return await this.model.findOne({ provider, oauthId });
-  }
-
-  async updateRefreshToken(id, refreshToken) {
-    return await this.model.findByIdAndUpdate(id, { refreshToken });
-  }
 }
-
 export default UserRepository;

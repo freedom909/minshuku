@@ -11,13 +11,12 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import bodyParser from "body-parser";
+
 import morgan from "morgan";
 import UserService from "../services/userService/index.js";
-// import router from "./router.js";
+import checkApiKey from "./utils/checkApiKey.js";
 import authLimiter from "../infrastructure/middleware/authLimiter.js"; // Adjust path as needed
 import TokenService from "../services/userService/tokenService.js";
-
 
 dotenv.config();
 
@@ -119,10 +118,12 @@ const startApolloServer = async () => {
         res.status(503).json({ status: "unhealthy", error: error.message });
       }
     });
-
+   
     // 🔹 CORS + Apollo Middleware
     app.use(
       "/graphql",
+      //checkApiKey,
+      
       authLimiter,
       cors({
         origin: ["http://localhost:3000", "http://localhost:4010"],

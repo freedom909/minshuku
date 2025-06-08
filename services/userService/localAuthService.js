@@ -40,6 +40,13 @@ class LocalAuthService {
     console.log("Starting local login process for email:", email);
 
     try {
+      // 检查账户是否存在
+      const userExisting = await this.userRepository.getUserByEmailFromDb(email);
+      if (!userExisting) {
+        throw new GraphQLError("User not found", {
+          extensions: { code: "USER_NOT_FOUND" },
+        });
+      }
       // 检查账户是否被锁定
       if (this.accountLockService) {
         const isLocked = await this.accountLockService.isAccountLocked(email);
@@ -93,21 +100,22 @@ class LocalAuthService {
       ]);
 
       console.log("Local login successful for user:", user._id.toString());
-      return {
+      return { // message: 'Cannot query field "user" on type "SignInResponse". Did you mean "userId"?',
         code: 200,
         success: true,
         message: "Login successful",
         token: accessToken,
         refreshToken,
-        userId: user._id?.toString?.() || user.id,
-        role: user.role,
+        userId: user._id?.toString() || user._id,
+        role: user.role || "GUEST",
+        
         user: {
           id: user._id?.toString?.() || user.id,
           email: user.email,
           fullName: user.fullName,
           role: user.role,
           picture: user.picture,
-        },
+        }
       };
     } catch (error) {
       console.error("Local login error:", error);
@@ -126,15 +134,23 @@ class LocalAuthService {
   }
   async login(email, password) {
     console.log("Starting login process for email:", email);
-   
+
     const user = await this.userRepository.getUserByEmailFromDb(email);
-    if (!user) return null;
- 
+    if (!user) {
+      throw new GraphQLError("User not found", {
+        extensions: { code: "USER_NOT_FOUND" },
+      });
+    }
     const isMatch = await this.passwordHasher.compare(password, user.password);
-    if (!isMatch) return null;
+    if (!isMatch) {
+      throw new GraphQLError("Invalid credentials", {
+        extensions: { code: "INVALID_CREDENTIALS" },
+      });
+    };
     await this.accountLockService.recordAttempt(user.userId);
     return user;
   }
+
   async register(email, password, name, nickname, role, picture) {
     
     const existingUser = await this.userRepository.getUserByEmailFromDb(email);
@@ -177,12 +193,10 @@ class LocalAuthService {
       success: true,
       message: "Registration successful",
       user:newUser,
-      token:token,
+      
       refreshToken:refreshToken,
       role: newUser.role||"GUEST",
       userId: newUser._id?.toString?.() || newUser.id,
-
-      // ✅ Ensure _id is returned
     };
     
   }
