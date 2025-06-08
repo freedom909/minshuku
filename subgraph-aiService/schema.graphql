@@ -1,14 +1,15 @@
+
+
+extend schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.8"
+    import: ["@key", "@shareable"]
+  )
 enum CacheControlScope {  
   PUBLIC  
   PRIVATE  
   INHERIT  
 }
-
-extend schema
-  @link(
-    url: "https://specs.apollo.dev/federation/v2.7"
-    import: ["@key", "@shareable"]
-  )
 
 scalar DateTime
 directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE  
@@ -43,11 +44,6 @@ type Mutation {
   deleteListing(listingId: ID!): String! @auth(requires: USER) @shareable 
 }
 
-type BookingStatusResponse {
-
-  getListingInfo(listingTitle: String!): Listing! @shareable 
-}
-
 
 type ChatGPTResponse {
   reply: String! @shareable 
@@ -59,7 +55,9 @@ type BookingStatusResponse {
   status: String! @shareable 
   message: String @shareable 
   estimatedTime: DateTime @shareable 
+  listing: Listing @shareable 
 }
+
 
 input ListingAvailabilityInput {
   checkInDate: DateTime!
@@ -123,17 +121,6 @@ input ReviewInput {
   guestId: ID!
 }
 
-type Booking {
-  id: ID! @shareable 
-  listingId: ID! @shareable 
-  guestId: ID! @shareable 
-  checkInDate: String! @shareable 
-  checkOutDate: String! @shareable 
-  name: String! @shareable 
-  email: String! @shareable 
-  phoneNumber: String! @shareable 
-  totalCost: Float! @shareable 
-}
 
 input ListingInput {
   title: String!
@@ -143,12 +130,14 @@ input ListingInput {
   costPerNight: Float!
   locationType: LocationType!
   hostId: ID!
-  amenities: [Amenity!]!
-  priceRange: PriceRange!
+  amenities: AmenityInput!
+  location: LocationInput!
+  status: ListingStatus!
+  host: HostInput!
+  priceRange: PriceRangeInput!
   totalCostRange: TotalCostRange!
-  locationFilter: Location!
+  locationFilter: LocationInput!
   distance: Float
-  filterListings(filter: ListingFilterInput): [Listing!]!
 }
 
 input PictureInput {
@@ -165,15 +154,12 @@ input TotalCostRange {
   max: Float
 }
 
-input Location {
-  latitude: Float!
-  longitude: Float!
-}
 
 enum LocationFilter {
   NEARBY
   CITY
 }
+
 
 enum ListingStatus {
   ACTIVE
@@ -232,18 +218,6 @@ enum MatchType {
   OR
 }
 
-enum ListingStatus {
-  PUBLISHED
-  ACTIVE
-  PENDING
-  SOLD
-  DELETED
-  REJECT
-  CANCELLED
-  EXPIRED
-  COMPLETED
-}
-
 type Booking @key(fields: "id") {
   id: ID! @shareable
   listing: Listing! @shareable @cacheControl(maxAge: 3600) 
@@ -268,28 +242,9 @@ enum AvailabilityStatus {
   UNAVAILABLE
 }
 
-
-input TotalCostRangeInput {
-  min: Float
-  max: Float
-}
-
 input AmenityInput {
   id: ID
   name: String
-}
-
-type Location {
-  id: ID! @shareable
-  name: String! @shareable
-  address: String! @shareable
-  latitude: Float!
-  longitude: Float!
-}
-
-input LocationInput {
-  latitude: Float!
-  longitude: Float!
 }
 
 enum BookingStatus {
@@ -310,7 +265,7 @@ type Review @key(fields: "id") {
   locationId: ID @shareable
   guestId: ID @shareable
   hostId: ID @shareable
-  location: Location @shareable
+  location: Location! @shareable
   createdAt: String! @shareable
   updatedAt: String! @shareable
   round: Int! @shareable
@@ -351,11 +306,6 @@ type PriceRange {
   max: Float! @shareable
 }
 
-type TotalCostRange {
-  min: Float! @shareable
-  max: Float! @shareable
-}
-
 interface User {
   id: ID!
   name: String!
@@ -364,10 +314,12 @@ interface User {
   nickname: String!
 }
 
-enum Role {
-  ADMIN
-  USER
-  GUEST
+input HostInput {
+  id: ID!
+  name: String!
+  picture: String
+  description: String
+  nickname: String!
 }
 
 type Guest implements User @key(fields: "id")  {
@@ -387,10 +339,21 @@ type Host implements User @key(fields: "id")  {
   role: Role! @shareable
 }
 
+input LocationInput {
+  city: String!
+  country: String!
+}
+
+type Location {
+  city: String!
+  country: String!
+}
+
+
 enum Role {
   ADMIN
   HOST
-  USER
+ USER
   GUEST
 }
 

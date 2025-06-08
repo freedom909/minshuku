@@ -30,6 +30,7 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
     sequelize: asValue(sequelize),
+    amenityRepository: asValue(AmenityRepository),
     
     userRepository: asClass(UserRepository).singleton(),
     localAuthService: asClass(LocalAuthService).singleton(),
@@ -38,7 +39,7 @@ const initializeListingContainer = async ({ services = [] } = {}) => {
     listingRepository: asClass(ListingRepository).singleton(),
     listingService: asClass(ListingService).singleton(),
     locationRepository: asClass(LocationRepository).singleton(),
-    amenityRepository: asValue(AmenityRepository).singleton(),
+    
     locationService: asClass(LocationService).singleton(),
     
     amenityService: asClass(AmenityService).singleton(),

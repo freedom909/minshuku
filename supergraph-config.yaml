@@ -13,7 +13,7 @@ cors:
     - https://studio.apollographql.com  # Allows Apollo Studio to still run queries against your Router
 
 subgraphs:
-  auths:
+  users:
     routing_url: http://localhost:4010/graphql
     schema:
       file: ./subgraph-users/schema.graphql

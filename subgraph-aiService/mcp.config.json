@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "userService": {
+      "interface": "IUserService",
+      "stub": true
+    },
+    "listingService": {
+      "interface": "IListingService",
+      "stub": true
+    },
+    "otherService": {
+      "interface": "IOtherService",
+      "stub": true
+    }
+  }
+}

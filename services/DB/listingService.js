@@ -2,7 +2,7 @@
 import { QueryTypes, UUIDV4, literal, Op } from 'sequelize'; // Ensure this is imported
 import { GraphQLError } from 'graphql';
 import { GraphQLClient } from 'graphql-request';
-//import { shield, allow } from 'graphql-shield';
+
 import { permissions } from '../infrastructure/auth/permission.js';
 import ListingRepository from './repositories/listingRepository.js';
 import dotenv from 'dotenv';

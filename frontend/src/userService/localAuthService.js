@@ -25,13 +25,17 @@ const loginRequestToSubgraph = `
 const registerRequestToSubgraph = `
   mutation Register($input: SignUpInput!) {
     signUp(input: $input) {
-       success
-      message
-      code
-      name
-      picture
       role
       userId
+      code
+      message
+      refreshToken
+      success
+      auth {
+        token
+      userId
+      role
+      }
     }
   }
 `;
@@ -53,28 +57,25 @@ const localAuthService = {
         variables: { input: { email, password } },
       });
 
-     
-
-      // if (result.errors) {
-      //   throw new Error(result.errors[0].message);
-      // }
-
       const result = response.data;
-      const { user} = result.data.signIn;
-      if (!user || !auth?.accessToken) {
+
+      if (result.errors) {
+        throw new Error(result.errors[0].message);
+      }
+
+      const { user, token } = result.data.signIn;
+      if (!user || !token) {
         throw new Error("Authentication failed");
       }
 
+      if (token?.accessToken?.token) {
+        localStorage.setItem("jwt_token", token.accessToken.token);
+      }
+
       return {
-        id: user._id || user.id, // ← Use fallback for either MongoDB (_id) or other
-        email: user.email,
-        name: user.name,
-        nickname: user.nickname,
-        role: user.role,
-        picture: user.picture,
         success: true,
         user,
-        token: auth?.accessToken?.token,
+        token: token.accessToken.token,
         message: "Authentication successful",
       };
     } catch (error) {

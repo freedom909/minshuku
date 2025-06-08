@@ -4,8 +4,8 @@ import { QueryTypes, UUIDV4, literal, Op } from 'sequelize'; // Ensure this is i
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 import { GraphQLError } from 'graphql';
 import { GraphQLClient } from 'graphql-request';
-//import { shield, allow } from 'graphql-shield';
-import { permissions } from '../infrastructure/auth/permission.js';
+
+
 import ListingRepository from './repositories/listingRepository.js';
 import dotenv from 'dotenv';
 import connectMysql from './DB/connectMysqlDB.js';

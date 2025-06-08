@@ -1,5 +1,5 @@
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
-import { permissions } from '../infrastructure/auth/permission.js';
+// import { permissions } from '../infrastructure/auth/permission.js';
 import Listing from '../services/models/listing.js';
 import Coordinate from '../services/models/location.js';
 import dbConfig from '../services/DB/dbConfig.js';
@@ -9,7 +9,7 @@ import Amenity from '../services/models/amenity.js';
 import transaction, { Op } from '@sequelize/core'
 import calculateDistance from './calculateDistance.js';
 import { resolve } from 'path';
-const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
+// const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 const resolvers = {
 
@@ -616,9 +616,9 @@ const resolvers = {
     },
     bookings: async ({ id }, _, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!listingWithPermissions) {
-        throw new ForbiddenError('User does not have permissions to search the listings');
-      }
+      // if (!listingWithPermissions) {
+      //   throw new ForbiddenError('User does not have permissions to search the listings');
+      // }
       try {
         const { listingService, bookingService } = dataSources;
         const { numOfBeds, reservedDate, page, limit, sortBy } = criteria;
