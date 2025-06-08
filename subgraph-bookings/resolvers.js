@@ -164,6 +164,15 @@ const resolvers = {
       // Fetch total cost from the listing service
       const { totalCost } = await listingService.getTotalCost({ id: listingId, checkInDate, checkOutDate });
       // Create booking
+      // Process payment first
+      const { paymentService } = dataSources;
+      try {
+        await paymentService.processPayment({ userId: guestId, amount: totalCost });
+      } catch (paymentError) {
+        console.error('Payment Error:', paymentError);
+        throw new ForbiddenError('Payment failed. Please try again.', { extensions: { code: 'FORBIDDEN' } });
+      }
+
       try {
         const booking = await bookingService.createBooking({
           id: uuidv4(),

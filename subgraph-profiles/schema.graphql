@@ -14,6 +14,9 @@ type Query {
 
   "Retrieves a list of profiles."
   profiles: [Profile] @shareable
+
+  "Fetches profile information based on a token."
+  getProfileByToken(token: String!): Profile! @shareable
 }
 
 """

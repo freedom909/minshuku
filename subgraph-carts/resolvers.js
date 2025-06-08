@@ -7,6 +7,44 @@ const pubSub = new PubSub();
 // const BOOKING_CREATED = 'BOOKING_CREATED';
 
 const resolvers = {
+  Mutation: {
+    addToCart: async (_, { input }, { dataSources }) => {
+
+    removeFromCart: async (_, { input }, { dataSources }) => {
+      try {
+        const result = await dataSources.cartService.removeFromCart(input);
+        return {
+          code: 200,
+          success: true,
+          message: 'Item removed from cart successfully',
+          cartItem: null
+        };
+      } catch (error) {
+        return {
+          code: 500,
+          success: false,
+          message: error.message,
+          cartItem: null
+        };
+      }
+    },
+      try {
+        const cartItem = await dataSources.cartService.addToCart(input);
+        return {
+          code: 200,
+          success: true,
+          message: 'Item added to cart successfully',
+          cartItem
+        };
+      } catch (error) {
+        return {
+          code: 500,
+          success: false,
+          message: error.message,
+          cartItem: null
+        };
+      }
+    },
 
   DateTime: GraphQLDateTime,
   Query: {

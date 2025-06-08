@@ -1,5 +1,6 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from './seq.js';
+import { Op } from 'sequelize';
 
 export class Booking extends Model { }
 
@@ -34,6 +35,11 @@ Booking.init({
     allowNull: false,
     defaultValue: 0,  // Ensure default value is properly set
   },
+  expiresAt: { 
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+
   bookingNumber: {  // Count of how many bookings the guest has made
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -43,6 +49,33 @@ Booking.init({
   sequelize,
   modelName: 'Booking',
   timestamps: true,
+});
+
+// Hook to automatically set expiresAt for PENDING bookings
+Booking.beforeCreate(async (booking, options) => {
+  if (booking.status === 'PENDING') {
+    const expirationDate = new Date();
+    expirationDate.setHours(expirationDate.getHours() + 1); // Set expiration to 1 hour from now
+    booking.expiresAt = expirationDate;
+  }
+});
+
+// Hook to automatically cancel expired bookings
+Booking.beforeFind(async (options) => {
+  const now = new Date();
+  const expiredBookings = await Booking.findAll({
+    where: {
+      status: 'PENDING',
+      expiresAt: {
+        [Op.lt]: now
+      }
+    }
+  });
+
+  for (const booking of expiredBookings) {
+    booking.status = 'CANCELLED';
+    await booking.save();
+  }
 });
 
 // Hook to automatically increment bookingNumber per guest

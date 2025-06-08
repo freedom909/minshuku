@@ -17,6 +17,41 @@ type Query {
   payment: Int @shareable
 }
 
+# Mutation type for wallet operations and payment processing
+type Mutation {
+  addFunds(userId: ID!, amount: Float!): Float! @shareable
+  subtractFunds(userId: ID!, amount: Float!): Float! @shareable
+}
+
+# Payment processing input
+
+# Represents the funds of a user
+type Funds {
+  userId: ID!
+  amount: Float!
+}
+
+# Represents a payment transaction
+type Payment {
+  id: ID!
+  userId: ID!
+  amount: Float!
+  date: DateTime!
+  type: String! # e.g., 'DEPOSIT', 'WITHDRAWAL'
+}
+
+# Payment processing input
+input PaymentProcessingInput {
+  userId: ID!
+  amount: Float!
+}
+
+# Refund processing input
+input RefundProcessingInput {
+  userId: ID!
+  amount: Float!
+}
+
 # Mutation type for wallet operations
 type Mutation {
   """
@@ -25,6 +60,8 @@ type Mutation {
   @returns: The response of adding funds to the wallet.
   """
   addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
+  processPayment(input: PaymentProcessingInput!): PaymentProcessingResponse! @shareable
+  processRefund(input: RefundProcessingInput!): RefundProcessingResponse! @shareable
   """
   Cancel a booking and refund the guest.
   @param id: The ID of the booking to be cancelled.
@@ -45,6 +82,22 @@ interface MutationResponse {
   code: Int!
   success: Boolean!
   message: String!
+}
+
+# Response type for addFundsToWallet mutation
+
+# Response type for payment processing
+ type PaymentProcessingResponse implements MutationResponse {
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+}
+
+# Response type for refund processing
+ type RefundProcessingResponse implements MutationResponse {
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
 }
 
 # Response type for addFundsToWallet mutation

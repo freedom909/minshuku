@@ -13,12 +13,41 @@ const openai = new OpenAIApi(configuration);
 
 const resolvers = {
     Mutation: {
+        suggestListingInfo: async (_, { listingData }, { dataSources }) => {
+            const { aiService } = dataSources;
+            const message = `Suggest a title and description for a listing with the following details: ${JSON.stringify(listingData)}.`;
+            const response = await openai.createChatCompletion({ model: "gpt-3.5-turbo", messages: [{ role: "user", content: message }] });
+            return { suggestion: response.data.choices[0].message.content };
+        },
+        getSmartSuggestions: async (_, { userId }, { dataSources }) => {
+            const { aiService, userService, listingService } = dataSources;
+            const user = await userService.getUserById(userId);
+            const listings = await listingService.getPopularListings();
+            const message = `Based on user ${user.name}'s preferences, suggest some listings from ${listings.map(l => l.title).join(', ')}.`;
+            const response = await openai.createChatCompletion({ model: "gpt-3.5-turbo", messages: [{ role: "user", content: message }] });
+            return { suggestions: response.data.choices[0].message.content };
+        },
+
+    Mutation: {
+        suggestListingInfo: async (_, { listingData }, { dataSources }) => {
+            const { aiService } = dataSources;
+            const message = `Suggest a title and description for a listing with the following details: ${JSON.stringify(listingData)}.`;
+            const response = await openai.createChatCompletion({ model: "gpt-3.5-turbo", messages: [{ role: "user", content: message }] });
+            return { suggestion: response.data.choices[0].message.content };
+        },
         sendMessageToChatGPT: async (_, { message }, { dataSources, userId }) => {
             console.log("Data sources:", dataSources); // Data sources: undefined
             if (!dataSources || !dataSources.aiService) {
                 throw new Error('AI service is not available');
             }
-            const { aiService, userService } = dataSources; // message": "Cannot destructure property 'aiService' of 'dataSources' as it is undefined.",
+            const { aiService, userService } = dataSources; // message": "Cannot destructure property 'aiService' of 'dataSources' as it is undefined.";
+
+            // Automatic moderation
+            const moderationResponse = await openai.createModeration({ input: message });
+            if (moderationResponse.data.results[0].flagged) {
+                throw new Error('Your message contains inappropriate content.');
+            }
+
             if (!aiService) {
                 throw new Error('ai service is not available in data sources');
             }

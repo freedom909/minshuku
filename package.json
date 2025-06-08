@@ -9,10 +9,10 @@
     "launch": "node infrastructure/utils/launch.js",
     "install-services": "node utils/install.js",
     "db:reset": "node utils/reset.js",
-    "launch:reviews": "rover subgraph publish minshuku-xfhf8l@current --name reviews --schema ./subgraph-reviews/schema.graphql --routing-url http://localhost:4080",
-    "launch:accounts": "rover subgraph publish minshuku-xfhf8l@current --name accounts --schema ./subgraph-accounts/schema.graphql --routing-url http://localhost:4020",
-    "launch:locations": "rover subgraph publish minshuku-xfhf8l@current --name locations --schema ./subgraph-locations/schema.graphql --routing-url http://localhost:4140",
-    "launch:users": "rover subgraph publish minshuku-xfhf8l@current --name users --schema ./subgraph-users/schema.graphql --routing-url http://localhost:4010"
+    "launch:reviews": "rover subgraph publish minshuku-bx411p@current --name reviews --schema ./subgraph-reviews/schema.graphql --routing-url http://localhost:4080",
+    "launch:accounts": "rover subgraph publish minshuku-bx411p@current --name accounts --schema ./subgraph-accounts/schema.graphql --routing-url http://localhost:4020",
+    "launch:locations": "rover subgraph publish minshuku-bx411p@current --name locations --schema ./subgraph-locations/schema.graphql --routing-url http://localhost:4140",
+    "launch:users": "rover subgraph publish minshuku-bx411p@current --name users --schema ./subgraph-users/schema.graphql --routing-url http://localhost:4010"
   },
   "keywords": [],
   "author": "",

@@ -1,4 +1,10 @@
-import crom from 'node-cron';
+import cron from 'node-cron';
+import { EventEmitter } from 'events';
+
+// Create an event emitter for reindexing events
+const reindexingEmitter = new EventEmitter();
+
+export { reindexingEmitter };
 import { getSearchIndex } from './searchIndex.js';
 import { getSearchIndexName } from './searchIndex.js';
 import { getSearchIndexType } from './searchIndex.js';
@@ -6,7 +12,38 @@ import { getSearchIndexType } from './searchIndex.js';
 
 
 // Schedule the data sync to run every day at midnight
-crom.schedule('0 0 * * *', async () => {
+cron.schedule('0 0 * * *', async () => {
+  try {
+    await syncAllData();
+  } catch (error) {
+    console.error('Error during scheduled sync:', error);
+  }
+});
+
+// Function to sync all data (MySQL listings and MongoDB users)
+async function syncAllData() {
+  try {
+    console.log('Running full data sync job');
+    // Add code here to call MySQL and MongoDB sync functions
+    // For example:
+    // await syncMySQLListings();
+    // await syncMongoDBUsers();
+    console.log('Full data sync completed');
+  } catch (error) {
+    console.error('Error during full data sync:', error);
+  }
+}
+
+// Event listener for reindexing events
+reindexingEmitter.on('reindex', async () => {
+  try {
+    console.log('Triggering immediate reindexing');
+    await syncAllData();
+    console.log('Immediate reindexing completed');
+  } catch (error) {
+    console.error('Error during immediate reindexing:', error);
+  }
+});
   try {
     console.log('Running data sync job');
     // Fetch and index data as before...

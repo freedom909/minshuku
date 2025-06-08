@@ -5,26 +5,12 @@ class Location extends Model { }
 
 Location.init({
   id: {
-    type: DataTypes.UUID,  // UUID type
-    defaultValue: DataTypes.UUIDV4,  // Auto-generate UUID
-    allowNull: false,
-    primaryKey: true
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
   },
-
   name: {
     type: DataTypes.STRING,
-    allowNull: false,
-  },
-  radius: {
-    type: DataTypes.FLOAT, // Replacing NUMBER with FLOAT
-    allowNull: true,
-  },
-  latitude: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
-  longitude: {
-    type: DataTypes.FLOAT,
     allowNull: false,
   },
   address: {
@@ -39,23 +25,33 @@ Location.init({
     type: DataTypes.STRING,
     allowNull: false,
   },
+  zip: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   country: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  zipCode: {
-    type: DataTypes.STRING,
+  latitude: {
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
+  longitude: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  radius: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
   units: {
-    type: DataTypes.ENUM('km', 'miles'),
-    defaultValue: 'km',
+    type: DataTypes.STRING,
+    allowNull: true,
   },
 }, {
   sequelize,
   modelName: 'Location',
-  tableName: 'Locations',
-  timestamps: false,
 });
 
 export default Location;

@@ -52,6 +52,9 @@ enum BookingStatus {
 
 type Booking @key(fields: "id") {
   id: ID!
+  bookingNumber: String! @shareable @cacheControl(maxAge: 3600)
+  isFeatured: Boolean! @shareable @cacheControl(maxAge: 3600)
+  reservedDate: DateTime! @shareable @cacheControl(maxAge: 3600)
   listing: Listing! @shareable @cacheControl(maxAge: 3600) 
   guest: Guest! @shareable @cacheControl(maxAge: 3600) 
   review: Review @shareable
@@ -92,6 +95,9 @@ interface MutationResponse {
 
 input CreateBookingInput {
   listingId: ID!
+  bookingNumber: String!
+  isFeatured: Boolean!
+  reservedDate: DateTime!
   checkInDate: DateTime!
   checkOutDate: DateTime!
   guestId: ID!

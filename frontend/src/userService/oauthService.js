@@ -15,6 +15,8 @@ class OAuthService {
         console.log("🔄 Sending request to subgraph...");
 
         try {
+        console.log('Starting OAuth request...');
+        const startTime = Date.now();
             const response = await fetch('http://localhost:4010/graphql', { //it did not use post
                 method: 'POST',
                 headers: {
@@ -44,9 +46,12 @@ class OAuthService {
             if (!response.ok) throw new Error('Request failed');
 
             const data = await response.json();
+        const endTime = Date.now();
+        console.log(`OAuth request completed in ${endTime - startTime}ms`);
             console.log('OAuth response:', data);
 
             if (!data.data?.signIn?.success) {
+          console.error('OAuth login failed:', data.errors?.[0]?.message);
                 throw new Error(data.errors?.[0]?.message || 'OAuth login failed');
             }
 
@@ -76,6 +81,8 @@ class OAuthService {
      */
     async registerUser(userData) {
         try {
+        console.log('Starting OAuth request...');
+        const startTime = Date.now();
             // 如果没有提供头像，使用默认头像
             if (!userData.picture) {
                 userData.picture = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`;

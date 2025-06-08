@@ -14,6 +14,22 @@ import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 const resolvers = {
 
   Query: {
+    getListing(id: ID!): Listing!
+    getAllListings(filter: ListingFilterInput): [Listing!]!
+
+  Mutation: {
+    async createListing(_, { input }, { dataSources }) {
+      return dataSources.listingService.createListing(input);
+    },
+    async updateListing(_, { id, input }, { dataSources }) {
+      return dataSources.listingService.updateListing(id, input);
+    },
+    async deleteListing(_, { id }, { dataSources }) {
+      return dataSources.listingService.deleteListing(id);
+    }
+  },
+
+  Query: {
     getNearbyListings: async (_, { latitude, longitude, radius }, { dataSources }) => {
 
       if (typeof latitude !== 'number' || typeof longitude !== 'number' || typeof radius !== 'number' || radius <= 0) {
@@ -689,5 +705,5 @@ const resolvers = {
     OUTDOORS: 'OUTDOORS'
   }
 }
-
+}
 export default resolvers;

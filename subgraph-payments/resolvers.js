@@ -23,6 +23,14 @@ const resolvers = {
     },
   },
   Mutation: {
+  addFunds: async (_, { userId, amount }, { dataSources }) => {
+    const { paymentService } = dataSources;
+    return await paymentService.addFunds({ userId, amount });
+  },
+  subtractFunds: async (_, { userId, amount }, { dataSources }) => {
+    const { paymentService } = dataSources;
+    return await paymentService.subtractFunds({ userId, amount });
+  },
     addFundsToWallet: requireAuth(async (_, { amount }, { dataSources, userId }) => {
       try {
         const updateWallet = await dataSources.paymentService.addFunds({ userId, amount });

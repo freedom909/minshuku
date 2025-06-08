@@ -8,6 +8,9 @@ scalar DateTime
 
 type Booking @key(fields: "id") {
   id: ID!
+  bookingNumber: String! @shareable
+  isFeatured: Boolean! @shareable
+  reservedDate: DateTime! @shareable
   "The listing associated with the reservation"
   listing: Listing! @shareable
   "The guest that reserved the location"
@@ -80,6 +83,12 @@ type CreateBookingResponse implements MutationResponse {
 input CreateBookingInput {
   "ID of the listing associated with the booking"
   listingId: ID!
+  "Booking number for the reservation"
+  bookingNumber: String!
+  "Indicates if the booking is featured"
+  isFeatured: Boolean!
+  "Reserved date for the booking"
+  reservedDate: DateTime!
   "Date of check-in"
   checkInDate: DateTime!
   "Date of check-out"
@@ -88,7 +97,39 @@ input CreateBookingInput {
   guestId: ID!
 }
 
+input AddToCartInput {
+  listingId: ID!
+  guestId: ID!
+  checkInDate: DateTime!
+  checkOutDate: DateTime!
+}
+
+input RemoveFromCartInput {
+  cartItemId: ID!
+  guestId: ID!
+}
+
+type AddToCartResponse implements MutationResponse {
+
+type RemoveFromCartResponse implements MutationResponse {
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+  cartItem: CartItem @shareable
+}
+
+type CartItem {
+  id: ID!
+  listing: Listing!
+  guest: Guest!
+  checkInDate: DateTime!
+  checkOutDate: DateTime!
+}
+
 type Mutation {
+  addToCart(input: AddToCartInput!): AddToCartResponse! @shareable
+  removeFromCart(input: RemoveFromCartInput!): RemoveFromCartResponse! @shareable
+
   "Guest create a booking."
   createBooking(input: CreateBookingInput!): CreateBookingResponse! @shareable
   "Research booking information according to guestId."

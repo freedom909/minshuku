@@ -1,0 +1,15 @@
+type AdminQuery {
+  filterBookingsByDateRange(startDate: String!, endDate: String!): [Booking]
+  filterListingsByDateRange(startDate: String!, endDate: String!): [Listing]
+  top5ListingsByRevenue: [Listing]
+  top5ListingsByBookingCount: [Listing]
+  totalListingIncome: Float!
+}
+
+type Booking {
+  # Define booking fields here
+}
+
+type Listing {
+  # Define listing fields here
+}

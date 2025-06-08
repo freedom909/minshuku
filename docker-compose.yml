@@ -5,10 +5,10 @@ version: '3.8'
      container_name: mysql_listings_bookings
      image: mysql:latest
      environment:
-       MYSQL_ROOT_PASSWORD: rootpassword
+       MYSQL_ROOT_PASSWORD: princess
        MYSQL_DATABASE: listings_bookings
-       MYSQL_USER: user
-       MYSQL_PASSWORD: password
+       MYSQL_USER: root
+       MYSQL_PASSWORD: princess
      volumes:
        - mysql_data:/var/lib/mysql
        - ./subgraph-listings/init.sql:/docker-entrypoint-initdb.d/init.sql

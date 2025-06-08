@@ -1,8 +1,61 @@
 import client from './clientSide.js';
 
+// Function to construct a fuzzy search query
+const constructFuzzyQuery = (field, value) => {
+  return {
+    fuzzy: {
+      [field]: {
+        value: value,
+        fuzziness: 'AUTO'
+      }
+    }
+  };
+}
+
 export const searchListings= async (index, criteria) => {
+  // Add autocomplete
+  if (criteria.autocomplete) {
+    const autocompleteQuery = {
+      multi_match: {
+        query: criteria.autocomplete,
+        fields: ['name^3', 'description'],
+        fuzziness: 'AUTO'
+      }
+    };
+    if (!criteria.query) {
+      criteria.query = { bool: { must: [] } };
+    }
+    criteria.query.bool.must.push(autocompleteQuery);
+  }
+
+  // Add fuzzy search if not already handled
+  if (criteria.fuzzy && !criteria.query?.bool?.must?.some(clause => clause.fuzzy)) {
+    const fuzzyFields = ['name', 'description'];
+    const fuzzyQueries = fuzzyFields.map(field => constructFuzzyQuery(field, criteria.fuzzy));
+    criteria.query.bool.must.push(...fuzzyQueries);
+  }
+
+  // Add filtering
+  if (criteria.filters) {
+    for (const [field, value] of Object.entries(criteria.filters)) {
+      const filterQuery = {
+        term: {
+          [field]: value
+        }
+      };
+      criteria.query.bool.must.push(filterQuery);
+    }
+  }
   try {
     const constructQuery = (criteria) => {
+  const sort = [];
+  if (criteria.sortBy) {
+    sort.push({
+      [criteria.sortBy]: {
+        order: criteria.sortOrder || 'asc'
+      }
+    });
+  }
       const query = {
         bool: {
           must: [],
@@ -40,6 +93,12 @@ export const searchListings= async (index, criteria) => {
       }
 
       if (criteria.name) { // amenities' name?
+      query.bool.must.push(constructFuzzyQuery('brand', criteria.name));
+    } else if (criteria.fuzzySearch) {
+      Object.entries(criteria.fuzzySearch).forEach(([field, value]) => {
+        query.bool.must.push(constructFuzzyQuery(field, value));
+      });
+    }
         query.bool.must.push({
           term: {
             brand: criteria.name,
@@ -80,6 +139,7 @@ export const searchListings= async (index, criteria) => {
     };
 
     const response = await client.search({
+      sort: sort.length > 0 ? sort : undefined,
       index: index,
       body: {
         query: constructQuery(criteria),

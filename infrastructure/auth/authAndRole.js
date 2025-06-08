@@ -2,7 +2,6 @@
 import { AuthenticationError, ForbiddenError } from '../utils/errors.js';
 import { info } from 'console';
 
-
 const requireAuth = (resolver) => {
   return (parent, args, context, info) => {
     if (!context.userId) {
@@ -11,9 +10,6 @@ const requireAuth = (resolver) => {
     return resolver(parent, args, context, info);
   };
 };
-
-
-
 
 const requireRole = (role, resolver) => {
   return (parent, args, context, info) => {

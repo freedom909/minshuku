@@ -18,6 +18,30 @@ const resolvers = {
             return profile;
         },
         async profiles(root, args, { dataSources }) {
+
+        async getProfileByToken(root, { token }, { dataSources }) {
+            const { profileService, tokenService } = dataSources;
+            try {
+                const decoded = tokenService.verifyToken(token);
+                const profile = await profileService.getProfileById(decoded.userId);
+                if (!profile) {
+                    throw new GraphQLError('Profile not found', {
+                        extensions: {
+                            code: ApolloServerErrorCode.BAD_USER_INPUT
+                        }
+                    });
+                }
+                return profile;
+            } catch (error) {
+                throw new GraphQLError('Invalid token', {
+                    extensions: {
+                        code: 'INVALID_TOKEN'
+                    }
+                });
+            }
+        },
+
+        async profiles(root, args, { dataSources }) {
             const { profileService } = dataSources;
             const profiles = await profileService.getProfiles();
             if (!profiles) {
