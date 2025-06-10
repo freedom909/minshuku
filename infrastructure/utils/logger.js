@@ -14,7 +14,6 @@ const logger = createLogger({
     ]
   });
 
-  // Debug middleware
 
 
   export default logger;

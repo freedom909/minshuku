@@ -15,7 +15,7 @@ extend type Mutation {
   updateLocation(
     locationId: ID!
     location: UpdateLocationInput
-  ): UpdateLocationResponse!
+  ): UpdateLocationResponse! 
   deleteLocation(locationId: ID!): Boolean! @shareable
 }
 

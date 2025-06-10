@@ -41,14 +41,18 @@ subgraphs:
   #   routing_url: http://localhost:4070/graphql
   #   schema:
   #     file: ./subgraph-payments/schema.graphql    
-  # reviews:
-  #   routing_url: http://localhost:4080/graphql
-  #   schema:
-  #     file: ./subgraph-reviews/schema.graphql
+  reviews:
+    routing_url: http://localhost:4080/graphql
+    schema:
+      file: ./subgraph-reviews/schema.graphql
   amenities:
     routing_url: http://localhost:4090/graphql
     schema:
       file: ./subgraph-amenities/schema.graphql
+  # aiServices:
+  #   routing_url: http://localhost:4100/graphql
+  #   schema:
+  #     file: ./subgraph-locations/schema.graphql    
   locations:
     routing_url: http://localhost:4140/graphql
     schema:

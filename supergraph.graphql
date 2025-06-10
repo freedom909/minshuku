@@ -70,17 +70,29 @@ type Availability
 type Booking
   @join__type(graph: AMENITIES, key: "id")
   @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
 {
   id: ID!
   checkInDate: String! @join__field(graph: AMENITIES)
   checkOutDate: String! @join__field(graph: AMENITIES)
-  listing: Listing!
+  listing: Listing! @join__field(graph: AMENITIES) @join__field(graph: LISTINGS)
   user: User! @join__field(graph: AMENITIES)
   totalCost: Float! @join__field(graph: AMENITIES)
   createdAt: DateTime @join__field(graph: AMENITIES)
   updatedAt: DateTime @join__field(graph: AMENITIES)
   guest: Guest! @join__field(graph: LISTINGS)
   review: Review @join__field(graph: LISTINGS)
+}
+
+type Comment
+  @join__type(graph: REVIEWS)
+{
+  id: ID!
+  content: String!
+  author: User!
+  review: Review!
+  createdAt: String!
+  updatedAt: String!
 }
 
 input CreateBookingInput
@@ -275,13 +287,15 @@ input FullTextSearchInput
 }
 
 type Guest implements User
+  @join__implements(graph: REVIEWS, interface: "User")
   @join__implements(graph: USERS, interface: "User")
   @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
   @join__type(graph: USERS, key: "id")
 {
   id: ID!
-  name: String @join__field(graph: LISTINGS)
-  email: String!
+  name: String @join__field(graph: LISTINGS, type: "String") @join__field(graph: REVIEWS, type: "String!")
+  email: String! @join__field(graph: LISTINGS) @join__field(graph: USERS)
   picture: String!
   bookings: [Booking] @join__field(graph: LISTINGS)
   fullName: String @join__field(graph: USERS)
@@ -297,8 +311,10 @@ type Guest implements User
 }
 
 type Host implements User
+  @join__implements(graph: REVIEWS, interface: "User")
   @join__implements(graph: USERS, interface: "User")
   @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
   @join__type(graph: USERS, key: "id")
 {
   id: ID!
@@ -308,13 +324,14 @@ type Host implements User
   picture: String!
 
   """The HOST's name"""
-  name: String @join__field(graph: LISTINGS)
+  name: String @join__field(graph: LISTINGS, type: "String") @join__field(graph: REVIEWS, type: "String!")
 
   """The HOST's email"""
-  email: String!
+  email: String! @join__field(graph: LISTINGS) @join__field(graph: USERS)
 
   """The HOST's phone number"""
   phoneNumber: String @join__field(graph: LISTINGS)
+  overallRating: Float @join__field(graph: REVIEWS)
   fullName: String @join__field(graph: USERS)
   firstName: String! @join__field(graph: USERS)
   lastName: String! @join__field(graph: USERS)
@@ -356,7 +373,19 @@ enum join__Graph {
   LISTINGS @join__graph(name: "listings", url: "http://localhost:4040/graphql")
   LOCATIONS @join__graph(name: "locations", url: "http://localhost:4140/graphql")
   PROFILES @join__graph(name: "profiles", url: "http://localhost:4030/graphql")
+  REVIEWS @join__graph(name: "reviews", url: "http://localhost:4080/graphql")
   USERS @join__graph(name: "users", url: "http://localhost:4010/graphql")
+}
+
+type Like
+  @join__type(graph: REVIEWS)
+{
+  id: ID!
+  userId: ID!
+  reviewId: ID!
+  createdAt: String!
+  updatedAt: String!
+  isPositive: Boolean!
 }
 
 scalar link__Import
@@ -376,9 +405,10 @@ enum link__Purpose {
 type Listing
   @join__type(graph: AMENITIES, key: "id")
   @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
 {
   id: ID!
-  title: String!
+  title: String! @join__field(graph: AMENITIES) @join__field(graph: LISTINGS)
   description: String @join__field(graph: LISTINGS)
   pictures: [String] @join__field(graph: LISTINGS)
   numOfBeds: Int @join__field(graph: LISTINGS)
@@ -419,12 +449,13 @@ type Location
   @join__type(graph: AMENITIES)
   @join__type(graph: LISTINGS, key: "id")
   @join__type(graph: LOCATIONS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
 {
-  latitude: Float!
+  latitude: Float! @join__field(graph: AMENITIES) @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
 
   """The location's longitude"""
-  longitude: Float!
-  id: ID! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
+  longitude: Float! @join__field(graph: AMENITIES) @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
+  id: ID! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS) @join__field(graph: REVIEWS)
 
   """The location's distance from a given point"""
   radius: Int! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
@@ -433,7 +464,7 @@ type Location
   """The location's city"""
   city: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
   listingId: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
-  name: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
+  name: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS) @join__field(graph: REVIEWS)
   country: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
   zipCode: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
   state: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
@@ -457,6 +488,7 @@ type Mutation
   @join__type(graph: LISTINGS)
   @join__type(graph: LOCATIONS)
   @join__type(graph: PROFILES)
+  @join__type(graph: REVIEWS)
   @join__type(graph: USERS)
 {
   addAmenity(name: String!): Amenity! @join__field(graph: AMENITIES)
@@ -486,6 +518,16 @@ type Mutation
 
   """Removes a user from a network."""
   removeFromNetwork(input: NetworkMemberInput!): Profile! @join__field(graph: PROFILES)
+
+  """
+  Creates a review for the guest - must be authored by the host of a past booking
+  """
+  submitGuestReview(guestReview: ReviewInput!, bookingId: ID!): SubmitGuestReviewResponse! @join__field(graph: REVIEWS)
+
+  """
+  Creates a review for the host and location - only authorized users (hosts) can submit
+  """
+  submitHostAndLocationReviews(bookingId: ID!, hostReview: ReviewInput!, locationReview: ReviewInput!): SubmitHostAndLocationReviewsResponse! @join__field(graph: REVIEWS)
   signUp(input: SignUpInput!): SignInResponse! @join__field(graph: USERS)
   signIn(input: SignInInput!): SignInResponse! @join__field(graph: USERS)
   oauthSaveUser(input: OAuthInput!): AuthPayload! @join__field(graph: USERS)
@@ -500,6 +542,14 @@ type Mutation
   verifyFacebookToken(token: String): AuthPayload @join__field(graph: USERS)
   verifyAppleToken(token: String): AuthPayload @join__field(graph: USERS)
   verifyTwitterToken(token: String): AuthPayload @join__field(graph: USERS)
+}
+
+interface MutationResponse
+  @join__type(graph: REVIEWS)
+{
+  code: Int!
+  success: Boolean!
+  message: String!
 }
 
 """
@@ -586,6 +636,7 @@ type Query
   @join__type(graph: LISTINGS)
   @join__type(graph: LOCATIONS)
   @join__type(graph: PROFILES)
+  @join__type(graph: REVIEWS)
   @join__type(graph: USERS)
 {
   listings: [Listing!]! @join__field(graph: AMENITIES)
@@ -633,6 +684,14 @@ type Query
 
   """Fetches profile information based on a token."""
   getProfileByToken(token: String!): Profile! @join__field(graph: PROFILES)
+
+  """Returns a list of reviews for a given listing"""
+  searchReviews(input: SearchReviewsInput!): [Review] @join__field(graph: REVIEWS)
+  reviewsForListing(listingId: ID!): [Review] @join__field(graph: REVIEWS)
+  review(id: ID!): [Review] @join__field(graph: REVIEWS)
+
+  """Returns all reviews in the system"""
+  allReviews: [Review] @join__field(graph: REVIEWS)
   getUser(id: ID!): User @join__field(graph: USERS)
   user(id: ID!): User @join__field(graph: USERS)
   users: [User]! @join__field(graph: USERS)
@@ -679,8 +738,42 @@ interface Response
 
 type Review
   @join__type(graph: LISTINGS, key: "id")
+  @join__type(graph: REVIEWS, key: "id")
 {
   id: ID!
+  content: String! @join__field(graph: REVIEWS)
+  rating: Float! @join__field(graph: REVIEWS)
+  author: User! @join__field(graph: REVIEWS)
+  booking: Booking! @join__field(graph: REVIEWS)
+  location: Location @join__field(graph: REVIEWS)
+  guest: Guest @join__field(graph: REVIEWS)
+  host: Host @join__field(graph: REVIEWS)
+  likes: [Like!] @join__field(graph: REVIEWS)
+  dislikes: [Like!] @join__field(graph: REVIEWS)
+  comments: [Comment!] @join__field(graph: REVIEWS)
+  round: Int @join__field(graph: REVIEWS)
+  createdAt: String! @join__field(graph: REVIEWS)
+  updatedAt: String! @join__field(graph: REVIEWS)
+}
+
+input ReviewInput
+  @join__type(graph: REVIEWS)
+{
+  content: String!
+  rating: Float!
+  locationId: ID
+  guestId: ID
+  bookingId: ID
+  round: Int!
+  hostId: ID
+}
+
+enum ReviewSortField
+  @join__type(graph: REVIEWS)
+{
+  RATING @join__enumValue(graph: REVIEWS)
+  CREATED_AT @join__enumValue(graph: REVIEWS)
+  UPDATED_AT @join__enumValue(graph: REVIEWS)
 }
 
 enum Role
@@ -722,6 +815,26 @@ enum SearchResultType
   USER @join__enumValue(graph: LISTINGS)
 }
 
+input SearchReviewsInput
+  @join__type(graph: REVIEWS)
+{
+  id: ID
+  guestId: ID
+  authorId: ID
+  listingId: ID
+  hostId: ID
+  targetType: String
+  content: String
+  rating: Float
+  round: Int
+  isPinned: Boolean
+  isRecommended: Boolean
+  limit: Int
+  offset: Int
+  sortBy: ReviewSortField
+  sortOrder: SortOrder
+}
+
 input SignInInput
   @join__type(graph: USERS)
 {
@@ -758,6 +871,34 @@ input SignUpInput
   role: Role = GUEST
   picture: String!
   inviteCode: String
+}
+
+enum SortOrder
+  @join__type(graph: REVIEWS)
+{
+  ASC @join__enumValue(graph: REVIEWS)
+  DESC @join__enumValue(graph: REVIEWS)
+}
+
+type SubmitGuestReviewResponse implements MutationResponse
+  @join__implements(graph: REVIEWS, interface: "MutationResponse")
+  @join__type(graph: REVIEWS)
+{
+  code: Int!
+  success: Boolean!
+  message: String!
+  guestReview: Review
+}
+
+type SubmitHostAndLocationReviewsResponse implements MutationResponse
+  @join__implements(graph: REVIEWS, interface: "MutationResponse")
+  @join__type(graph: REVIEWS)
+{
+  code: Int!
+  success: Boolean!
+  message: String!
+  hostReview: Review
+  locationReview: Review
 }
 
 type TotalCostRange
@@ -883,15 +1024,19 @@ input UpdatePasswordInput
 interface User
   @join__type(graph: AMENITIES)
   @join__type(graph: LISTINGS)
+  @join__type(graph: REVIEWS)
   @join__type(graph: USERS, key: "id")
 {
   id: ID!
+  name: String @join__field(graph: REVIEWS)
+
+  """The user's profile photo URL"""
+  picture: String! @join__field(graph: REVIEWS) @join__field(graph: USERS)
   email: String! @join__field(graph: USERS)
   fullName: String @join__field(graph: USERS)
   firstName: String! @join__field(graph: USERS)
   lastName: String! @join__field(graph: USERS)
   role: Role! @join__field(graph: USERS)
-  picture: String! @join__field(graph: USERS)
   nickname: String! @join__field(graph: USERS)
   provider: OAuthProvider @join__field(graph: USERS)
   oauthId: String! @join__field(graph: USERS)

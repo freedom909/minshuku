@@ -11,7 +11,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 
 import resolvers from './resolvers.js';
-import { logger, debugMiddleware } from '../infrastructure/utils/logger.js';
+import  logger from '../infrastructure/utils/logger.js';
 import  ReviewRepository from '../services/repositories/reviewRepository.js';
 
 // Container initializers
@@ -43,7 +43,7 @@ const startApolloServer = async () => {
     const app = express();
     const httpServer = http.createServer(app);
 
-    app.use(debugMiddleware);
+    //app.use(debugMiddleware);
 
     const schema = buildSubgraphSchema({ typeDefs, resolvers });
 

@@ -142,7 +142,7 @@ type Listing @key(fields: "id") {
 ### User Types
 interface User {
   id: ID!
-  name: String!
+  name: String
   "The user's profile photo URL"
   picture: String!
 }
