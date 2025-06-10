@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7", 
+  @link(url: "https://specs.apollo.dev/federation/v2.8", 
         import: ["@key", "@shareable", "@provides", "@external"]
   )
 
@@ -41,7 +41,6 @@ type Profile @key(fields: "id") {
   "The unique username of the user."
   username: String! @shareable
   
-
   """
   Whether the currently authenticated user has another user in their network.
   """
@@ -93,16 +92,13 @@ input NetworkMemberInput {
 type Mutation {
   "Creates a new profile tied to an Auth0 account."
   createProfile(input: CreateProfileInput!): Profile! @shareable 
-
-  
+ 
   "Deletes a user profile."
   deleteProfile(accountId: ID!): Boolean! @shareable
- 
   
   "Adds a user to a network."
   addToNetwork(input: NetworkMemberInput!): Profile! @shareable
 
-  
   "Removes a user from a network."
   removeFromNetwork(input: NetworkMemberInput!): Profile! @shareable
 

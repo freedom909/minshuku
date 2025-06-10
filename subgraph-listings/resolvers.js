@@ -1,5 +1,5 @@
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
-// import { permissions } from '../infrastructure/auth/permission.js';
+//import { permissions } from '../infrastructure/auth/permission.js';
 import Listing from '../services/models/listing.js';
 import Coordinate from '../services/models/location.js';
 import dbConfig from '../services/DB/dbConfig.js';
@@ -12,22 +12,6 @@ import { resolve } from 'path';
 // const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 const resolvers = {
-
-  Query: {
-    getListing(id: ID!): Listing!
-    getAllListings(filter: ListingFilterInput): [Listing!]!
-
-  Mutation: {
-    async createListing(_, { input }, { dataSources }) {
-      return dataSources.listingService.createListing(input);
-    },
-    async updateListing(_, { id, input }, { dataSources }) {
-      return dataSources.listingService.updateListing(id, input);
-    },
-    async deleteListing(_, { id }, { dataSources }) {
-      return dataSources.listingService.deleteListing(id);
-    }
-  },
 
   Query: {
     getNearbyListings: async (_, { latitude, longitude, radius }, { dataSources }) => {
@@ -632,9 +616,9 @@ const resolvers = {
     },
     bookings: async ({ id }, _, { dataSources, userId }) => {
       if (!userId) throw new AuthenticationError('User not authenticated');
-      // if (!listingWithPermissions) {
-      //   throw new ForbiddenError('User does not have permissions to search the listings');
-      // }
+      if (!listingWithPermissions) {
+        throw new ForbiddenError('User does not have permissions to search the listings');
+      }
       try {
         const { listingService, bookingService } = dataSources;
         const { numOfBeds, reservedDate, page, limit, sortBy } = criteria;
@@ -705,5 +689,5 @@ const resolvers = {
     OUTDOORS: 'OUTDOORS'
   }
 }
-}
+
 export default resolvers;

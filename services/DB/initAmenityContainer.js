@@ -2,7 +2,7 @@
 import { createContainer, asValue, asClass } from 'awilix';
 import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
-import UserService from '../userService.js';
+import UserService from '../userService/index.js';
 import UserRepository from '../repositories/userRepository.js';
 import AmenityService from '../amenityService.js';
 import axios from 'axios';
@@ -22,7 +22,7 @@ const initializeAmenityContainer = async ({ services = [] } = {}) => {
     mongodb: asValue(mongodb),
     userRepository: asClass(UserRepository).singleton(),
     userService: asClass(UserService).singleton(),
-    amenityRepository: asClass(AmenityRepository).singleton(),
+    amenityRepository: asValue(AmenityRepository),
     amenityService: asClass(AmenityService).singleton()
   });
 

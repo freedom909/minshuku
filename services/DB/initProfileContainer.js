@@ -1,50 +1,31 @@
 // infrastructure/DB/initMongoContainer.js
-import pkg from 'mongodb';
-const { MongoClient } = pkg;
+import mongoose from 'mongoose';
 import { createContainer, asClass, asValue } from 'awilix';
-import UserRepository from '../repositories/userRepository.js';
-import UserService from '../userService.js';
+// import UserRepository from '../repositories/userRepository.js';
+// import UserService from '../userService/index.js';
 import ProfileService from '../profileService.js';
 import ProfileRepository from '../repositories/profileRepository.js';
-import AccountService from '../accountService.js';
 import connectMongoDB from './connectMongoDB.js';
 
 const initProfileContainer = async () => {
   try {
-
     const mongodb = await connectMongoDB();
     console.log('MongoDB Database connected');
+
     const container = createContainer();
     container.register({
       mongodb: asValue(mongodb),
-      userRepository: asClass(UserRepository).singleton(),
-      userService: asClass(UserService).singleton(),
+      // userRepository: asClass(UserRepository).singleton(),
+      // userService: asClass(UserService).singleton(),
       profileService: asClass(ProfileService).singleton(),
       profileRepository: asClass(ProfileRepository).singleton(),
-      accountService: asClass(AccountService).singleton(),
-
     });
+
     return container;
   } catch (err) {
     console.error('Error connecting to MongoDB:', err);
+    throw err; // optional: bubble it up so the server doesn't silently continue
   }
-
-  const mongodb = await connectMongoDB();
-  console.log('MongoDB Database connected');
-  const container = createContainer();
-  container.register({
-    mongodb: asValue(mongodb),
-    userRepository: asClass(UserRepository).singleton(),
-    userService: asClass(UserService).singleton(),
-    profileService: asClass(ProfileService).singleton(),
-    profileRepository: asClass(ProfileRepository).singleton(),
-    accountService: asClass(AccountService).singleton(),
-
-  });
-  return container;
-}catch (err) {
-  console.error('Error connecting to MongoDB:', err);
-}
-
+};
 
 export default initProfileContainer;

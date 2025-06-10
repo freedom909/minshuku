@@ -7,7 +7,7 @@
  * Usage: node monitor-locks.js
  */
 
-import AccountLockService from './accountLockService.js';
+import AccountLockService from './accountLockService.mjs';
 import dotenv from 'dotenv';
 
 dotenv.config();

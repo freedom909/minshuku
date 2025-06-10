@@ -3,7 +3,7 @@ import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
 import ListingService from '../listingService.js';
 import ListingRepository from '../repositories/listingRepository.js';
-import UserService from '../userService.js';
+import UserService from '../userService/index.js';
 import UserRepository from '../repositories/userRepository.js';
 import sequelize from '../models/seq.js';  // Import your Sequelize instance
 import LocationRepository from '../repositories/locationRepository.js';

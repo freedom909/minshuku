@@ -18,6 +18,17 @@ const resolvers = {
             return profile;
         },
         async profiles(root, args, { dataSources }) {
+            const { profileService } = dataSources;
+            const profiles = await profileService.getProfiles();
+            if (!profiles) {
+                throw new GraphQLError("Profiles not available.", {
+                    extensions: {
+                        code: ApolloServerErrorCode.BAD_USER_INPUT,
+                    },
+                });
+            }
+            return profiles;
+        },
 
         async getProfileByToken(root, { token }, { dataSources }) {
             const { profileService, tokenService } = dataSources;
@@ -39,8 +50,8 @@ const resolvers = {
                     }
                 });
             }
-        },
-
+        }
+    },
         async profiles(root, args, { dataSources }) {
             const { profileService } = dataSources;
             const profiles = await profileService.getProfiles();
@@ -53,11 +64,12 @@ const resolvers = {
             }
             return profiles;
         },
-    },
+    
     Profile: {
-        __resolveReference(reference, { dataSources, user }) {
+        __resolveReference(reference, context) {
+            const { dataSources, user } = context;
             const { profileService } = dataSources;
-            if (user?.sub) {
+            if (user?.sub && reference?.id) {
                 return profileService.getProfileById(reference.id);
             }
             throw new GraphQLError("Not authorized!", {

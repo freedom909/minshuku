@@ -13,10 +13,10 @@ import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
 import initMongoContainer from '../services/DB/initMongoContainer.js'
 import initializeAmenityContainer from '../services/DB/initAmenityContainer.js';
-import ListingService from '../services/services/listingService.js';
-import AmenityService from '../services/services/amenityService.js';
+import ListingService from '../services/listingService.js';
+import AmenityService from '../services/amenityService.js';
 import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
-import UserService from '../services/services/userService.js';
+import UserService from '../services/userService/index.js';
 
 
 dotenv.config();
@@ -70,8 +70,8 @@ const startApolloServer = async () => {
       express.json(),
       expressMiddleware(server)
     );
-    httpServer.listen({ port: 4012 }, () => {
-      console.log(`🚀 Server ready at http://localhost:4012/graphql`);
+    httpServer.listen({ port: 4090 }, () => {
+      console.log(`🚀 Server ready at http://localhost:4090/graphql`);
     });
   } catch (error) {
     console.error('Error starting server:', error);

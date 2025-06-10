@@ -126,6 +126,6 @@ const resolvers = {
             return dataSources.userService.getUser(user.id);
         }
     }
-};
+}}
 
-export default resolvers;
+export default resolvers

@@ -8,11 +8,53 @@ extend schema
 # SCALARS
 scalar DateTime
 
-extend type Listing @key(fields: "id"){
-  id: ID! @external
-  title: String! @shareable
-  amenities: [Amenity!]! @requires(fields: "amenityIds")
-  amenityIds: [ID!]! @external
+type  PriceRange @shareable {
+  min: Float! 
+  max: Float!
+}
+
+interface User {
+  id: ID!
+}
+
+type Booking @key(fields: "id") {
+  id: ID!
+  checkInDate: String! @shareable
+  checkOutDate: String! @shareable
+  listing: Listing! @shareable
+  user: User! 
+  totalCost: Float! @shareable
+  createdAt: DateTime @shareable
+  updatedAt: DateTime @shareable
+}
+
+type Listing @key(fields: "id") {
+    id: ID!  
+    title: String! @shareable
+}  
+
+type ROOM @key(fields: "id") {
+  id: ID!
+  listing: Listing! @shareable
+  checkInDate: String!  @shareable
+  checkOutDate: String!  @shareable
+  user: User!
+  totalCost: Float! @shareable
+  createdAt: DateTime! @shareable
+  updatedAt: DateTime! @shareable
+}
+type TotalCostRange @shareable {
+  min: Float!
+  max: Float!
+}
+
+enum LocationType  {
+ HOUSE
+  APARTMENT
+  COTTAGE
+  VILLA
+  SPACESHIP
+  ROOM
 }
 
 type Amenity @key(fields: "id"){
@@ -23,12 +65,17 @@ type Amenity @key(fields: "id"){
 type Query {
   listings: [Listing!]! @shareable
   listing(id: ID!): Listing @shareable
-  amenities: [Amenity!]! @shareable
+  amenities: [Amenity!]! 
   amenity(id: ID!): Amenity @shareable
 }
+
+type Location @shareable {
+  latitude: Float!
+  longitude: Float!
+}
+
 
 type Mutation {
   addAmenity(name: String!): Amenity! @shareable
   addAmenityToListing(listingId: ID!, amenityId: ID!): Listing! @shareable
 }
-

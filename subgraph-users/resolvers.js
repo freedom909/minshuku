@@ -1,6 +1,6 @@
 import { GraphQLError } from "graphql";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
+//import { OAuth2Client } from "google-auth-library";
 import validateHostInviteCode from "../infrastructure/helpers/validateHostInviteCode.js";
 import  loginValidate  from "../infrastructure/helpers/loginValidator.js";
 import applyRateLimiting from "../infrastructure/middleware/rateLimitStore.js";
@@ -10,7 +10,7 @@ import userService from "../services/userService/index.js";
 import registerValidate from "../infrastructure/helpers/registerValidator.js";
 
 // Initialize Google OAuth client
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+//const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Debug logger
 const logger = {
