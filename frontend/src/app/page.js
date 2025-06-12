@@ -16,8 +16,8 @@ export default function Home() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">欢迎来到民宿预订系统</h1>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-yellow-5">
+        <h1 className="text-4xl font-bold text-white mb-8">欢迎来到民宿预订系统</h1>
         <div className="space-y-4">
           <Link 
             href="/auth/register" 
@@ -27,7 +27,7 @@ export default function Home() {
           </Link>
           <div className="text-center">
             <Link 
-              href="/auth" 
+              href="/login" 
               className="text-indigo-600 hover:text-indigo-800 font-medium"
             >
               已有账户？立即登录

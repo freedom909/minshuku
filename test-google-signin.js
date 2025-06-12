@@ -9,10 +9,14 @@
  * 2. Run: node test-google-signin.js
  */
 
-const fetch = require('node-fetch');
-const { OAuth2Client } = require('google-auth-library');
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
+import fetch from 'node-fetch';
+import { OAuth2Client } from 'google-auth-library';
+import pkg from 'jsonwebtoken';
+const { sign, verify } = pkg;
+import { writeFileSync } from 'fs';
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 // Configuration
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4010/graphql';
@@ -81,7 +85,7 @@ async function runTests() {
 
   // Step 3: Create mock Google token
   logger.info('Creating mock Google token');
-  const mockToken = jwt.sign(MOCK_GOOGLE_PAYLOAD, 'mock-secret');
+  const mockToken = sign(MOCK_GOOGLE_PAYLOAD, 'mock-secret');
   logger.success('Mock token created');
 
   // Step 4: Test signIn mutation
@@ -128,7 +132,7 @@ async function runTests() {
     if (data.data?.signIn?.auth?.token) {
       logger.info('Verifying JWT token');
       try {
-        const decoded = jwt.verify(data.data.signIn.auth.token, JWT_SECRET);
+        const decoded = verify(data.data.signIn.auth.token, JWT_SECRET);
         logger.success('JWT token verified', decoded);
       } catch (error) {
         logger.error('JWT token verification failed', error);
@@ -156,7 +160,7 @@ async function runTests() {
     ]
   };
   
-  fs.writeFileSync('google-signin-test-report.json', JSON.stringify(report, null, 2));
+  writeFileSync('google-signin-test-report.json', JSON.stringify(report, null, 2));
   logger.success('Test report generated', 'google-signin-test-report.json');
 }
 

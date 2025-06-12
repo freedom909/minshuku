@@ -19,10 +19,6 @@ Listing.init({
     type: DataTypes.TEXT,
     allowNull: false,
   },
-  price: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-  },
   hostId: {
     type: DataTypes.UUID,
     allowNull: false,
@@ -31,14 +27,14 @@ Listing.init({
     type: DataTypes.UUID,
     allowNull: false,
   },
-  latitude: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
-  longitude: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
+  // latitude: {
+  //   type: DataTypes.FLOAT,
+  //   allowNull: false,
+  // },
+  // longitude: {
+  //   type: DataTypes.FLOAT,
+  //   allowNull: false,
+  // },
   numOfBeds: {
     type: DataTypes.INTEGER,
     allowNull: false,

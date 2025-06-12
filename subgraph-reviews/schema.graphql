@@ -139,26 +139,46 @@ type Listing @key(fields: "id") {
   id: ID!
 }
 
+### Enums
+enum Role {
+  HOST
+  GUEST
+  ADMIN
+}
+
 ### User Types
 interface User {
   id: ID!
   name: String
   "The user's profile photo URL"
-  picture: String!
+  picture: String!  
+  role:Role
 }
 
+
 type Host implements User @key(fields: "id") {
-  id: ID!
+  role: Role @shareable
+  id: ID! @shareable
   name: String! @shareable
   overallRating: Float @shareable
   picture: String! @shareable
-
+  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
+  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
+  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
+  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
 }
+ 
 
 type Guest implements User @key(fields: "id") {
   id: ID! @shareable 
   name: String! @shareable
   picture: String! @shareable
+  role: Role @shareable
+  overallRating: Float @shareable
+  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
+  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
+  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
+  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
 }
 
 type Comment {

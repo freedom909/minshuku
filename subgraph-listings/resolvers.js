@@ -450,7 +450,7 @@ const resolvers = {
       const { listingService } = dataSources;
       try {
         const listing = await Listing.findByPk(id);
-        console.log('Listing', listing);
+        console.log('Listing', listing);//no output
 
         if (!listing) {
           return {

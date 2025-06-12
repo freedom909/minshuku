@@ -1,8 +1,10 @@
 from fastapi import FastAPI
-from app.routers import title, description, review
+from app.routers import ai_tasks
 
-app = FastAPI(title="AI Services for Host Listings")
+app = FastAPI(title="AI Service")
+@app.get('/')
+async def root():
+    return {'message': 'Welcome to the AI Service'}
 
-app.include_router(title.router)
-app.include_router(description.router)
-app.include_router(review.router)
+# Mount all AI-related endpoints
+app.include_router(ai_tasks.router, prefix="/ai", tags=["AI Tasks"])

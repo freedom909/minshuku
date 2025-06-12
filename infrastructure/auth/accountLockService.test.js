@@ -1,7 +1,7 @@
 import AccountLockService from './accountLockService.js';
 
 // Mock Redis implementation for testing
-jest.mock('ioredis', () => {
+jest.mock('redis', () => {
   return jest.fn().mockImplementation(() => {
     const store = new Map();
     const ttls = new Map();

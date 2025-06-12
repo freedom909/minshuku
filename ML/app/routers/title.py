@@ -8,6 +8,9 @@ class TitleRequest(BaseModel):
     current_title: str
     description: str
 
-@router.post("/suggest")
-def get_suggested_titles(data: TitleRequest):
-    return {"suggestions": suggest_titles(data.current_title, data.description)}
+
+
+@router.get("/suggest-title")
+def suggest_title(title: str):
+    return {"suggestions": [f"{title} - Improved"]}
+

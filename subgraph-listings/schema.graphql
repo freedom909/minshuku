@@ -110,8 +110,6 @@ input CreateListingInput {
   title: String!
   "The description of the listing"
   description: String!
-  "The price of the listing"
-  price: Float!
   "The ID of an existing location if available"
   locationId: String 
   "The ID of the host"

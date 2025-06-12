@@ -18,3 +18,4 @@ class CartRepository extends RESTDataSource {
         return await this.delete(`/${cartId}/items/${itemId}`);
     }
 }
+export default CartRepository;
