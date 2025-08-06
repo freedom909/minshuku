@@ -1,6 +1,6 @@
 extend schema
   @link(
-    url: "https://specs.apollo.dev/federation/v2.8",
+    url: "https://specs.apollo.dev/federation/v2.11",
     import: ["@key", "@shareable", "@external"]
   )
 
@@ -9,6 +9,7 @@ enum Role {
   ADMIN
   HOST
   GUEST
+  USER
 }
 
 # Scalars

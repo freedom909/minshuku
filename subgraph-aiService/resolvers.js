@@ -1,72 +1,41 @@
-import Configuration from 'openai';
-import OpenAIApi from 'openai';
+
 import Listing from '../services/models/listing.js';
 import dotenv from 'dotenv';
-
 dotenv.config();
-const key = process.env.OPENAI_API_KEY
-const configuration = new Configuration({
-    apiKey: "key",
-});
-console.log('API Key:', process.env.OPENAI_API_KEY);
-const openai = new OpenAIApi(configuration);
 
 const resolvers = {
+    // Debug logger setup
+    debug: true,
     Mutation: {
-        suggestListingInfo: async (_, { listingData }, { dataSources }) => {
-            const { aiService } = dataSources;
-            const message = `Suggest a title and description for a listing with the following details: ${JSON.stringify(listingData)}.`;
-            const response = await openai.createChatCompletion({ model: "gpt-3.5-turbo", messages: [{ role: "user", content: message }] });
-            return { suggestion: response.data.choices[0].message.content };
-        },
+
         getSmartSuggestions: async (_, { userId }, { dataSources }) => {
             const { aiService, userService, listingService } = dataSources;
             const user = await userService.getUserById(userId);
             const listings = await listingService.getPopularListings();
             const message = `Based on user ${user.name}'s preferences, suggest some listings from ${listings.map(l => l.title).join(', ')}.`;
-            const response = await openai.createChatCompletion({ model: "gpt-3.5-turbo", messages: [{ role: "user", content: message }] });
-            return { suggestions: response.data.choices[0].message.content };
+            const response = await aiService.getChatResponse(message);
+            return { suggestions: response };
         },
 
-    Mutation: {
-        suggestListingInfo: async (_, { listingData }, { dataSources }) => {
-            const { aiService } = dataSources;
-            const message = `Suggest a title and description for a listing with the following details: ${JSON.stringify(listingData)}.`;
-            const response = await openai.createChatCompletion({ model: "gpt-3.5-turbo", messages: [{ role: "user", content: message }] });
-            return { suggestion: response.data.choices[0].message.content };
-        },
-        sendMessageToChatGPT: async (_, { message }, { dataSources, userId }) => {
-            console.log("Data sources:", dataSources); // Data sources: undefined
-            if (!dataSources || !dataSources.aiService) {
+        sendMessageToAI: async (_, { message }, context) => {
+            console.log('▶ context:', context);
+            const { aiService } = context?.dataSources || {};
+            if (!aiService) {
                 throw new Error('AI service is not available');
             }
-            const { aiService, userService } = dataSources; // message": "Cannot destructure property 'aiService' of 'dataSources' as it is undefined.";
 
-            // Automatic moderation
-            const moderationResponse = await openai.createModeration({ input: message });
-            if (moderationResponse.data.results[0].flagged) {
-                throw new Error('Your message contains inappropriate content.');
-            }
-
-            if (!aiService) {
-                throw new Error('ai service is not available in data sources');
-            }
             try {
-                const response = await openai.createChatCompletion({
-                    model: "gpt-3.5-turbo", // or "gpt-4" if available
-                    messages: [{ role: "user", content: message }],
-                });
-                const reply = await response.data.choices[0].message.content
-                //save message and reply to the database
-                const savedMessage = await aiService.savedMessageToDB(message, reply)
-                return { reply: response.data.choices[0].message.content };
+                const reply = await aiService.getChatResponse(message);
+                await aiService.saveConversation(context.userId || 'anonymous', message, reply);
+                return { reply };
             } catch (error) {
                 console.error(error);
                 throw new Error("Error communicating with ChatGPT");
             }
         },
-        getListingInfo: async (_, { listingTitle }, { dataSource, userId }) => {
-            const { aiService } = dataSource;
+
+        getListingInfo: async (_, { listingTitle }, { dataSources = {}, userId = null }) => {
+            const { aiService } = dataSources;
             const listingData = await Listing.findOne({ title: listingTitle }).exec();
 
             if (!listingData) throw new Error(`Listing with title "${listingTitle}" not found`);
@@ -83,13 +52,8 @@ const resolvers = {
             const message = `What are the available dates for the listing: ${listingData.title}?`;
 
             // Send a refined question to ChatGPT with the filtered data
-            const response = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: message }],
-            });
-
-            const reply = response.data.choices[0].message.content;
-            await aiService.saveMessageToDB(message, reply);
+            const reply = await aiService.getChatResponse(message);
+            await aiService.saveConversation(userId, message, reply);
 
             return {
                 ...listingData.toObject(),
@@ -97,7 +61,22 @@ const resolvers = {
                 currentlyBookedDates,
             };
         },
+
+        suggestTitleImprovements: async (_, { listingId }, context) => {
+            // ✅ Logging context inside the resolver
+            console.log('▶ Resolver context:', context);
+            const aiService = context?.dataSources?.aiService;
+            if (!aiService) {
+                console.error('❌ AI service missing from context:', context);
+                throw new Error('AI service is not available');
+            }
+            return {
+  suggestions: ['Better title 1', 'More attractive title 2']
+};
+            // return await aiService.suggestTitleImprovements(listingId);
+        }
     },
+
     Query: {
         Listing: {
             bookings: async (listing, _, { userId }) => {
@@ -112,10 +91,9 @@ const resolvers = {
                 }
                 return listing.currentlyBookedDates;
             },
-
-
         },
-        getUser: (_, __, { user, dataSources }) => {
+
+        getUser: (_, __, { user = {}, dataSources = {} }) => {
             // Access userId here  
 
             // Implement logic to fetch user data from the database or other sources
@@ -125,7 +103,7 @@ const resolvers = {
             }
             return dataSources.userService.getUser(user.id);
         }
-    }
-}}
+    },
+}
 
 export default resolvers

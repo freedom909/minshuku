@@ -121,6 +121,11 @@ class PaymentRepository extends RESTDataSource {
           throw new Error('Error subtracting funds from wallet');
         }
       }
+
+    async processPayment(userId, amount) {
+        console.log(`[MockPayment] Processing payment for user ${userId} of amount ${amount}`);
+        return { status: 'MOCK_SUCCESS', transactionId: 'mock-tx-1234' };
+      }
 }
 
 export default PaymentRepository;

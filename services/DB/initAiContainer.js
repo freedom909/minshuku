@@ -17,6 +17,9 @@ import User from '../models/user.js';
 import sequelize from '../models/seq.js';
 import Listing from '../models/listing.js';
 import Booking from '../models/booking.js';
+import PaymentService from '../paymentService.js';
+import { MockUserService, MockListingService, MockBookingService, MockPaymentService } from '../mockServices.js';
+import AiRepository from '../repositories/aiRepository.js';
 
 const initializeAiContainer = async ({ services = [] } = {}) => {
     // Establishing connection to MySQL database
@@ -28,7 +31,7 @@ const initializeAiContainer = async ({ services = [] } = {}) => {
     // Initializing the container and registering dependencies and services
     const container = createContainer();
 
-
+    // 确保所有依赖服务已注册
     container.register({
         mysqldb: asValue(mysqldb),
         mongodb: asValue(mongodb),
@@ -43,7 +46,12 @@ const initializeAiContainer = async ({ services = [] } = {}) => {
         locationService: asClass(LocationService).singleton(),
         bookingRepository: asClass(BookingRepository).singleton(),
         bookingService: asClass(BookingService).singleton(),
-        aiService: asClass(AiService).singleton(),
+        paymentService: asClass(MockPaymentService).singleton(), // 使用模拟服务
+        userService: asClass(MockUserService).singleton(), // 使用模拟服务
+        listingService: asClass(MockListingService).singleton(), // 使用模拟服务
+        bookingService: asClass(MockBookingService).singleton(), // 使用模拟服务
+        aiRepository: asClass(AiRepository).singleton(),
+        aiService: asClass(AiService).singleton()
     });
 
 

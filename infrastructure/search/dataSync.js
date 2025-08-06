@@ -77,4 +77,3 @@ reindexingEmitter.on('reindex', async () => {
   }catch (error) {
     console.error('Error syncing data:', error);
   }
-})

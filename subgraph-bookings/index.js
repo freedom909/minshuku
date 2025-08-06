@@ -1,3 +1,5 @@
+//subgraph-bookings/index.js 
+
 import { ApolloServer } from '@apollo/server';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { gql } from 'graphql-tag';
@@ -19,6 +21,7 @@ import initMongoContainer from '../services/DB/initMongoContainer.js';
 import getUserFromToken from '../infrastructure/auth/getUserFromToken.js';
 import { useServer } from 'graphql-ws/lib/use/ws';
 import { WebSocketServer } from 'ws';
+import PaymentService from '../services/paymentService.js';
 
 dotenv.config();
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -27,7 +30,7 @@ const startApolloServer = async () => {
   try {
     // Initialize MySQL and MongoDB containers
     const mysqlContainer = await initializeBookingContainer({
-      services: [ListingService, BookingService]
+      services: [ListingService, BookingService, PaymentService]
     });
 
     const mongoContainer = await initMongoContainer({
@@ -80,18 +83,27 @@ const startApolloServer = async () => {
           oAuthService: container.resolve('oAuthService'),
           tokenService: container.resolve('tokenService'),
         };
-
+  // Instantiate AiService with required dependencies
+  const aiService = new AiService({
+    userService,
+    listingService: mysqlContainer.resolve('listingService'),
+    bookingService: mysqlContainer.resolve('bookingService'),
+    paymentService: mysqlContainer.resolve('paymentService'),
+  });
         return {
           user,
           dataSources: {
             listingService: mysqlContainer.resolve('listingService'),  // Resolve MySQL services
             bookingService: mysqlContainer.resolve('bookingService'),
-            userService,// Resolve MongoDB services
-            cacheClient, // Cache client is available globally, no need to resolve from container
+            userService: userService,
+            paymentService: mysqlContainer.resolve('paymentService'),
+            aiService, // ✅ Add this line!
+            cacheClient,
           }
         };
       }
     });
+
 
     // Start Apollo Server
     await server.start();
