@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { oauthService } from '../userService/oauthService';
+import { oauthService } from '../../userService/oauthService';
 
 const providerInfo = {
   google: {

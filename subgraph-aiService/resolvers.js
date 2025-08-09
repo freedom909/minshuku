@@ -71,8 +71,8 @@ const resolvers = {
                 throw new Error('AI service is not available');
             }
             return {
-  suggestions: ['Better title 1', 'More attractive title 2']
-};
+                suggestions: ['Better title 1', 'More attractive title 2']
+            };
             // return await aiService.suggestTitleImprovements(listingId);
         }
     },

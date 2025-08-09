@@ -48,107 +48,36 @@ export const AuthProvider = ({ children }) => {
       if (!signInResult.success || !signInResult.auth) {
         let feedback = '登录失败，请检查邮箱和密码是否正确';
         if (signInResult.code === 'USER_NOT_FOUND') {
-          feedback = '此邮箱尚未注册，请先注册账号';
+          feedback = '用户不存在';
         } else if (signInResult.code === 'INVALID_PASSWORD') {
-          feedback = '密码错误，请重试';
+          feedback = '密码错误';
         }
         throw new Error(feedback);
       }
 
-      const { token } = signInResult.auth;
-
-      localStorage.setItem('token', token);
       setUser(signInResult.auth);
-
+      localStorage.setItem('auth', JSON.stringify(signInResult.auth));
       navigate('/dashboard');
-
-      return { success: true, user: signInResult.auth };
     } catch (err) {
-      setError(err.response?.data?.errors?.[0]?.message || err.message || 'Login failed');
-      throw err;
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (formData) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      };
-
-      const operations = {
-        query: `
-          mutation Register($input: RegisterInput!) {
-            register(input: $input) {
-              token
-              user {
-                id
-                name
-                email
-                bio
-                location
-                phone
-                profilePicture
-              }
-            }
-          }
-        `,
-        variables: {
-          input: {
-            name: formData.get('name'),
-            email: formData.get('email'),
-            password: formData.get('password'),
-            confirmPassword: formData.get('confirmPassword'),
-            bio: formData.get('bio'),
-            location: formData.get('location'),
-            phone: formData.get('phone'),
-            profilePicture: formData.get('profilePicture') || null
-          }
-        }
-      };
-
-      const response = await axios.post('/graphql', operations, config);
-
-      if (response.data.errors) {
-        throw new Error(response.data.errors[0].message);
-      }
-
-      const { token, user } = response.data.data.register;
-
-      if (!token) {
-        throw new Error('Registration successful but no token received');
-      }
-
-      localStorage.setItem('token', token);
-      setUser(user); // ✅ Corrected from `signInResult.auth` to `user`
-
-      navigate('/dashboard');
-
-      return user;
-    } catch (err) {
-      setError(err.response?.data?.errors?.[0]?.message || err.message || 'Registration failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('auth');
+    navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      error,
-      register,
-      login
-    }}>
+    <AuthContext.Provider value={{ user, loading, error, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  return useContext(AuthContext);
+};

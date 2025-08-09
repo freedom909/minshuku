@@ -3,9 +3,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import GoogleSignInButton from "@/components/GoogleSignInButton";
-import FacebookSignInButton from "@/components/FacebookSignInButton";
-import GithubSignInButton from "@/components/GitHubSignInButton";
+import GoogleSignInButton from "../../components/users/GoogleSignInButton";
+import FacebookSignInButton from "../../components/users/FacebookSignInButton";
+import GithubSignInButton from "../../components/users/GitHubSignInButton";
 
 export default function Login() {
   const [email, setEmail] = useState("");

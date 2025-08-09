@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { GoogleLoginButton } from '../components/auth';
+import { GoogleLoginButton } from '../components/auth/GoogleSignIn';
 
 /**
  * 登录页面组件

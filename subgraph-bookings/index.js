@@ -28,14 +28,17 @@ const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    // Initialize MySQL and MongoDB containers
+    console.log('⏳ Initializing MySQL container...');
     const mysqlContainer = await initializeBookingContainer({
       services: [ListingService, BookingService, PaymentService]
     });
+    console.log('✅ MySQL container initialized');
 
+    console.log('⏳ Initializing MongoDB container...');
     const mongoContainer = await initMongoContainer({
       services: [UserService]
     });
+    console.log('✅ MongoDB container initialized');
 
     const app = express();
     const httpServer = http.createServer(app);
@@ -77,19 +80,27 @@ const startApolloServer = async () => {
 
       context: async ({ req }) => {
         const token = req.headers.authorization || '';
+        console.log('🔑 Authorization token:', token); // 添加日志
         const user = getUserFromToken(token);
+        if (!user) {
+          console.warn('⚠️ Unauthorized: Invalid or missing token');
+        }
         const userService = {
           localAuthService: container.resolve('localAuthService'),
           oAuthService: container.resolve('oAuthService'),
           tokenService: container.resolve('tokenService'),
         };
   // Instantiate AiService with required dependencies
-  const aiService = new AiService({
-    userService,
-    listingService: mysqlContainer.resolve('listingService'),
-    bookingService: mysqlContainer.resolve('bookingService'),
-    paymentService: mysqlContainer.resolve('paymentService'),
-  });
+  const listingService = mysqlContainer.resolve('listingService');
+    const bookingService = mysqlContainer.resolve('bookingService');
+    const paymentService = mysqlContainer.resolve('paymentService');
+    console.log('🔍 Resolved services:', { listingService, bookingService, paymentService });
+    const aiService = new AiService({
+      userService,
+      listingService,
+      bookingService,
+      paymentService,
+    });
         return {
           user,
           dataSources: {

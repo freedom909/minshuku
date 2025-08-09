@@ -5,7 +5,7 @@
 // import { GeistSans, GeistMono } from 'geist/font';
 import { GeistSans } from 'geist/font/sans';
 
-import './globals.css';
+import '../styles/globals.css';
 import { SessionProvider } from 'next-auth/react';
 import Image from 'next/image';
 

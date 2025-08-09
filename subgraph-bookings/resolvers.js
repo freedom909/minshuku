@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
-import { createClient } from 'graphql-ws';
-import WebSocket from 'ws'
+
 import { requireAuth, requireRole } from '../infrastructure/auth/authAndRole.js';
 // import { permissions } from '../infrastructure/auth/permission.js';
 import Booking from '../services/models/booking.js';
@@ -11,10 +10,45 @@ import cacheClient from '../cache/cacheClient.js';
 import { broadcast, subscriptionTopics } from '../cache/cachePubSub.js';
 // const { bookingsWithPermission } = permissions;
 
-const client = createClient({
-  url: 'http://localhost:3000', // Correct Socket.IO URL  
-  webSocketImpl: WebSocket
-});
+
+
+const createBooking = async (_, { input }, { dataSources }) => {
+  try {
+    const { listingId, guestId, checkInDate, checkOutDate, totalCost } = input;
+    
+    // 验证输入数据
+    if (!listingId || !guestId || !checkInDate || !checkOutDate || !totalCost) {
+      throw new Error('Missing required booking fields');
+    }
+    
+    // 调用bookingService创建预订
+    const booking = await dataSources.bookingService.createBooking({
+      listingId,
+      guestId,
+      checkInDate,
+      checkOutDate,
+      totalCost
+    });
+    
+    // 广播预订创建事件
+    broadcast(subscriptionTopics.BOOKING_CREATED, booking);
+    
+    return {
+      code: 200,
+      success: true,
+      message: 'Booking created successfully',
+      booking
+    };
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    return {
+      code: 500,
+      success: false,
+      message: error.message,
+      booking: null
+    };
+  }
+};
 
 let clients = []
 function addClient(client) {
@@ -44,6 +78,14 @@ client.subscribe({
   error: (error) => console.error('Error:', error),
   complete: () => console.log('Subscription complete'),
 })
+
+const Mutation = {
+  createBooking,
+  cancelBooking,
+  confirmBooking
+};
+
+
 
 // Example usage of addClient and removeClient for registration  
 addClient(client); // Add the client to the active clients 

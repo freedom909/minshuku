@@ -1,21 +1,25 @@
 //frontend/src/pages/api/auth/[...nextauth].js
-import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import FacebookProvider from "next-auth/providers/facebook";
-import GithubProvider from "next-auth/providers/github";
-import CredentialsProvider from "next-auth/providers/credentials";
+// Update NextAuth import to use require syntax for consistency
+const { default: NextAuth } = require('next-auth');
 import bcrypt from "bcryptjs";
 import localAuthService from "@/userService/localAuthService";
 import oauthService from "@/userService/oauthService";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
-import axios from "axios";
+
+// Use require syntax for all providers for consistency
+const { default: Google } = require('next-auth/providers/google');
+const { default: Facebook } = require('next-auth/providers/facebook');
+const { default: Github } = require('next-auth/providers/github');
+const { default: Credentials } = require('next-auth/providers/credentials');
 
 const handler = NextAuth({
+  // Move adapter to top-level configuration
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    Google({
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET,
       authorization: {
         params: {
           prompt: "consent",
@@ -24,17 +28,15 @@ const handler = NextAuth({
         }
       }
     }),
-    FacebookProvider({
+    Facebook({
       clientId: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET
     }),
-    GithubProvider({
+    Github({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET
     }),
-
-
-    CredentialsProvider({
+    Credentials({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
@@ -42,54 +44,25 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const { email, password } = credentials;
-    
-          if (!email || !password) {
-            throw new Error("Email and password are required");
+          const user = await localAuthService.authenticate(
+            credentials.email,
+            credentials.password
+          );
+
+          if (!user) {
+            throw new Error("Invalid credentials");
           }
-    
-          const response = await axios.post("http://localhost:4010/graphql", {
-            query: `
-              mutation SignIn($input: SignInInput!) {
-                signIn(input: $input) {
-                  code
-                  auth {
-                    token
-                    userId
-                    role
-                  }
-                  success
-                  message
-                }
-              }
-            `,
-            variables: {
-              input: { email, password }
-            }
-          });
-    
-          const result = response.data?.data?.signIn;
-    
-          const { auth, success, message } = result;
-    
-          if (!success || !auth?.token || !auth?.userId) {
-            throw new Error(message || "Authentication failed");
-          }
-    
+
           return {
-            id: auth.userId,
-            email,
-            role: auth.role,
-            token: auth.token
+            id: user.id,
+            email: user.email,
+            name: user.name
           };
-    
         } catch (error) {
-          console.error("Authorization error:", error);
           throw new Error(error.message || "Authentication failed");
         }
       }
-    }),
-
+    })
   ],
   session: {
     strategy: "jwt",
@@ -107,6 +80,13 @@ const handler = NextAuth({
 
           console.log(`Calling subgraph with ${account.provider} token:`, token);
 
+          // Add check for token existence before making the call
+          if (!token) {
+            console.error("No token received from provider");
+            throw new Error("OAuth login failed: response not successful");
+
+          }
+
           const response = await oauthService.sendOAuthRequestToSubgraph(
             account.provider,
             token
@@ -114,11 +94,15 @@ const handler = NextAuth({
 
           console.log("OAuth response from subgraph:", response);
 
-          // ✅ Allow login to continue and still let adapter save user
-          if (!response?.success) {
-            console.error("OAuth login failed:", response);
-            return false;
-          }
+          // if (!response?.success) {
+          //   console.error("OAuth login failed:", response);
+          //   return false;
+          // }
+          if (!response || response.error) {
+  console.error("OAuth backend returned error:", response);
+  throw new Error(response?.message || "OAuth failed");
+}
+
         } catch (err) {
           console.error("OAuth backend call failed:", err?.message || err);
           return false;
@@ -127,9 +111,6 @@ const handler = NextAuth({
 
       return true;
     },
-
-    adapter: MongoDBAdapter(clientPromise),
-
 
     jwt: async ({ token, user }) => {
       if (user) {

@@ -72,7 +72,7 @@ export default function RegisterPage() {
       name: formData.name,
       nickname: formData.nickname || formData.name,
       role: formData.role || 'GUEST',
-      picture: formData.picture || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp"
+      picture: formData.picture || "https://www.gravatar.com/avatar-default?d=mp"
     });
     setLoading(false);
   };
@@ -97,8 +97,6 @@ export default function RegisterPage() {
       setError(err.message || '注册失败');
     }
   };
-
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900">
