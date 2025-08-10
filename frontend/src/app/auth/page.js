@@ -5,9 +5,7 @@ import { getSession,useSession, signIn } from "next-auth/react";
 import Head from "next/head";
 import dayjs from "dayjs";
 import OAuthService from "@/userService/oauthService";
-import GoogleSignInButton from "../GoogleSignInButton";
-import FacebookSignInButton from "../FacebookSignInButton";
-import GithubSignInButton from "../GitHubSignInButton";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 

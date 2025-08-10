@@ -2,7 +2,7 @@
 import config from '@/config/config.js'
 
 // Define the GraphQL endpoint URL
-const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_SUBGRAPH_AUTH_URL || 'http://localhost:4010/graphql';
+const SUBGRAPH_USER_URL = `${config.API_URL}/graphql`;
 
 class OAuthService {
     constructor() {
@@ -15,12 +15,9 @@ class OAuthService {
         console.log("🔄 Sending request to subgraph...");
 
         try {
-            console.log('Starting OAuth request...');
-            const startTime = Date.now();
-            
-            // Use the defined constant instead of hardcoding the URL
-            // Fix syntax issues in headers and body
-            const response = await fetch(SUBGRAPH_USER_URL, {
+        console.log('Starting OAuth request...');
+        const startTime = Date.now();
+            const response = await fetch('http://localhost:4010/graphql', { //it did not use post
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -40,36 +37,28 @@ class OAuthService {
                     variables: {
                         input: {
                             provider: provider.toUpperCase(),
-                            token // Removed comment and trailing comma
+                            token,// pass empty input object if your backend extracts info from token
                         }
                     }
                 })
             });
 
-            if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`);
-                throw new Error(`Request failed with status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error('Request failed');
 
             const data = await response.json();
-            const endTime = Date.now();
-            console.log(`OAuth request completed in ${endTime - startTime}ms`);
+        const endTime = Date.now();
+        console.log(`OAuth request completed in ${endTime - startTime}ms`);
+            console.log('OAuth response:', data);
 
-            // Check if response contains errors
-            if (data.errors) {
-                console.error('GraphQL errors:', data.errors);
-                return { success: false, error: data.errors[0].message };
+            if (!data.data?.signIn?.success) {
+          console.error('OAuth login failed:', data.errors?.[0]?.message);
+                throw new Error(data.errors?.[0]?.message || 'OAuth login failed');
             }
 
-            return data.data?.signIn || { success: false };
-        } catch (error) {
-            console.error('OAuth request failed:', error.message);
-            // Return a meaningful error object instead of letting the error propagate
-            return { 
-                success: false, 
-                error: error.message || 'OAuth request failed',
-                details: process.env.NODE_ENV === 'development' ? error : undefined
-            };
+            return { success: true, data: data.data.signIn };
+        } catch (err) {
+            console.error('OAuth request failed:', err);
+            return { success: false };
         }
     }
 

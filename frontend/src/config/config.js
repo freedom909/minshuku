@@ -17,9 +17,7 @@ const config = {
     }
 };
 
-// This is the constant we need to import in oauthService.js
 const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || 'http://localhost:4010/graphql';
 console.log('SUBGRAPH_USER_URL:', SUBGRAPH_USER_URL);
 
-export { SUBGRAPH_USER_URL };
 export default config;

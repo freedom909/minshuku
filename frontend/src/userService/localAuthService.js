@@ -63,20 +63,20 @@ const localAuthService = {
         throw new Error(result.errors[0].message);
       }
 
-      const { user, token } = result.data.signIn;
-      if (!user || !token) {
-        throw new Error("Authentication failed");
+      const signInResult = result.data.signIn;
+      if (!signInResult.success || !signInResult.user || !signInResult.token) {
+        throw new Error(signInResult.message || "Authentication failed");
       }
 
-      if (token?.accessToken?.token) {
-        localStorage.setItem("jwt_token", token.accessToken.token);
+      if (signInResult.token?.accessToken?.token) {
+        localStorage.setItem("jwt_token", signInResult.token.accessToken.token);
       }
 
       return {
         success: true,
-        user,
-        token: token.accessToken.token,
-        message: "Authentication successful",
+        user: signInResult.user,
+        token: signInResult.token.accessToken.token,
+        message: signInResult.message || "Authentication successful",
       };
     } catch (error) {
       console.error("Authentication error:", error);
@@ -141,8 +141,8 @@ const localAuthService = {
       return {
         success: result.data.signUp.success,
         code: result.data.signUp.code,
-        role: result.data.signUp.role||"GUEST",
-        userId: result.data.signUp.userId|| null,
+        role: result.data.signUp.role || "GUEST",
+        userId: result.data.signUp.userId || null,
         message: result.data.signUp.message,
         token: result.data.signUp.auth?.token || null,
       };

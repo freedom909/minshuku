@@ -1,6 +1,6 @@
 //src/graphql/mutations.js
 import { gql } from '@apollo/client';
-//import { GOOGLE_SIGN_IN } from './graphql/mutations';
+import { GOOGLE_SIGN_IN } from './graphql/mutations';
 // 2. Use the `useMutation` hook to get the `signIn` function
 const [signIn, { loading, error, data }] = useMutation(SIGN_IN);
 
