@@ -1,15 +1,17 @@
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
-//import { permissions } from '../infrastructure/auth/permission.js';
+import { permissions } from '../infrastructure/auth/permission.js';
 import Listing from '../services/models/listing.js';
 import Coordinate from '../services/models/location.js';
-import dbConfig from '../services/DB/dbConfig.js';
+import { UserInputError } from '../infrastructure/utils/errors.js';
 import Location from '../services/models/location.js';
 import { GraphQLError } from 'graphql';
 import Amenity from '../services/models/amenity.js';
 import transaction, { Op } from '@sequelize/core'
 import calculateDistance from './calculateDistance.js';
 import { resolve } from 'path';
-// const { listingWithPermissions, isHostOfListing, isAdmin } = permissions;
+import {isHost} from '../infrastructure/auth/permission.js'
+
+const { listingWithPermissions} = permissions;
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 const resolvers = {
 
@@ -43,7 +45,7 @@ const resolvers = {
             description: listing.description || 'No description available',
             pictures: listing.pictures || [],
             numOfBeds: listing.numOfBeds || 0,
-            costPerNight: listing.costPerNight || 0,
+            price: listing.price || 0,
             isFeatured: listing.isFeatured || false,
             saleAmount: listing.saleAmount || 0,
             checkInDate: listing.checkInDate || 'default_check_in_date',
@@ -269,7 +271,7 @@ const resolvers = {
       // Fetch featured listings with coordinates
       return await Listing.findAll({
         where: { isFeatured: true }, // Filter for featured listings
-        attributes: ['id', 'locationType', 'title', 'checkInDate', 'checkOutDate', 'photoThumbnail', 'description', 'costPerNight', 'saleAmount'], // Include id, locationType, title
+        attributes: ['id', 'locationType', 'title', 'checkInDate', 'checkOutDate', 'photoThumbnail', 'description', 'price', 'saleAmount'], // Include id, locationType, title
         include: [
           {
             model: Amenity,
@@ -349,11 +351,11 @@ const resolvers = {
       }
     },
 
-    createListing: async (_, { input }, { dataSources, context, userId }) => {
-      //if (!userId) throw new AuthenticationError('User not authenticated');
-      //if (!isHostOfListing || !isAdmin) {
-      //throw new AuthenticationError(`you don't have right to delete this list`)
-      //}
+    createListing: async (_, { input }, { dataSources, context, userId="689c1ac6e1a02e81f0b7f112" }) => {
+      if (!userId) throw new AuthenticationError('User not authenticated');
+      if (!isHost && !isAdmin) {
+      throw new AuthenticationError(`you don't have right to create this list`)
+      }
       console.log("Context received in createListing:", context);
 
       if (!context || !context.dataSources) {
@@ -386,7 +388,7 @@ const resolvers = {
       console.log("Listing data to create:", {
         description: input.description,
         pictures: input.pictures,
-        costPerNight: input.costPerNight,
+        price: input.price,
         locationType: input.locationType,
         listingStatus: input.listingStatus,
         title: input.title,
@@ -509,6 +511,15 @@ const resolvers = {
   },
 
   Listing: {
+    location: (listing) => ({
+    __typename: "Location",
+    id: listing.locationId
+  }),
+  amenities: (listing) =>
+    (listing.amenityIds || []).map((id) => ({
+      __typename: "Amenity",
+      id
+    })),
     __resolveReference: async (reference, { dataSources }) => {
       try {
         const listing = await Listing.findOne({
@@ -557,8 +568,8 @@ const resolvers = {
           console.log(`No listing found with ID: ${id}`);
           return null;
         }
-        if (typeof listing.costPerNight !== 'number') {
-          console.log('Invalid or missing costPerNight:', listing.costPerNight);
+        if (typeof listing.price !== 'number') {
+          console.log('Invalid or missing price:', listing.price);
           return null;
         }
 
@@ -576,7 +587,7 @@ const resolvers = {
         const numberOfNights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
 
         // Calculate the total cost
-        const totalCost = listing.costPerNight * numberOfNights;
+        const totalCost = listing.price * numberOfNights;
 
         return totalCost;
       } catch (error) {

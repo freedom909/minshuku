@@ -15,7 +15,7 @@ def analyze_listing():
         'locationId': 'location-3',
         'title': 'a hjouse',
         'description': 'you will be pleased to see',
-        'costPerNight': '44',
+        'price': '44',
         'hostId': 'user-1',
         'numOfBeds': '5',
         'pictures': ['oid.png', 'ker.png'],

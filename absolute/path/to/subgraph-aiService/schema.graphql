@@ -1,0 +1,31 @@
+// ... existing code ...
+input ListingInput {
+  title: String!
+  description: String!
+  pictures: [PictureInput!]!
+  numOfBeds: Int!
+  price: Float!
+  locationType: LocationType!
+  hostId: ID!
+  amenities: AmenityInput!
+  location: LocationInput!
+  status: ListingStatus!
+  host: HostInput!
+  priceRange: PriceRangeInput!
+  totalCostRange: TotalCostRangeInput!
+  locationFilter: LocationInput!
+  distance: Float
+}
+// ... existing code ...
+
+type TotalCostRange @key(fields: "id") @shareable {
+  id: ID! @shareable
+  min: Float! @shareable
+  max: Float! @shareable
+}
+
+input TotalCostRangeInput {
+  min: Float
+  max: Float
+}
+// ... existing code ...

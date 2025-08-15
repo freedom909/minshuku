@@ -44,7 +44,7 @@ import resolvers from './resolvers.js';
 //     // Simulate fetching the listing from the database
 //     if (where.id === "listing-1") {
 //       return {
-//         costPerNight: 120,
+//         price: 120,
 //       };
 //     }
 //     return null;
@@ -70,13 +70,13 @@ import resolvers from './resolvers.js';
 //   try {
 //     const listing = await context.dataSources.listingService.findOne({
 //       where: { id },
-//       attributes: ["costPerNight"],
+//       attributes: ["price"],
 //     });
 
 //     console.log(`Fetched listing for ID: ${id}`, listing);
 
-//     if (!listing || typeof listing.costPerNight !== 'number') {
-//       console.error("Could not find listing or invalid costPerNight");
+//     if (!listing || typeof listing.price !== 'number') {
+//       console.error("Could not find listing or invalid price");
 //       return null;
 //     }
 
@@ -100,7 +100,7 @@ import resolvers from './resolvers.js';
 //       return null;
 //     }
 
-//     const totalCost = listing.costPerNight * diffInDays;
+//     const totalCost = listing.price * diffInDays;
 
 //     console.log('Calculated total cost:', totalCost);
 

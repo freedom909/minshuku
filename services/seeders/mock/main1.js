@@ -27,7 +27,7 @@ const generateInsertListings = (listings) => {
         '${listing.title || "NULL"}',   
         '${listing.locationId || "NULL"}',   
         '${JSON.stringify(listing.amenityIds || [])}',   
-        ${listing.costPerNight !== undefined ? listing.costPerNight : "NULL"},   
+        ${listing.price !== undefined ? listing.price : "NULL"},   
         '${JSON.stringify(listing.bookingIds || [])}',   
         '${JSON.stringify(listing.reviewIds || [])}',    
         '${listing.description || "NULL"}',   
@@ -44,7 +44,7 @@ const generateInsertListings = (listings) => {
         ${listing.numOfBeds !== undefined ? listing.numOfBeds : "NULL"})`;
     });
 
-    const sql = `INSERT INTO listings (id, title, locationId, amenityIds, costPerNight, bookingIds, reviewIds, description, createdAt, updatedAt, hostId, photoThumbnails, checkInDate, checkOutDate, isFeatured, saleAmount, bookingNumber, listingStatus, numOfBeds)  
+    const sql = `INSERT INTO listings (id, title, locationId, amenityIds, price, bookingIds, reviewIds, description, createdAt, updatedAt, hostId, photoThumbnails, checkInDate, checkOutDate, isFeatured, saleAmount, bookingNumber, listingStatus, numOfBeds)  
 VALUES ${sqlValues.join(',\n')};`;
 
     return sql;

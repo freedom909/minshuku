@@ -2,6 +2,24 @@ import { Router } from 'express';
 const router = Router();
 import { container } from '../infrastructure/DB/container.js';
 
+router.post('/listings', async (req, res) => {
+  try {
+    const { title, description, price, hostId } = req.body;
+    // Mock host role if hostId is not provided
+    const mockHostId = hostId || 'mock-host-id';
+    const listing = await container.resolve('listingService').createListing({
+      title,
+      description,
+      price,
+      hostId: mockHostId
+    });
+    res.status(201).json(listing);
+  } catch (error) {
+    console.error('Error creating listing:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 router.get('/hot-listings-by-money', async (req, res) => {
     try {
         const listings = await db.collection('listings').aggregate([

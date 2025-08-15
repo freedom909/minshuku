@@ -6,89 +6,44 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import initializeLocationContainer from '../services/DB/initLocationContainer.js';
 import cors from 'cors';
-// import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import ListingService from '../services/listingService.js';
+import initializeLocationContainer from '../services/DB/initLocationContainer.js';
 
-// dotenv.config();
+dotenv.config();
 
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+const typeDefs = gql(readFileSync('./schema.graphql', 'utf-8'));
 
-const startApolloServer = async () => {
-  try {
-    const mysqlContainer = await initializeLocationContainer({ services: [] });
-    const app = express();
-    const httpServer = http.createServer(app);
+const startServer = async () => {
+  const container = await initializeLocationContainer();
+  const app = express();
+  const httpServer = http.createServer(app);
 
-    const server = new ApolloServer({
-      schema: buildSubgraphSchema({ typeDefs, resolvers }),
-      introspection: true,
-      plugins: [
-        ApolloServerPluginDrainHttpServer({ httpServer }),
-        {
-          async serverWillStart() {
-            return {
-              async drainServer() {
-                await mysqlContainer.resolve('mysqldb').end();
-              }
-            };
-          }
-        }
-      ],
-      context: async ({ req }) => {
-        // Extract user ID or listing ID based on request details
-        const userId = req.userId;
-        const listingId = req.body?.variables?.input?.listingId; // Access listingId from request input if provided
+  const server = new ApolloServer({
+    schema: buildSubgraphSchema({ typeDefs, resolvers }),
+    introspection: true,
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    context: ({ req }) => ({
+      locationId: req.body?.variables?.locationId || null,
+      dataSources: {
+        locationService: container.resolve('locationService'),
+      },
+    }),
+  });
 
-        return {
-          userId,
-          context: {
-            isListingCreation: true,
-            userRole: 'host',
-            listingId: listingId || null // Include listingId if it exists, or null if not provided
-          },
-          dataSources: {
-            listingService: mysqlContainer.resolve('listingService'),
-            locationService: mysqlContainer.resolve('locationService')
-          }
-        };
-      }
-    });
+  await server.start();
 
-    await server.start();
+  app.use(
+    '/graphql',
+    cors(),
+    express.json(),
+    expressMiddleware(server)
+  );
 
-    app.use(
-      '/graphql',
-      cors(),
-      express.json(),
-      expressMiddleware(server, {
-        context: async ({ req }) => {
-          const userId = req.userId;
-          const listingId = req.body?.variables?.input?.listingId;
-
-          return {
-            userId,
-            context: {
-              isListingCreation: true,
-              userRole: 'host',
-              listingId: listingId || null
-            },
-            dataSources: {
-              listingService: mysqlContainer.resolve('listingService'),
-              locationService: mysqlContainer.resolve('locationService')
-            }
-          };
-        }
-      })
-    );
-
-    await new Promise((resolve) => httpServer.listen({ port: 4140 }, resolve));
-    console.log(`Server is running on http://localhost:4140/graphql`);
-  } catch (error) {
-    console.error('Failed to start Apollo Server:', error);
-  }
+  httpServer.listen({ port: 4140 }, () => {
+    console.log('🚀 Locations Subgraph running at http://localhost:4140/graphql');
+  });
 };
 
-startApolloServer();
+startServer();

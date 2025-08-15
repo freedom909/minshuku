@@ -1,8 +1,9 @@
 extend schema
   @link(
-    url: "https://specs.apollo.dev/federation/v2.5"
-    import: ["@key", "@shareable", "@external", "@extends"]
+    url: "https://specs.apollo.dev/federation/v2.8"
+    import: ["@key", "@shareable", "@external", "@requires", "@provides", "@override", "@inaccessible"]
   )
+
 
 type Query @extends {
   "Returns a list of reviews for a given listing"

@@ -1,41 +1,26 @@
-
 import { Model, DataTypes } from 'sequelize';
 import sequelize from './seq.js';
 
-class Amenity extends Model { }
+class Amenity extends Model {}
 
 Amenity.init({
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  category: {
-    type: DataTypes.STRING,
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  name: DataTypes.STRING,
+  locationId: {
+    type: DataTypes.UUID, // match Location.id type
     allowNull: false,
+    unique: true, // one-to-one
+    references: {
+      model: 'Locations',
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
   },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
+  category: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: true },
 }, {
   sequelize,
   modelName: 'Amenity',
 });
-
-// Define associations if needed later
-
-// Amenity.associate = (models) => {
-//   Amenity.belongsToMany(models.Listing, {
-//     through: 'ListingAmenities',
-//     foreignKey: 'amenityId',
-//     otherKey: 'listingId',
-//     as: 'listings'
-//   });
-// };
 
 export default Amenity;

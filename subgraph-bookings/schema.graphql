@@ -1,19 +1,11 @@
 schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", 
-  import: ["@key", "@shareable", "@external", "@requires", "@provides", "@override", "@inaccessible"]) {
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@external","@shareable"]) {
   query: Query
 }
 
-enum CacheControlScope {  
-  PUBLIC  
-  PRIVATE  
-  INHERIT  
-}
-scalar DateTime
-directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE  
-
+scalar DateTime 
 type Query {
-  ### Bookings
+    ### Bookings
   bookingsForHost(listingId: ID!, status: BookingStatus): [Booking!]! @shareable
   currentGuestBooking: Booking! @shareable
   upcomingGuestBookings: [Booking!]! @shareable
@@ -22,6 +14,16 @@ type Query {
   booking(id: ID!): Booking! @shareable
   bookingsForGuest(userId: ID!): [Booking!] @shareable
 }
+
+
+extend type User @key(fields: "id") {
+  id: ID! @external
+}
+
+extend type Listing @key(fields: "id") {
+  id: ID! @external
+}
+
 
 type CancelBookingResponse implements MutationResponse {
   code: Int! @shareable
@@ -54,19 +56,19 @@ enum BookingStatus {
 
 type Booking @key(fields: "id") {
   id: ID!
-  bookingNumber: String! @shareable @cacheControl(maxAge: 3600)
-  isFeatured: Boolean! @shareable @cacheControl(maxAge: 3600)
-  reservedDate: DateTime! @shareable @cacheControl(maxAge: 3600)
-  listing: Listing! @shareable @cacheControl(maxAge: 3600) 
-  guest: Guest! @shareable @cacheControl(maxAge: 3600) 
+  bookingNumber: String! @shareable 
+  isFeatured: Boolean! @shareable 
+  reservedDate: DateTime! @shareable 
+  listing: Listing! @shareable  
+  guest: Guest! @shareable  
   review: Review @shareable
-  checkInDate: DateTime! @shareable @cacheControl(maxAge: 3600) 
-  checkOutDate: DateTime! @shareable @cacheControl(maxAge: 3600) 
-  totalPrice: Float! @shareable @cacheControl(maxAge: 3600) 
-  criteriaTime: Int! @shareable @cacheControl(maxAge: 3600) 
-  status: BookingStatus! @shareable @cacheControl(maxAge: 60) 
-  cancelledAt: DateTime @shareable @cacheControl(maxAge: 60)
-  confirmedAt: DateTime @shareable @cacheControl(maxAge: 60)
+  checkInDate: DateTime! @shareable  
+  checkOutDate: DateTime! @shareable  
+  totalPrice: Float! @shareable  
+  criteriaTime: Int! @shareable  
+  status: BookingStatus! @shareable 
+  cancelledAt: DateTime @shareable 
+  confirmedAt: DateTime @shareable 
 }
 
 type ReservedDate @shareable {
@@ -74,10 +76,6 @@ type ReservedDate @shareable {
   checkOutDate: DateTime!
 }
 
-type Listing @key(fields: "id") {
-  id: ID!
-  bookings: [Booking!]! @shareable
-}
 
 type Guest @key(fields: "id") {
   id: ID!

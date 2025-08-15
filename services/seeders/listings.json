@@ -1,6 +1,6 @@
 [
   {
-    "costPerNight": 120.0,
+    "price": 120.0,
     "title": "Cave campsite in snowy MoundiiX",
     "locationType": "CAMPSITE",
     "description": "Enjoy this amazing cave campsite in snow MoundiiX, where you'll be one with the nature and wildlife in this wintery planet. All space survival amenities are available. We have complementary dehydrated wine upon your arrival. Check in between 34:00 and 72:00. The nearest village is 3AU away, so please plan accordingly. Recommended for extreme outdoor adventurers.",
@@ -23,7 +23,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 592.0,
+    "price": 592.0,
     "title": "Cozy yurt in Mraza",
     "locationType": "ROOM",
     "description": "Thiz cozy yurt has an aerodyne hull and efficient sublight engines. It is equipped with an advanced sensor system and defensive force shield. Meteor showers are quite common, please rest assured that our Kevlar-level shields will keep you safe from any space debris. Mraza suns are known to have high levels of UV hyper radiation, which we counteract with the yurt's UV protection shield.",
@@ -46,7 +46,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 313.0,
+    "price": 313.0,
     "title": "Repurposed mid century aircraft in Kessail",
     "locationType": "SPACESHIP",
     "description": "Enjoy this floaty, repurposed aircraft reminiscent of Earth’s former converted airstreams. Includes lake access!",
@@ -68,7 +68,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 520.0,
+    "price": 520.0,
     "title": "Repurposed mid century home in Kessail",
     "locationType": "HOUSE",
     "description": "Enjoy a converted mid-century home in Kessail. Originally from Earth, this craft has been completely renovated for outer space. Kessail features sunny weather with a chance of deorbitting debris. We have many transportation options available to you should you choose to venture outside.",
@@ -91,7 +91,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 580.0,
+    "price": 580.0,
     "title": "The Qo’noS Mountaintop Cabin",
     "locationType": "HOUSE",
     "description": "The name speaks for itself! Come enjoy our comfortable cabin with amazing views of neighboring planets.",
@@ -113,7 +113,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 330.0,
+    "price": 330.0,
     "title": "Cozy room in Vaperi V mansion with aircraft access",
     "locationType": "SPACESHIP",
     "description": "Just like the cottages one might find on Earth, but on an entirely different planet.",
@@ -135,7 +135,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 430.0,
+    "price": 430.0,
     "title": "Interstellar cottage in Vaperi III",
     "locationType": "ROOM",
     "description": "Just like the cottages one might find on Earth, but on an entirely different planet.",
@@ -157,7 +157,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 688.0,
+    "price": 688.0,
     "title": "The Pod in Origae-6",
     "locationType": "SPACESHIP",
     "description": "Enjoy a converted pod in Origae-6! Originally from Earth, this craft has been completely renovated for space travel. We offer complimentary home-away-from-homeworld breakfast from 0800 to 0802. This spaceship features a full temperature control system, a droid concierge and a self-cleaning bathroom. Plasma lighting system is all automatic and cannot be manually overriden. Though this pod is small, it is homey.",
@@ -179,7 +179,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 474.0,
+    "price": 474.0,
     "title": "The Nostromo in LV-426",
     "locationType": "HOUSE",
     "description": "Ever wondered what it must be like to be aboard The Nostromo, minus the Xenomorph? Now you can find out!",
@@ -202,7 +202,7 @@
     "updatedAt": "2021-02-08 04:00:00"
   },
   {
-    "costPerNight": 687.0,
+    "price": 687.0,
     "title": "The A-Frame in Mraza",
     "locationType": "APARTMENT",
     "description": "Just like the cottages one might find on Earth, but on an entirely different planet.",

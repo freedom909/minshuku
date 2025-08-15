@@ -1,6 +1,9 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", 
-        import: ["@key", "@shareable"])
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.8"
+    import: ["@key", "@shareable", "@external", "@requires", "@provides", "@override", "@inaccessible"]
+  )
+
 enum CacheControlScope {  
   PUBLIC  
   PRIVATE  

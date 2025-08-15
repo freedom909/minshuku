@@ -29,7 +29,7 @@ type Listing {
   description: String! @shareable
   pictures: [Picture!]! @shareable  
   numOfBeds: Int! @shareable
-  costPerNight: Float! @shareable
+  price: Float! @shareable
   locationType: LocationType! @shareable
   hostId: ID! @shareable
   amenities: [Amenity!]! @shareable

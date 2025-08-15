@@ -73,8 +73,8 @@ class AccountService {
     return await this.accountRepository.getAllAccounts();
   }
 
-  async createListing({ title, description, photoThumbnail, numOfBeds, costPerNight, locationType, amenities, hostId }) {
-    if (!title || !description || !photoThumbnail || !numOfBeds || !costPerNight || !locationType || !amenities || !hostId) {
+  async createListing({ title, description, photoThumbnail, numOfBeds, price, locationType, amenities, hostId }) {
+    if (!title || !description || !photoThumbnail || !numOfBeds || !price || !locationType || !amenities || !hostId) {
       throw new Error("All listing details must be provided");
     }
 
@@ -88,7 +88,7 @@ class AccountService {
       description,
       photoThumbnail,
       numOfBeds,
-      costPerNight,
+      price,
       locationType,
       amenities,
       hostId

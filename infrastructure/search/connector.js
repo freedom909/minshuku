@@ -31,7 +31,7 @@ async function syncDataToElasticsearch() {
         for (let row of rows) {
             // Transform the row data if necessary
             const transformedRow = {
-              costPerNight: row.costPerNight,
+              price: row.price,
               title: row.title,
               locationType: row.locationType,
               description: row.description,

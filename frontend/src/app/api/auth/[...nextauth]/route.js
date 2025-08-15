@@ -9,7 +9,6 @@ import localAuthService from "@/userService/localAuthService";
 import oauthService from "@/userService/oauthService";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
-import axios from "axios";
 
 const handler = NextAuth({
   providers: [
@@ -32,8 +31,6 @@ const handler = NextAuth({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET
     }),
-
-
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -42,54 +39,25 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const { email, password } = credentials;
-    
-          if (!email || !password) {
-            throw new Error("Email and password are required");
+          const user = await localAuthService.authenticate(
+            credentials.email,
+            credentials.password
+          );
+
+          if (!user) {
+            throw new Error("Invalid credentials");
           }
-    
-          const response = await axios.post("http://localhost:4010/graphql", {
-            query: `
-              mutation SignIn($input: SignInInput!) {
-                signIn(input: $input) {
-                  code
-                  auth {
-                    token
-                    userId
-                    role
-                  }
-                  success
-                  message
-                }
-              }
-            `,
-            variables: {
-              input: { email, password }
-            }
-          });
-    
-          const result = response.data?.data?.signIn;
-    
-          const { auth, success, message } = result;
-    
-          if (!success || !auth?.token || !auth?.userId) {
-            throw new Error(message || "Authentication failed");
-          }
-    
+
           return {
-            id: auth.userId,
-            email,
-            role: auth.role,
-            token: auth.token
+            id: user.id,
+            email: user.email,
+            name: user.name
           };
-    
         } catch (error) {
-          console.error("Authorization error:", error);
           throw new Error(error.message || "Authentication failed");
         }
       }
-    }),
-
+    })
   ],
   session: {
     strategy: "jwt",

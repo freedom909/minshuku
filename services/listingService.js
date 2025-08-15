@@ -15,7 +15,6 @@ import queryDatabase from './DB/dbUtils.js'
 import Listing from './models/listing.js';
 import Amenity from './models/amenity.js';
 import Coordinate from './models/location.js'
-import dbConfig from './DB/dbConfig.js';
 import Location from './models/location.js';
 import { query } from 'express';
 // import UUIDV4 from 'uuid';
@@ -55,7 +54,7 @@ class ListingService {
       // Haversine formula to calculate distance
       const query = `
       SELECT 
-        listings.id, listings.title, listings.description, listings.costPerNight, listings.hostId, listings.locationId,
+        listings.id, listings.title, listings.description, listings.price, listings.hostId, listings.locationId,
         listings.numOfBeds, listings.pictures, listings.isFeatured, listings.saleAmount,
         (
           ${earthRadiusInKm} * ACOS(
@@ -83,7 +82,7 @@ class ListingService {
           description: listing.description || "No description available", // Default description if missing
           pictures: listing.pictures || [],
           numOfBeds: listing.numOfBeds || 0,
-          costPerNight: listing.costPerNight || 0,
+          price: listing.price || 0,
           isFeatured: listing.isFeatured !== null ? listing.isFeatured : false,
           saleAmount: listing.saleAmount || 0,
           checkInDate: listing.checkInDate || "default_check_in_date",
@@ -576,7 +575,12 @@ class ListingService {
     }
   }
 
-  async createListing(_, { input }, context) {
+  async createListing(_, { input }, {context,user}) {
+   
+    if (user?.userRole!== 'host') {
+      throw new Error("You must be a host to create a listing");
+    }
+  
     const { dataSources } = context;
     console.log(`Creating new listing:`, dataSources)
     const { locationService, listingService } = dataSources;
@@ -605,7 +609,7 @@ class ListingService {
     console.log("Listing data to create:", {
       description: input.description,
       pictures: input.pictures,
-      costPerNight: input.costPerNight,
+      price: input.price,
       locationType: input.locationType,
       listingStatus: input.listingStatus,
       title: input.title,
@@ -648,6 +652,13 @@ class ListingService {
       throw new GraphQLError("Listing creation failed.");
     }
   }
+
+  
+  async releaseListing({ id, availability }) {
+    // Update availability in DB
+    return await this.listingRepository.updateListing(id, { availability });
+  }
+
 
   async getLocations() {
     try {
@@ -712,7 +723,7 @@ class ListingService {
       if (!listing || !listingId) {
         throw new Error("Missing required fields: listing or listingId"); // Error updating listing: Error: Missing required fields: listing or listingId
       }
-      const { title, description, costPerNight, pictures } = listing; //TypeError: Cannot destructure property 'title' of 'listing' as it is undefined.
+      const { title, description, price, pictures } = listing; //TypeError: Cannot destructure property 'title' of 'listing' as it is undefined.
 
       console.log("Updating listing with id:", listingId, "and data:", listing);
       let query = `UPDATE listings SET title = :title`;
@@ -722,9 +733,9 @@ class ListingService {
         replacements.description = description;
       }
 
-      if (costPerNight !== undefined) {
-        query += `, costPerNight = :costPerNight`;
-        replacements.costPerNight = costPerNight;
+      if (price !== undefined) {
+        query += `, price = :price`;
+        replacements.price = price;
       }
       if (pictures !== undefined) {
         query += `, pictures = :pictures`;
@@ -735,7 +746,7 @@ class ListingService {
         replacements,
       });
       console.log("Executing query:", query);
-      console.log("With replacements:", { title, description, costPerNight, listingId });
+      console.log("With replacements:", { title, description, price, listingId });
 
       const [updateResult] = await this.sequelize.query(query, {
         replacements
@@ -779,7 +790,7 @@ class ListingService {
       SELECT * 
       FROM listings 
       WHERE numOfBeds = :numOfBeds 
-      ORDER BY costPerNight ${sortOrder}
+      ORDER BY price ${sortOrder}
       LIMIT :limit OFFSET :skipValue
     `;
 

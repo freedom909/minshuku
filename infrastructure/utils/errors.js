@@ -20,4 +20,15 @@ class ForbiddenError extends GraphQLError {
   }
 }
 
-export { AuthenticationError, ForbiddenError };
+class UserInputError extends GraphQLError {
+  constructor(message) {
+    super(message, {
+      extensions: {
+        code: 'USER_INPUT_ERROR',
+      },
+    });
+  }
+}
+
+
+export { AuthenticationError, ForbiddenError,UserInputError };

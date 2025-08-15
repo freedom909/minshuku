@@ -1,81 +1,25 @@
-extend schema
-  @link(
-    url: "https://specs.apollo.dev/federation/v2.7", 
-      import: ["@key", "@shareable","@external","@requires"]
-      )
+schema
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable"]) {
+  query: Query
+  mutation: Mutation
+}
 
-
-# SCALARS
 scalar DateTime
 
-type  PriceRange @shareable {
-  min: Float! 
-  max: Float!
-}
-
-interface User {
-  id: ID!
-}
-
-type Booking @key(fields: "id") {
-  id: ID!
-  checkInDate: String! @shareable
-  checkOutDate: String! @shareable
-  listing: Listing! @shareable
-  user: User! 
-  totalCost: Float! @shareable
-  createdAt: DateTime @shareable
-  updatedAt: DateTime @shareable
-}
-
-type Listing @key(fields: "id") {
-    id: ID!  
-    title: String! @shareable
-}  
-
-type ROOM @key(fields: "id") {
-  id: ID!
-  listing: Listing! @shareable
-  checkInDate: String!  @shareable
-  checkOutDate: String!  @shareable
-  user: User!
-  totalCost: Float! @shareable
+type Amenity @key(fields: "id") {
+  id: ID! @shareable
+  title: String! @shareable
+  locationId: ID! @shareable
+  category: String! @shareable
+  description: String @shareable
   createdAt: DateTime! @shareable
   updatedAt: DateTime! @shareable
 }
-type TotalCostRange @shareable {
-  min: Float!
-  max: Float!
-}
-
-enum LocationType  {
- HOUSE
-  APARTMENT
-  COTTAGE
-  VILLA
-  SPACESHIP
-  ROOM
-}
-
-type Amenity @key(fields: "id"){
-  id: ID! @shareable
-  name: String! @shareable
-}
 
 type Query {
-  listings: [Listing!]! @shareable
-  listing(id: ID!): Listing @shareable
-  amenities: [Amenity!]! 
-  amenity(id: ID!): Amenity @shareable
+ amenities(locationId: ID!): [Amenity!]! @shareable
 }
-
-type Location @shareable {
-  latitude: Float!
-  longitude: Float!
-}
-
 
 type Mutation {
   addAmenity(name: String!): Amenity! @shareable
-  addAmenityToListing(listingId: ID!, amenityId: ID!): Listing! @shareable
 }

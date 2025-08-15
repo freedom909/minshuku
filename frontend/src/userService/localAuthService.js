@@ -8,7 +8,10 @@ const loginRequestToSubgraph = `
       success
       message
       token {
-        accessToken
+        accessToken {
+          token
+          expiresAt
+        }
       }
       user {
         id
@@ -33,8 +36,6 @@ const registerRequestToSubgraph = `
       success
       auth {
         token
-      userId
-      role
       }
     }
   }
@@ -63,20 +64,20 @@ const localAuthService = {
         throw new Error(result.errors[0].message);
       }
 
-      const signInResult = result.data.signIn;
-      if (!signInResult.success || !signInResult.user || !signInResult.token) {
-        throw new Error(signInResult.message || "Authentication failed");
+      const { user, token } = result.data.signIn;
+      if (!user || !token) {
+        throw new Error("Authentication failed");
       }
 
-      if (signInResult.token?.accessToken?.token) {
-        localStorage.setItem("jwt_token", signInResult.token.accessToken.token);
+      if (token?.accessToken?.token) {
+        localStorage.setItem("jwt_token", token.accessToken.token);
       }
 
       return {
         success: true,
-        user: signInResult.user,
-        token: signInResult.token.accessToken.token,
-        message: signInResult.message || "Authentication successful",
+        user,
+        token: token.accessToken.token,
+        message: "Authentication successful",
       };
     } catch (error) {
       console.error("Authentication error:", error);
@@ -99,7 +100,6 @@ const localAuthService = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-internal-secret": process.env.INTERNAL_SECRET,
         },
         body: JSON.stringify({
           query: registerRequestToSubgraph,
@@ -140,9 +140,7 @@ const localAuthService = {
 
       return {
         success: result.data.signUp.success,
-        code: result.data.signUp.code,
-        role: result.data.signUp.role || "GUEST",
-        userId: result.data.signUp.userId || null,
+        userId: result.data.signUp.userId,
         message: result.data.signUp.message,
         token: result.data.signUp.auth?.token || null,
       };

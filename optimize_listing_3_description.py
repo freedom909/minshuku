@@ -13,7 +13,7 @@ MOCK_LISTING = {
     "id": "listing-3",
     "title": "舒适的两居室公寓",
     "description": "这是一个位于市中心的舒适两居室公寓，靠近公共交通和各种便利设施。",
-    "costPerNight": 120,
+    "price": 120,
     "numOfBeds": 2,
     "locationType": "城市",
     "amenities": [

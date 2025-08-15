@@ -1,0 +1,8 @@
+query GetListings {
+  listings {
+    id
+    title
+    description
+    price
+  }
+}

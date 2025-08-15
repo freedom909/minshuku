@@ -1,0 +1,5 @@
+type TotalCostRange @key(fields: "id") @shareable {
+  id: ID! @shareable
+  min: Float! @shareable
+  max: Float! @shareable
+}

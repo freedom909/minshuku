@@ -1,7 +1,9 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.7",
-  import: ["@key", "@shareable"]
-      )
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.8"
+    import: ["@key", "@shareable", "@external", "@requires", "@provides", "@override", "@inaccessible"]
+  )
+
 
 # SCALARS
 scalar DateTime
@@ -66,6 +68,7 @@ enum Role {
   ADMIN
   GUEST
   HOST
+  EDITOR
 }
 
 type Guest implements User @key(fields: "id") {
@@ -283,8 +286,6 @@ input CreateListingInput {
   pictures: [String!]!
   "The number of beds in the listing"
   numOfBeds: Int!
-  "The cost per night of the listing"
-  costPerNight: Float!
   "The type of location"
   locationType: LocationType!
   "The amenity IDs for the listing"
@@ -319,6 +320,8 @@ enum LocationType {
   CAMPSITE
   APARTMENT
   ROOM
+  COTTAGE
+  VILLA
 }
 
 type Amenity @key(fields: "id") {
@@ -327,9 +330,11 @@ type Amenity @key(fields: "id") {
   name: String! @shareable
 }
 
-enum ListingStatus{
+enum ListingStatus {
   ACTIVE,
   PENDING,
+  INACTIVE,
+  ARCHIVED,
   SOLD,
   DELETED,
   REJECT,
@@ -348,7 +353,7 @@ type Booking @key(fields: "id") {
   checkInDate: DateTime! @shareable
   "The check-out date for the reservation"
   checkOutDate: DateTime! @shareable
-  "Total price price, calculated using the listing's costPerNight and the check-in check-out dates"
+  "Total price price, calculated using the listing's price and the check-in check-out dates"
   totalPrice: Float! @shareable
 }
 

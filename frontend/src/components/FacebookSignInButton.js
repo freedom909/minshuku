@@ -12,7 +12,7 @@ export default function FacebookSignInButton() {
     
     try {
       const result = await signIn('facebook', { 
-        callbackUrl: '/dashboard',
+        callbackUrl: '/',
       });
 
       if (result?.url) {

@@ -1,9 +1,8 @@
 import { GraphQLError } from "graphql";
-import jwt from "jsonwebtoken";
+
+import { UserInputError } from "graphql";
+
 import { OAuth2Client } from "google-auth-library";
-import userRepository from "../services/repositories/userRepository.js";
-import accountLockService from "../services/userService/accountLockService.js";
-import userService from "../services/userService/index.js";
 
 const resolvers = {
   Mutation: {

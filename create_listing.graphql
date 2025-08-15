@@ -1,0 +1,22 @@
+mutation CreateListing {
+  createListing(input: {
+    title: "测试房源",
+    description: "这是一个测试房源，包含关联的设施和位置数据。",
+    price: 1000,
+    amenities: [1, 2],  # 关联设施 ID 列表
+    locationId: 1       # 关联位置 ID
+  }) {
+    id
+    title
+    description
+    price
+    amenities {
+      id
+      name
+    }
+    location {
+      id
+      name
+    }
+  }
+}

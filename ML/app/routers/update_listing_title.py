@@ -17,7 +17,7 @@ def update_listing_title(listing_id, new_title):
             "description": "Updated by AI",
             "pictures": [{"url": "https://example.com/updated.jpg"}],
             "numOfBeds": 2,
-            "costPerNight": 150.0,
+            "price": 150.0,
             "locationType": "APARTMENT",
             "hostId": "user-6",
             "amenities": {"id": "amenity-1", "name": "WiFi"},

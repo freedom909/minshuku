@@ -51,7 +51,7 @@ export default function RegisterPage() {
       return false;
     }
 
-    if (!/[^A-Za-z0-9]/.test(formData.password)) {
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
       setError('密码必须包含至少一个特殊字符');
       return false;
     }
@@ -72,7 +72,7 @@ export default function RegisterPage() {
       name: formData.name,
       nickname: formData.nickname || formData.name,
       role: formData.role || 'GUEST',
-      picture: formData.picture || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp"
+      picture: formData.picture || "https://www.gravatar.com/avatar/?d=mp"
     });
     setLoading(false);
   };

@@ -17,6 +17,10 @@ subgraphs:
     routing_url: http://localhost:4010/graphql
     schema:
       file: ./subgraph-users/schema.graphql
+  listings:
+    routing_url: http://localhost:4040/graphql
+    schema:
+      file: ./subgraph-listings/schema.graphql
   # accounts:
   #   routing_url: http://localhost:4020
   #   schema:
@@ -29,10 +33,10 @@ subgraphs:
     routing_url: http://localhost:4040/graphql
     schema:
       file: ./subgraph-listings/schema.graphql
-  # bookings:
-  #   routing_url: http://localhost:4050/graphql
-  #   schema:
-  #     file: ./subgraph-bookings/schema.graphql
+  bookings:
+    routing_url: http://localhost:4050/graphql
+    schema:
+      file: ./subgraph-bookings/schema.graphql
   carts:
     routing_url: http://localhost:4060/graphql
     schema:
@@ -49,10 +53,12 @@ subgraphs:
     routing_url: http://localhost:4090/graphql
     schema:
       file: ./subgraph-amenities/schema.graphql
-  # aiServices:
-  #   routing_url: http://localhost:4100/graphql
-  #   schema:
-  #     file: ./subgraph-locations/schema.graphql    
+  gateway:
+    routing_url: http://localhost:4000/
+  aiServices:
+    routing_url: http://localhost:4100/graphql
+    schema:
+      file: ./subgraph-aiServices/schema.graphql    
   locations:
     routing_url: http://localhost:4140/graphql
     schema:

@@ -15,7 +15,7 @@ def test_listing_optimization():
         'id': 'listing-10',
         'title': '现代公寓',
         'description': '你会喜欢这里的',
-        'costPerNight': '150',
+        'price': '150',
         'numOfBeds': '2',
         'locationType': 'APARTMENT',
         'pictures': ['front.jpg', 'room1.jpg', 'kitchen.jpg'],

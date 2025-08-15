@@ -32,7 +32,7 @@ async function generateSQL() {
             console.log('Data:', JSON.stringify(data, null, 2)); // Log entire data structure  
 
             return `  
-        INSERT INTO listings (id, title, locationId, amenityIds, costPerNight, bookingIds, reviewIds, description, createdAt, updatedAt, hostId, photoThumbnails, checkInDate, checkOutDate, isFeatured, saleAmount, bookingNumber, listingStatus, numOfBeds)  
+        INSERT INTO listings (id, title, locationId, amenityIds, price, bookingIds, reviewIds, description, createdAt, updatedAt, hostId, photoThumbnails, checkInDate, checkOutDate, isFeatured, saleAmount, bookingNumber, listingStatus, numOfBeds)  
         VALUES ${data.map((listing) => {
                 console.log('Current Listing:', JSON.stringify(listing, null, 2)); // Debug output for each listing  
 
@@ -41,7 +41,7 @@ async function generateSQL() {
                     title,
                     locationId,
                     amenityIds,
-                    costPerNight,
+                    price,
                     bookingIds,
                     reviewIds,
                     description,
@@ -62,7 +62,7 @@ async function generateSQL() {
                 '${title || ''}',   
                 '${locationId || ''}',   
                 '${JSON.stringify(amenityIds || [])}',   
-                ${costPerNight || 0},   
+                ${price || 0},   
                 '${JSON.stringify(bookingIds || [])}',   
                 '${JSON.stringify(reviewIds || [])}',    
                 '${description || ''}',   

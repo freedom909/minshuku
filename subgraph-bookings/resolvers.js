@@ -1,14 +1,19 @@
-import { v4 as uuidv4 } from 'uuid';
-import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
 
-import { requireAuth, requireRole } from '../infrastructure/auth/authAndRole.js';
-// import { permissions } from '../infrastructure/auth/permission.js';
+import { requireAuth, requireRole} from '../infrastructure/auth/authAndRole.js';
+import { v4 as uuidv4 } from 'uuid';
+import { AuthenticationError, ForbiddenError,UserInputError } from '../infrastructure/utils/errors.js';
+import { createClient } from 'graphql-ws';
+import { permissions } from '../infrastructure/auth/permission.js';
 import Booking from '../services/models/booking.js';
 import User from '../services/models/user.js';
 import Listing from '../services/models/listing.js';
 import cacheClient from '../cache/cacheClient.js';
 import { broadcast, subscriptionTopics } from '../cache/cachePubSub.js';
-// const { bookingsWithPermission } = permissions;
+const { bookingsWithPermission } = permissions;
+
+const client = createClient({
+  url: 'ws://localhost:4000/graphql', // replace with your subscription server URL
+});
 
 
 
@@ -59,7 +64,7 @@ function removeClient(client) {
   clients = clients.filter(c => c !== client);
 }
 
-client.subscribe({
+client.subscribe({ // Could not find name 'client'. how to do?
   query: `
   subscription{
     bookingCreated{
@@ -78,12 +83,6 @@ client.subscribe({
   error: (error) => console.error('Error:', error),
   complete: () => console.log('Subscription complete'),
 })
-
-const Mutation = {
-  createBooking,
-  cancelBooking,
-  confirmBooking
-};
 
 
 
@@ -237,9 +236,66 @@ const resolvers = {
         console.error('Booking Error:', error);
         throw new ForbiddenError('Unable to create booking at this time', { extensions: { code: 'FORBIDDEN' } });
       }
-    },
-    ),
+    }),
 
+   cancelBooking: requireAuth(async (_, { id }, { dataSources, user }) => {
+  const { listingService, bookingService } = dataSources;
+  const guestId = user?.id;
+
+  if (!guestId) {
+    throw new AuthenticationError('You need to be logged in as a guest to cancel a booking'); 
+  }
+  if (!listingService || !bookingService) {
+    throw new Error('Data sources are not available.');
+  }
+
+  // First, get the booking
+  const booking = await bookingService.getBookingById(id);
+  if (!booking) {
+    throw new ForbiddenError('Booking not found', { extensions: { code: 'NOT_FOUND' } });
+  }
+
+  // Ensure the logged-in guest is the owner
+  if (booking.guestId !== guestId) {
+    throw new ForbiddenError('Insufficient permissions', { extensions: { code: 'FORBIDDEN' } });
+  } 
+
+  // Check booking status
+  if (booking.status !== 'UPCOMING') {
+    throw new ForbiddenError('Only upcoming bookings can be cancelled', { extensions: { code: 'FORBIDDEN' } });
+  }
+
+  // Ensure cancellation happens before check-in
+  const checkInTime = new Date(booking.checkInDate).getTime();
+  if (checkInTime < Date.now()) {
+    throw new ForbiddenError('Booking cannot be cancelled after the check-in time', { extensions: { code: 'FORBIDDEN' } });
+  }
+
+  try {
+    await bookingService.updateBookingStatus({
+      id,
+      status: 'CANCELLED',
+      cancelledAt: new Date().toISOString(),
+    });
+
+    // Notify subscribers
+    broadcast(subscriptionTopics.BOOKING_CANCELLED, booking);
+
+    // Release listing availability
+    await listingService.releaseListing({
+      id: booking.listingId,
+      availability: true,
+    });
+
+    return {
+      code: 200,
+      success: true,
+      message: 'Booking cancelled',
+    };
+  } catch (error) {
+    throw new ForbiddenError('Unable to cancel booking', { extensions: { code: 'FORBIDDEN' } });
+  }
+}),
 
     confirmBooking: requireAuth(async (_, { id }, { dataSources, user }) => {
       const { bookingService } = dataSources
@@ -336,9 +392,6 @@ const resolvers = {
     },
   },
 
-
-
-
   Booking: {
     listing: async ({ listingId }, _, { dataSources }) => {
       return dataSources.listingService.getListing(listingId);
@@ -376,6 +429,7 @@ const resolvers = {
     __resolveReference: async (listing, { dataSources }) => {
       return dataSources.listingService.getListing(listing.id);
     },
+ 
   },
   Subscription: {
     Subscription: {

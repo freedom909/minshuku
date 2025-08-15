@@ -51,7 +51,7 @@ class PriceOptimizer:
             id
             title
             description
-            costPerNight
+            price
             numOfBeds
             locationType
             rating
@@ -119,7 +119,7 @@ class PriceOptimizer:
         target_listing = await self._get_listing_details(listing_id)
         
         # 提取价格数据
-        prices = [listing["costPerNight"] for listing in similar_listings]
+        prices = [listing["price"] for listing in similar_listings]
         
         # 计算统计数据
         avg_price = sum(prices) / len(prices)
@@ -128,7 +128,7 @@ class PriceOptimizer:
         median_price = sorted(prices)[len(prices) // 2]
         
         # 计算目标房源价格与市场的对比
-        current_price = target_listing.get("costPerNight", 0)
+        current_price = target_listing.get("price", 0)
         price_difference = current_price - avg_price
         price_difference_percentage = (price_difference / avg_price) * 100 if avg_price > 0 else 0
         
@@ -182,7 +182,7 @@ class PriceOptimizer:
         
         房源信息：
         - 标题: {target_listing.get('title')}
-        - 当前价格: ${target_listing.get('costPerNight')} 每晚
+        - 当前价格: ${target_listing.get('price')} 每晚
         - 房间数: {target_listing.get('numOfBeds')} 间
         - 位置类型: {target_listing.get('locationType')}
         - 评分: {target_listing.get('rating', 'N/A')}
@@ -217,7 +217,7 @@ class PriceOptimizer:
             
             # 计算建议价格范围
             avg_price = market_analysis['market_analysis']['average_price']
-            current_price = target_listing.get('costPerNight', 0)
+            current_price = target_listing.get('price', 0)
             
             # 根据市场情况和当前价格计算建议价格范围
             if market_analysis['comparison']['is_significantly_above']:
@@ -274,7 +274,7 @@ class PriceOptimizer:
                 "message": f"无法获取房源 ID {listing_id} 的详细信息"
             }
         
-        current_price = target_listing.get("costPerNight", 0)
+        current_price = target_listing.get("price", 0)
         
         # 计算不同价格点
         price_points = []
@@ -345,7 +345,7 @@ class PriceOptimizer:
                 "message": f"无法获取房源 ID {listing_id} 的详细信息"
             }
         
-        current_price = target_listing.get("costPerNight", 0)
+        current_price = target_listing.get("price", 0)
         
         # 获取房源位置信息，用于确定季节性因素
         location = {
@@ -487,7 +487,7 @@ class PriceOptimizer:
             id
             title
             description
-            costPerNight
+            price
             numOfBeds
             locationType
             lat

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "types": "module",
+  "type": "module",
   "scripts": {
     "test": "jest",
     "start": "nodemon index.js"
@@ -20,6 +20,8 @@
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
     "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.17.1",
+    "morgan": "^1.10.1",
     "nodemon": "^3.1.10",
     "path": "^0.12.7"
   }

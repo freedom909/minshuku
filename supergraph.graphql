@@ -117,7 +117,7 @@ type Booking
   review: Review @join__field(graph: CARTS) @join__field(graph: LISTINGS)
 
   """
-  Total price price, calculated using the listing's costPerNight and the check-in check-out dates
+  Total price price, calculated using the listing's price and the check-in check-out dates
   """
   totalPrice: Float! @join__field(graph: CARTS)
 
@@ -244,7 +244,7 @@ input CreateListingInput
   numOfBeds: Int!
 
   """The cost per night of the listing"""
-  costPerNight: Float!
+  price: Float!
 
   """The type of location"""
   locationType: LocationType!
@@ -545,7 +545,7 @@ type Listing
   host: User @join__field(graph: CARTS) @join__field(graph: LISTINGS)
 
   """The price per night for the listing"""
-  costPerNight: Float @join__field(graph: CARTS, type: "Float!") @join__field(graph: LISTINGS, type: "Float")
+  price: Float @join__field(graph: CARTS, type: "Float!") @join__field(graph: LISTINGS, type: "Float")
 
   """The total number of bookings for the listing"""
   bookingsCount: Int! @join__field(graph: CARTS)
@@ -1177,7 +1177,7 @@ input UpdateListingInput
   numOfBeds: Int
 
   """The cost per night"""
-  costPerNight: Float
+  price: Float
 
   """The location type of the listing"""
   locationType: LocationType

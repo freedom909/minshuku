@@ -1,8 +1,9 @@
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.8"
-    import: ["@key", "@shareable","@external"]
+    import: ["@key", "@shareable", "@external", "@requires", "@provides", "@override", "@inaccessible"]
   )
+
 
 scalar DateTime
 
@@ -21,7 +22,7 @@ type Booking @key(fields: "id") {
   checkInDate: String! @shareable
   "Check-out date for the reservation"
   checkOutDate: String! @shareable
-  "Total price price, calculated using the listing's costPerNight and the check-in check-out dates"
+  "Total price price, calculated using the listing's price and the check-in check-out dates"
   totalPrice: Float! @shareable
   "The status of the booking - check BookingStatus type for all possibilities"
   status: BookingStatus! @shareable
@@ -41,7 +42,7 @@ type Listing @key(fields: "id") {
   "The host of the listing"
   host: User @shareable
   "The price per night for the listing"
-  costPerNight: Float!@shareable
+  price: Float!@shareable
   "The total number of bookings for the listing"
   bookingsCount: Int!@shareable
   "The total number of reviews for the listing"

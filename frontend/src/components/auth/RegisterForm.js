@@ -1,10 +1,10 @@
 // File: frontend/src/components/auth/RegisterForm.js
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function RegisterForm() {
   const [passwordErrors, setPasswordErrors] = useState([]);
-  const { register } = useAuth();
+  //const { register } = useAuth();
 
   const validatePassword = (password) => {
     const errors = [];

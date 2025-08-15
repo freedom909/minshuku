@@ -1,7 +1,6 @@
 
 import { AuthenticationError } from '../infrastructure/utils/errors.js';
 import Listing from '../services/models/listing.js';
-import dbConfig from '../services/DB/dbConfig.js';
 import Location from '../services/models/location.js';
 
 
@@ -42,7 +41,11 @@ const resolvers = {
             }
         },
 
-
+Location: {
+    __resolveReference: async (ref, { dataSources }) => {
+      return dataSources.locationService.getLocationById(ref.id);
+    }
+  },
 
         deleteLocation: (_, { id }, { dataSources, user }) => {
             // if (!userId) throw new AuthenticationError('User not authenticated');
@@ -64,17 +67,25 @@ const resolvers = {
         },
     },
     Query: {
-        locations: (_, __, { dataSources }) => {
-            return dataSources.locationService.getAllLocations();
-        },
-        location: (_, { id }, { dataSources }) => {
-            return dataSources.locationService.getLocationById(id);
-        },
-        listings: {
-
-        },
-
-    }
+    locations: async (_, { locationId }, { dataSources }) => {
+      const service = dataSources.locationService;
+      if (locationId) {
+        return [await service.getById(locationId)];
+      }
+      return service.getAll();
+    },
+  },
+  Location: {
+    id: (loc) => loc.id,
+    name: (loc) => loc.name,
+    address: (loc) => loc.address,
+    city: (loc) => loc.city,
+    state: (loc) => loc.state,
+    zip: (loc) => loc.zip,
+    country: (loc) => loc.country,
+    latitude: (loc) => loc.latitude,
+    longitude: (loc) => loc.longitude,
+  },
 }
 
 export default resolvers;

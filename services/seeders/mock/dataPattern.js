@@ -9,7 +9,7 @@ const listings = Array.from({ length: 10 }, (_, index) => ({
     title: `Listing ${index + 1}`,
     locationId: `location-${index + 1}`,
     amenityids: [`am-${index + 1}`, `am-${index + 2}`, `am-${index + 3}`],
-    costPerNight: 100 + index * 10,
+    price: 100 + index * 10,
     pictures: ["https://example.org/foo#bar", "https://example.org/"],
     bookings: [],
     reviews: [],

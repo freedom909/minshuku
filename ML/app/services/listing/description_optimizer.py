@@ -64,7 +64,7 @@ class DescriptionOptimizer:
         - 标题: {listing_details.get('title')}
         - 类型: {listing_details.get('locationType')}
         - 房间数: {listing_details.get('numOfBeds')} 间
-        - 价格: ${listing_details.get('costPerNight')} 每晚
+        - 价格: ${listing_details.get('price')} 每晚
         - 设施: {self._get_amenity_list(listing_details)}
         
         请提供：
@@ -137,7 +137,7 @@ class DescriptionOptimizer:
         - 标题: {listing_details.get('title')}
         - 类型: {listing_details.get('locationType')}
         - 房间数: {listing_details.get('numOfBeds')} 间
-        - 价格: ${listing_details.get('costPerNight')} 每晚
+        - 价格: ${listing_details.get('price')} 每晚
         - 设施: {self._get_amenity_list(listing_details)}
         
         成功房源的描述特征：
@@ -217,7 +217,7 @@ class DescriptionOptimizer:
         房源信息：
         - 类型: {location_type}
         - 房间数: {listing_details.get('numOfBeds')} 间
-        - 价格: ${listing_details.get('costPerNight')} 每晚
+        - 价格: ${listing_details.get('price')} 每晚
         
         请提供以下风格的模板：
         1. 简洁专业风格（适合商务旅客）
@@ -400,7 +400,7 @@ class DescriptionOptimizer:
             id
             title
             description
-            costPerNight
+            price
             numOfBeds
             locationType
             lat

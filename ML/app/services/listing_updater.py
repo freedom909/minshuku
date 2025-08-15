@@ -32,9 +32,9 @@ class ListingUpdater:
         Raises:
             Exception: 如果 API 调用失败
         """
-        # 如果更新数据包含 price，将其重命名为 costPerNight
+        # 如果更新数据包含 price，将其重命名为 price
         if "price" in update_data:
-            update_data["costPerNight"] = update_data.pop("price")
+            update_data["price"] = update_data.pop("price")
         
         # 确保更新数据中包含必需的 pictures 字段
         if "pictures" not in update_data:

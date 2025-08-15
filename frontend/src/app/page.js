@@ -2,9 +2,12 @@ import React from 'react';
 import Image from 'next/image';
 import Button from '@/components/ui/button';
 import Link from 'next/link';
-import JoinNowButton from '@/components/JoinNowButton';
+import JoinNowButton from '@/components/ui/JoinNowButton';
+import ProfileMenu from '@/components/ui/ProfilesMenu';
 
-export default function HomePage() {
+
+export default function Home() {
+  
   return (
     <div className="min-h-screen bg-white">
       {/* Top Banner */}
@@ -15,8 +18,13 @@ export default function HomePage() {
         </div>
         <div className="flex space-x-4">
           <a href="#" className="underline">Get the Minshuku App</a>
-
-          <JoinNowButton />
+          {
+            <>
+         
+              <ProfileMenu/>
+              <JoinNowButton>Join Now</JoinNowButton>
+            </>
+          }
 
         </div>
       </div>

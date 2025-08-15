@@ -13,7 +13,7 @@ export default function GoogleSignInButton() {
         
         try {
             const result = await signIn("google", {
-                callbackUrl: "/dashboard",
+                callbackUrl: "/",
                 redirect: true
             });
 

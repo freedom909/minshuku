@@ -63,7 +63,7 @@ class ListingService {
       // Haversine formula to calculate distance
       const query = `
       SELECT 
-        listings.id, listings.title, listings.description, listings.costPerNight, listings.hostId, listings.locationId,
+        listings.id, listings.title, listings.description, listings.price, listings.hostId, listings.locationId,
         listings.numOfBeds, listings.pictures, listings.isFeatured, listings.saleAmount,
         (
           ${earthRadiusInKm} * ACOS(
@@ -91,7 +91,7 @@ class ListingService {
           description: listing.description || "No description available", // Default description if missing
           pictures: listing.pictures || [],
           numOfBeds: listing.numOfBeds || 0,
-          costPerNight: listing.costPerNight || 0,
+          price: listing.price || 0,
           isFeatured: listing.isFeatured !== null ? listing.isFeatured : false,
           saleAmount: listing.saleAmount || 0,
           checkInDate: listing.checkInDate || "default_check_in_date",
@@ -584,7 +584,7 @@ class ListingService {
     }
   }
 
-  async createListing(_, { title, description, location, hostId, pictures, numOfBeds, costPerNight, locationType, amenities, listingStatus }, { dataSource, user }) {
+  async createListing(_, { title, description, location, hostId, pictures, numOfBeds, price, locationType, amenities, listingStatus }, { dataSource, user }) {
     const { listingService, amenityService } = dataSource;
     const currentUserId = user?.id ? user.id : null;
     const { locationId } = location;
@@ -603,7 +603,7 @@ class ListingService {
         hostId,
         pictures,
         numOfBeds,
-        costPerNight,
+        price,
         locationType,
         listingStatus: currentListingStatus,
       });
@@ -704,7 +704,7 @@ class ListingService {
       if (!listing || !listingId) {
         throw new Error("Missing required fields: listing or listingId"); // Error updating listing: Error: Missing required fields: listing or listingId
       }
-      const { title, description, costPerNight, pictures } = listing; //TypeError: Cannot destructure property 'title' of 'listing' as it is undefined.
+      const { title, description, price, pictures } = listing; //TypeError: Cannot destructure property 'title' of 'listing' as it is undefined.
 
       console.log("Updating listing with id:", listingId, "and data:", listing);
       let query = `UPDATE listings SET title = :title`;
@@ -714,9 +714,9 @@ class ListingService {
         replacements.description = description;
       }
 
-      if (costPerNight !== undefined) {
-        query += `, costPerNight = :costPerNight`;
-        replacements.costPerNight = costPerNight;
+      if (price !== undefined) {
+        query += `, price = :price`;
+        replacements.price = price;
       }
       if (pictures !== undefined) {
         query += `, pictures = :pictures`;
@@ -727,7 +727,7 @@ class ListingService {
         replacements,
       });
       console.log("Executing query:", query);
-      console.log("With replacements:", { title, description, costPerNight, listingId });
+      console.log("With replacements:", { title, description, price, listingId });
 
       const [updateResult] = await this.sequelize.query(query, {
         replacements
@@ -771,7 +771,7 @@ class ListingService {
       SELECT * 
       FROM listings 
       WHERE numOfBeds = :numOfBeds 
-      ORDER BY costPerNight ${sortOrder}
+      ORDER BY price ${sortOrder}
       LIMIT :limit OFFSET :skipValue
     `;
 

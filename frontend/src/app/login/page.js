@@ -24,7 +24,7 @@ export default function Login() {
         redirect: false,
         email,
         password,
-        callbackUrl: "/dashboard"
+        callbackUrl: "/"
       });
 
       if (result?.error) {

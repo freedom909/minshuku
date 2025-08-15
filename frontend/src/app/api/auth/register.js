@@ -24,7 +24,7 @@ export default async function handler(req, res) {
             redirect: true,
             email: formData.email,
             password: formData.password,
-            callbackUrl: "/dashboard"
+            callbackUrl: "/"
         });
       return res.status(201).json({ success: true, user: result.user });
     } else {

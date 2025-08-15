@@ -1,386 +1,53 @@
-extend schema
+# ======================
+# aiService SDL (Federation-safe)
+# ======================
+
+# Federation links
+schema
   @link(
-    url: "https://specs.apollo.dev/federation/v2.8"
-    import: ["@key", "@shareable"]
-  )
-enum CacheControlScope {  
-  PUBLIC  
-  PRIVATE  
-  INHERIT  
+    url: "https://specs.apollo.dev/federation/v2.8",
+    import: ["@key", "@shareable", "@external"]
+  ) {
+  query: Query
 }
 
+# ======================
+# SCALARS
+# ======================
 scalar DateTime
-directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE  
-  directive @auth(requires: Role) on FIELD_DEFINITION | OBJECT | INTERFACE
 
+# ======================
+# AI Result type
+# ======================
+type AIResult @shareable {
+  suggestion: String!
+}
+
+# ======================
+# Extend external entities
+# ======================
+
+# Reference Listing from listings subgraph
+extend type Listing @key(fields: "id") {
+  id: ID! @external
+}
+
+# Reference Booking from bookings subgraph
+extend type Booking @key(fields: "id") {
+  id: ID! @external
+}
+
+# Reference User from users subgraph
+extend interface User @key(fields: "id") {
+  id: ID! @external
+}
+
+# ======================
+# QUERIES
+# ======================
 type Query {
-  
-  # query room availability
-  checkListingAvailability(filter: ListingAvailabilityInput!): [AvailableListing!]! @auth(requires: USER) @shareable 
-
-  # get review analyze
-  analyzeReviews(listingId: ID!): ReviewAnalysis! @auth(requires: GUEST) @shareable 
-
-  # get FAQ
-  getFAQ: [FAQ!]! @shareable 
-}
-
-type Mutation {
-   # send message to AI
-  sendMessageToAI(message: String!): ChatGPTResponse! @auth(requires: GUEST) @shareable 
-
-  suggestTitleImprovements(input: TitleInput!): TitleSuggestionResponse!
-
-  # Process payments
-  processPayment(paymentDetails: PaymentInput!): PaymentResponse! @auth(requires: USER) @shareable 
-
-  # submit Review
-  submitReview(reviewDetails: ReviewInput!): Review! @auth(requires: USER) @shareable 
-
-  # update listing information
-  updateListingInfo(listingId: ID!, listingDetails: ListingInput!): Listing! @auth(requires: USER) @shareable 
-
-  # delete listing
-  deleteListing(listingId: ID!): String! @auth(requires: USER) @shareable 
-}
-
-input TitleInput {
-  title: String!
-}
-type TitleSuggestionResponse {
-  improvedTitle: String!
-}
-
-type ChatGPTResponse {
-  reply: String! @shareable 
-  context: String @shareable 
-}
-
-type BookingStatusResponse {
-  bookingId: ID! @shareable 
-  status: String! @shareable 
-  message: String @shareable 
-  estimatedTime: DateTime @shareable 
-  listing: Listing @shareable 
-}
-
-
-input ListingAvailabilityInput {
-  checkInDate: DateTime!
-  checkOutDate: DateTime!
-  numOfGuests: Int!
-  locationId: ID
-  priceRange: PriceRangeInput
-}
-
-type AvailableListing {
-  id: ID! @shareable 
-  title: String! @shareable 
-  numOfBeds: Int! @shareable 
-  costPerNight: Float! @shareable 
-  amenities: [Amenity!]! @shareable 
-}
-
-type ReviewAnalysis {
-  listingId: ID! @shareable 
-  totalReviews: Int! @shareable 
-  averageRating: Float! @shareable 
-  positiveFeedback: [String!]! @shareable 
-  negativeFeedback: [String!]! @shareable 
-}
-
-type FAQ {
-  id: ID!
-  question: String! @shareable 
-  answer: String! @shareable 
-}
-
-input PaymentInput {
-  amount: Float!
-  currency: String!
-  paymentMethod: PaymentMethod!
-}
-
-enum PaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  PAYPAL
-  STRIPE
-}
-
-type PaymentResponse {
-  transactionId: ID!
-  status: PaymentStatus! @shareable 
-  message: String @shareable 
-}
-
-enum PaymentStatus {
-  SUCCESS
-  FAILURE
-  PENDING
-}
-
-input ReviewInput {
-  listingId: ID!
-  rating: Float!
-  content: String!
-  guestId: ID!
-}
-
-
-input ListingInput {
-  title: String!
-  description: String!
-  pictures: [PictureInput!]!
-  numOfBeds: Int!
-  costPerNight: Float!
-  locationType: LocationType!
-  hostId: ID!
-  amenities: AmenityInput!
-  location: LocationInput!
-  status: ListingStatus!
-  host: HostInput!
-  priceRange: PriceRangeInput!
-  totalCostRange: TotalCostRange!
-  locationFilter: LocationInput!
-  distance: Float
-}
-
-input PictureInput {
-  url: String!
-}
-
-input PriceRangeInput {
-  min: Float
-  max: Float
-}
-
-input TotalCostRange {
-  min: Float
-  max: Float
-}
-
-
-enum LocationFilter {
-  NEARBY
-  CITY
-}
-
-
-enum ListingStatus {
-  ACTIVE
-  PENDING
-  SOLD
-  DELETED
-  REJECT
-  CANCELLED
-  EXPIRED
-  COMPLETED
-}
-
-type Amenity {
-  id: ID! 
-  name: String! @shareable 
-}
-
-type Available {
-  date: String! @shareable 
-  available: Boolean! @shareable 
-  bookings: [Booking!]! @auth(requires: "GUEST") @shareable 
-  availableBookings: [Booking!]! @auth(requires: "GUEST") @shareable 
-}
-
-type Listing {
-  id: ID!
-  title: String! @shareable
-  description: String! @shareable
-  costPerNight: Float! @shareable
-  location: Location! @shareable
-  amenities: [Amenity!]! @shareable
-}
-
-type Picture {
-  id: ID! @shareable 
-  url: String! @shareable 
-}
-
-
-
-enum LocationType {
-  SPACESHIP
-  HOUSE
-  CAMPSITE
-  APARTMENT
-  ROOM
-}
-
-input ListingFilterInput {
-  priceRange: PriceRangeInput
-  locationType: LocationType
-  amenities: [ID!] # Use amenity IDs for clarity
-  matchType: MatchType # AND or OR logic
-}
-
-enum MatchType {
-  AND
-  OR
-}
-
-type Booking @key(fields: "id") {
-  id: ID! @shareable
-  listing: Listing! @shareable @cacheControl(maxAge: 3600) 
-  guest: Guest! @shareable @cacheControl(maxAge: 3600) 
-  review: Review @shareable
-  checkInDate: DateTime! @shareable @cacheControl(maxAge: 3600) 
-  checkOutDate: DateTime! @shareable @cacheControl(maxAge: 3600) 
-  totalPrice: Float! @shareable @cacheControl(maxAge: 3600) 
-  status: BookingStatus! @shareable @cacheControl(maxAge: 60) 
-  cancelledAt: DateTime @shareable @cacheControl(maxAge: 60)
-  confirmedAt: DateTime @shareable @cacheControl(maxAge: 60)
-}
-
-type Availability {
-  id: ID!
-  date: DateTime! @shareable @cacheControl(maxAge: 3600)
-  status: AvailabilityStatus! @shareable @cacheControl(maxAge: 3600)
-}
-
-enum AvailabilityStatus {
-  AVAILABLE
-  UNAVAILABLE
-}
-
-input AmenityInput {
-  id: ID
-  name: String
-}
-
-enum BookingStatus {
-  CURRENT
-  COMPLETED
-  UPCOMING
-  PAST
-  CANCELLED
-  CONFIRMED
-}
-
-type Review @key(fields: "id") {
-   id: ID!
-  rating: Float! @shareable
-  content: String! @shareable
-  author: User! @shareable
-  bookingId: ID! @shareable
-  locationId: ID @shareable
-  guestId: ID @shareable
-  hostId: ID @shareable
-  location: Location! @shareable
-  createdAt: String! @shareable
-  updatedAt: String! @shareable
-  round: Int! @shareable
-  likes: [Like!] 
-  dislikes: [Like!] 
-  likesCount: Int!
-  dislikesCount: Int!
-  title: String! @shareable
-  isFeatured: Boolean! @shareable
-  isPinned: Boolean! @shareable
-  "to allow users to comment on reviews"
-  comment: Comment 
-  comments: [Comment!]
-}
-
-type Like @key(fields: "id") {
-  id: ID!
-  user: User! @shareable
-  review: Review! @shareable
-}
-
-type Comment @key(fields: "id") {
-  id: ID!
-  user: User! @shareable
-  review: Review! @shareable
-  content: String! @shareable
-  createdAt: String! @shareable
-  updatedAt: String! @shareable
-}
-
-type ReservedDate {
-  id: ID!
-  date: DateTime! @shareable @cacheControl(maxAge: 3600)
-}
-
-type PriceRange {
-  min: Float! @shareable
-  max: Float! @shareable
-}
-
-interface User {
-  id: ID!
-  name: String!
-  role: Role!
-  picture: String
-  nickname: String!
-}
-
-input HostInput {
-  id: ID!
-  name: String!
-  picture: String
-  description: String
-  nickname: String!
-}
-
-type Guest implements User @key(fields: "id")  {
-  id: ID!
-  name: String! @shareable
-  picture: String @shareable
-  nickname: String! @shareable
-  role: Role! @shareable
-}
-
-type Host implements User @key(fields: "id")  {
-  id: ID!
-  name: String! @shareable
-  picture: String @shareable
-  description: String @shareable
-  nickname: String! @shareable
-  role: Role! @shareable
-}
-
-input LocationInput {
-  city: String!
-  country: String!
-}
-
-type Location {
-  city: String!
-  country: String!
-}
-
-
-enum Role {
-  ADMIN
-  HOST
- USER
-  GUEST
-}
-
-type Error {
-  code: String!
-  message: String!
-}
-
-input PaginationInput {
-  page: Int
-  limit: Int
-}
-
-input SortInput {
-  field: String!
-  order: SortOrder!
-}
-
-enum SortOrder {
-  ASC
-  DESC
+  # AI suggestions for listings and reviews
+  suggestTitleImprovements(listingId: ID!): AIResult
+  generateDescriptionSuggestions(listingId: ID!): AIResult
+  generateReplyToReview(reviewId: ID!): AIResult
 }

@@ -493,7 +493,7 @@ class ImageAdvisor:
             id
             title
             description
-            costPerNight
+            price
             numOfBeds
             locationType
             lat

@@ -12,12 +12,12 @@ const resolvers = {
     },
 
     amenities: async (_, __, { dataSources }) => {
-      const { amenityService } = dataSources; //   "TypeError: Cannot destructure property 'amenityService' of 'dataSources' as it is undefined.",
+      const { amenityService } = dataSources; 
       return await amenityService.getAllAmenities();
     },
-    amenity: async (_, { id }, { dataSources }) => {
+    amenity: async (_, { locationId }, { dataSources }) => {
       const { amenityService } = dataSources;
-      return await amenityService.getAmenityById(id);
+      return await amenityService.getAmenityById(locationId);
     },
   },
   Mutation: {
@@ -32,6 +32,11 @@ const resolvers = {
     __resolveReference: async (reference, { dataSources }) => {
       return await dataSources.amenityService.getAmenityById(reference.id);
     },
+     id: (a) => a.id,
+    name: (a) => a.name,
+    locationId: (a) => a.locationId,
+    category: (a) => a.category,
+    description: (a) => a.description,
   },
   Listing: {
     __resolveReference: async (reference, { dataSources }) => {

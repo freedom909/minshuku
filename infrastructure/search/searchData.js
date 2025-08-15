@@ -62,12 +62,12 @@ export const searchListings= async (index, criteria) => {
         },
       };
 
-      if (criteria.costPerNight) {
+      if (criteria.price) {
         query.bool.must.push({
           range: {
-            costPerNight: {
-              gte: criteria.costPerNight.min,
-              lte: criteria.costPerNight.max,
+            price: {
+              gte: criteria.price.min,
+              lte: criteria.price.max,
             },
           },
         });

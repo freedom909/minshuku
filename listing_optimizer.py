@@ -179,7 +179,7 @@ class ListingOptimizer:
         """
         # 提取关键信息
         listing_id = listing_data.get('id', 'unknown')
-        current_price = float(listing_data.get('costPerNight', '0'))
+        current_price = float(listing_data.get('price', '0'))
         location_type = listing_data.get('locationType', 'APARTMENT')
         num_beds = int(listing_data.get('numOfBeds', '1'))
         booking_number = int(listing_data.get('bookingNumber', '0'))

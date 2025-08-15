@@ -121,6 +121,17 @@ class ListingRepository {
         }
     }
 
+    async updateListing({ id, availability = true }) {
+        try {
+            const response = await this.httpClient.put(`/listings/${id}`, { availability });
+            return response.data;
+        } catch (error) {
+            console.error('Error updating listing:', error);
+            throw error;
+        }
+    }
+
+
     async deleteListing(id) {
         try {
             const response = await this.httpClient.delete(`/listings/${id}`);
@@ -142,7 +153,7 @@ class ListingRepository {
             description,
             pictures,
             numOfBeds,
-            costPerNight,
+            price,
             locationType,
             listingStatus,
             amenities = []
@@ -159,7 +170,7 @@ class ListingRepository {
             description,
             pictures,
             numOfBeds,
-            costPerNight,
+            price,
             locationType,
             listingStatus,
         }, { transaction });

@@ -62,7 +62,7 @@ class TitleOptimizer:
         房源信息：
         - 类型: {listing_details.get('locationType')}
         - 房间数: {listing_details.get('numOfBeds')} 间
-        - 价格: ${listing_details.get('costPerNight')} 每晚
+        - 价格: ${listing_details.get('price')} 每晚
         - 位置特点: {self._get_location_features(listing_details)}
         
         请提供：
@@ -132,7 +132,7 @@ class TitleOptimizer:
         - 当前标题: {listing_details.get('title')}
         - 类型: {listing_details.get('locationType')}
         - 房间数: {listing_details.get('numOfBeds')} 间
-        - 价格: ${listing_details.get('costPerNight')} 每晚
+        - 价格: ${listing_details.get('price')} 每晚
         - 位置特点: {self._get_location_features(listing_details)}
         - 设施亮点: {self._get_amenity_highlights(listing_details)}
         
@@ -268,7 +268,7 @@ class TitleOptimizer:
             id
             title
             description
-            costPerNight
+            price
             numOfBeds
             locationType
             lat
