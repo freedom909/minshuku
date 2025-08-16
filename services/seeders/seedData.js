@@ -2,13 +2,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sequelize from '../models/config/seq.js';
-import Listing from '../models/listing.js';
+import Listing from '../models/mysql/listing.js';
 import Booking from '../models/booking.js';
 import Payment from '../models/payment.js';
-import Amenity from '../models/amenity.js';
+import Amenity from '../models/mysql/amenity.js';
 //import Coordinate from '../models/coordinate.js';
-import ListingAmenities from '../models/listingAmenities.js';
-import Location from '../models/location.js'; // Ensure this model exists and is imported correctly
+import ListingAmenities from '../models/mysql/listingAmenity.js';
+import Location from '../models/mysql/location.js'; // Ensure this model exists and is imported correctly
 
 const models = { Listing, Booking, Payment, Amenity, ListingAmenities, Location };
 

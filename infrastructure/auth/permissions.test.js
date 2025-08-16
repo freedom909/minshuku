@@ -4,7 +4,7 @@ import { permissions, bookingsWithPermission, listingsWithPermission } from './p
 import { authenticate, authorize } from './authenticateAndAuthorize.js';
 import User from '../../services/models/user.js';
 import Booking from '../../services/models/booking.js';
-import Listing from '../../services/models/listing.js';
+import Listing from '../../services/models/mysql/listing.js';
 
 // Mock the models
 jest.mock('../../services/models/user.js');

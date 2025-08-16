@@ -1,4 +1,4 @@
-import Location from "./models/location.js";
+import Location from "./models/mysql/location.js";
 import { Sequelize, Op } from "sequelize";
 class LocationService {
     constructor({ locationRepository, sequelize }) {

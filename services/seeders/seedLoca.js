@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { readFileSync } from 'fs';
-import Location from '../models/location.js';
+import Location from '../models/mysql/location.js';
 import connectToMongoDB from '../DB/connectMongoDB.js';  // Connect to MongoDB before
 
 dotenv.config();

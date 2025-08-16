@@ -6,7 +6,7 @@ import { createClient } from 'graphql-ws';
 import { permissions } from '../infrastructure/auth/permission.js';
 import Booking from '../services/models/booking.js';
 import User from '../services/models/user.js';
-import Listing from '../services/models/listing.js';
+import Listing from '../services/models/mysql/listing.js';
 import cacheClient from '../cache/cacheClient.js';
 import { broadcast, subscriptionTopics } from '../cache/cachePubSub.js';
 const { bookingsWithPermission } = permissions;

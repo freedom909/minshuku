@@ -1,4 +1,4 @@
-import Location from "../models/location.js";
+import Location from "../models/mysql/location.js";
 import transaction from "sequelize";
 
 class LocationRepository {

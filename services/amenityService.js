@@ -1,6 +1,6 @@
 // services/amenityService.js
 import { QueryTypes } from 'sequelize';
-import Amenity from './models/amenity.js'; // Assuming you have an Amenity model
+import Amenity from './models/mysql/amenity.js'; // Assuming you have an Amenity model
 import { CanceledError } from 'axios';
 
 class AmenityService {
@@ -43,13 +43,11 @@ class AmenityService {
     }
   }
 
-  async addAmenity(name, categoryId) {
-    if (!name) {
-      throw new Error('Amenity name is required');
+  async addAmenity(name, categoryId, description, locationId) {
+    if (!name || !categoryId || !description || !locationId) {
+      throw new Error('Name, category, description, and location are required');
     }
-    if (!categoryId) {
-      throw new Error('Category ID is required');
-    }
+
     try {
       const category = await this.sequelize.models.Category.findByPk(categoryId);
       if (!category) {

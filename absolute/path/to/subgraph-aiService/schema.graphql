@@ -1,6 +1,6 @@
 // ... existing code ...
 input ListingInput {
-  title: String!
+  name: String!
   description: String!
   pictures: [PictureInput!]!
   numOfBeds: Int!

@@ -8,9 +8,9 @@ scalar DateTime
 
 type Amenity @key(fields: "id") {
   id: ID! @shareable
-  title: String! @shareable
+  name: String! @shareable
   locationId: ID! @shareable
-  category: String! @shareable
+  categoryId: ID @shareable 
   description: String @shareable
   createdAt: DateTime! @shareable
   updatedAt: DateTime! @shareable

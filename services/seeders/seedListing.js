@@ -2,9 +2,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import sequelize from '../models/config/seq.js';
-import Listing from '../models/listing.js';
+import Listing from '../models/mysql/listing.js';
 
-import Location from '../models/location.js'; // Ensure this model exists and is imported correctly
+import Location from '../models/mysql/location.js'; // Ensure this model exists and is imported correctly
 
 const models = { Listing };
 

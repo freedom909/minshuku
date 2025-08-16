@@ -1,6 +1,6 @@
 import Configuration from 'openai';
 import OpenAIApi from 'openai';
-import Listing from '../services/models/listing.js';
+import Listing from '../services/models/mysql/listing.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

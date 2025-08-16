@@ -1,6 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from './config/seq.js'; // Correct path to seq.js
-import Listing from './listing.js';
+import Listing from './mysql/listing.js';
 
 class Coordinate extends Model { }
 

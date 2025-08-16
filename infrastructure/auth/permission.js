@@ -2,7 +2,7 @@ import { rule, shield, and, or } from 'graphql-shield';
 import jwt from 'jsonwebtoken';
 import User from '../../services/models/user.js';
 import Booking from '../../services/models/booking.js';
-import Listing from '../../services/models/listing.js';
+import Listing from '../../services/models/mysql/listing.js';
 
 // Rule to check if the user is authenticated
 const isAuthenticated = rule()(async (parent, args, ctx, info) => {

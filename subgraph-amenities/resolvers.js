@@ -21,9 +21,10 @@ const resolvers = {
     },
   },
   Mutation: {
-    addAmenity: async (_, { name }, { dataSources }) => {
+    addAmenity: async (_, { input }, { dataSources }) => {
       const { amenityService } = dataSources;
-      return amenityService.addAmenity(name, categoryId)
+      const { name, categoryId, description, locationId } = input;
+      return await amenityService.addAmenity(name, categoryId, description, locationId)
     },
     addAmenityToListing: async (_, { listingId, amenityId }, { dataSources }) =>
       dataSources.listingService.addAmenityToListing(listingId, amenityId),

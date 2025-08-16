@@ -3,10 +3,10 @@ import sequelize from '../../models/config/seq.js'; // Adjust the path as necess
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import Listing from '../../models/listing.js'
-import Amenity from '../../models/amenity.js'; //
-import ListingAmenities from '../../models/listingAmenities.js';
-import Location from '../../models/location.js'
+import Listing from '../../models/mysql/listing.js'
+import Amenity from '../../models/mysql/amenity.js'; //
+import ListingAmenities from '../../models/mysql/listingAmenity.js';
+import Location from '../../models/mysql/location.js'
 const seedData = async () => {
     try {
         const __filename = fileURLToPath(import.meta.url);

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { AuthenticationError, ForbiddenError } from '../../infrastructure/utils/errors.js';
 import connectMysql from '../DB/connectMysqlDB.js'
-import Listing from '../models/listing.js';
-import Location from '../models/location.js';
+import Listing from '../models/mysql/listing.js';
+import Location from '../models/mysql/location.js';
 
 class ListingRepository {
     constructor(httpClient, database) {

@@ -1,5 +1,5 @@
-import Amenity from '../models/amenity.js';
-import ListingAmenities from '../models/listingAmenities.js';
+import Amenity from '../models/mysql/amenity.js';
+import ListingAmenities from '../models/mysql/listingAmenity.js';
 
 class AmenityRepository {
   async findAmenitiesByName(amenities) {

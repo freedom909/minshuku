@@ -12,10 +12,10 @@ import connectMysql from './DB/connectMysqlDB.js';
 import mysql from 'mysql2/promise';
 import sequelize from './models/config/seq.js';
 import queryDatabase from './DB/dbUtils.js'
-import Listing from './models/listing.js';
-import Amenity from './models/amenity.js';
-import Coordinate from './models/location.js'
-import Location from './models/location.js';
+import Listing from './models/mysql/listing.js';
+import Amenity from './models/mysql/amenity.js';
+import Coordinate from './models/mysql/location.js'
+import Location from './models/mysql/location.js';
 import { query } from 'express';
 // import UUIDV4 from 'uuid';
 

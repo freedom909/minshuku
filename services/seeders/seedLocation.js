@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import dotenv from 'dotenv';
 import sequelize from '../models/config/seq.js'; // Your Sequelize instance
-import Location from '../models/location.js'; // Your Sequelize Location model
+import Location from '../models/mysql/location.js'; // Your Sequelize Location model
 
 dotenv.config();
 

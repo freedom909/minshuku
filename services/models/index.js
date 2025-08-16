@@ -1,13 +1,13 @@
 import sequelize from './config/seq.js';
 import User from './user.js';
 import Account from './account.js';
-import Listing from './listing.js';
+import Listing from './mysql/listing.js';
 import Review from './review.js';
 import Booking from './booking.js';
 import Payment from './payment.js';
-import Amenity from './amenity.js';
-import ListingAmenities from './listingAmenities.js';
-import Location from './location.js';
+import Amenity from './mysql/amenity.js';
+import ListingAmenities from './mysql/listingAmenity.js';
+import Location from './mysql/location.js';
 
 
 // Define associations

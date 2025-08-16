@@ -1,7 +1,7 @@
 
 import { AuthenticationError } from '../infrastructure/utils/errors.js';
-import Listing from '../services/models/listing.js';
-import Location from '../services/models/location.js';
+import Listing from '../services/models/mysql/listing.js';
+import Location from '../services/models/mysql/location.js';
 
 const resolvers = {
     Mutation: {

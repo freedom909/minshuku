@@ -1,11 +1,11 @@
 import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
 import { permissions } from '../infrastructure/auth/permission.js';
-import Listing from '../services/models/listing.js';
-import Coordinate from '../services/models/location.js';
+import Listing from '../services/models/mysql/listing.js';
+import Coordinate from '../services/models/mysql/location.js';
 import { UserInputError } from '../infrastructure/utils/errors.js';
-import Location from '../services/models/location.js';
+import Location from '../services/models/mysql/location.js';
 import { GraphQLError } from 'graphql';
-import Amenity from '../services/models/amenity.js';
+import Amenity from '../services/models/mysql/amenity.js';
 import transaction, { Op } from '@sequelize/core'
 import calculateDistance from './calculateDistance.js';
 import { resolve } from 'path';
