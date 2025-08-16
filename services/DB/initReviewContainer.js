@@ -14,7 +14,7 @@ import BookingRepository from '../repositories/bookingRepository.js';
 import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
 import connect from './connectNeo4jDB.js'; // Import your Neo4j database connection function
-import sequelize from '../models/seq.js'
+import sequelize from '../models/config/seq.js'
 import axios from 'axios';
 import LocationRepository from '../repositories/locationRepository.js';
 

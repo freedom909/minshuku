@@ -54,32 +54,46 @@ class LocationService {
         return location;
     }
 
-    async createLocation(locationInput, { context }) {
-        console.log("Context in createLocation:", context);
-        if (!locationInput) {
-            throw new Error('Location input is required but was not provided.');
-        }
+    async createLocation(locationData,transaction) {
 
-        console.log('Location Input received in createLocation:', locationInput);
-        console.log('Context in createLocation:', context);
+        console.log("locationData: ", locationData);
+           const options = {
+            transaction: this.transaction,
+            logging: true,
+            where: {
+                id: locationData.id,
+            },
+        };
+        return this.locationRepository.create(locationData,options);
+    }
 
-        try {
-            // Combine locationInput with any additional context
-            const location = await this.locationRepository.create({// Error creating location: Error: Failed to create location.
-                ...locationInput,
-                listingId: context.listingId || null
-
-            });
-            console.log("Created location:", location);
-            return location;
-        } catch (error) {
-            console.error('Error creating location:', error);
-            throw new Error('Failed to create location.');
-        }
+    updateLocation(input) {
+        console.log('input in LocationService:', input);
+        const updateData = {
+            listingId: input?.listingId || undefined,
+            match: input?.match,
+        };
+        const options = {
+            transaction: this.transaction,
+            logging: true,
+            where: {
+                id: input.id,
+            },
+        };
+        return this.Location.update(updateData, options);
+    }
+    async deleteLocation(input) {
+        console.log('input in LocationService:', input);
+        const options = {
+            transaction: this.transaction,
+            logging: true,
+            where: {
+                id: input.id,
+            },
+        };
+        return this.Location.destroy(options);
     }
 
 }
-
-
 
 export default LocationService;

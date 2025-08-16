@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js';
+import sequelize from './config/seq.js';
 
 class Amenity extends Model {}
 

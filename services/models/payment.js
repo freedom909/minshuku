@@ -1,5 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
-import sequelize from './seq.js';
+import sequelize from './config/seq.js';
 
 export class Payment extends Model {}
 

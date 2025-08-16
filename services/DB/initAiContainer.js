@@ -14,7 +14,7 @@ import BookingRepository from '../repositories/bookingRepository.js';
 import BookingService from '../bookingService.js';
 import AiService from '../aiService.js';
 import User from '../models/user.js';
-import sequelize from '../models/seq.js';
+import sequelize from '../models/config/seq.js';
 import Listing from '../models/listing.js';
 import Booking from '../models/booking.js';
 import PaymentService from '../paymentService.js';

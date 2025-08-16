@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js';
+import sequelize from './config/seq.js';
 
 class Location extends Model {}
 
@@ -18,7 +18,7 @@ Location.init({
   latitude: { type: DataTypes.FLOAT, allowNull: false },
   longitude: { type: DataTypes.FLOAT, allowNull: false },
   radius: { type: DataTypes.FLOAT, allowNull: true },
-  units: { type: DataTypes.STRING, allowNull: true },
+  units: { type: DataTypes.STRING, allowNull: true, defaultValue: 'km' },
 }, {
   sequelize,
   modelName: 'Location',

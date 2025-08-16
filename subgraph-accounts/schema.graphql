@@ -375,7 +375,7 @@ input CreateLocationInput {
   "The country of the location"
   country: String!
   "The postal code of the location"
-  zipCode: String!
+  zip: String!
   "Units for the radius (e.g., kilometers, miles)"
   units: String! 
 }

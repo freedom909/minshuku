@@ -43,7 +43,7 @@ const locations = Array.from({ length: 10 }, (_, index) => ({
     city: `City ${i + 1}`, // e.g., City 1, City 2, etc.  
     state: `State ${i + 1}`, // e.g., State 1, State 2, etc.  
     country: 'USA', // Fixed country  
-    zipCode: `ZIP${String(i + 1).padStart(5, '0')}`, // e.g., ZIP00001, ZIP00002, etc.  
+    zip: `ZIP${String(i + 1).padStart(5, '0')}`, // e.g., ZIP00001, ZIP00002, etc.  
     type: i % 2 === 0 ? 'primary' : 'secondary' // Alternate between primary and secondary 
 }))
 const listingAmenities = []

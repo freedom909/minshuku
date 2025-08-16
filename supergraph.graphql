@@ -307,7 +307,7 @@ input CreateLocationInput
   country: String!
 
   """The postal code of the location"""
-  zipCode: String!
+  zip: String!
 
   """Units for the radius (e.g., kilometers, miles)"""
   units: String!
@@ -324,7 +324,7 @@ type CreateLocationResponse implements Response
   city: String @join__field(graph: LISTINGS)
   state: String @join__field(graph: LISTINGS)
   country: String @join__field(graph: LISTINGS)
-  zipCode: String @join__field(graph: LISTINGS)
+  zip: String @join__field(graph: LISTINGS)
   latitude: Float @join__field(graph: LISTINGS)
   longitude: Float @join__field(graph: LISTINGS)
   radius: Int @join__field(graph: LISTINGS)
@@ -623,7 +623,7 @@ type Location
   listingId: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
   name: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS) @join__field(graph: REVIEWS)
   country: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
-  zipCode: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
+  zip: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
   state: String! @join__field(graph: LISTINGS) @join__field(graph: LOCATIONS)
   address: String! @join__field(graph: LOCATIONS)
 }
@@ -1243,7 +1243,7 @@ input UpdateLocationInput
   country: String
 
   """The postal code of the location"""
-  zipCode: String
+  zip: String
   units: String
 }
 

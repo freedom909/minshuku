@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import dotenv from 'dotenv';
-import sequelize from '../models/seq.js'; // Your Sequelize instance
+import sequelize from '../models/config/seq.js'; // Your Sequelize instance
 import Location from '../models/location.js'; // Your Sequelize Location model
 
 dotenv.config();
@@ -25,7 +25,7 @@ async function seedLocations() {
                 city: locationData.city,
                 state: locationData.state,
                 country: locationData.country,
-                zipCode: locationData.zipCode
+                zip: locationData.zip
             });
         }
 

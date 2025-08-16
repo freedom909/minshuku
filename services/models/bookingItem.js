@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from './seq.js'; // Ensure you import your Sequelize instance
+import sequelize from './config/seq.js'; // Ensure you import your Sequelize instance
 
 
 const BookingItem = sequelize.define('BookingItem', {

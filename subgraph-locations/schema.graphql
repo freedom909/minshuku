@@ -10,7 +10,7 @@ type Location @key(fields: "id") {
   id: ID! @shareable
   name: String! @shareable
   country: String! @shareable
-  zipCode: String! @shareable
+  zip: String! @shareable
   city: String! @shareable
   state: String! @shareable
   address: String! @shareable
@@ -29,7 +29,7 @@ input CreateLocationInput {
   city: String!
   state: String!
   country: String!
-  zipCode: String!
+  zip: String!
   units: String!
 }
 
@@ -43,7 +43,7 @@ input UpdateLocationInput {
   city: String
   state: String
   country: String
-  zipCode: String
+  zip: String
   units: String
 }
 

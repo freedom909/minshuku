@@ -1,7 +1,7 @@
 
 
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js'; // Adjust the path as necessary
+import sequelize from './config/seq.js'; // Adjust the path as necessary
 import Location from './location.js';
 import Amenity from './amenity.js';
 import ListingAmenities from './listingAmenities.js';

@@ -1,5 +1,5 @@
 // testSequelizeConnection.js
-import sequelize from './seq.js';
+import sequelize from './config/seq.js';
 
 (async () => {
   try {

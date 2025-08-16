@@ -1,6 +1,6 @@
-import connectMysql from "../DB/connectMysqlDB.js";
 import Location from "../models/location.js";
 import transaction from "sequelize";
+
 class LocationRepository {
     constructor() {
         // No need to pass in `locationRepository` here; it's just the model
@@ -8,12 +8,13 @@ class LocationRepository {
     }
     // Define findById method properly using Sequelize's findByPk method
 
-    async create(location, options = {}) {
-        const { transaction } = options; // Safely destructure transaction
+    async create(locationData,options) {
+      const { transaction } = options; // Safely destructure transaction
         try {
-            const newLocation = await this.model.create(location, { transaction });
+            const newLocation = await this.model.create(locationData,transaction);
+            console.log("newLocation: ", newLocation);
+            return newLocation;
 
-            return newLocation;// Return created location object
         } catch (error) {
             console.error("Error creating location in repository:", error);
             throw error;

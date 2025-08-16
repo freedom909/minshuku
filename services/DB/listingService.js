@@ -702,9 +702,9 @@ class ListingService {
   async updateListing({ listing, listingId }) {
     try {
       if (!listing || !listingId) {
-        throw new Error("Missing required fields: listing or listingId"); // Error updating listing: Error: Missing required fields: listing or listingId
+        throw new Error("Missing required fields: listing or listingId");
       }
-      const { title, description, price, pictures } = listing; //TypeError: Cannot destructure property 'title' of 'listing' as it is undefined.
+      const { title, description, price, pictures } = listing; 
 
       console.log("Updating listing with id:", listingId, "and data:", listing);
       let query = `UPDATE listings SET title = :title`;

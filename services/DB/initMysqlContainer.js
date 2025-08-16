@@ -2,7 +2,7 @@
 import { createContainer, asClass, asValue } from 'awilix';
 import BookingService from '../bookingService.js'; // Adjust the path as necessary
 import ListingService from '../listingService.js'; // Adjust the path as necessary
-import sequelize from '../models/seq.js';
+import sequelize from '../models/config/seq.js';
 import connectMysql from './connectMysqlDB.js';
 import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';

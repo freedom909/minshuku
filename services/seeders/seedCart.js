@@ -3,7 +3,7 @@ import Cart from '../models/cart.js'; // adjust the import path to your Cart mod
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sequelize from '../models/seq.js';
+import sequelize from '../models/config/seq.js';
 
 const models = {Cart}
 async function loadJSON(filePath) {

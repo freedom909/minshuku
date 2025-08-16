@@ -13,7 +13,7 @@ import LocationRepository from '../repositories/locationRepository.js';
 import LocalAuthService from '../userService/localAuthService.js';
 import OAuthService from '../userService/oauthService.js';
 import TokenService from '../userService/tokenService.js';
-import sequelize from '../models/seq.js';
+import sequelize from '../models/config/seq.js';
 import PaymentRepository from '../repositories/paymentRepository.js';
 import PaymentService from '../paymentService.js';
 import AiService from '../aiService.js';

@@ -14,7 +14,7 @@ describe('Location Creation', () => {
                 city: 'New York',
                 state: 'NY',
                 country: 'USA',
-                zipCode: '10001',
+                zip: '10001',
                 radius: 10,
                 units: 'km',
             },

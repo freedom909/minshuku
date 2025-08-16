@@ -20,7 +20,7 @@ const resolvers = {
             if (!dataSources) {
                 throw new Error('Data sources are not defined');
             }
-            const { supportService, userService } = dataSources; // message": "Cannot destructure property 'supportService' of 'dataSources' as it is undefined.",
+            const { supportService, userService } = dataSources; 
             if (!supportService) {
                 throw new Error('Support service is not available in data sources');
             }

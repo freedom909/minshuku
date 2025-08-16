@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from './seq.js';
+import sequelize from './config/seq.js';
 import Listing from './listing.js';
 import Amenity from './amenity.js';
 import Location from './location.js';

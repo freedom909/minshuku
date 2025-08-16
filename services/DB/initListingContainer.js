@@ -8,7 +8,7 @@ import LocalAuthService from '../userService/localAuthService.js';
 import OAuthService from '../userService/oauthService.js';
 import TokenService from '../userService/tokenService.js';
 import UserRepository from '../repositories/userRepository.js';
-import sequelize from '../models/seq.js';  // Import your Sequelize instance
+import sequelize from '../models/config/seq.js';  // Import your Sequelize instance
 import AmenityService from '../amenityService.js';
 import LocationService from '../locationService.js';
 import LocationRepository from '../repositories/locationRepository.js';

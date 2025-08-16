@@ -61,7 +61,7 @@ const resolvers = {
               listingId: listing.id || 'unknown-listing',
               name: location?.name || 'UFO',
               country: location?.country || 'USA',
-              zipCode: location?.zipCode || '1234567', // Fixed typing issue  
+              zip: location?.zip || '1234567', // Fixed typing issue  
               state: location?.state || 'Washington', // Fixed typing issue  
             },
             locationType: listing.locationType || 'ROOM',
@@ -145,7 +145,7 @@ const resolvers = {
           city: result.city,
           state: result.state,
           country: result.country,
-          zipCode: result.zipCode,
+          zip: result.zip,
         };
       } catch (error) {
         console.error('Error fetching location:', error);
@@ -185,7 +185,7 @@ const resolvers = {
             {
               model: Location,
               as: 'location', // This alias must match the association
-              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+              attributes: ['state', 'address', 'city', 'country', 'zip', 'latitude', 'longitude', 'name', 'radius'],
             }
           ],
         });
@@ -222,7 +222,7 @@ const resolvers = {
             {
               model: Location,
               as: 'location', // This alias must match the association
-              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+              attributes: ['state', 'address', 'city', 'country', 'zip', 'latitude', 'longitude', 'name', 'radius'],
             }
           ],
         });
@@ -245,7 +245,7 @@ const resolvers = {
             {
               model: Location,
               as: 'location', // This alias must match the association
-              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+              attributes: ['state', 'address', 'city', 'country', 'zip', 'latitude', 'longitude', 'name', 'radius'],
             }
           ],
         });
@@ -282,7 +282,7 @@ const resolvers = {
           {
             model: Location,
             as: 'location', // Ensure alias matches the association
-            attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+            attributes: ['state', 'address', 'city', 'country', 'zip', 'latitude', 'longitude', 'name', 'radius'],
           }
         ],
       });
@@ -534,7 +534,7 @@ const resolvers = {
             {
               model: Location,
               as: 'location',
-              attributes: ['state', 'address', 'city', 'country', 'zipCode', 'latitude', 'longitude', 'name', 'radius'],
+              attributes: ['state', 'address', 'city', 'country', 'zip', 'latitude', 'longitude', 'name', 'radius'],
             }
           ]
         })

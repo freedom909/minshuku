@@ -1,5 +1,5 @@
 import { Model, DataTypes, ENUM } from 'sequelize';
-import sequelize from '../../models/seq.js'; // Adjust the path as necessary  
+import sequelize from '../../models/config/seq.js'; // Adjust the path as necessary  
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

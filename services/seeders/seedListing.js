@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sequelize from '../models/seq.js';
+import sequelize from '../models/config/seq.js';
 import Listing from '../models/listing.js';
 
 import Location from '../models/location.js'; // Ensure this model exists and is imported correctly

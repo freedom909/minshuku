@@ -17,7 +17,7 @@ import TokenService from '../userService/tokenService.js';
 import UserRepository from '../repositories/userRepository.js';
 import PaymentService from '../paymentService.js';
 import PaymentRepository from '../repositories/paymentRepository.js';
-import sequelize from '../models/seq.js';
+import sequelize from '../models/config/seq.js';
 const initializeCartContainer = async ({ services = [] } = {}) => {
   // Establishing connection to MySQL database
   const mysqldb = await connectMysql();

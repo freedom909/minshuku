@@ -1,4 +1,4 @@
-import sequelize from './seq.js';
+import sequelize from './config/seq.js';
 import User from './user.js';
 import Account from './account.js';
 import Listing from './listing.js';
