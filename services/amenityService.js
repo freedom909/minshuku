@@ -1,41 +1,46 @@
 // services/amenityService.js
 import { QueryTypes } from 'sequelize';
-import Amenity from './models/mysql/amenity.js'; // Assuming you have an Amenity model
-import { CanceledError } from 'axios';
+import Amenity from './models/mysql/amenity.js';
+import Category from './models/mysql/category.js';
+import Listing from './models/mysql/listing.js';
+import ListingAmenities from './models/mysql/listingAmenities.js';
 
 class AmenityService {
-  constructor({ sequelize }) {
+  constructor({ sequelize, amenityRepository, locationRepository }) {
     this.sequelize = sequelize;
-    // this.httpClient = httpClient;
-    // this.Amenity = Amenity;
+    this.amenityRepository = amenityRepository;
+    this.locationRepository = locationRepository;
   }
 
+  // 🔹 Fetch all amenities
   async getAllAmenities() {
     try {
-      const query = 'SELECT * FROM AMENITIES';
-      const response = await this.sequelize.query(query, { type: QueryTypes.SELECT });
-      if (!response || !Array.isArray(response)) {
-        throw new Error('Invalid response from the database');
-      }
-      const amenities = response.map((amenity) => ({
-        ...amenity,
-        id: amenity.id,
-        name: amenity.name,
-        category: amenity.category ? amenity.category.replace(' ', '_').toUpperCase() : 'UNKNOWN',
-      })).filter((amenity) => amenity.name && amenity.category);
-      return amenities;
+      const amenities = await this.sequelize.models.Amenity.findAll({
+        include: [{ model: Category, as: 'category' }],
+      });
+
+      return amenities.map((a) => ({
+        id: a.id,
+        name: a.name,
+        description: a.description,
+        category: a.category ? a.category.name : null,
+        locationId: a.locationId,
+      }));
     } catch (error) {
       console.error('Error fetching amenities:', error);
       throw new Error('Error fetching amenities');
     }
   }
 
-  async getAmenityById(listingId) {
+  // 🔹 Fetch amenity by ID
+  async getAmenityById(id) {
     try {
-      const amenity = await this.Amenity.findByPk(id);
-      if (!amenity) {
-        throw new Error('Amenity not found');
-      }
+      const amenity = await this.sequelize.models.Amenity.findByPk(id, {
+        include: [{ model: Category, as: 'category' }],
+      });
+
+      if (!amenity) throw new Error('Amenity not found');
+
       return amenity;
     } catch (error) {
       console.error('Error fetching amenity:', error);
@@ -43,50 +48,72 @@ class AmenityService {
     }
   }
 
-  async addAmenity(name, categoryId, description, locationId) {
-    if (!name || !categoryId || !description || !locationId) {
-      throw new Error('Name, category, description, and location are required');
-    }
-
-    try {
-      const category = await this.sequelize.models.Category.findByPk(categoryId);
-      if (!category) {
-        throw new Error('Invalid category ID');
-      }
-      const existingAmenity = await this.sequelize.models.Amenity.findOne({
-        where: { name, categoryId },
-      });
-      if (existingAmenity) {
-        throw new Error('Amenity already exists');
-      }
-      const amenity = await this.sequelize.models.Amenity.create({ name, categoryId });
-      return amenity;
-    } catch (error) {
-      console.error('Error adding amenity:', error);
-      throw new Error('Failed to add amenity');
-    }
+  // 🔹 Add a new amenity
+// 🔹 Add a new amenity
+async addAmenity({ name, categoryId, description, locationId }) {
+  if (!name || !categoryId || !description || !locationId) {
+    throw new Error('Name, category, description, and location are required');
   }
 
+  try {
+    // Validate category exists
+    const category = await Category.findByPk(categoryId);
+    if (!category) throw new Error('Invalid category ID');
+
+    // Check duplicates
+    const existingAmenity = await Amenity.findOne({
+      where: { name, categoryId }, // pass ID, not object
+    });
+    if (existingAmenity) throw new Error('Amenity already exists');
+
+    const amenity = await Amenity.create({
+      name,
+      categoryId: category.id, // store only the ID
+      description,
+      locationId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return amenity;
+  } catch (error) {
+    console.error('Error adding amenity:', error);
+    throw new Error('Failed to add amenity');
+  }
+}
+
+
+  // 🔹 Ensure amenity IDs exist or create them
   async getAmenityIds(amenities) {
-    if (!amenities || !Array.isArray(amenities)) {
+    if (!Array.isArray(amenities)) {
       throw new Error('Invalid amenities array');
     }
 
-    const amenityIds = await Promise.all( //Error: Column 'id' cannot be null
-      amenities.map(async (amenity) => {
-        const { name, category, description } = amenity;
+    const amenityIds = await Promise.all(
+      amenities.map(async ({ name, category, description, locationId }) => {
         if (!name || !category) {
           throw new Error('Missing name or category in amenity');
         }
-        const [amenityRecord] = await this.sequelize.models.Amenity.findOrCreate({
-          where: { name, category: category.replace(' ', '_').toUpperCase(), description },
-          defaults: {
-            name: name,
-            category: category.replace(' ', '_').toUpperCase(),
+
+        const [categoryRecord] = await Category.findOrCreate({
+          where: { name: category.trim() },
+        });
+
+        const [amenityRecord] = await Amenity.findOrCreate({
+          where: {
+            name,
+            categoryId: categoryRecord.id,
             description,
+            locationId,
+          },
+          defaults: {
+            name,
+            categoryId: categoryRecord.id,
+            description,
+            locationId,
           },
         });
-        console.log(amenityRecord.id);
+
         return amenityRecord.id;
       })
     );
@@ -94,38 +121,67 @@ class AmenityService {
     return amenityIds;
   }
 
-
+  // 🔹 Link amenities to a listing
   async linkAmenitiesToListing(listingId, amenityIds) {
-    // Construct an array of objects to insert into ListingAmenities
-    const listingAmenitiesData = amenityIds.map(amenityId => ({
-      listingId,
-      amenityId,
-    }));
+    if (!listingId || !Array.isArray(amenityIds)) {
+      throw new Error('Listing ID and amenity IDs are required');
+    }
 
-    // Insert the records using bulkCreate
     try {
-      await ListingAmenities.bulkCreate(listingAmenitiesData);
-      console.log('Amenities linked to listing successfully.');
+      const listingAmenitiesData = amenityIds.map((amenityId) => ({
+        listingId,
+        amenityId,
+      }));
+
+      await ListingAmenities.bulkCreate(listingAmenitiesData, {
+        ignoreDuplicates: true,
+      });
+
+      return true;
     } catch (error) {
       console.error('Error linking amenities to listing:', error);
-      throw new Error('Error linking amenities to listing.');
+      throw new Error('Error linking amenities to listing');
     }
   }
 
+  // 🔹 Get all amenities for a listing
   async getAmenitiesByListingId(listingId) {
-    if (!listingId) {
-      throw new Error('Listing ID is required');
-    }
+    if (!listingId) throw new Error('Listing ID is required');
+
     try {
-      const listing = await this.sequelize.models.Listing.findByPk(listingId, {
-        include: this.sequelize.models.Amenity,
+      const listing = await Listing.findByPk(listingId, {
+        include: [{ model: Amenity, through: ListingAmenities }],
       });
+
       return listing ? listing.Amenities : [];
     } catch (error) {
       console.error('Error fetching amenities for listing:', error);
       throw new Error('Failed to fetch amenities for listing');
     }
   }
+
+  // inside AmenityService
+async updateAmenity(id, { name, categoryId, description, locationId }) {
+  const amenity = await Amenity.findByPk(id);
+  if (!amenity) throw new Error('Amenity not found');
+
+  if (categoryId) {
+    const category = await Category.findByPk(categoryId);
+    if (!category) throw new Error('Invalid category ID');
+  }
+
+  await amenity.update({ name, categoryId, description, locationId });
+  return amenity;
+}
+
+async deleteAmenity(id) {
+  const amenity = await Amenity.findByPk(id);
+  if (!amenity) throw new Error('Amenity not found');
+
+  await amenity.destroy();
+  return true;
+}
+
 }
 
 export default AmenityService;

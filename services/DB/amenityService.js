@@ -4,12 +4,11 @@ import Amenity from './models/amenity.js'; // Assuming you have an Amenity model
 import { CanceledError } from 'axios';
 
 class AmenityService {
-  constructor({ sequelize }) {
-    this.sequelize = sequelize;
-    // this.httpClient = httpClient;
-    // this.Amenity = Amenity;
-  }
-
+constructor({ sequelize, amenityRepository, locationRepository }) {
+  this.sequelize = sequelize;
+  this.amenityRepository = amenityRepository;
+  this.locationRepository = locationRepository;
+}
 
   async getAllAmenities() {
     try {
@@ -44,25 +43,26 @@ class AmenityService {
     }
   }
 
-  async addAmenity(name, categoryId) {
-    if (!name) {
-      throw new Error('Amenity name is required');
+  async addAmenity(name, categoryId,locationId,description) {
+    if (!name || !categoryId || !locationId) {
+      throw new Error('Amenity name, category ID and location are required');
     }
-    if (!categoryId) {
-      throw new Error('Category ID is required');
-    }
+ 
+
     try {
       const category = await this.sequelize.models.Category.findByPk(categoryId);
       if (!category) {
         throw new Error('Invalid category ID');
       }
       const existingAmenity = await this.sequelize.models.Amenity.findOne({
-        where: { name, categoryId },
+        where: { name, categoryId, locationId },
+        include: this.sequelize.models.Location,
+
       });
       if (existingAmenity) {
         throw new Error('Amenity already exists');
       }
-      const amenity = await this.sequelize.models.Amenity.create({ name, categoryId });
+      const amenity = await this.sequelize.models.Amenity.create({ name, categoryId, locationId, description });
       return amenity;
     } catch (error) {
       console.error('Error adding amenity:', error);

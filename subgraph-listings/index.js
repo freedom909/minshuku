@@ -43,8 +43,7 @@ const startApolloServer = async () => {
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          listingService: mysqlContainer.resolve('listingService'),
-          locationService: mysqlContainer.resolve('locationService')
+          container
         },
       })
     });

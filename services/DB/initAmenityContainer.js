@@ -1,64 +1,52 @@
-// initializeAmenityContainer.js
 import { createContainer, asValue, asClass } from 'awilix';
 import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
 import sequelize from '../models/config/seq.js';
+import setupAssociations from '../models/mysql/associations.js';
 
-// Core domain services/repositories for Amenities subgraph
-import UserService from '../userService/index.js';
-import UserRepository from '../repositories/userRepository.js';
+// Services & Repositories
 import AmenityService from '../amenityService.js';
 import AmenityRepository from '../repositories/amenityRepository.js';
+import UserService from '../userService/index.js';
+import UserRepository from '../repositories/userRepository.js';
+import LocationService from '../locationService.js';
+import LocationRepository from '../repositories/locationRepository.js';
 
 const initializeAmenityContainer = async ({ services = [] } = {}) => {
-  // Connect to databases in parallel
-  const [mysqldb, mongodb] = await Promise.all([
-    connectMysql(),
-    connectToMongoDB()
-  ]);
+  const mysqldb = await connectMysql();
+  const mongodb = await connectToMongoDB();
 
-  // Create container
+  // Ensure associations are set before using services
+  setupAssociations();
+
   const container = createContainer();
 
-  // Utility to check if a value is a class
-  const isClass = (fn) =>
-    typeof fn === 'function' && /^class\s/.test(Function.prototype.toString.call(fn));
-
-  // Register core dependencies
   container.register({
     sequelize: asValue(sequelize),
     mysqldb: asValue(mysqldb),
     mongodb: asValue(mongodb),
 
-    userRepository: isClass(UserRepository)
-      ? asClass(UserRepository).singleton()
-      : asValue(UserRepository),
-
-    userService: isClass(UserService)
-      ? asClass(UserService).singleton()
-      : asValue(UserService),
-
-    amenityRepository: isClass(AmenityRepository)
-      ? asClass(AmenityRepository).singleton()
-      : asValue(AmenityRepository),
-
-    amenityService: isClass(AmenityService)
-      ? asClass(AmenityService).singleton()
-      : asValue(AmenityService),
+    // User
+    userRepository: asClass(UserRepository).singleton(),
+    userService: asClass(UserService).singleton(),
+    // Amenity
+    amenityRepository: asClass(AmenityRepository).singleton(),
+    amenityService: asClass(AmenityService).singleton(),
+    // Location
+    locationRepository: asClass(LocationRepository).singleton(),
+    locationService: asClass(LocationService).singleton(),
   });
 
-  // Optionally register additional services
+  // Optional dynamic services
   services
-    .filter((service) => !container.registrations[service.name])
-    .forEach((service) => {
+    .filter(service => !container.registrations[service.name])
+    .forEach(service => {
       container.register({
-        [service.name]: isClass(service)
-          ? asClass(service).singleton()
-          : asValue(service),
+        [service.name]: asClass(service).singleton(),
       });
     });
 
-  console.log('Databases connected and services initialized for Amenity subgraph');
+  console.log('✅ Amenity container initialized (MySQL + MongoDB + DI)');
   return container;
 };
 

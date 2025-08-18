@@ -1,12 +1,12 @@
-import sequelize from './config/seq.js';
-import setupAssociations from './models/associations.js';
+import sequelize from '../config/seq.js';
+import setupAssociations from './associations.js';
 
 // Import models so Sequelize registers them
-import './models/listing.js';
-import './models/location.js';
-import './models/category.js';
-import './models/amenity.js';
-import './models/listingAmenities.js';
+import './listing.js';
+import './location.js';
+import './category.js';
+import './amenity.js';
+import './listingAmenities.js';
 
 // Setup associations
 setupAssociations();

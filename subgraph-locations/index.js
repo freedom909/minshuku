@@ -11,7 +11,7 @@ import { GraphQLError } from 'graphql';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import LocationService from '../services/locationService.js';
+
 
 dotenv.config();
 

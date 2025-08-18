@@ -1,100 +1,37 @@
+// models/mysql/category.js
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/seq.js';
 
-class Listing extends Model {}
 
-Listing.init(
+class Category extends Model {}
+
+Category.init(
   {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    locationId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      unique: true, // each listing tied to exactly one location
-    },
-    title: {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    name: { type: DataTypes.STRING, allowNull: false },
+    image: DataTypes.STRING,
+    description: DataTypes.STRING,
+    listingId: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    price: {
-      type: DataTypes.FLOAT,
-      allowNull: false,
-    },
-    hostId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    numOfBeds: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    pictures: {
-      type: DataTypes.JSON, // store array of picture URLs
-      allowNull: false,
-      defaultValue: ["pic1.jpg", "pic2.jpg"],
-    },
-    isFeatured: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    saleAmount: {
-      type: DataTypes.FLOAT,
-      allowNull: true,
-    },
-    bookingNumber: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
-    checkInDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    checkOutDate: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    listingStatus: {
-      type: DataTypes.ENUM(
-        'ACTIVE',
-        'PENDING',
-        'SOLD',
-        'DELETED',
-        'REJECT',
-        'CANCELLED',
-        'EXPIRED',
-        'COMPLETED',
-        'AVAILABLE',
-        'PUBLISHED'
-      ),
-      allowNull: false,
-    },
-    locationType: {
-      type: DataTypes.ENUM('SPACESHIP', 'HOUSE', 'CAMPSITE', 'APARTMENT', 'ROOM'),
-      allowNull: false,
-      defaultValue: 'ROOM',
+      references: {
+        model: 'listings',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
     },
   },
   {
     sequelize,
-    modelName: 'Listing',
-    tableName: 'listings',
-    timestamps: false, // using explicit createdAt/updatedAt above
+    modelName: 'Category',
+    tableName: 'categories',
+    timestamps: false,
   }
 );
 
-export default Listing;
+// Association: Listing has one Category
+// Listing.hasOne(Category, { foreignKey: 'listingId', as: 'category' });
+// Category.belongsTo(Listing, { foreignKey: 'listingId', as: 'listing' });
+
+export default Category;

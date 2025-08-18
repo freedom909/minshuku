@@ -6,7 +6,9 @@ import Review from './review.js';
 import Booking from './booking.js';
 import Payment from './payment.js';
 import Amenity from './mysql/amenity.js';
-import ListingAmenities from './mysql/listingAmenity.js';
+import ListingAmenities from './mysql/listingAmenities.js';
+import Category from './mysql/category.js';
+
 import Location from './mysql/location.js';
 
 

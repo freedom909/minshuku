@@ -6,44 +6,86 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import initializeAmenityContainer from '../services/DB/initAmenityContainer.js';
+import { GraphQLError } from 'graphql';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
-import initializeAmenityContainer from '../services/DB/initAmenityContainer.js';
+
 
 dotenv.config();
 
-const typeDefs = gql(readFileSync('./schema.graphql', 'utf-8'));
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
-const startServer = async () => {
-  const container = await initializeAmenityContainer();
-  const app = express();
-  const httpServer = http.createServer(app);
+const startApolloServer = async () => {
+  try {
+    const mysqlContainer = await initializeAmenityContainer();
+    const app = express();
+    const httpServer = http.createServer(app);
 
-  const server = new ApolloServer({
-    schema: buildSubgraphSchema({ typeDefs, resolvers }),
-    introspection: true,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-    context: ({ req }) => ({
-      locationId: req.body?.variables?.locationId || null,
-      dataSources: {
-        amenityService: container.resolve('amenityService'),
+    const server = new ApolloServer({
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
+
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+               const mysql = mysqlContainer.resolve('mysql');
+          if (mysql && mysql.end) {
+            await mysql.end(); // close the DB connection properly
+          };
+              }
+            };
+          }
+        }
+      ],
+      context: async ({ req }) => ({
+        token: req.headers.authorization || '',
+        dataSources: {
+          amenityService: mysqlContainer.resolve('amenityService'),
+        },
+      }),
+      formatError: (error) => {
+        console.error('GraphQL error:', error);
+        return {
+          message: error.message,
+          code: error.extensions?.code,
+          locations: error.locations,
+          path: error.path,
+        };
       },
-    }),
-  });
 
-  await server.start();
+    });
 
-  app.use(
-    '/graphql',
-    cors(),
-    express.json(),
-    expressMiddleware(server)
-  );
+    await server.start();
 
-  httpServer.listen({ port: 4090 }, () => {
-    console.log('🚀 Amenities Subgraph running at http://localhost:4090/graphql');
-  });
+    app.use(
+      '/graphql',
+      cors({
+        origin: '*',
+        methods: ['GET', 'POST', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization']
+      }),
+      express.json(),
+      expressMiddleware(server, {
+        isListingCreation: true, // mock flag for testing
+        context: async ({ req }) => ({
+          token: req.headers.authorization || '',
+          dataSources: {
+            amenityService: mysqlContainer.resolve('amenityService')
+          },
+        })
+      })
+    );
+
+    httpServer.listen({ port: 4090 }, () =>
+      console.log('Server is running on http://localhost:4090/graphql')
+    );
+  } catch (error) {
+    console.error('Error starting Apollo Server:', error);
+  }
 };
 
-startServer();
+startApolloServer();

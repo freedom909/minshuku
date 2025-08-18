@@ -1,37 +1,14 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/seq.js';
-import Listing from './listing.js';
-import Amenity from './amenity.js';
+import { v4 as uuidv4 } from 'uuid';
 
 class ListingAmenities extends Model {}
 
 ListingAmenities.init(
   {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    listingId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: Listing,
-        key: 'id',
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
-    },
-    amenityId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: Amenity,
-        key: 'id',
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
-    },
+    id: { type: DataTypes.UUID, primaryKey: true, defaultValue: uuidv4 },
+    listingId: { type: DataTypes.STRING, allowNull: false },
+    amenityId: { type: DataTypes.STRING, allowNull: false },
   },
   {
     sequelize,
@@ -40,18 +17,5 @@ ListingAmenities.init(
     timestamps: false,
   }
 );
-
-// Define associations (many-to-many)
-Listing.belongsToMany(Amenity, {
-  through: ListingAmenities,
-  foreignKey: 'listingId',
-  as: 'amenities',
-});
-
-Amenity.belongsToMany(Listing, {
-  through: ListingAmenities,
-  foreignKey: 'amenityId',
-  as: 'listings',
-});
 
 export default ListingAmenities;

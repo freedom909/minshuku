@@ -16,7 +16,7 @@ async function loadJSON(filePath) {
   return JSON.parse(data);
 }
 
-const mongoUrl = 'mongodb://localhost:27017/food';
+const mongoUrl = 'mongodb://localhost:27017/air';
 
 
 const seedDatabase = async () => {

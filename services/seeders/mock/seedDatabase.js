@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import Listing from '../../models/mysql/listing.js'
 import Amenity from '../../models/mysql/amenity.js'; //
-import ListingAmenities from '../../models/mysql/listingAmenity.js';
+import ListingAmenities from '../../models/mysql/listingAmenities.js';
 import Location from '../../models/mysql/location.js'
 const seedData = async () => {
     try {

@@ -1,49 +1,137 @@
-
+// resolvers/amenityResolvers.js
 
 const resolvers = {
   Query: {
-    listings: async (_, __, { dataSources }) => {
-      const { listingService } = dataSources;
-      return await listingService.getAllListings();
-    },
-    listing: async (_, { id }, { dataSources }) => {
-      const { listingService } = dataSources;
-      return await listingService.getListingById(id);
-    },
-
-    amenities: async (_, __, { dataSources }) => {
-      const { amenityService } = dataSources; 
+    // Get all amenities
+    amenities: async (_, __, { container }) => {
+      const amenityService = container.resolve("amenityService");
+      if (!amenityService) throw new Error("AmenityService is not available");
       return await amenityService.getAllAmenities();
     },
-    amenity: async (_, { locationId }, { dataSources }) => {
-      const { amenityService } = dataSources;
-      return await amenityService.getAmenityById(locationId);
+
+    // Get a single amenity by ID
+    amenity: async (_, { id }, { container }) => {
+      const amenityService = container.resolve("amenityService");
+      if (!amenityService) throw new Error("AmenityService is not available");
+      return await amenityService.getAmenityById(id);
+    },
+
+    // Get amenities for a specific listing
+    listingAmenities: async (_, { listingId }, { container }) => {
+      const amenityService = container.resolve("amenityService");
+      if (!amenityService) throw new Error("AmenityService is not available");
+      return await amenityService.getAmenitiesByListingId(listingId);
     },
   },
+
   Mutation: {
-    addAmenity: async (_, { input }, { dataSources }) => {
-      const { amenityService } = dataSources;
-      const { name, categoryId, description, locationId } = input;
-      return await amenityService.addAmenity(name, categoryId, description, locationId)
+    // Add a new amenity
+// Resolver
+addAmenity: async (_, { input }, { dataSources }) => {
+  const amenityService = dataSources.amenityService;
+  if (!amenityService) throw new Error("AmenityService is not available");
+
+  const amenity = await amenityService.addAmenity(input);
+  return {
+    code: 200,
+    success: true,
+    message: "Amenity created successfully",
+    amenity,
+  };
+},
+
+
+    // Update an amenity
+    updateAmenity: async (_, { id, input }, { container }) => {
+      const amenityService = container.resolve("amenityService");
+      if (!amenityService) throw new Error("AmenityService is not available");
+
+      try {
+        const amenity = await amenityService.updateAmenity(id, input);
+        if (!amenity) {
+          return {
+            code: 404,
+            success: false,
+            message: "Amenity not found",
+            amenity: null,
+          };
+        }
+        return {
+          code: 200,
+          success: true,
+          message: "Amenity updated successfully",
+          amenity,
+        };
+      } catch (error) {
+        console.error("Error in updateAmenity:", error);
+        return {
+          code: 500,
+          success: false,
+          message: error.message || "Failed to update amenity",
+          amenity: null,
+        };
+      }
     },
-    addAmenityToListing: async (_, { listingId, amenityId }, { dataSources }) =>
-      dataSources.listingService.addAmenityToListing(listingId, amenityId),
+
+    // Delete an amenity
+    deleteAmenity: async (_, { id }, { container }) => {
+      const amenityService = container.resolve("amenityService");
+      if (!amenityService) throw new Error("AmenityService is not available");
+
+      try {
+        const deleted = await amenityService.deleteAmenity(id);
+        if (!deleted) {
+          return {
+            code: 404,
+            success: false,
+            message: "Amenity not found",
+          };
+        }
+        return {
+          code: 200,
+          success: true,
+          message: "Amenity deleted successfully",
+        };
+      } catch (error) {
+        console.error("Error in deleteAmenity:", error);
+        return {
+          code: 500,
+          success: false,
+          message: error.message || "Failed to delete amenity",
+        };
+      }
+    },
   },
+
+  // Field resolvers for Amenity
   Amenity: {
-    __resolveReference: async (reference, { dataSources }) => {
-      return await dataSources.amenityService.getAmenityById(reference.id);
+    id: (parent) => parent.id,
+    name: (parent) => parent.name,
+    description: (parent) => parent.description,
+    locationId: (parent) => parent.locationId,
+    category: (parent) => (parent.category ? parent.category : null),
+
+    __resolveReference: async (reference, { container }) => {
+      const amenityService = container.resolve("amenityService");
+      if (!amenityService) throw new Error("AmenityService is not available");
+      return await amenityService.getAmenityById(reference.id);
     },
-     id: (a) => a.id,
-    name: (a) => a.name,
-    locationId: (a) => a.locationId,
-    category: (a) => a.category,
-    description: (a) => a.description,
   },
+
+  // Field resolvers for Listing
   Listing: {
-    __resolveReference: async (reference, { dataSources }) => {
-      return await dataSources.listingService.getListingById(reference.id);
+    __resolveReference: async (reference, { container }) => {
+      const listingService = container.resolve("listingService");
+      if (!listingService) throw new Error("ListingService is not available");
+      return await listingService.getListingById(reference.id);
     },
-    amenities: async (listing, __, { dataSources }) => dataSources.amenityService.getAmenitiesById(listing.amenityIds),
+
+    amenities: async (listing, __, { container }) => {
+      const amenityService = container.resolve("amenityService");
+      if (!amenityService) throw new Error("AmenityService is not available");
+      return await amenityService.getAmenitiesByListingId(listing.id);
+    },
   },
 };
+
 export default resolvers;

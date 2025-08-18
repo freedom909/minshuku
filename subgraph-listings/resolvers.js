@@ -351,7 +351,9 @@ const resolvers = {
       }
     },
 
-    createListing: async (_, { input }, { dataSources, context, userId="689c1ac6e1a02e81f0b7f112" }) => {
+    createListing: async (_, { input }, { container, userId="689c1ac6e1a02e81f0b7f112" }) => {
+      const listingService = container.resolve('listingService');
+      console.log("Context received in createListing:", container);
       if (!userId) throw new AuthenticationError('User not authenticated');
       if (!isHost && !isAdmin) {
       throw new AuthenticationError(`you don't have right to create this list`)
@@ -362,7 +364,7 @@ const resolvers = {
         throw new Error("Invalid context or dataSources missing.");
       }
 
-      const { locationService, listingService } = dataSources;
+      const locationService = container.resolve('locationService');
       let locationId;
 
       if (input.locationInput) {
@@ -383,7 +385,7 @@ const resolvers = {
           throw new Error("Invalid locationId.");
         }
       }
-
+     const hostId=userId;
       // Logging parameters before listing creation  
       console.log("Listing data to create:", {
         description: input.description,

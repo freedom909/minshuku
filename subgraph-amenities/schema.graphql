@@ -10,16 +10,45 @@ type Amenity @key(fields: "id") {
   id: ID! @shareable
   name: String! @shareable
   locationId: ID! @shareable
-  categoryId: ID @shareable 
-  description: String @shareable
-  createdAt: DateTime! @shareable
-  updatedAt: DateTime! @shareable
+  categoryId: ID !@shareable
+  description: String! @shareable
+}
+
+interface Response {
+  code: Int!
+  success: Boolean!
+  message: String!
+}
+
+type AddAmenityResponse implements Response {
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+  amenity: Amenity! @shareable
+}
+
+type AmenityResponse implements Response {
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+  amenity: Amenity! @shareable
+}
+
+input AmenityInput {
+  name: String!
+  locationId: ID!
+  categoryId: ID!
+  description: String
 }
 
 type Query {
- amenities(locationId: ID!): [Amenity!]! @shareable
+  amenities: [Amenity!]! @shareable
+  amenity(id: ID!): Amenity @shareable
+  listingAmenities(listingId: ID!): [Amenity!]! @shareable
 }
 
 type Mutation {
-  addAmenity(name: String!): Amenity! @shareable
+  addAmenity(input: AmenityInput!): AddAmenityResponse! @shareable
+  updateAmenity(id: ID!, input: AmenityInput!): AmenityResponse! @shareable
+  deleteAmenity(id: ID!): AmenityResponse! @shareable
 }
