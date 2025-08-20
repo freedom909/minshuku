@@ -7,47 +7,59 @@ import Amenity from '../../models/mysql/amenity.js';
 import ListingAmenities from '../../models/mysql/listingAmenities.js';
 import Location from '../../models/mysql/location.js';
 import Category from '../../models/mysql/category.js';
+import ListingCategory from '../../models/mysql/listingCategory.js';
 
 const seedData = async () => {
   try {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-
-    // Load JSON data
+    console.log('Seeding data...', __dirname);
     const filePath = path.join(__dirname, 'data.json');
+    console.log('Reading data from file:', filePath);
     const rawData = fs.readFileSync(filePath, 'utf8');
-    const { listings, amenities, listingAmenities, locations, categories } = JSON.parse(rawData);
+    console.log('File read successfully.', rawData);
+    const data = JSON.parse(rawData);
+    console.log('Data parsed successfully.', data);
+    const { listings, amenities, listingAmenities, locations, categories, listingCategories } = data;
 
-    // Drop & recreate tables
+    // Recreate tables
     await sequelize.sync({ force: true });
     console.log('Tables recreated!');
 
-    // Insert Locations
-    if (locations && locations.length) {
+    // Insert Locations first
+    if (locations?.length) {
       await Location.bulkCreate(locations);
       console.log('Locations inserted.');
     }
 
-    // Insert Listings (locationId must exist)
-    if (listings && listings.length) {
-      await Listing.bulkCreate(listings);
-      console.log('Listings inserted.');
-    }
-
-    // Insert Categories (listingId must exist)
-    if (categories && categories.length) {
+    // Insert Categories
+    if (categories?.length) {
       await Category.bulkCreate(categories);
       console.log('Categories inserted.');
     }
 
-    // Insert Amenities (optional locationId)
-    if (amenities && amenities.length) {
-      await Amenity.bulkCreate(amenities);
+    // Insert Listings (ensure locationId exists)
+    if (listings?.length) {
+      await Listing.bulkCreate(listings);
+      console.log('Listings inserted.');
+    }
+
+    // Insert ListingCategory join table
+    if (listingCategories?.length) {
+      await ListingCategory.bulkCreate(listingCategories);
+      console.log('ListingCategory inserted.');
+    }
+
+    // Insert Amenities (ensure categoryId exists)
+    if (amenities?.length) {
+      // Validate categoryId exists in DB
+      const validAmenities = amenities.filter(a => a.categoryId && categories.some(c => c.id === a.categoryId));
+      await Amenity.bulkCreate(validAmenities);
       console.log('Amenities inserted.');
     }
 
-    // Insert ListingAmenities (FKs must exist)
-    if (listingAmenities && listingAmenities.length) {
+    // Insert ListingAmenities join table
+    if (listingAmenities?.length) {
       await ListingAmenities.bulkCreate(listingAmenities);
       console.log('ListingAmenities inserted.');
     }

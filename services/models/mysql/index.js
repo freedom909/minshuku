@@ -1,15 +1,15 @@
-import sequelize from '../config/seq.js';
-import setupAssociations from './associations.js';
+// models/listing.js
+Listing.belongsToMany(Amenity, {
+  through: 'listing_amenities',
+  foreignKey: 'listingId',
+  otherKey: 'amenityId',
+  as: 'amenities', // 👈 important alias
+});
 
-// Import models so Sequelize registers them
-import './listing.js';
-import './location.js';
-import './category.js';
-import './amenity.js';
-import './listingAmenities.js';
-
-// Setup associations
-setupAssociations();
-
-// Sync DB if needed
-await sequelize.sync({ alter: true });
+// models/amenity.js
+Amenity.belongsToMany(Listing, {
+  through: 'listing_amenities',
+  foreignKey: 'amenityId',
+  otherKey: 'listingId',
+  as: 'listings',
+});

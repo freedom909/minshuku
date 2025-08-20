@@ -43,19 +43,20 @@ constructor({ sequelize, amenityRepository, locationRepository }) {
     }
   }
 
-  async addAmenity(name, categoryId,locationId,description) {
-    if (!name || !categoryId || !locationId) {
+  async addAmenity(name, id,locationId,description) {
+    if (!name || !id || !locationId) {
       throw new Error('Amenity name, category ID and location are required');
     }
  
 
     try {
-      const category = await this.sequelize.models.Category.findByPk(categoryId);
+      const category = await this.sequelize.models.Category.findByPk(id);
       if (!category) {
         throw new Error('Invalid category ID');
       }
       const existingAmenity = await this.sequelize.models.Amenity.findOne({
-        where: { name, categoryId, locationId },
+        where: { name, categoryId: id, locationId },
+
         include: this.sequelize.models.Location,
 
       });

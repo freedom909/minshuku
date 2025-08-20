@@ -1,37 +1,31 @@
-// models/mysql/category.js
+// models/mysql/listing.js
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/seq.js';
 
+class Listing extends Model {}
 
-class Category extends Model {}
-
-Category.init(
+Listing.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    name: { type: DataTypes.STRING, allowNull: false },
-    image: DataTypes.STRING,
-    description: DataTypes.STRING,
-    listingId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      references: {
-        model: 'listings',
-        key: 'id',
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
-    },
+    id: { type: DataTypes.STRING, primaryKey: true },
+    title: { type: DataTypes.STRING, allowNull: false },
+    description: { type: DataTypes.STRING },
+    pictures: { type: DataTypes.JSON }, // array of URLs
+    numOfBeds: { type: DataTypes.INTEGER },
+    price: { type: DataTypes.FLOAT },
+    isFeatured: { type: DataTypes.BOOLEAN, defaultValue: false },
+    saleAmount: { type: DataTypes.FLOAT },
+    checkInDate: { type: DataTypes.DATEONLY },
+    checkOutDate: { type: DataTypes.DATEONLY },
+
+    locationId: { type: DataTypes.STRING, allowNull: false },
+    hostId: { type: DataTypes.STRING, allowNull: false }, // one-to-many with User
   },
   {
     sequelize,
-    modelName: 'Category',
-    tableName: 'categories',
-    timestamps: false,
+    modelName: 'Listing',
+    tableName: 'listings',
+    timestamps: true,
   }
 );
 
-// Association: Listing has one Category
-// Listing.hasOne(Category, { foreignKey: 'listingId', as: 'category' });
-// Category.belongsTo(Listing, { foreignKey: 'listingId', as: 'listing' });
-
-export default Category;
+export default Listing;

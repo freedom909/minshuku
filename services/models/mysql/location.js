@@ -6,8 +6,7 @@ class Location extends Model {}
 Location.init(
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.STRING,
       primaryKey: true,
       allowNull: false,
     },

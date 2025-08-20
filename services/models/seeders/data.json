@@ -1,0 +1,462 @@
+{
+  "listings": [
+    {
+      "id": "listing-1",
+      "title": "Listing 1",
+      "locationId": "location-1",
+      "amenityids": [
+        "am-1",
+        "am-2",
+        "am-3"
+      ],
+      "price": 100,
+      "bookings": [],
+      "reviews": [],
+      "description": "Listing 1 description",
+      "createdAt": "2024-10-10T04:30:11.294Z",
+      "updatedAt": "2024-10-10T04:30:11.294Z",
+      "hostId": "host-1",
+      "pictures": [
+        "1.jpg",
+        "2.jpg"
+      ],
+      "checkInDate": "2024-10-10T04:30:11.294Z",
+      "checkOutDate": "2024-10-10T04:30:11.294Z",
+      "isFeatured": false,
+      "saleAmount": 0,
+      "bookingNumber": 0,
+      "listingStatus": "AVAILABLE",
+      "numOfBeds": 5
+    },
+    {
+      "id": "listing-2",
+      "title": "Listing 2",
+      "locationId": "location-2",
+      "amenityids": [
+        "am-2",
+        "am-3",
+        "am-4"
+      ],
+      "price": 110,
+      "bookings": [],
+      "reviews": [],
+      "description": "Listing 2 description",
+      "createdAt": "2024-10-10T04:30:11.294Z",
+      "updatedAt": "2024-10-10T04:30:11.294Z",
+      "hostId": "host-2",
+      "pictures": [
+        "2.jpg",
+        "3.jpg"
+      ],
+      "checkInDate": "2024-10-10T04:30:11.294Z",
+      "checkOutDate": "2024-10-10T04:30:11.294Z",
+      "isFeatured": false,
+      "saleAmount": 0,
+      "bookingNumber": 0,
+      "listingStatus": "AVAILABLE",
+      "numOfBeds": 5
+    }
+  ],
+  "amenities": [
+  {
+    "id": "am-1",
+    "categoryId": "12",
+    "name": "Inter dimensional wifi harmony",
+    "description": "a physical wifi connection",
+    "locationId":"location-1"
+  },
+  {
+    "id": "am-2",
+    "categoryId": "13",
+    "name": "Towel",
+    "description": "a long-lasting towel",
+    "locationId":"location-2"
+
+  },
+  {
+    "id": "am-3",
+    "categoryId": "3",
+    "name": "Universal remote",
+    "description": "a universal remote control",
+    "locationId":"location-3"
+  }
+ 
+],
+
+  "listingAmenities": [
+    {
+      "amenityId": "am-23",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-16",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-20",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-7",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-26",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-11",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-2",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-21",
+      "listingId": "listing-1"
+    },
+    {
+      "amenityId": "am-16",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-12",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-30",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-27",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-10",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-19",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-15",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-29",
+      "listingId": "listing-2"
+    },
+    {
+      "amenityId": "am-20",
+      "listingId": "listing-3"
+    },
+    {
+      "amenityId": "am-18",
+      "listingId": "listing-3"
+    },
+    {
+      "amenityId": "am-1",
+      "listingId": "listing-3"
+    },
+    {
+      "amenityId": "am-24",
+      "listingId": "listing-3"
+    },
+    {
+      "amenityId": "am-28",
+      "listingId": "listing-3"
+    },
+    {
+      "amenityId": "am-4",
+      "listingId": "listing-3"
+    },
+    {
+      "amenityId": "am-11",
+      "listingId": "listing-3"
+    },
+    {
+      "amenityId": "am-5",
+      "listingId": "listing-4"
+    },
+    {
+      "amenityId": "am-27",
+      "listingId": "listing-4"
+    },
+    {
+      "amenityId": "am-24",
+      "listingId": "listing-4"
+    },
+    {
+      "amenityId": "am-23",
+      "listingId": "listing-5"
+    },
+    {
+      "amenityId": "am-2",
+      "listingId": "listing-5"
+    },
+    {
+      "amenityId": "am-17",
+      "listingId": "listing-5"
+    },
+    {
+      "amenityId": "am-27",
+      "listingId": "listing-5"
+    },
+    {
+      "amenityId": "am-15",
+      "listingId": "listing-5"
+    },
+    {
+      "amenityId": "am-8",
+      "listingId": "listing-5"
+    },
+    {
+      "amenityId": "am-11",
+      "listingId": "listing-6"
+    },
+    {
+      "amenityId": "am-14",
+      "listingId": "listing-6"
+    },
+    {
+      "amenityId": "am-24",
+      "listingId": "listing-6"
+    },
+    {
+      "amenityId": "am-27",
+      "listingId": "listing-6"
+    },
+    {
+      "amenityId": "am-30",
+      "listingId": "listing-6"
+    },
+    {
+      "amenityId": "am-18",
+      "listingId": "listing-6"
+    },
+    {
+      "amenityId": "am-16",
+      "listingId": "listing-7"
+    },
+    {
+      "amenityId": "am-24",
+      "listingId": "listing-8"
+    },
+    {
+      "amenityId": "am-18",
+      "listingId": "listing-8"
+    },
+    {
+      "amenityId": "am-19",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-9",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-11",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-26",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-8",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-27",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-10",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-1",
+      "listingId": "listing-9"
+    },
+    {
+      "amenityId": "am-4",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-24",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-21",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-11",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-9",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-13",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-29",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-16",
+      "listingId": "listing-10"
+    },
+    {
+      "amenityId": "am-17",
+      "listingId": "listing-10"
+    }
+  ],
+  "locations": [
+    {
+      "id": "location-1",
+      "listingId": "listing-1",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-2",
+      "listingId": "listing-7",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-3",
+      "listingId": "listing-1",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-4",
+      "listingId": "listing-9",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-5",
+      "listingId": "listing-9",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-6",
+      "listingId": "listing-6",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-7",
+      "listingId": "listing-3",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-8",
+      "listingId": "listing-5",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-9",
+      "listingId": "listing-3",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    },
+    {
+      "id": "location-10",
+      "listingId": "listing-8",
+      "name": "Central Park",
+      "radius": 5,
+      "latitude": 40.785091,
+      "longitude": -73.968285,
+      "address": "New York, NY 10024",
+      "city": "New York",
+      "state": "NY",
+      "country": "USA",
+      "zip": "10024",
+      "type": "primary"
+    }
+  ]
+}

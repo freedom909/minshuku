@@ -1,0 +1,17 @@
+[
+    {
+        "id": 1,
+        "name": "Electronics",  
+        "description": "Electronics",   
+        "created_at": "2021-01-01 00:00:00",
+        "updated_at": "2021-01-01 00:00:00" 
+    },
+    {
+        "id": 2,    
+        "name": "Furniture",  
+        "description": "Furniture",     
+        "created_at": "2021-01-01 00:00:00",    
+        "updated_at": "2021-01-01 00:00:00" 
+    },
+    
+]

@@ -2,7 +2,7 @@ import { createContainer, asValue, asClass } from 'awilix';
 import connectMysql from './connectMysqlDB.js';
 import connectToMongoDB from './connectMongoDB.js';
 import sequelize from '../models/config/seq.js';
-import setupAssociations from '../models/mysql/associations.js';
+import { setupAssociations } from '../models/mysql/associations.js';
 
 // Services & Repositories
 import AmenityService from '../amenityService.js';

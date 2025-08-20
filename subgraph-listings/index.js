@@ -35,6 +35,7 @@ const startApolloServer = async () => {
             return {
               async drainServer() {
                 await mysqlContainer.resolve('mysqldb').end();
+              
               }
             };
           }
@@ -43,7 +44,9 @@ const startApolloServer = async () => {
       context: async ({ req }) => ({
         token: req.headers.authorization || '',
         dataSources: {
-          container
+          listingService: mysqlContainer.resolve('listingService'),
+          locationService: mysqlContainer.resolve('locationService'), 
+          amenityService: mysqlContainer.resolve('amenityService'),
         },
       })
     });
@@ -59,13 +62,14 @@ const startApolloServer = async () => {
       }),
       express.json(),
       expressMiddleware(server, {
-        context: async ({ req }) => ({
-          token: req.headers.authorization || '',
-          dataSources: {
-            listingService: mysqlContainer.resolve('listingService'),
-            locationService: mysqlContainer.resolve('locationService')
-          },
-        })
+         context: async ({ req }) => ({
+        token: req.headers.authorization || '',
+        dataSources: {
+          listingService: mysqlContainer.resolve('listingService'),
+          locationService: mysqlContainer.resolve('locationService'),
+          amenityService: mysqlContainer.resolve('amenityService'),
+        },
+      })
       })
     );
 

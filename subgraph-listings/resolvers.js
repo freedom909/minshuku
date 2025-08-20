@@ -351,20 +351,23 @@ const resolvers = {
       }
     },
 
-    createListing: async (_, { input }, { container, userId="689c1ac6e1a02e81f0b7f112" }) => {
-      const listingService = container.resolve('listingService');
-      console.log("Context received in createListing:", container);
-      if (!userId) throw new AuthenticationError('User not authenticated');
-      if (!isHost && !isAdmin) {
-      throw new AuthenticationError(`you don't have right to create this list`)
-      }
+    createListing: async (_, { input },  context) => {
+      // console.log("Mutation createListing invoked",input);
+      const {listingService,locationService,amenityService}= context.dataSources;
+
+      
+      console.log("Context received in createListing:", context);
+      //if (!userId) throw new AuthenticationError('User not authenticated');
+      // if (!isHost && !isAdmin) {
+      // throw new AuthenticationError(`you don't have right to create this list`)
+      // }
+
       console.log("Context received in createListing:", context);
 
-      if (!context || !context.dataSources) {
+      if (!context||!context.dataSources) {
         throw new Error("Invalid context or dataSources missing.");
       }
 
-      const locationService = container.resolve('locationService');
       let locationId;
 
       if (input.locationInput) {
@@ -381,11 +384,11 @@ const resolvers = {
         console.log("New location created with ID:", locationId);
       } else {
         locationId = input.locationId;
-        if (!locationId || !uuidValidate(locationId)) {
+        if (!locationId) {
           throw new Error("Invalid locationId.");
         }
       }
-     const hostId=userId;
+      //const hostId = context.userId; 
       // Logging parameters before listing creation  
       console.log("Listing data to create:", {
         description: input.description,
@@ -403,11 +406,11 @@ const resolvers = {
       });
 
       // Transaction for listing creation  
-      const transaction = await listingService.sequelize.transaction();
+      const transaction = await listingService.sequelize.transaction();//"listingService is not defined",
       try {
-        if (!input.hostId || !uuidValidate(input.hostId)) {
-          throw new Error("Invalid hostId.");
-        }
+        // if (!input.hostId || !uuidValidate(input.hostId)) {
+        //   throw new Error("Invalid hostId.");
+        // }
         const listingInput = {
           ...input,
           locationId,
@@ -425,9 +428,9 @@ const resolvers = {
         }
 
         console.log("ListingId created after creation:", newListing.id);
-        if (!uuidValidate(newListing.id)) {
-          throw new Error("Failed to create listing due to invalid ID.");
-        }
+if (!newListing.id) {
+  throw new Error("Listing ID was not generated.");
+}
 
         // Continue processing...  
         await transaction.commit();

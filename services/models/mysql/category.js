@@ -1,3 +1,4 @@
+// models/mysql/category.js
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/seq.js';
 
@@ -5,23 +6,20 @@ class Category extends Model {}
 
 Category.init(
   {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    name: { type: DataTypes.STRING, allowNull: false },
-    image: DataTypes.STRING,
-    description: DataTypes.STRING,
-    listingId: {
+    id: {
+      type: DataTypes.STRING, // or DataTypes.INTEGER if you want auto increment
+      primaryKey: true,
+    },
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
-      references: { model: 'listings', key: 'id' },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
     },
   },
   {
     sequelize,
     modelName: 'Category',
     tableName: 'categories',
-    timestamps: false,
+    timestamps: true,
   }
 );
 

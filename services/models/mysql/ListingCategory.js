@@ -1,16 +1,14 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/seq.js';
 import Listing from './listing.js';
-import Amenity from './amenity.js';
+import Category from './category.js';
 
-class ListingAmenities extends Model {}
+class ListingCategory extends Model {}
 
-ListingAmenities.init(
+ListingCategory.init(
   {
-    
     listingId: {
       type: DataTypes.STRING,
-
       allowNull: false,
       references: {
         model: Listing,
@@ -18,11 +16,11 @@ ListingAmenities.init(
       },
       primaryKey: true,
     },
-    amenityId: {
+    categoryId: {
       type: DataTypes.STRING,
       allowNull: false,
       references: {
-        model: Amenity,
+        model: 'categories',
         key: 'id',
       },
       primaryKey: true,
@@ -30,10 +28,10 @@ ListingAmenities.init(
   },
   {
     sequelize,
-    modelName: 'ListingAmenities',
-    tableName: 'listing_amenities',
+    modelName: 'ListingCategory',
+    tableName: 'listing_categories',
     timestamps: false,
   }
 );
 
-export default ListingAmenities;
+export default ListingCategory;

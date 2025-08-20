@@ -58,23 +58,26 @@ async addAmenity({ name, categoryId, description, locationId }) {
   try {
     // Validate category exists
     const category = await Category.findByPk(categoryId);
+    console.log('category', category);
     if (!category) throw new Error('Invalid category ID');
 
     // Check duplicates
     const existingAmenity = await Amenity.findOne({
       where: { name, categoryId }, // pass ID, not object
     });
+    console.log('existingAmenity', existingAmenity);
     if (existingAmenity) throw new Error('Amenity already exists');
-
+const { id: categoryIdValue } = category;
     const amenity = await Amenity.create({
+      id: `am-${Date.now()}`, // simple unique ID
       name,
-      categoryId: category.id, // store only the ID
+      categoryId: categoryIdValue,
       description,
       locationId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
+    console.log('amenity', amenity);
     return amenity;
   } catch (error) {
     console.error('Error adding amenity:', error);

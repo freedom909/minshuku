@@ -1,23 +1,51 @@
 // models/mysql/amenity.js
-import { Model, DataTypes } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/seq.js';
 
-class Amenity extends Model {}
+class Amenity extends Model { }
 
 Amenity.init(
   {
-    id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
-    name: { type: DataTypes.STRING, allowNull: false },
-    categoryId: { type: DataTypes.INTEGER, allowNull: false },
-    locationId: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.STRING, allowNull: true },
+    id: {
+      type: DataTypes.STRING, // or INTEGER, just stay consistent
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    categoryId: {
+      type: DataTypes.STRING, // or INTEGER
+      allowNull: true,
+      references: {
+        model: 'categories',
+        key: 'id',
+      },
+      onDelete: 'SET NULL',
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    locationId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      references: {
+        model: 'locations',
+        key: 'id',
+      },
+      onDelete: 'SET NULL',
+    },
+
+
   },
   {
     sequelize,
     modelName: 'Amenity',
     tableName: 'amenities',
-    timestamps: true,
+    timestamps: false,
   }
+
 );
 
 export default Amenity;
