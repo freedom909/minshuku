@@ -1,0 +1,33 @@
+CREATE TABLE IF NOT EXISTS categories (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  description VARCHAR(255),
+  image VARCHAR(255)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS locations (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  address VARCHAR(255),
+  city VARCHAR(100),
+  country VARCHAR(100)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS listings (
+  id VARCHAR(50) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description VARCHAR(500),
+  price DECIMAL(10,2),
+  locationId VARCHAR(50),
+  FOREIGN KEY (locationId) REFERENCES locations(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS amenities (
+  id VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  categoryId VARCHAR(50),
+  description VARCHAR(255),
+  locationId VARCHAR(50),
+  FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL,
+  FOREIGN KEY (locationId) REFERENCES locations(id) ON DELETE SET NULL
+) ENGINE=InnoDB;

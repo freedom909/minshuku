@@ -34,7 +34,8 @@ const resolvers = {
 
       try {
         let options = {};
-        const newLocation = await locationService.createLocation(input,options);
+        let locationData={id: `loc-${Date.now()}`, ...input};
+        const newLocation = await locationService.createLocation(locationData,options);
         return {
           code: 200,
           success: true,

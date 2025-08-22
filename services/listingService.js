@@ -5,6 +5,8 @@ import { v4 as uuidv4, validate as uuidValidate } from 'uuid'
 import { GraphQLError } from 'graphql';
 import { GraphQLClient } from 'graphql-request';
 import ListingAmenities from './models/mysql/listingAmenities.js';
+// Example: adjust to your actual path
+import { Listing, Location, Amenity, Category } from './models/mysql/index.js';
 
 
 import ListingRepository from './repositories/listingRepository.js';
@@ -13,10 +15,11 @@ import connectMysql from './DB/connectMysqlDB.js';
 import mysql from 'mysql2/promise';
 import sequelize from './models/config/seq.js';
 import queryDatabase from './DB/dbUtils.js'
-import Listing from './models/mysql/listing.js';
-import Amenity from './models/mysql/amenity.js';
+//import Listing from './models/mysql/listing.js';
+//import Amenity from './models/mysql/amenity.js';
 import Coordinate from './models/mysql/location.js'
-import Location from './models/mysql/location.js';
+
+//import Location from './models/mysql/location.js';
 import { query } from 'express';
 // import UUIDV4 from 'uuid';
 
@@ -576,12 +579,12 @@ class ListingService {
     }
   }
 
-// ListingService.js
+  // ListingService.js
 async createListing(listingInput) {
   try {
     console.log('[ListingService] Creating listing with input:', listingInput);
 
-    // ---- Required field checks (adjust as needed) ----
+    // ------------------- Required field validation -------------------
     const required = ['title', 'description', 'price', 'locationId', 'hostId', 'checkInDate', 'checkOutDate'];
     for (const key of required) {
       if (listingInput[key] === undefined || listingInput[key] === null || listingInput[key] === '') {
@@ -589,7 +592,7 @@ async createListing(listingInput) {
       }
     }
 
-    // ---- Date validation ----
+    // ------------------- Date validation -------------------
     const checkInDate = new Date(listingInput.checkInDate);
     const checkOutDate = new Date(listingInput.checkOutDate);
     if (isNaN(checkInDate) || isNaN(checkOutDate)) {
@@ -599,7 +602,7 @@ async createListing(listingInput) {
       throw new Error('Check-out date must be after check-in date');
     }
 
-    // ---- Amenity IDs validation (existence) ----
+    // ------------------- Validate amenity IDs -------------------
     const amenityIds = Array.isArray(listingInput.amenityIds) ? listingInput.amenityIds : [];
     if (amenityIds.length > 0) {
       const existingAmenities = await Amenity.findAll({ where: { id: amenityIds } });
@@ -610,19 +613,29 @@ async createListing(listingInput) {
       }
     }
 
-    // ---- Generate a Listing ID (string) ----
-    const listingId = `listing-${Date.now()}`;
-
-    // ---- Pictures normalization (if your column is TEXT, store JSON string) ----
-    let picturesValue = listingInput.pictures;
-    if (Array.isArray(picturesValue)) {
-      // If your DB column is JSON -> keep array; if TEXT -> stringify:
-      // picturesValue = JSON.stringify(picturesValue);
-      picturesValue = picturesValue; // leave as-is if model column is JSON/ARRAY
+    // ------------------- Validate category IDs -------------------
+    const categoryIds = Array.isArray(listingInput.categoryIds) ? listingInput.categoryIds : [];
+    if (categoryIds.length > 0) {
+      const existingCategories = await Category.findAll({ where: { id: categoryIds } });
+      if (existingCategories.length !== categoryIds.length) {
+        const foundIds = new Set(existingCategories.map(c => c.id));
+        const missing = categoryIds.filter(id => !foundIds.has(id));
+        throw new Error(`Some categories do not exist: ${missing.join(', ')}`);
+      }
     }
 
-    // ---- Transactional create + link ----
+    // ------------------- Generate Listing ID -------------------
+    const listingId = `listing-${Date.now()}`;
+
+    // ------------------- Normalize pictures -------------------
+    let picturesValue = listingInput.pictures;
+    if (Array.isArray(picturesValue)) {
+      picturesValue = picturesValue; // leave as-is if model column is JSON
+    }
+
+    // ------------------- Transactional create -------------------
     const createdListing = await sequelize.transaction(async (transaction) => {
+      // Create listing
       const row = await Listing.create(
         {
           id: listingId,
@@ -640,41 +653,38 @@ async createListing(listingInput) {
           locationType: listingInput.locationType ?? null,
           hostId: listingInput.hostId,
           listingStatus: listingInput.listingStatus ?? 'ACTIVE',
+          categoryIds:listingInput.categoryIds,
+          amenityIds:listingInput.amenityIds,
         },
         { transaction }
       );
 
-      if (!row || !row.id) {
-        throw new Error('Failed to create listing (no ID returned)');
-      }
+      if (!row || !row.id) throw new Error('Failed to create listing');
 
+      // Link amenities
       if (amenityIds.length > 0) {
-        const rows = amenityIds.map((amenityId) => ({
+        const amenityRows = amenityIds.map((amenityId) => ({
           listingId: row.id,
           amenityId,
-          // add timestamps if your join table has them:
-          // createdAt: new Date(),
-          // updatedAt: new Date(),
         }));
-        await ListingAmenity.bulkCreate(rows, { transaction });
+        await ListingAmenity.bulkCreate(amenityRows, { transaction });
         console.log('[ListingService] Amenities linked:', amenityIds);
+      }
+
+      // Link categories
+      if (categoryIds.length > 0) {
+        await row.addCategories(categoryIds, { transaction });
+        console.log('[ListingService] Categories linked:', categoryIds);
       }
 
       return row;
     });
 
     console.log('ListingId created after creation:', createdListing.id);
-
-    // (Optional) If you have associations set up and want to return with amenities:
-    // const withAmenities = await Listing.findByPk(createdListing.id, {
-    //   include: [{ model: Amenity, as: 'amenities', through: { attributes: [] } }],
-    // });
-
-    return createdListing; // or `withAmenities` if you use the include above
+    return createdListing;
 
   } catch (error) {
     console.error('[ListingService] Error creating listing:', error);
-    // Keep error generic for GraphQL response; logs already show the details.
     throw new GraphQLError('Database error while creating listing.');
   }
 }

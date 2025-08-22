@@ -4,16 +4,27 @@ import Location from './location.js';
 import Amenity from './amenity.js';
 import Category from './category.js';
 import ListingAmenities from './listingAmenities.js';
-import ListingCategory from './listingCategory.js';
-
-
+import ListingCategories from './listingCategories.js';
+import ListingLocations from './listingLocations.js'; // new join table
 
 export function setupAssociations() {
-  // Listing ↔ Location (many listings belong to one location)
-  Listing.belongsTo(Location, { foreignKey: 'locationId' });
-  Location.hasMany(Listing, { foreignKey: 'locationId' });
+  // ========================
+  // Listing ↔ Locations (many-to-many)
+  // ========================
+  Listing.belongsToMany(Location, {
+    through: ListingLocations,
+    foreignKey: 'listingId',
+    otherKey: 'locationId',
+  });
+  Location.belongsToMany(Listing, {
+    through: ListingLocations,
+    foreignKey: 'locationId',
+    otherKey: 'listingId',
+  });
 
-  // Listing ↔ Amenities (many-to-many via ListingAmenities)
+  // ========================
+  // Listing ↔ Amenities (many-to-many)
+  // ========================
   Listing.belongsToMany(Amenity, {
     through: ListingAmenities,
     foreignKey: 'listingId',
@@ -25,14 +36,16 @@ export function setupAssociations() {
     otherKey: 'listingId',
   });
 
-  // Listing ↔ Categories (many-to-many via ListingCategory)
+  // ========================
+  // Listing ↔ Categories (many-to-many)
+  // ========================
   Listing.belongsToMany(Category, {
-    through: ListingCategory,
+    through: ListingCategories,
     foreignKey: 'listingId',
     otherKey: 'categoryId',
   });
   Category.belongsToMany(Listing, {
-    through: ListingCategory,
+    through: ListingCategories,
     foreignKey: 'categoryId',
     otherKey: 'listingId',
   });

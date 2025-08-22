@@ -55,7 +55,7 @@ class LocationService {
     }
 
     async createLocation(locationData,transaction) {
-
+        this.transaction = transaction;
         console.log("locationData: ", locationData);
            const options = {
             transaction: this.transaction,

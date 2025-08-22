@@ -7,8 +7,9 @@ class Amenity extends Model { }
 Amenity.init(
   {
     id: {
-      type: DataTypes.STRING, // or INTEGER, just stay consistent
+      type: DataTypes.INTEGER, // or INTEGER, just stay consistent
       primaryKey: true,
+      autoIncrement: true,
     },
     name: {
       type: DataTypes.STRING,
@@ -36,8 +37,6 @@ Amenity.init(
       },
       onDelete: 'SET NULL',
     },
-
-
   },
   {
     sequelize,

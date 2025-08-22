@@ -1,14 +1,14 @@
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
-import sequelize from '../../models/config/seq.js';
+import sequelize from '../config/seq.js';
 
-import Listing from '../../models/mysql/listing.js';
-import Amenity from '../../models/mysql/amenity.js';
-import ListingAmenities from '../../models/mysql/listingAmenities.js';
-import Location from '../../models/mysql/location.js';
-import Category from '../../models/mysql/category.js';
-import ListingCategory from '../../models/mysql/listingCategory.js';
+import Listing from '../mysql/listing.js';
+import Amenity from '../mysql/amenity.js';
+import ListingAmenities from '../mysql/listingAmenities.js';
+import Location from '../mysql/location.js';
+import Category from '../mysql/category.js';
+import ListingCategory from '../mysql/listingCategories.js';
 
 const seedData = async () => {
   try {

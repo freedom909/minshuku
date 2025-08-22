@@ -1,10 +1,13 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sequelize from '../models/config/seq.js';
-import Listing from '../models/mysql/listing.js';
+import sequelize from '../config/seq.js';
+import Listing from '../mysql/listing.js';
+import Amenity   from '../mysql/amenity.js';
+import Category  from '../mysql/category.js';
+// ... import other models
 
-import Location from '../models/mysql/location.js'; // Ensure this model exists and is imported correctly
+import Location from '../mysql/location.js'; // Ensure this model exists and is imported correctly
 
 const models = { Listing };
 

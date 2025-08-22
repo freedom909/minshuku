@@ -1,11 +1,10 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/seq.js';
 import Listing from './listing.js';
-import Category from './category.js';
 
-class ListingCategory extends Model {}
+class ListingCategories extends Model {}
 
-ListingCategory.init(
+ListingCategories.init(
   {
     listingId: {
       type: DataTypes.STRING,
@@ -30,8 +29,8 @@ ListingCategory.init(
     sequelize,
     modelName: 'ListingCategory',
     tableName: 'listing_categories',
-    timestamps: false,
+    timestamps: true,
   }
 );
 
-export default ListingCategory;
+export default ListingCategories;

@@ -16,15 +16,15 @@ Listing.init(
     saleAmount: { type: DataTypes.FLOAT },
     checkInDate: { type: DataTypes.DATEONLY },
     checkOutDate: { type: DataTypes.DATEONLY },
-
-    locationId: { type: DataTypes.STRING, allowNull: false },
-    hostId: { type: DataTypes.STRING, allowNull: false }, // one-to-many with User
+    hostId: { type: DataTypes.STRING, allowNull: false }, 
+    listingStatus: { type: DataTypes.ENUM('available', 'pending', 'sold', 'archived'), allowNull: false },
+    locationType: { type: DataTypes.ENUM('ROOM', 'APARTMENT', 'HOUSE', 'COTTAGE', 'VILLA', 'OTHER'), allowNull: false },
   },
   {
     sequelize,
     modelName: 'Listing',
     tableName: 'listings',
-    timestamps: true,
+    timestamps: true, //whatever it is true or false, it always has "Unknown column 'createdAt' in 'field list'",
   }
 );
 
