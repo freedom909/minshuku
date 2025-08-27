@@ -1,10 +1,11 @@
+
 import { GraphQLError } from "graphql";
 import jwt from "jsonwebtoken";
 //import { OAuth2Client } from "google-auth-library";
 import validateHostInviteCode from "../infrastructure/helpers/validateHostInviteCode.js";
-import  loginValidate  from "../infrastructure/helpers/loginValidator.js";
+import loginValidate from "../infrastructure/helpers/loginValidator.js";
 import applyRateLimiting from "../infrastructure/middleware/rateLimitStore.js";
-
+import User from "../services/models/user.js";
 import handleSignUpError from "../infrastructure/utils/handleSignUpError.js";
 import userService from "../services/userService/index.js";
 import registerValidate from "../infrastructure/helpers/registerValidator.js";
@@ -37,7 +38,7 @@ export const resolvers = {
 
       let { provider, token, email, password, idToken, accessToken } = input;
       // Normalize token regardless of provider
-       token = token || idToken || accessToken;
+      token = token || idToken || accessToken;
 
       logger.info("signIn mutation called with input:", {
         provider: provider,
@@ -47,10 +48,10 @@ export const resolvers = {
         idToken: idToken,
         accessToken: accessToken,
       });
-    
+
       const isOAuth = !!provider && !!token;
       const isLocal = !!email && !!password;
-    
+
       if (!isOAuth && !isLocal) {
         throw new GraphQLError(
           "Invalid sign-in input: must provide either email/password or provider/token",
@@ -61,14 +62,14 @@ export const resolvers = {
           }
         );
       }
-    
+
       // Only check account lock for local auth
       if (isLocal) {
         const isLocked = await accountLockService.isAccountLocked(email);
         if (isLocked) {
           const lockDetails = await accountLockService.getLockDetails(email);
           logger.info(`Account locked: ${email}`, lockDetails);
-    
+
           throw new GraphQLError(
             "Account temporarily locked due to too many failed attempts",
             {
@@ -80,7 +81,7 @@ export const resolvers = {
           );
         }
       }
-    
+
       let response;
       const userService = container.resolve('userService');
       try {
@@ -89,12 +90,12 @@ export const resolvers = {
           : await userService.localLogin(email, password);
       } catch (err) {
         logger.error("Login error:", err);
-    
+
         // Handle failed attempt for local login
         if (isLocal) {
           const lockResult = await accountLockService.recordFailedAttempt(email);
           logger.info(`Failed login attempt for ${email}`, lockResult);
-    
+
           if (lockResult.locked) {
             throw new GraphQLError(
               "Account temporarily locked due to too many failed attempts",
@@ -106,7 +107,7 @@ export const resolvers = {
               }
             );
           }
-    
+
           throw new GraphQLError("Invalid email or password", {
             extensions: {
               code: "INVALID_CREDENTIALS",
@@ -114,13 +115,13 @@ export const resolvers = {
             },
           });
         }
-    
+
         // OAuth-specific error
         throw new GraphQLError("OAuth authentication failed", {
           extensions: { code: "OAUTH_FAILED" },
         });
       }
-    
+
       const user = response.user;
       if (!user) {
         logger.error("Authentication failed - no user returned");
@@ -128,17 +129,17 @@ export const resolvers = {
           extensions: { code: "AUTH_FAILED" },
         });
       }
-    
+
       // On successful login, clear account lock
       if (isLocal) {
         await accountLockService.clearLock(email);
       }
-    
+
       logger.info("Authentication successful", {
         userId: user.id,
         role: user.role,
       });
-    
+
       return {
         code: response.code,
         success: response.success,
@@ -152,17 +153,17 @@ export const resolvers = {
         role: response.role,
         userId: response.userId,
       };
-    },   
-    
-   
+    },
+
+
     logout: async (_, { input }, { container, req, logger, user }) => {
       try {
         const { provider, token } = input;
         const userService = container.resolve("userService");
-    
+
         // Revoke token if applicable
         await userService.tokenService.revokeProviderToken(provider, token);
-    
+
         // Destroy session if it exists
         if (req.session) {
           await new Promise((resolve, reject) => {
@@ -172,13 +173,13 @@ export const resolvers = {
             });
           });
         }
-    
+
         logger.info("Logout successful", { userId: user?.id, role: user?.role });
-    
+
         return { success: true, message: "Logout successful" };
       } catch (error) {
         logger.error("Error during logout", { error: error.message });
-    
+
         throw new GraphQLError("Logout failed", {
           extensions: {
             code: "LOGOUT_FAILED",
@@ -206,32 +207,32 @@ export const resolvers = {
         extensions: { code: "INVALID_TOKEN" },
       });
     },
-   
+
     signUp: async (_, { input }, { container, req }) => {
       const { email, password, name, nickname, role, inviteCode, picture } = input;
-    
+
       try {
-        
-        const userRepository  = container.resolve("userRepository");
-       const userService  = container.resolve("userService");
+
+        const userRepository = container.resolve("userRepository");
+        const userService = container.resolve("userService");
         const { localAuthService, tokenService } = userService;
-    
+
         // Apply rate limiting
         await applyRateLimiting(req);
         await loginValidate(email, password);
-        await registerValidate({name, nickname, picture, role});
-    
+        await registerValidate({ name, nickname, picture, role });
+
         if (role === "HOST") {
           await validateHostInviteCode(inviteCode);
         }
-    
+
         const existingUser = await userRepository.getUserByEmailFromDb(email);
         if (existingUser) {
           throw new GraphQLError("Email already registered", {
             extensions: { code: "DUPLICATE_EMAIL" },
           });
         }
-    
+
         const registrationResult = await localAuthService.register(
           email, password, name, nickname, role, picture
         );
@@ -240,7 +241,7 @@ export const resolvers = {
           throw new GraphQLError("Registration failed: Missing user ID");
         }
         console.log(`✅ Registered new user: ${email} (${user.id})`);
-  
+
         return {
           code: 200,
           success: true,
@@ -252,13 +253,13 @@ export const resolvers = {
           //   token: user.auth.token,
           //   refreshToken: user.auth.refreshToken,
           // },
-          role: user.role||"GUEST",
+          role: user.role || "GUEST",
         };
       } catch (error) {
         return handleSignUpError(error);
       }
     },
-    
+
     forgotPassword: async (_, { email }, { dataSources, req }) => {
       // Apply rate limiting
       try {
@@ -398,7 +399,7 @@ export const resolvers = {
       }
     },
 
-    oauthSaveUser: async (_, { input }, { dataSources }) => {   
+    oauthSaveUser: async (_, { input }, { dataSources }) => {
       const { provider, token } = input;
       const { oauthService } = dataSources.userService;
       try {
@@ -455,6 +456,45 @@ export const resolvers = {
     },
 
     // This is a custom resolver that is used to check if a user
+    verifyAndUpgradeHost: async (_, { VerifyHostInput }, __) => {
+      const { id, idNumber, faceImageUrl } = VerifyHostInput
+
+      // 1. 找用户
+      const user = await User.findByPk(id);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      try {
+        const response = await axios.post('https://kyc-provider.example.com/verify', {
+          userId: id,
+          idNumber: idNumber,
+          faceImageUrl: faceImageUrl
+        },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.KYC_API_KEY}`,
+            },
+          })
+        const { passed } = response.data;
+        if (!passed) {
+          throw new Error('KYC verification failed');
+        }
+        更新数据库角色
+        user.role = 'HOST';
+        user.kycVerified = true; // 假设你有这个字段
+        await user.save();
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        return {
+          token: 'Bearer ' + token, // JWT Service 生成
+          userId: user.id,
+          role: user.role,
+        };
+
+      } catch (error) {
+        console.error('KYC API error:', err.message);
+        throw new Error('KYC API error: ' + err.message);
+      }
+    },
   },
 };
 

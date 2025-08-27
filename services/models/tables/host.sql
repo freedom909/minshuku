@@ -1,0 +1,16 @@
+CREATE TABLE users (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  fullName VARCHAR(255),
+  firstName VARCHAR(100) NOT NULL,
+  lastName VARCHAR(100) NOT NULL,
+  picture VARCHAR(500),
+  nickname VARCHAR(100),
+  provider VARCHAR(50),
+  oauthId VARCHAR(255),
+  password VARCHAR(255),
+  role ENUM('ADMIN','HOST','GUEST','USER') DEFAULT 'USER' NOT NULL,
+  kycVerified BOOLEAN DEFAULT false NOT NULL,
+  createdAt DATETIME NOT NULL,
+  updatedAt DATETIME NOT NULL
+);

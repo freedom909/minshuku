@@ -11,30 +11,30 @@ class UserRepository {
     this.model = User;
   }
 
+async findByProviderAndSub(provider, sub) {
+    return await User.findOne({ provider, sub });
+  }
+
   async mapMongoUser(userDoc) {
     if (!userDoc) return null;
     const { _id, ...rest } = userDoc;
     return { id: _id.toString(), ...rest };
   }
 
-  async createOAuthUser({ email, name, picture, oauthId, provider, role = "GUEST", refreshToken = null }) {
-    console.log('Creating OAuth user with data:', { email, name, picture, oauthId, provider, role });
-  
-    if (!oauthId||!email || !name || !picture  || !provider || !role) {
-      throw new Error('All fields are required');
-    }
-  
-    return await this.model.create({
-      email,
-      name,
-      picture,
-      sub: oauthId,           // ✅ This line ensures sub is not null
-      oauthId,
-      provider,
-      role,
-      refreshToken
-    });
-  }
+ async createOAuthUser({ email, name, picture, provider, sub, oauthId, role, kycVerified }) {
+  const user = new User({
+    email,
+    name,
+    picture,
+    provider: provider.toLowerCase(), // ✅ normalize to lowercase
+    sub,
+    oauthId,
+    role: role || "USER",
+    kycVerified: kycVerified ?? false,
+  });
+  return await user.save();
+}
+
 
   async insertUser(userData) {
     try {

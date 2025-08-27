@@ -52,6 +52,12 @@ type Guest implements User @key(fields: "id") {
   refreshToken: String @shareable
 }
 
+input VerifyHostInput {
+  id: ID!
+  idNumber: String!
+  faceImageUrl: String!
+}
+
 type Host implements User @key(fields: "id") {
   id: ID! @shareable
   email: String! @shareable
@@ -67,7 +73,6 @@ type Host implements User @key(fields: "id") {
   accessToken: String! @shareable
   refreshToken: String @shareable
   description: String @shareable
-  inviteCode: String! @shareable
 }
 
 # Input Types
@@ -137,6 +142,8 @@ type InviteCodeResponse implements Response {
 
 # Queries and Mutations
 type Mutation {
+  # Mutations
+  verifyAndUpgradeHost(input: VerifyHostInput!): AuthPayload! @shareable
   signUp(input: SignUpInput!): SignInResponse! @shareable 
   signIn(input: SignInInput!): SignInResponse! @shareable
   oauthSaveUser(input: OAuthInput!): AuthPayload! @shareable
