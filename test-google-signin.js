@@ -21,7 +21,7 @@ dotenv.config();
 // Configuration
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4010/graphql';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string';
 
 // Mock Google token for testing
 const MOCK_GOOGLE_PAYLOAD = {

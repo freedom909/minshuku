@@ -13,7 +13,7 @@ class SubgraphAuthVerifier {
     this.config = {
       userServiceUrl: 'http://localhost:4010',
       bookingServiceUrl: 'http://localhost:4002',
-      jwtSecret: process.env.JWT_SECRET || 'test-secret',
+      jwtSecret: process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string',
       ...config,
     };
 
@@ -282,7 +282,7 @@ if (require.main === module) {
   const verifier = new SubgraphAuthVerifier({
     userServiceUrl: process.env.USER_SERVICE_URL || 'http://localhost:4010',
     bookingServiceUrl: process.env.BOOKING_SERVICE_URL || 'http://localhost:4002',
-    jwtSecret: process.env.JWT_SECRET || 'test-secret',
+    jwtSecret: process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string',
   });
 
   verifier.verifyAll().then((success) => {

@@ -26,11 +26,11 @@ describe('Authentication Tests', () => {
       
       const token = jwt.sign(
         userData,
-        process.env.JWT_SECRET || 'test-secret',
+        process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string',
         { expiresIn: '1h' }
       );
       
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'test-secret');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string');
       expect(decoded.email).toBe(userData.email);
     });
   });

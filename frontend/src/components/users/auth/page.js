@@ -7,7 +7,7 @@ import dayjs from "dayjs";
 import OAuthService from "@/userService/oauthService";
 import GoogleSignInButton from "../GoogleSignInButton";
 import FacebookSignInButton from "../FacebookSignInButton";
-import GithubSignInButton from "../GitHubSignInButton";
+import GithubSignInButton from "../GithubSignInButton";
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 

@@ -140,7 +140,7 @@ describe('Subgraph Authentication Unit Tests', () => {
       });
     });
     
-    test('should verify valid GitHub token', async () => {
+    test('should verify valid Github token', async () => {
       const result = await verifyOAuthToken('github', 'valid-github-token');
       
       expect(result).toEqual({
@@ -155,7 +155,7 @@ describe('Subgraph Authentication Unit Tests', () => {
       await expect(verifyOAuthToken('google', 'invalid-token')).rejects.toThrow('Invalid google token');
     });
     
-    test('should reject invalid GitHub token', async () => {
+    test('should reject invalid Github token', async () => {
       await expect(verifyOAuthToken('github', 'invalid-token')).rejects.toThrow('Invalid github token');
     });
     

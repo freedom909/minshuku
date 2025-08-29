@@ -12,7 +12,7 @@ jest.mock('../../services/models/booking.js');
 jest.mock('../../services/models/listing.js');
 
 describe('Authentication and Authorization Tests', () => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+  const JWT_SECRET = process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string';
   
   // Test data
   const mockUser = {

@@ -12,18 +12,36 @@ import initRedisClient from './initRedisClient.js';
 import { config } from 'dotenv';
 import bcrypt from 'bcryptjs';
 
+// 👇 import your OAuth provider classes
+import { GoogleOAuth, FacebookOAuth, GithubOAuth } from '../userService/providers/index.js';
+
 config();
 
-/**
- * 验证环境变量是否配置正确
- */
 const validateEnvironment = () => {
-  const requiredVars = [
-    'JWT_SECRET',
-    'GOOGLE_CLIENT_ID',
-    'GOOGLE_CLIENT_SECRET',
-    'GOOGLE_REDIRECT_URI'
-  ];
+const requiredVars = [
+  'JWT_SECRET',   
+
+  // Google
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'GOOGLE_REDIRECT_URI',
+
+  // Facebook
+  'FACEBOOK_CLIENT_ID',
+  'FACEBOOK_CLIENT_SECRET',
+  'FACEBOOK_REDIRECT_URI',
+
+  // Github
+  'GITHUB_CLIENT_ID',
+  'GITHUB_CLIENT_SECRET',
+  'GITHUB_REDIRECT_URI',
+
+  // Apple
+  // 'APPLE_CLIENT_ID',
+  // 'APPLE_CLIENT_SECRET',
+  // 'APPLE_REDIRECT_URI',
+];
+
 
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
   
@@ -31,16 +49,15 @@ const validateEnvironment = () => {
     throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
   }
 
-  if (process.env.JWT_SECRET === 'default_secret' || process.env.JWT_SECRET === 'default') {
-    throw new Error('JWT_SECRET must be properly configured with a secure value');
-  }
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'default') {
+  console.warn('⚠️ JWT_SECRET is not secure. Using default for testing only.');
+  process.env.JWT_SECRET = 'dev_secret_key_123';
+}
+
 };
-
-
 
 const initUserContainer = async () => {
   try {
-    // 验证环境变量
     validateEnvironment();
 
     const mongodb = await initMongoContainer();
@@ -50,8 +67,7 @@ const initUserContainer = async () => {
 
     const container = createContainer();
     const redisClient = await initRedisClient();
-    console.log('Redis client initialized:', typeof redisClient.get);// should be 'function'
-    // 注册服务和依赖
+
     container.register({
       redisClient: asValue(redisClient),
       mongodb: asValue(mongodb),
@@ -75,20 +91,45 @@ const initUserContainer = async () => {
       userService: asClass(UserService).singleton(),
       bcrypt: asValue(bcrypt),
       
-      // 环境变量配置
+      // JWT config
       expiresIn: asValue(process.env.JWT_EXPIRES_IN || '1h'),
       secretKey: asValue(process.env.JWT_SECRET),
       options: asValue({ expiresIn: process.env.options || 'HS256' }),
+
+      // OAuth provider instances (must use `new` here)
+      googleOAuth: asFunction(() => 
+        new GoogleOAuth({
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          redirectUri: process.env.GOOGLE_REDIRECT_URI
+        })
+      ).singleton(),
+
       
-      // OAuth配置
-      googleClientId: asValue(process.env.GOOGLE_CLIENT_ID),
-      googleClientSecret: asValue(process.env.GOOGLE_CLIENT_SECRET),
-      googleRedirectUri: asValue(process.env.GOOGLE_REDIRECT_URI),
-      facebookClientId: asValue(process.env.FACEBOOK_CLIENT_ID),
-      facebookClientSecret: asValue(process.env.FACEBOOK_CLIENT_SECRET),
-      facebookRedirectUri: asValue(process.env.FACEBOOK_REDIRECT_URI),
-      githubId: asValue(process.env.GITHUB_ID),
-      githubSecret: asValue(process.env.GITHUB_SECRET),
+      facebookOAuth: asFunction(() => 
+        new FacebookOAuth({
+          clientId: process.env.FACEBOOK_CLIENT_ID,
+          clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+          redirectUri: process.env.FACEBOOK_REDIRECT_URI
+        })
+      ).singleton(),
+      // appleOAuth: asFunction(() => 
+      //   new AppleOAuth({
+      //     clientId: process.env.APPLE_CLIENT_ID,
+      //     clientSecret: process.env.APPLE_CLIENT_SECRET,
+      //     redirectUri: process.env.APPLE_REDIRECT_URI
+      //   })
+      // ).singleton(),
+      githubOAuth: asFunction(() => 
+        new GithubOAuth({
+          clientId: process.env.GITHUB_CLIENT_ID,
+          clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          redirectUri: process.env.GITHUB_REDIRECT_URI
+        })
+      ).singleton(),
+    });
+    container.register({
+      userRepository: asClass(UserRepository).singleton(),
     });
 
     console.log('User container initialized successfully');

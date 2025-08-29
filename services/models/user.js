@@ -14,7 +14,9 @@ export const Provider = {
   EMAIL: 'email',
   GOOGLE: 'google',
   FACEBOOK: 'facebook',
+  APPLE: 'apple',
   TWITTER: 'twitter',
+  GITHUB: 'github',
 };
 
 const userSchema = new mongoose.Schema(

@@ -57,7 +57,7 @@ const initializeReviewContainer = async () => {
       oAuthService: asClass(OAuthService).singleton(),
       tokenService: asClass(TokenService).singleton(),
     
-      secretKey: asValue(process.env.JWT_SECRET || 'good'),
+      secretKey: asValue(process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string'),
       expiresIn: asValue('1h'),
       axios: asValue(axios),
     });

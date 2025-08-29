@@ -3,10 +3,10 @@
  * Run with: node start-auth-services.js
  */
 
-const { spawn } = require('child_process');
-const fetch = require('node-fetch');
-const fs = require('fs');
-const path = require('path');
+import { spawn } from 'child_process';
+import fetch from 'node-fetch';
+import { existsSync } from 'fs';
+import { join } from 'path';
 
 // Configuration
 const BACKEND_PORT = 4010;
@@ -28,15 +28,15 @@ async function checkEnvironment() {
   logger.info('Checking environment configuration...');
 
   // Check frontend .env.local
-  const frontendEnvPath = path.join(process.cwd(), 'frontend', '.env.local');
-  if (!fs.existsSync(frontendEnvPath)) {
+  const frontendEnvPath = join(process.cwd(), 'frontend', '.env.local');
+  if (!existsSync(frontendEnvPath)) {
     logger.error('Frontend .env.local file not found!');
     process.exit(1);
   }
 
   // Check backend .env
-  const backendEnvPath = path.join(process.cwd(), 'subgraph-auths', '.env');
-  if (!fs.existsSync(backendEnvPath)) {
+  const backendEnvPath = join(process.cwd(), 'subgraph-auths', '.env');
+  if (!existsSync(backendEnvPath)) {
     logger.error('Backend .env file not found!');
     process.exit(1);
   }
@@ -65,7 +65,7 @@ function startBackend() {
   logger.info('Starting backend service...');
   
   const backend = spawn('npm', ['start'], {
-    cwd: path.join(process.cwd(), 'subgraph-auths'),
+    cwd: join(process.cwd(), 'subgraph-auths'),
     stdio: 'inherit'
   });
 
@@ -82,7 +82,7 @@ function startFrontend() {
   logger.info('Starting frontend service...');
   
   const frontend = spawn('npm', ['run', 'dev'], {
-    cwd: path.join(process.cwd(), 'frontend'),
+    cwd: join(process.cwd(), 'frontend'),
     stdio: 'inherit'
   });
 

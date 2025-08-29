@@ -4,7 +4,7 @@ import { AuthenticationError, ForbiddenError } from 'apollo-server';
 import { SubgraphAuthService } from './subgraphAuth.js';
 
 describe('SubgraphAuthService', () => {
-  const TEST_JWT_SECRET = 'test-secret';
+  const TEST_JWT_SECRET = 'minshuku_jwt_secret_key_2024_secure_random_string';
   const TEST_CONFIG = {
     jwtSecret: TEST_JWT_SECRET,
     allowedServices: ['service1', 'service2'],

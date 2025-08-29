@@ -27,7 +27,7 @@ class UserService {
 
 
   async oauthLogin(provider, token) {
-    console.log("Authenticating with provider:", provider); //no output, maybe the frontend did not send the anything
+    console.log("Authenticating with provider:", provider); 
     console.log("Token received:", token);
     return await this.oauthService.authenticate(provider, token);
   }

@@ -86,7 +86,8 @@ export const resolvers = {
       const userService = container.resolve('userService');
       try {
         response = isOAuth
-          ? await userService.oauthLogin(provider, token)
+          ? await userService.
+          oauthLogin(provider, token)
           : await userService.localLogin(email, password);
       } catch (err) {
         logger.error("Login error:", err);

@@ -300,7 +300,7 @@ async localLogin(email, password) {
   }
 
   async generateJwt(payload) {
-    const jwtKey = process.env.JWT_SECRET || "default_secret";
+    const jwtKey = process.env.JWT_SECRET || "minshuku_jwt_secret_key_2024_secure_random_string";
     return jwt.sign(payload, jwtKey, { expiresIn: "1h" });
   }
 

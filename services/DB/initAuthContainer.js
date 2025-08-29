@@ -32,7 +32,7 @@ const validateEnvironment = () => {
   }
 
   if (
-    process.env.JWT_SECRET === "default_secret" ||
+    process.env.JWT_SECRET === "minshuku_jwt_secret_key_2024_secure_random_string" ||
     process.env.JWT_SECRET === "default"
   ) {
     throw new Error(

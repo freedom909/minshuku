@@ -74,9 +74,8 @@ class OAuthService extends RESTDataSource {
       const sub = userInfo.id;
 
       // Try find existing user
-      let user = await this.userRepository.findByProviderAndSub(
-        provider.toUpperCase(),
-        sub
+      let user = await this.userRepository.getUserByEmailFromDb(
+        userInfo.email
       );
 
       if (!user) {
@@ -106,7 +105,7 @@ class OAuthService extends RESTDataSource {
         code: 200,
         success: true,
         message: "Authentication successful",
-        user,
+       user,
         token: accessToken,
         refreshToken,
         userId: user._id,
@@ -149,53 +148,6 @@ class OAuthService extends RESTDataSource {
     }
   }
 
-  async verifyGithubToken(token) {
-    try {
-      const response = await fetch(`https://api.github.com/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (!data || data.error) {
-        throw new Error(data?.error?.message || "Invalid Github token");
-      }
-
-      // Optionally get email if not public
-      let email = data.email;
-
-      if (!email) {
-        const emailResponse = await fetch(`https://api.github.com/user/emails`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/vnd.github+json",
-          },
-        });
-
-        const emails = await emailResponse.json();
-        const primaryEmail = emails.find((e) => e.primary && e.verified);
-        email = primaryEmail?.email;
-      }
-
-      return {
-        id: data.id.toString(), // GitHub ID → sub
-        email,
-        name: data.name || data.login,
-        picture: data.avatar_url,
-      };
-    } catch (error) {
-      throw new GraphQLError("Invalid Github token", {
-        extensions: {
-          code: "INVALID_GITHUB_TOKEN",
-          provider: "GITHUB",
-          error,
-        },
-      });
-    }
-  }
 
   async verifyFacebookToken(token) {
     try {
@@ -231,6 +183,53 @@ class OAuthService extends RESTDataSource {
   }
 
   // Apple token verification could be added here
+    async verifyGithubToken(token) {
+    try {
+      const response = await fetch(`https://api.github.com/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data || data.error) {
+        throw new Error(data?.error?.message || "Invalid Github token");
+      }
+
+      // Optionally get email if not public
+      let email = data.email;
+
+      if (!email) {
+        const emailResponse = await fetch(`https://api.github.com/user/emails`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github+json",
+          },
+        });
+
+        const emails = await emailResponse.json();
+        const primaryEmail = emails.find((e) => e.primary && e.verified);
+        email = primaryEmail?.email;
+      }
+
+      return {
+        id: data.id.toString(), // Github ID → sub
+        email,
+        name: data.name || data.login,
+        picture: data.avatar_url,
+      };
+    } catch (error) {
+      throw new GraphQLError("Invalid Github token", {
+        extensions: {
+          code: "INVALID_GITHUB_TOKEN",
+          provider: "GITHUB",
+          error,
+        },
+      });
+    }
+  }
 }
 
 export default OAuthService;

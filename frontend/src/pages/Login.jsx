@@ -1,5 +1,5 @@
 import GoogleSignInButton from '../components/GoogleSignInButton';
-import GitHubSignInButton from '../components/GitHubSignInButton';
+import GithubSignInButton from '../components/GithubSignInButton';
 import FacebookSignInButton from '../components/FacebookSignInButton';
 
 export default function LoginPage() {
@@ -16,7 +16,7 @@ export default function LoginPage() {
         </div>
         <div className="mt-8 space-y-4">
           <GoogleSignInButton />
-          <GitHubSignInButton />
+          <GithubSignInButton />
           <FacebookSignInButton />
         </div>
       </div>
