@@ -1,10 +1,71 @@
 schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable"]) {
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable","@external"]) {
   query: Query
   mutation: Mutation
 }
 
 scalar DateTime
+
+interface User @key(fields: "id") {
+  id: ID!
+  email: String! 
+  fullName: String
+  firstName: String!
+  lastName: String!
+  role: Role!
+  picture: String!
+  nickname: String!
+  provider: OAuthProvider
+  oauthId: String!
+}
+
+type Guest implements User @key(fields: "id") {
+  id: ID! @shareable
+  email: String! @shareable
+  fullName: String @shareable
+  firstName: String! @shareable
+  lastName: String! @shareable
+  picture: String! @shareable
+  nickname: String! @shareable
+  role: Role! @shareable
+  provider: OAuthProvider @shareable
+  oauthId: String! @shareable
+  idToken: String! @shareable
+  accessToken: String! @shareable
+  refreshToken: String @shareable
+}
+
+extend enum OAuthProvider  {
+  GOOGLE 
+  FACEBOOK 
+  APPLE 
+  GITHUB 
+  LOCAL 
+}
+
+type Host implements User @key(fields: "id") {
+  id: ID! @shareable
+  email: String! @shareable
+  fullName: String @shareable
+  firstName: String! @shareable
+  lastName: String! @shareable
+  picture: String! @shareable
+  nickname: String! @shareable
+  role: Role! @shareable
+  provider: OAuthProvider @shareable
+  oauthId: String! @shareable
+  idToken: String! @shareable
+  accessToken: String! @shareable
+  refreshToken: String @shareable
+  description: String @shareable
+}
+
+enum Role {
+  ADMIN
+  HOST
+  GUEST
+  USER
+}
 
 type Amenity @key(fields: "id") {
   id: ID! @shareable
@@ -13,6 +74,11 @@ type Amenity @key(fields: "id") {
   categoryId: ID !@shareable
   description: String! @shareable
 }
+
+extend type Booking @key(fields: "id") {
+  id: ID! @shareable
+}
+
 
 interface Response {
   code: Int!

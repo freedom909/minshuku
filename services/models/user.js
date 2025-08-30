@@ -17,6 +17,7 @@ export const Provider = {
   APPLE: 'apple',
   TWITTER: 'twitter',
   GITHUB: 'github',
+ LOCAL: 'local',
 };
 
 const userSchema = new mongoose.Schema(

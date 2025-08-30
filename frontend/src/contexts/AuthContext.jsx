@@ -1,3 +1,4 @@
+
 // // frontend/src/context/AuthContext.jsx
 // import { createContext, useContext, useState } from 'react';
 // import axios from 'axios';
@@ -87,6 +88,15 @@ import { useSession } from 'next-auth/react';
 
 const AuthContext = createContext();
 
+function normalizeUser(rawUser) {
+  return {
+    id: rawUser.id,
+    email: rawUser.email,
+    firstName: rawUser.firstName || null,
+    name: rawUser.name || rawUser.firstName || rawUser.email,
+    role: rawUser.role || 'User',
+  };
+}
 export function AuthProvider({ children }) {
   const { data: session, status } = useSession();
   const [user, setUser] = useState(null);
@@ -96,10 +106,13 @@ export function AuthProvider({ children }) {
     setLoading(status === 'loading');
     if (status === 'authenticated') {
       setUser(session.user);
+      if (sessionUser) {
+    setUser(normalizeUser(sessionUser));
+  }
     } else {
       setUser(null);
     }
-  }, [status, session]);
+  }, [status, session, sessionUser]);
 
   return (
     <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user }}>

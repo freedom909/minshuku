@@ -11,6 +11,7 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
 
 const handler = NextAuth({
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -95,9 +96,6 @@ const handler = NextAuth({
 
       return true;
     },
-
-    adapter: MongoDBAdapter(clientPromise),
-
 
     jwt: async ({ token, user }) => {
       if (user) {

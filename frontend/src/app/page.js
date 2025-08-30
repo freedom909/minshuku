@@ -1,13 +1,15 @@
+
 import React from 'react';
+import { useSession } from "next-auth/react";
 import Image from 'next/image';
 import Button from '@/components/ui/button';
 import Link from 'next/link';
 import JoinNowButton from '@/components/ui/JoinNowButton';
 import ProfileMenu from '@/components/ui/ProfilesMenu';
-
-
+import HeaderClient from '../components/ui/HeaderClient';
 export default function Home() {
-  
+
+
   return (
     <div className="min-h-screen bg-white">
       {/* Top Banner */}
@@ -17,16 +19,11 @@ export default function Home() {
           <span>unforgotten</span>
         </div>
         <div className="flex space-x-4">
-          <a href="#" className="underline">Get the Minshuku App</a>
-          {
-            <>
-         
-              <ProfileMenu/>
-              <JoinNowButton>Join Now</JoinNowButton>
-            </>
-          }
-
+          {/* <a href="#" className="underline">Get the Minshuku App</a> */}
+          {/* Client-side header */}
+          <HeaderClient />
         </div>
+
       </div>
 
       {/* Header */}

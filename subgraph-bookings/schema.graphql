@@ -15,15 +15,36 @@ type Query {
   bookingsForGuest(userId: ID!): [Booking!] @shareable
 }
 
+enum Role {
+  ADMIN
+  HOST
+  GUEST
+  USER
+}
 
-extend type User @key(fields: "id") {
-  id: ID! @external
+interface User @key(fields: "id") {
+  id: ID!
+  email: String!
+  picture: String
+}
+
+type Host implements User @key(fields: "id") {
+  id: ID! @shareable
+  email: String! @shareable
+  picture: String @shareable
+  listings: [Listing!]! @shareable
+}
+
+type Guest implements User @key(fields: "id") {
+  id: ID! @shareable
+  email: String! @shareable
+  picture: String @shareable
+  bookings: [Booking!]! @shareable
 }
 
 extend type Listing @key(fields: "id") {
   id: ID! @external
 }
-
 
 type CancelBookingResponse implements MutationResponse {
   code: Int! @shareable
@@ -74,13 +95,6 @@ type Booking @key(fields: "id") {
 type ReservedDate @shareable {
   checkInDate: DateTime!
   checkOutDate: DateTime!
-}
-
-
-type Guest @key(fields: "id") {
-  id: ID!
-  bookings: [Booking!]! @shareable
-  picture: String! @shareable
 }
 
 type Review @key(fields: "id") {

@@ -7,6 +7,17 @@ schema
   mutation: Mutation
 }
 
+directive @cacheControl(
+  maxAge: Int
+  scope: CacheControlScope
+  inheritMaxAge: Boolean
+) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION
+
+enum CacheControlScope {
+  PUBLIC
+  PRIVATE
+}
+
 scalar DateTime
 
 enum ListingStatus {
@@ -19,6 +30,7 @@ enum ListingStatus {
   EXPIRED
   COMPLETED
 }
+
 enum LocationType {
   HOUSE
   APARTMENT
@@ -28,6 +40,7 @@ enum LocationType {
   ROOM
   CAMPSITE
 }
+
 enum AmenityCategory {
   ACCOMMODATION_DETAILS
   SPACE_SURVIVAL
@@ -48,7 +61,6 @@ type ReservedDate {
   checkOutDate: DateTime! @shareable
 }
 
-# ---- Entities this subgraph OWNS
 # ------------------------------
 # Listing Schema (MySQL side)
 # ------------------------------
@@ -63,30 +75,26 @@ type Listing @key(fields: "id") {
   saleAmount: Float @shareable
   checkInDate: String @shareable
   checkOutDate: String @shareable
- 
 
   locationType: LocationType @shareable
   listingStatus: ListingStatus @shareable
 
   # Relationships inside MySQL
-  location: Location!
+  location: Location! @shareable
   locationId: ID! @shareable
 
   categories: [Category!]! @shareable
   categoryIds: [ID!]! @shareable
-  amenities: [Amenity!]! 
+  amenities: [Amenity!]!
   amenityIds: [ID!]! @shareable
 
-  bookings: [Booking]! @shareable
+  bookings: [Booking!]! @shareable
   availability: [ReservedDate] @shareable
 
   priceRange: PriceRange @shareable
   totalCostRange: TotalCostRange @shareable
 
-  # ------------------------------
-  # 👇 Federated relationship
-  # host is stored in Mongo (subgraph-users)
-  # ------------------------------
+  # 👇 Federated relationship (host is stored in Mongo, subgraph-users)
   host: User!
   hostId: ID! @shareable
 }
@@ -94,17 +102,32 @@ type Listing @key(fields: "id") {
 # ------------------------------
 # External User entity from Mongo
 # ------------------------------
-extend type User @key(fields: "id") {
-  id: ID! @external
+interface User @key(fields: "id") {
+  id: ID!
+  email: String!
+  picture: String
 }
 
-
-type User @key(fields: "id"){
-  # id: ID! @shareable
+type Host implements User @key(fields: "id") {
+  id: ID! @shareable
   email: String! @shareable
   picture: String @shareable
+  listings: [Listing!]! @shareable
 }
 
+type Guest implements User @key(fields: "id") {
+  id: ID! @shareable
+  email: String! @shareable
+  picture: String @shareable
+  bookings: [Booking!]! @shareable
+}
+
+enum Role {
+  ADMIN
+  HOST
+  GUEST
+  USER
+}
 type Category @key(fields: "id") {
   id: ID! @shareable
   name: String! @shareable
@@ -113,7 +136,6 @@ type Category @key(fields: "id") {
   listingId: ID! @shareable
 }
 
-
 # ---- Entities OWNED by other subgraphs
 extend type Amenity @key(fields: "id") {
   id: ID! @external
@@ -121,10 +143,12 @@ extend type Amenity @key(fields: "id") {
 extend type Location @key(fields: "id") {
   id: ID! @external
 }
-extend type Booking @key(fields: "id") { id: ID! }
-extend type Review  @key(fields: "id") { id: ID! }
-extend type Guest   @key(fields: "id") { id: ID! }
-extend type Host    @key(fields: "id") { id: ID! }
+extend type Booking @key(fields: "id") {
+  id: ID! @external
+}
+extend type Review  @key(fields: "id") { id: ID! @external }
+
+
 
 # ---- Inputs
 input UpdateListingStatusInput {
@@ -146,7 +170,7 @@ input CreateListingInput {
   title: String!
   description: String!
   locationId: ID!                # reference to Location entity
-  hostId: String!
+  hostId: ID!
   pictures: [String!]!
   numOfBeds: Int!
   price: Float!

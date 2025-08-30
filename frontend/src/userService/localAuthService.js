@@ -3,26 +3,20 @@ import axios from "axios";
 const SUBGRAPH_USERS_URL = "http://localhost:4010/graphql"; // ✅ point directly to /graphql
 
 const loginRequestToSubgraph = `
-  mutation Login($input: SignInInput!) {
-    signIn(input: $input) {
-      success
-      message
-      token {
-        accessToken {
-          token
-          expiresAt
-        }
-      }
-      user {
-        id
-        email
-        name
-        nickname
-        role
-        picture
-      }
+ mutation SignIn($input: SignInInput!) {
+  signIn(input: $input) {
+    auth {
+      role
+      token
+      userId
     }
+    refreshToken
+    success
+    code
+    message
   }
+}
+
 `;
 
 const registerRequestToSubgraph = `
@@ -59,15 +53,25 @@ const localAuthService = {
       });
 
       const result = response.data;
-
+      if (!result.success) {
+        alert(result.error || "Login failed");
+        return; // stop navigation
+      }
+      // 1. If GraphQL has errors
       if (result.errors) {
-        throw new Error(result.errors[0].message);
+        throw new Error(result.errors[0].message || "Authentication failed");
       }
 
-      const { user, token } = result.data.signIn;
-      if (!user || !token) {
-        throw new Error("Authentication failed");
+      if (!result.data || !result.data.signIn) {
+        throw new Error("Invalid credentials");
       }
+      const { user, token, success } = result.data.signIn;
+      if (!success || !user || !token?.accessToken?.token) {
+        throw new Error("Invalid email or password");
+      }
+
+      // Save token
+      localStorage.setItem("jwt_token", token.accessToken.token);
 
       if (token?.accessToken?.token) {
         localStorage.setItem("jwt_token", token.accessToken.token);

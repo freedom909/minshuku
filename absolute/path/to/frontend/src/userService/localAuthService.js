@@ -7,23 +7,20 @@ const SUBGRAPH_USERS_URL = process.env.SUBGRAPH_USERS_URL;
 // ✅ point directly to /graphql
 
 const loginRequestToSubgraph = `
-  mutation Login($input: SignInInput!) {
-    signIn(input: $input) {
-      success
-      message
-      token {
-        accessToken
-      }
-      user {
-        id
-        email
-        name
-        nickname
-        role
-        picture
-      }
+mutation SignIn($input: SignInInput!) {
+  signIn(input: $input) {
+    auth {
+      role
+      token
+      userId
     }
+    refreshToken
+    success
+    code
+    message
   }
+}
+
 `;
 
 const registerRequestToSubgraph = `

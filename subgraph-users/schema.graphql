@@ -1,8 +1,20 @@
+
+
 schema
   @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable"]) {
   query: Query
 }
 
+directive @cacheControl(
+  maxAge: Int
+  scope: CacheControlScope
+  inheritMaxAge: Boolean
+) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION
+
+enum CacheControlScope {
+  PUBLIC
+  PRIVATE
+}
 # Enums
 enum Role {
   ADMIN
@@ -165,6 +177,7 @@ enum OAuthProvider {
   FACEBOOK
   APPLE
   GITHUB
+  LOCAL
 }
 
 
