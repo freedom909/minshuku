@@ -1,0 +1,75 @@
+# services:
+#   listings-db:
+#     image: mysql:8.0.33
+#     container_name: listings-db
+#     restart: always
+#     volumes:
+#       - listings-db-data:/var/lib/mysql
+#     ports:
+#       - "3306:3306"
+#     environment:
+#       MYSQL_PASSWORD: princess
+#       MYSQL_DATABASE: listings
+#     networks:
+#       - backend
+      
+#   users-service: 
+#     build: ./services/users
+#     ports:
+#       - "4010:4010"
+#     environment:
+#       - NODE_ENV=development
+#     depends_on:
+#       - users-db
+
+#   users-db:
+#     image: mongo:latest
+#     container_name: users-db
+#     restart: always
+#     volumes:
+#       - users-db-data:/data/db
+#     ports:
+#       - "27017:27017"
+#     networks:
+#       - backend
+
+#   listings-service:
+#     build: ./services/listings
+#     ports:
+#       - "4040:4040"
+#     environment:
+#       NODE_ENV: development
+#       MYSQL_HOST: listings-db
+#       MYSQL_PASSWORD: princess
+#       MYSQL_DB: listings
+#     depends_on:
+#       - listings-db
+#     networks:
+#       - backend
+
+# networks:
+#   backend:
+
+# volumes:
+#   listings-db-data:
+#   users-db-data:
+
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - aiService
+
+  aiService:
+    build: ./subgraph-aiService
+    ports:
+      - "4100:4100"
+    depends_on:
+      - machine
+
+  machine:
+    build: ./machine
+    ports:
+      - "8000:8000"

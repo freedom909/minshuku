@@ -1,38 +1,100 @@
-version: '3.8'
+# services:
+#   gateway:
+#     build: ./gateway
+#     container_name: gateway
+#     ports:
+#       - "4000:4000"
+#     depends_on:
+#       - users
+#       - listings
+#       - bookings
+#       - reviews
+#       - amenities
+#       - locations
+#       - aiService
+#     environment:
+#       # Apollo Gateway will point to subgraphs via service names (DNS inside Docker network)
+#       USERS_URL: http://users:4010/graphql
+#       LISTINGS_URL: http://listings:4040/graphql
+#       BOOKINGS_URL: http://bookings:4050/graphql
+#       REVIEWS_URL: http://reviews:4080/graphql
+#       AMENITIES_URL: http://amenities:4090/graphql
+#       LOCATIONS_URL: http://locations:4140/graphql
+#       AISERVICE_URL: http://aiService:4100/graphql
 
-networks:
-  listings_bookings_network:
-    driver: bridge
+#   aiService:
+#     build: ./subgraph-aiService
+#     container_name: aiService
+#     ports:
+#       - "4100:4100"
+#     depends_on:
+#       - machine
+#     environment:
+#       MACHINE_URL: http://machine:8000  # aiService will call Python FastAPI here
+
+#   machine:
+#     build: ./machine
+#     container_name: machine
+#     ports:
+#       - "8000:8000"
+
+#   # Example of other subgraphs
+#   users:
+#     build: ./subgraph-users
+#     container_name: users
+#     ports:
+#       - "4010:4010"
+
+#   listings:
+#     build: ./subgraph-listings
+#     container_name: listings
+#     ports:
+#       - "4040:4040"
+
+#   bookings:
+#     build: ./subgraph-bookings
+#     container_name: bookings
+#     ports:
+#       - "4050:4050"
+
+#   reviews:
+#     build: ./subgraph-reviews
+#     container_name: reviews
+#     ports:
+#       - "4080:4080"
+
+#   amenities:
+#     build: ./subgraph-amenities
+#     container_name: amenities
+#     ports:
+#       - "4090:4090"
+
+#   locations:
+#     build: ./subgraph-locations
+#     container_name: locations
+#     ports:
+#       - "4140:4140"
+
+# networks:
+#   default:
+#     driver: bridge
 
 services:
-   mysql:
-     container_name: mysql_listings_bookings
-     image: mysql:latest
-     environment:
-       MYSQL_ROOT_PASSWORD: princess
-       MYSQL_DATABASE: listings_bookings
-       MYSQL_USER: root
-       MYSQL_PASSWORD: princess
-     volumes:
-       - mysql_data:/var/lib/mysql
-       - ./subgraph-listings/init.sql:/docker-entrypoint-initdb.d/init.sql
-     ports:
-       - "3306:3306"
-     restart: always
+  gateway:
+    build: ./gateway
+    ports:
+      - "4000:4000"
+    depends_on:
+      - aiService
 
-   mongo:
-     container_name: mongo_users_profile
-     image: mongo:latest
-     environment:
-       MONGO_INITDB_ROOT_USERNAME: root
-       MONGO_INITDB_ROOT_PASSWORD: rootpassword
-       MONGO_INITDB_DATABASE: users_profile
-     volumes:
-       - mongo_data:/data/db
-     ports:
-       - "27017:27017"
-     restart: always
+  aiService:
+    build: ./subgraph-aiService
+    ports:
+      - "4100:4100"
+    depends_on:
+      - machine
 
-volumes:
-   mysql_data:
-   mongo_data:
+  machine:
+    build: ./machine
+    ports:
+      - "8000:8000"

@@ -15,98 +15,98 @@ import initializeAiContainer from '../services/DB/initAiContainer.js';
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
+  try {
+    const container = await initializeAiContainer();
+    console.log('Registered services:', Object.keys(container.registrations));
+
+    // 验证 aiService 是否能解析
     try {
-        const container = await initializeAiContainer();
-        console.log('Registered services:', Object.keys(container.registrations));
+      const aiService = container.resolve('aiService');
+      console.log('✅ aiService resolved:', typeof aiService);
+    } catch (error) {
+      console.error('❌ Failed to resolve aiService:', error);
+    }
 
-        // 验证 aiService 是否能解析
-        try {
-            const aiService = container.resolve('aiService');
-            console.log('✅ aiService resolved:', typeof aiService);
-        } catch (error) {
-            console.error('❌ Failed to resolve aiService:', error);
-        }
+    const app = express();
+    const httpServer = http.createServer(app);
 
-        const app = express();
-        const httpServer = http.createServer(app);
+    const server = new ApolloServer({
+      schema: buildSubgraphSchema({ typeDefs, resolvers }),
 
-        const server = new ApolloServer({
-            schema: buildSubgraphSchema({ typeDefs, resolvers }),
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer }),
+        {
+          async serverWillStart() {
+            return {
+              async drainServer() {
+                await container.dispose(); // ✅ Correct
+              },
+            };
+          },
+        },
+      ],
 
-            plugins: [
-                ApolloServerPluginDrainHttpServer({ httpServer }),
-                {
-                    async serverWillStart() {
-                        return {
-                            async drainServer() {
-                                await container.dispose(); // ✅ Correct
-                            },
-                        };
-                    },
-                },
-            ],
-
-context: async ({ req }) => {
-  const resolvedServices = {
-    aiService: container.resolve('aiService'),
-    userService: container.resolve('userService'),
-    listingService: container.resolve('listingService'),
-    bookingService: container.resolve('bookingService'),
-    paymentService: container.resolve('paymentService')
-  };
-
-  return {
-    ...resolvedServices, // inject directly
-    userId: req?.user?.id || null,
-  };
-}
-
-        });
-
-        await server.start();
-
-app.use(
-  '/graphql',
-  cors(),
-  express.json(),
-  expressMiddleware(server, {
-    context: async ({ req }) => {
-      try {
-        const aiService = container.resolve('aiService');
-        const userService = container.resolve('userService');
-        const listingService = container.resolve('listingService');
-        const bookingService = container.resolve('bookingService');
-        const paymentService = container.resolve('paymentService');
-
-        const dataSources = {
-          aiService,
-          userService,
-          listingService,
-          bookingService,
-          paymentService
+      context: async ({ req }) => {
+        const resolvedServices = {
+          aiService: container.resolve('aiService'),
+          userService: container.resolve('userService'),
+          listingService: container.resolve('listingService'),
+          bookingService: container.resolve('bookingService'),
+          paymentService: container.resolve('paymentService')
         };
-
-        console.log('✅ Built context with dataSources:', Object.keys(dataSources));
 
         return {
+          ...resolvedServices, // inject directly
           userId: req?.user?.id || null,
-          dataSources
         };
-      } catch (err) {
-        console.error('❌ Error resolving services in context:', err);
-        throw err;
       }
-    }
-  })
-);
+
+    });
+
+    await server.start();
+
+    app.use(
+      '/graphql',
+      cors(),
+      express.json(),
+      expressMiddleware(server, {
+        context: async ({ req }) => {
+          try {
+            const aiService = container.resolve('aiService');
+            const userService = container.resolve('userService');
+            const listingService = container.resolve('listingService');
+            const bookingService = container.resolve('bookingService');
+            const paymentService = container.resolve('paymentService');
+
+            const dataSources = {
+              aiService,
+              userService,
+              listingService,
+              bookingService,
+              paymentService
+            };
+
+            console.log('✅ Built context with dataSources:', Object.keys(dataSources));
+
+            return {
+              userId: req?.user?.id || null,
+              dataSources
+            };
+          } catch (err) {
+            console.error('❌ Error resolving services in context:', err);
+            throw err;
+          }
+        }
+      })
+    );
 
 
-        httpServer.listen({ port: 4100 }, () =>
-            console.log('Server is running on http://localhost:4100/graphql')
-        );
-    } catch (error) {
-        console.error('Error starting Apollo Server:', error);
-    }
+    httpServer.listen({ port: 4100 }, () =>
+      console.log('Server is running on http://localhost:4100/graphql')
+    );
+  } catch (error) {
+    console.error('Error starting Apollo Server:', error);
+  }
 };
 
 startApolloServer();

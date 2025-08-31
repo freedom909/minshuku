@@ -1,0 +1,67 @@
+# ======================
+# aiService SDL (Federation-safe)
+# ======================
+
+schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.5",
+    import: ["@key", "@shareable", "@external"]
+  ) {
+  query: Query
+  mutation: Mutation
+}
+
+scalar DateTime
+
+type AIResult @shareable {
+  suggestion: String!
+  confidence: Float
+  createdAt: DateTime!
+}
+
+type PerformanceTip @shareable {
+  tip: String!
+  impactScore: Int
+}
+
+# Extend external entities
+extend type Listing @key(fields: "id") {
+  id: ID! @external
+}
+
+extend type Booking @key(fields: "id") {
+  id: ID! @external
+}
+
+# ----------------------
+# Queries
+# ----------------------
+type Query {
+  # Improve a listing's title
+  suggestTitleImprovements(listingId: ID!): AIResult
+
+  # Suggest description improvements
+  generateDescriptionSuggestions(listingId: ID!): AIResult
+
+
+
+  # Give host actionable tips from past bookings
+  getPerformanceTips(bookingId: ID!): [PerformanceTip!]!
+}
+
+# ----------------------
+# Mutations
+# ----------------------
+type Mutation {
+    # Suggest a reply to a guest review
+  generateReplyToReview(reviewId: ID!): AIResult
+  # Apply an AI-suggested title directly to a listing
+  
+  applyTitleSuggestion(listingId: ID!,reviewId: ID!): AIResult
+
+  # Generate & save multiple description variations
+  saveDescriptionSuggestions(listingId: ID!): [AIResult!]!
+
+  # Draft + store a reply to a review
+  draftReplyToReview(reviewId: ID!, suggestion: String!): Boolean
+}

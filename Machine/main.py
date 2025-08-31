@@ -1,8 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from transformers import pipeline
-
+from pydantic import BaseModel
 app = FastAPI()
+
+class AIRequest(BaseModel):
+    listingId: str
+
+class AIResult(BaseModel):
+    suggestion: str
+
+@app.post("/suggestTitleImprovements")
+def suggest_title(req: AIRequest):
+    # Example dummy AI logic
+    return AIResult(suggestion=f"Improved title for {req.listingId}")
 
 # Optional: allow frontend/backend cross-origin
 app.add_middleware(

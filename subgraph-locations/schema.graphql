@@ -19,7 +19,7 @@ interface User {
   name: String
   "The user's profile photo URL"
   picture: String!  
-  role:Role
+  role: Role
 }
 
 type Host implements User @key(fields: "id") {
@@ -28,28 +28,28 @@ type Host implements User @key(fields: "id") {
   name: String! @shareable
   overallRating: Float @shareable
   picture: String! @shareable
-  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
-  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
+  bookings: [Booking!] @shareable
+  listings: [Listing!] @shareable
 }
- 
+
 type Guest implements User @key(fields: "id") {
   id: ID! @shareable 
   name: String! @shareable
   picture: String! @shareable
   role: Role @shareable
   overallRating: Float @shareable
-  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
-  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
+  bookings: [Booking!] @shareable
+  listings: [Listing!] @shareable
 }
 
 
+type Listing @key(fields: "id") {
+  id: ID! @shareable
+}
 
-
-
+type Booking @key(fields: "id") {
+  id: ID! @shareable
+}
 
 type Location @key(fields: "id") {
   id: ID! @shareable
@@ -66,7 +66,6 @@ type Location @key(fields: "id") {
 }
 
 input CreateLocationInput {
-  
   name: String!
   latitude: Float!
   radius: Int!
@@ -113,8 +112,12 @@ type UpdateLocationResponse implements Response {
   location: Location @shareable
 }
 
+type Review @key(fields: "id") {
+  id: ID! @shareable
+}
+
 type Query {
- locations(locationId: ID): [Location!]! @shareable
+  locations(locationId: ID): [Location!]! @shareable
 }
 
 type Mutation {

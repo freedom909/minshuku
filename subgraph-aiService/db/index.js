@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/minshuku'
+  connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/food'
 });
 
 export default {

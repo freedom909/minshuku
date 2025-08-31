@@ -1,13 +1,49 @@
-
+import fetch from "node-fetch";
 import Listing from '../services/models/mysql/listing.js';
 import dotenv from 'dotenv';
 dotenv.config();
-
+import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js'
 const resolvers = {
     // Debug logger setup
     debug: true,
     Mutation: {
+        applyTitleSuggestion: async (_, { listingId }, { dataSources }) => {
+            // Step 1. Get AI suggestion from Python
+            const response = await fetch("http://localhost:8000/suggestTitleImprovements", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ listingId }),
+            });
+            const data = await response.json();
 
+            // Step 2. Update MySQL Listing via your listingService (DI container)
+            const updatedListing = await dataSources.listingService.updateListingTitle(
+                listingId,
+                data.suggestion
+            );
+
+            // Step 3. Return AIResult
+            return { suggestion: updatedListing.title };
+        },
+
+          suggestTitleImprovements: async (_, { listingId }, context) => {
+            // ✅ Logging context inside the resolver
+            console.log('▶ Resolver context:', context);
+            const aiService = context?.dataSources?.aiService;
+            if (!aiService) {
+                console.error('❌ AI service missing from context:', context);
+                throw new Error('AI service is not available');
+            }
+            const response = await fetch(`${process.env.MACHINE_URL}/suggest-title`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ listingId }),
+            });
+            const data = await response.json();
+            return data.suggestions;
+        },
+    },
+    Query: {
         getSmartSuggestions: async (_, { userId }, { dataSources }) => {
             const { aiService, userService, listingService } = dataSources;
             const user = await userService.getUserById(userId);
@@ -61,48 +97,6 @@ const resolvers = {
                 currentlyBookedDates,
             };
         },
-
-        suggestTitleImprovements: async (_, { listingId }, context) => {
-            // ✅ Logging context inside the resolver
-            console.log('▶ Resolver context:', context);
-            const aiService = context?.dataSources?.aiService;
-            if (!aiService) {
-                console.error('❌ AI service missing from context:', context);
-                throw new Error('AI service is not available');
-            }
-            return {
-                suggestions: ['Better title 1', 'More attractive title 2']
-            };
-            // return await aiService.suggestTitleImprovements(listingId);
-        }
-    },
-
-    Query: {
-        Listing: {
-            bookings: async (listing, _, { userId }) => {
-                if (!userId || !listing.bookings.some(b => b.guestId === userId)) {
-                    throw new AuthenticationError("Access denied to booking details");
-                }
-                return listing.bookings;
-            },
-            currentlyBookedDates: async (listing, _, { userId }) => {
-                if (!userId || !listing.bookings.some(b => b.guestId === userId)) {
-                    throw new AuthenticationError("Access denied to booked dates");
-                }
-                return listing.currentlyBookedDates;
-            },
-        },
-
-        getUser: (_, __, { user = {}, dataSources = {} }) => {
-            // Access userId here  
-
-            // Implement logic to fetch user data from the database or other sources
-            // Example usage  
-            if (user.role === 'GUEST') {
-                return dataSources.userService.getGuestUser();
-            }
-            return dataSources.userService.getUser(user.id);
-        }
     },
 }
 

@@ -165,23 +165,20 @@ type Host implements User @key(fields: "id") {
   name: String! @shareable
   overallRating: Float @shareable
   picture: String! @shareable
-  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
-  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
+  bookings: [Booking!] @shareable
+  listings: [Listing!] @shareable
 }
- 
+
 type Guest implements User @key(fields: "id") {
   id: ID! @shareable 
   name: String! @shareable
   picture: String! @shareable
   role: Role @shareable
   overallRating: Float @shareable
-  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
-  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
+  bookings: [Booking!] @shareable
+  listings: [Listing!] @shareable
 }
+
 
 type Comment {
   id: ID!
