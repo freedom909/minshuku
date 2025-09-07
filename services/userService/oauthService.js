@@ -5,7 +5,7 @@ import { GraphQLError } from "graphql";
 import { OAuth2Client } from "google-auth-library";
 import dotenv from "dotenv";
 import jwksClient from "jwks-rsa";
-import User, { Provider, Role } from "../models/user.js";
+import User, { Role } from "../models/user.js";
 import UserRepository from "../repositories/userRepository.js";
 
 dotenv.config();

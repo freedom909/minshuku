@@ -26,22 +26,18 @@ const resolvers = {
             return { suggestion: updatedListing.title };
         },
 
-          suggestTitleImprovements: async (_, { listingId }, context) => {
-            // ✅ Logging context inside the resolver
-            console.log('▶ Resolver context:', context);
-            const aiService = context?.dataSources?.aiService;
-            if (!aiService) {
-                console.error('❌ AI service missing from context:', context);
-                throw new Error('AI service is not available');
-            }
-            const response = await fetch(`${process.env.MACHINE_URL}/suggest-title`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ listingId }),
-            });
-            const data = await response.json();
-            return data.suggestions;
-        },
+  suggestTitleImprovements: async (_, { listingId }, { dataSources }) => {
+      const { machineUrl } = dataSources;
+
+      const response = await fetch(`${machineUrl}/suggestTitleImprovements`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId })
+      });
+
+      const data = await response.json();
+      return data; // must match schema.graphql type
+    }
     },
     Query: {
         getSmartSuggestions: async (_, { userId }, { dataSources }) => {

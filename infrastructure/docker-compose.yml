@@ -1,0 +1,189 @@
+version: "3.9"
+
+services:
+  # ===============================
+  # Apollo Gateway
+  # ===============================
+  gateway:
+    container_name: minshuku-gateway
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    depends_on:
+      # - subgraph-accounts
+      # - subgraph-admin
+      - subgraph-aiService
+      - subgraph-amenities
+      - subgraph-bookings
+      # - subgraph-carts
+      - subgraph-listings
+      - subgraph-locations
+      # - subgraph-payments
+      # - subgraph-profiles
+      - subgraph-reviews
+      # - subgraph-temple
+      - subgraph-users
+      - machine
+      - ai_service
+    environment:
+      # 👇 Gateway will use service names, not localhost
+      USERS_SERVICE_URL: http://subgraph-users:4010/graphql
+      MACHINE_SERVICE_URL: http://machine:9000/graphql
+      AI_SERVICE_URL: http://ai_service:4100/graphql
+    networks:
+      - minshuku-net
+
+  # ===============================
+  # Node.js Subgraphs
+  # ===============================
+  # subgraph-accounts:
+  #   container_name: minshuku-accounts
+  #   build:
+  #     context: ./subgraph-accounts
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "4101:4101"
+  #   networks:
+  #     - minshuku-net
+
+  # subgraph-admin:
+  #   container_name: minshuku-admin
+  #   build:
+  #     context: ./subgraph-admin
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "4102:4102"
+  #   networks:
+  #     - minshuku-net
+
+  subgraph-aiService:
+    container_name: minshuku-subgraph-aiService
+    build:
+      context: ./subgraph-aiService
+      dockerfile: Dockerfile
+    ports:
+      - "4100:4100"
+    networks:
+      - minshuku-net
+
+  subgraph-amenities:
+    container_name: minshuku-amenities
+    build:
+      context: ./subgraph-amenities
+      dockerfile: Dockerfile
+    ports:
+      - "4090:4090"
+    networks:
+      - minshuku-net
+
+  subgraph-bookings:
+    container_name: minshuku-bookings
+    build:
+      context: ./subgraph-bookings
+      dockerfile: Dockerfile
+    ports:
+      - "4050:4050"
+    networks:
+      - minshuku-net
+
+  # subgraph-carts:
+    # container_name: minshuku-carts
+    # build:
+    #   context: ./subgraph-carts
+    #   dockerfile: Dockerfile
+    # ports:
+    #   - "4107:4107"
+    # networks:
+    #   - minshuku-net
+
+  subgraph-listings:
+    container_name: minshuku-listings
+    build:
+      context: ./subgraph-listings
+      dockerfile: Dockerfile
+    ports:
+      - "4040:4040" 
+    networks:
+      - minshuku-net
+
+  subgraph-locations:
+    container_name: minshuku-locations
+    build:
+      context: ./subgraph-locations
+      dockerfile: Dockerfile
+    ports:
+      - "4140:4140"
+    networks:
+      - minshuku-net
+
+  # subgraph-payments:
+    # container_name: minshuku-payments
+    # build:
+    #   context: ./subgraph-payments
+    #   dockerfile: Dockerfile
+    # ports:
+    #   - "4110:4110"
+    # networks:
+    #   - minshuku-net
+
+  # subgraph-profiles:
+    # container_name: minshuku-profiles
+    # build:
+    #   context: ./subgraph-profiles
+    #   dockerfile: Dockerfile
+    # ports:
+    #   - "4111:4111"
+    # networks:
+    #   - minshuku-net
+
+  # subgraph-reviews:
+    # container_name: minshuku-reviews
+    # build:
+    #   context: ./subgraph-reviews
+    #   dockerfile: Dockerfile
+    # ports:
+    #   - "4112:4112"
+    # networks:
+    #   - minshuku-net
+
+  subgraph-users:
+    container_name: minshuku-users
+    build:
+      context: ./subgraph-users
+      dockerfile: Dockerfile
+    ports:
+      - "4010:4010"
+    networks:
+      - minshuku-net
+
+  # ===============================
+  # Python Services
+  # ===============================
+  machine:
+    container_name: minshuku-machine
+    build:
+      context: ./services/machine
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    networks:
+      - minshuku-net
+
+  # ai_service:
+  #   container_name: minshuku-ai-service
+  #   build:
+  #     context: ./services/ai_service
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "4100:4100"
+  #   networks:
+  #     - minshuku-net
+
+# ===============================
+# Network
+# ===============================
+networks:
+  minshuku-net:
+    driver: bridge

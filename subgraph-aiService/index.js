@@ -71,6 +71,8 @@ const startApolloServer = async () => {
       express.json(),
       expressMiddleware(server, {
         context: async ({ req }) => {
+          const MACHINE_URL = process.env.MACHINE_URL || "http://machine:8000";
+
           try {
             const aiService = container.resolve('aiService');
             const userService = container.resolve('userService');
@@ -83,7 +85,8 @@ const startApolloServer = async () => {
               userService,
               listingService,
               bookingService,
-              paymentService
+              paymentService,
+              machineUrl: MACHINE_URL   // 👈 add here
             };
 
             console.log('✅ Built context with dataSources:', Object.keys(dataSources));
