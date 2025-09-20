@@ -17,6 +17,7 @@ import BookingService from '../bookingService.js';         // 👈 ADD THIS
 import BookingRepository from '../repositories/bookingRepository.js'; // 👈 ADD THIS
 
 const initializeListingContainer = async ({ services = [] } = {}) => {
+  console.log("All env variables:", process.env);
   // Establishing connection to MySQL database
   const mysqldb = await connectMysql();
 

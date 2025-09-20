@@ -1,19 +1,17 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const dbName = process.env.MONGO_DB_NAME || 'air';
-
-async function connectToMongoDB() {
+export default async function connectToMongoDB(mongoUri) {
     try {
-        await mongoose.connect(`${mongoUri}/${dbName}`, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+        console.log("MONGO_URI:", mongoUri);
+        console.log("Loading MONGO_URI from env:", process.env.MONGO_URI);
+        console.log("All env variables:", process.env);
+        const MONGO_URI = process.env.MONGO_URI;
+
+        await mongoose.connect(MONGO_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000
         });
+
         console.log('✅ Connected to MongoDB via Mongoose');
         return mongoose.connection;
     } catch (error) {
@@ -21,5 +19,3 @@ async function connectToMongoDB() {
         throw error;
     }
 }
-
-export default connectToMongoDB;

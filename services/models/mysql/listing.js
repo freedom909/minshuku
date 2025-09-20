@@ -8,7 +8,7 @@ Listing.init(
   {
     id: { type: DataTypes.STRING, primaryKey: true },
     title: { type: DataTypes.STRING, allowNull: false },
-    description: { type: DataTypes.STRING },
+    description: { type: DataTypes.TEXT },
     pictures: { type: DataTypes.JSON }, // array of URLs
     numOfBeds: { type: DataTypes.INTEGER },
     price: { type: DataTypes.FLOAT },

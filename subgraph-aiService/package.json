@@ -1,5 +1,5 @@
 {
-  "name": "subgraph-supports",
+  "name": "subgraph-aiservice",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "- `userService`: This service is essential for handling user authentication and authorization. Without it, the AI service cannot identify users and provide personalized experiences.",
   "dependencies": {
     "@apollo/server": "^4.11.2",
     "@apollo/subgraph": "^2.9.3",
@@ -27,5 +27,6 @@
     "nodemon": "^3.1.9",
     "openai": "^4.70.2",
     "path": "^0.12.7"
-  }
+  },
+  "devDependencies": {}
 }

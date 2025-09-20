@@ -16,7 +16,7 @@ Amenity.init(
       allowNull: false,
     },
     categoryId: {
-      type: DataTypes.STRING, // or INTEGER
+      type: DataTypes.INTEGER, // or INTEGER
       allowNull: true,
       references: {
         model: 'categories',
