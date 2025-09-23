@@ -1,0 +1,198 @@
+networks:
+  minshuku-net:
+
+services:
+  # Apollo Gateway
+  gateway:
+    build: ./gateway
+    container_name: minshuku-gateway
+    ports:
+      - "4000:4000"
+    env_file: ./.env
+    depends_on:
+      - subgraph-users
+      - subgraph-listings
+      - subgraph-bookings
+      - subgraph-amenities
+      - subgraph-locations
+      - machine
+    networks:
+      - minshuku-net
+
+  # Machine learning FastAPI service
+  machine:
+    build: ./services/machine
+    container_name: minshuku-machine
+    ports:
+      - "9000:9000"
+    env_file: ./.env
+    networks:
+      - minshuku-net
+
+  # Users subgraph (MongoDB)
+  subgraph-users:
+    build: ./subgraph-users
+    container_name: subgraph-users
+    ports:
+      - "4010:4010"
+    env_file: ./.env
+    environment:
+      MONGO_URI: ${USERS_DB_MONGO_URI}
+    depends_on:
+      - users-db
+    networks:
+      - minshuku-net
+
+  users-db:
+    image: mongo:latest
+    container_name: users-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - users_data:/data/db
+    networks:
+      - minshuku-net
+
+  # Listings subgraph (MySQL)
+  subgraph-listings:
+    build: 
+      context: .
+      dockerfile: ./subgraph-listings/Dockerfile
+    ports:
+      - "4040:4040"
+    env_file: ./.env
+    environment:
+      DB_HOST: listings-db
+      DB_PORT: 3306
+      DB_NAME: ${LISTINGS_DB_NAME}
+      DB_USER: ${LISTINGS_DB_USER}
+      DB_PASSWORD: ${LISTINGS_DB_PASSWORD}
+    depends_on:
+      - listings-db
+    networks:
+      - minshuku-net
+
+  listings-db:
+    image: mysql:8.0
+    container_name: listings-db
+    env_file: ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${LISTINGS_DB_NAME}
+      MYSQL_USER: ${LISTINGS_DB_USER}
+      MYSQL_PASSWORD: ${LISTINGS_DB_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - listings_data:/var/lib/mysql
+    networks:
+      - minshuku-net
+
+  # Bookings subgraph (MySQL)
+  subgraph-bookings:
+    build: ./subgraph-bookings
+    container_name: subgraph-bookings
+    ports:
+      - "4050:4050"
+    env_file: ./.env
+    environment:
+      DB_HOST: bookings-db
+      DB_PORT: 3306
+      DB_USER: ${BOOKINGS_DB_USER}
+      DB_PASSWORD: ${BOOKINGS_DB_PASSWORD}
+      DB_NAME: ${BOOKINGS_DB_NAME}
+    depends_on:
+      - bookings-db
+    networks:
+      - minshuku-net
+
+  bookings-db:
+    image: mysql:8.0
+    container_name: bookings-db
+    env_file: ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${BOOKINGS_DB_NAME}
+      MYSQL_USER: ${BOOKINGS_DB_USER}
+      MYSQL_PASSWORD: ${BOOKINGS_DB_PASSWORD}
+    ports:
+      - "3308:3306"
+    volumes:
+      - bookings_data:/var/lib/mysql
+    networks:
+      - minshuku-net
+
+  # Amenities subgraph (MySQL)
+  subgraph-amenities:
+    build: ./subgraph-amenities
+    container_name: subgraph-amenities
+    ports:
+      - "4090:4090"
+    env_file: ./.env
+    environment:
+      DB_HOST: amenities-db
+      DB_PORT: 3306
+      DB_USER: ${AMENITIES_DB_USER}
+      DB_PASSWORD: ${AMENITIES_DB_PASSWORD}
+      DB_NAME: ${AMENITIES_DB_NAME}
+    depends_on:
+      - amenities-db
+    networks:
+      - minshuku-net
+
+  amenities-db:
+    image: mysql:8.0
+    container_name: amenities-db
+    env_file: ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${AMENITIES_DB_NAME}
+      MYSQL_USER: ${AMENITIES_DB_USER}
+      MYSQL_PASSWORD: ${AMENITIES_DB_PASSWORD}
+    ports:
+      - "3309:3306"
+    volumes:
+      - amenities_data:/var/lib/mysql
+    networks:
+      - minshuku-net
+
+  
+  subgraph-locations:
+    build: ./subgraph-locations
+    container_name: subgraph-locations
+    ports:
+      - "4140:4140"
+    env_file: ./.env
+    environment:
+      DB_HOST: locations-db
+      DB_PORT: 3306
+      DB_USER: ${LOCATIONS_DB_USER}
+      DB_PASSWORD: ${LOCATIONS_DB_PASSWORD}
+      DB_NAME: ${LOCATIONS_DB_NAME}
+    depends_on:
+      - locations-db
+    networks:
+      - minshuku-net
+
+  locations-db:
+    image: mysql:8.0
+    container_name: locations-db
+    env_file: ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${LOCATIONS_DB_NAME}
+      MYSQL_USER: ${LOCATIONS_DB_USER}
+      MYSQL_PASSWORD: ${LOCATIONS_DB_PASSWORD}
+    ports:
+      - "3310:3306"
+    volumes:
+      - locations_data:/var/lib/mysql
+    networks:
+      - minshuku-net
+
+volumes:
+  users_data:
+  listings_data:
+  bookings_data:
+  amenities_data:
+  locations_data:

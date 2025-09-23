@@ -20,7 +20,7 @@ import TokenService from "../services/userService/tokenService.js";
 
 dotenv.config({ path: 'C:\\Users\\omae9\\Desktop\\minshuku\\subgraph-users\\.env' });
 
-const typeDefs = gql(readFileSync("C:\\Users\\omae9\\Desktop\\minshuku\\subgraph-users\\schema.graphql", { encoding: "utf-8" }));
+const typeDefs = gql(readFileSync("./schema.graphql", { encoding: "utf-8" }));
 
 const createApolloServer = (container) => {
   return new ApolloServer({
