@@ -23,9 +23,7 @@ import Coordinate from './models/mysql/location.js'
 import { query } from 'express';
 // import UUIDV4 from 'uuid';
 
-
 dotenv.config();
-
 
 class ListingService {
   constructor({ listingRepository, sequelize }) {
