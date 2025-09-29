@@ -48,7 +48,6 @@ const initializeAiContainer = async ({ services = [] } = {}) => {
         bookingService: asClass(BookingService).singleton(),
         paymentService: asClass(MockPaymentService).singleton(), // 使用模拟服务
         userService: asClass(MockUserService).singleton(), // 使用模拟服务
-        listingService: asClass(MockListingService).singleton(), // 使用模拟服务
         bookingService: asClass(MockBookingService).singleton(), // 使用模拟服务
         aiRepository: asClass(AiRepository).singleton(),
         aiService: asClass(AiService).singleton()

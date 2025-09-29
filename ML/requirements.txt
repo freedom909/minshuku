@@ -1,4 +1,4 @@
 fastapi
 uvicorn
 pydantic
-openai  # if using OpenAI API
+ariadne  # if using OpenAI API

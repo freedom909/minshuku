@@ -107,7 +107,26 @@ class ListingService {
     }
   }
 
-
+async updateListingTitle(listingId, suggestTitle) {
+  if (!uuidValidate(listingId)) {
+    throw new Error('Invalid listing ID format');
+  }
+  if (typeof suggestTitle !== 'string') {
+    throw new Error('Invalid suggestTitle format');
+  }
+  try {
+    const listing = await Listing.findByPk(listingId);
+    if (!listing) {
+      throw new Error('Listing not found');
+    }
+    listing.title = suggestTitle;
+    await listing.save();
+    return listing;
+  } catch (error) {
+    console.error('Error updating listing title:', error);
+    throw new Error('Error updating listing title');
+  }
+}
 
   async hotListingsByMoneyBookingTop5() {
     const query = `

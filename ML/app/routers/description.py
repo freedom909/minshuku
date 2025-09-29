@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from app.services.description_generator import generate_description
+from .title import TitleRequest
 
 router = APIRouter(prefix="/description", tags=["Description Suggestions"])
 
@@ -11,6 +12,8 @@ class DescriptionRequest(BaseModel):
 @router.post("/suggest")
 def suggest_description(data: DescriptionRequest):
     return {"new_description": generate_description(data.current_description, data.title)}
+
+from .title import TitleRequest
 
 @router.post("/suggest")
 def get_suggested_titles(data: TitleRequest):

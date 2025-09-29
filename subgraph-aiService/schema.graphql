@@ -1,7 +1,10 @@
-# ======================
-# aiService SDL (Federation-safe)
-# ======================
+# ==============================
+# AI-Service Subgraph Schema (Federation-ready)
+# ==============================
 
+# -----------------------------
+# Apollo Federation link
+# -----------------------------
 schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.5",
@@ -13,9 +16,13 @@ schema
 
 scalar DateTime
 
+# -----------------------------
+# Output types
+# -----------------------------
 type AIResult @shareable {
   suggestion: String!
   confidence: Float
+  isSuitable: Boolean!
   createdAt: DateTime!
 }
 
@@ -24,7 +31,47 @@ type PerformanceTip @shareable {
   impactScore: Int
 }
 
+type ListingSuggestion {
+  suggestion: String!
+}
+
+type DescriptionSuggestion {
+  suggestion: String!
+}
+
+type ReviewReply {
+  reply: String!
+}
+
+type SmartSuggestionsResult {
+  suggestions: [String!]!
+}
+
+type AIChatReply {
+  reply: String!
+}
+
+type Booking {
+  guestId: ID!
+  startDate: String!
+  endDate: String!
+}
+
+type ListingInfo {
+  id: ID!
+  title: String!
+  description: String
+  bookings: [Booking]
+  currentlyBookedDates: [String]
+}
+
+type TitleSuggestionResponse {
+  suggestions: [String!]!
+}
+
+# -----------------------------
 # Extend external entities
+# -----------------------------
 extend type Listing @key(fields: "id") {
   id: ID! @external
 }
@@ -33,39 +80,34 @@ extend type Booking @key(fields: "id") {
   id: ID! @external
 }
 
-# ----------------------
-# Queries
-# ----------------------
+# -----------------------------
+# Query types
+# -----------------------------
 type Query {
-  # Improve a listing's title
+  # Minimal subgraph queries
+  getSmartSuggestions(userId: ID!): SmartSuggestionsResult!
+  sendMessageToAI(message: String!): AIChatReply!
+  getListingInfo(listingTitle: String!): ListingInfo!
+
+  # AIService-specific queries
   suggestTitleImprovements(listingId: ID!): AIResult
-
-  # Suggest description improvements
   generateDescriptionSuggestions(listingId: ID!): AIResult
-
-
-
-  # Give host actionable tips from past bookings
   getPerformanceTips(bookingId: ID!): [PerformanceTip!]!
 }
 
-type TitleSuggestionResponse {
-  suggestions: [String!]!
-}
-
-# ----------------------
-# Mutations
-# ----------------------
+# -----------------------------
+# Mutation types
+# -----------------------------
 type Mutation {
-    # Suggest a reply to a guest review
+  # Minimal subgraph mutations
+  applyTitleSuggestion(listingId: ID!): ListingSuggestion!
+  applyDescriptionSuggestion(listingId: ID!): DescriptionSuggestion!
+  replyToReview(reviewId: ID!, reviewText: String!): ReviewReply!
+
+  # AIService-specific mutations
   generateReplyToReview(reviewId: ID!): AIResult
-  # Apply an AI-suggested title directly to a listing
   suggestTitleImprovements(listingId: ID!): TitleSuggestionResponse
-  applyTitleSuggestion(listingId: ID!,reviewId: ID!): AIResult
-
-  # Generate & save multiple description variations
+  # applyTitleSuggestion(listingId: ID!, reviewId: ID!): AIResult
   saveDescriptionSuggestions(listingId: ID!): [AIResult!]!
-
-  # Draft + store a reply to a review
   draftReplyToReview(reviewId: ID!, suggestion: String!): Boolean
 }

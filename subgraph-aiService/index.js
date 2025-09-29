@@ -71,7 +71,7 @@ const startApolloServer = async () => {
       express.json(),
       expressMiddleware(server, {
         context: async ({ req }) => {
-          const MACHINE_URL = process.env.MACHINE_URL || "http://machine:8000";
+          const MACHINE_URL = process.env.MACHINE_URL || "http://machine:8000/graphql";
 
           try {
             const aiService = container.resolve('aiService');
