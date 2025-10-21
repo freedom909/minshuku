@@ -1,56 +1,43 @@
-import Redis from 'redis';
+import { createClient } from 'redis';
+const Redis = createClient();
 import { promisify } from 'util';
 
 class AccountLockService {
-    
-        constructor({ redisClient, maxAttempts = 5,lockDuration = 15 * 60, namespace = 'auth:lockout:' }) {
-            if (!redisClient || typeof redisClient.get !== 'function') {
-                throw new Error('Invalid Redis client provided to AccountLockService');//  'Error: Invalid Redis client provided to AccountLockService',
-              }
-              
-            this.redis = redisClient;
-            this.maxAttempts = maxAttempts;
-            this.lockDuration = lockDuration;
-            this.namespace = namespace; 
-             // Default to class method if not provided     
-
-        // Bind methods
+    constructor({ redisClient, maxAttempts = 5,lockDuration = 15 * 60 * 1000, namespace = 'auth:lockout:' }) {
+        if (!redisClient || typeof redisClient.get !== 'function') {
+            throw new Error('Invalid Redis client provided to AccountLockService');
+        }
+        this.redis = redisClient;
+        this.maxAttempts = maxAttempts;
+        this.lockDuration = lockDuration;
+        this.namespace = namespace;
         this.getKey = this.getKey.bind(this);
         this.isAccountLocked = this.isAccountLocked.bind(this);
         this.recordFailedAttempt = this.recordFailedAttempt.bind(this);
         this.clearLock = this.clearLock.bind(this);
         this.getLockDetails = this.getLockDetails.bind(this);
     }
-
-    // Generate Redis key for an email
     getKey(email) {
         return `${this.namespace}${email}`;
     }
-
     async lockAccount(userId) {
-        await this.redis.set(`lock:${userId}`, 'true', { EX: 3600 }); // expire in 1 hour
-      }
-    
-      async recordAttempt(userId) { 
+        await this.redis.set(`lock:${userId}`, 'true', { EX: 3600 });
+    }
+    async recordAttempt(userId) {
         const key = `attempts:${userId}`;
         const attempts = await this.redis.incr(key);
         if (attempts === 1) {
-          await this.redis.expire(key, 3600); // expire in 1 hour
+            await this.redis.expire(key, 3600);
         }
         return attempts;
-      }
-
-    // Check if account is locked
+    }
     async isAccountLocked(email) {
         try {
             const key = this.getKey(email);
             const attempts = await this.redis.get(key);
-            
             if (!attempts) return false;
-            
             const numAttempts = parseInt(attempts, 10);
             if (numAttempts >= this.maxAttempts) {
-                // Check if lock has expired
                 const ttl = await this.redis.ttl(key);
                 if (ttl <= 0) {
                     await this.clearLock(email);
@@ -58,31 +45,20 @@ class AccountLockService {
                 }
                 return true;
             }
-            
             return false;
         } catch (error) {
             console.error('Error checking account lock:', error);
-            return false; // Fail open to prevent lockouts due to Redis errors
+            return false;
         }
     }
-
-    async isAccountLocked(userId) {
-        return await this.redis.get(`lock:${userId}`);//  "TypeError: Cannot read properties of undefined (reading 'get')"
-      }
-    // Record a failed login attempt
     async recordFailedAttempt(email) {
         try {
             const key = this.getKey(email);
             const attempts = await this.redis.incr(key);
-            
-            // Set expiration on first attempt
             if (attempts === 1) {
                 await this.redis.expire(key, this.lockDuration);
             }
-
-            // Check if account should be locked
             if (attempts >= this.maxAttempts) {
-                // Reset expiration to ensure full lock duration
                 await this.redis.expire(key, this.lockDuration);
                 return {
                     locked: true,
@@ -90,7 +66,6 @@ class AccountLockService {
                     remainingTime: this.lockDuration
                 };
             }
-
             return {
                 locked: false,
                 attempts,
@@ -105,7 +80,6 @@ class AccountLockService {
             };
         }
     }
-
     async clearAttempts(email) {
         try {
             await this.redis.del(this.getKey(email));
@@ -115,7 +89,6 @@ class AccountLockService {
             return false;
         }
     }
-    // Clear lock and reset attempts
     async clearLock(email) {
         try {
             await this.redis.del(this.getKey(email));
@@ -125,13 +98,10 @@ class AccountLockService {
             return false;
         }
     }
-
-    // Get lock details including attempts and remaining time
     async getLockDetails(email) {
         try {
             const key = this.getKey(email);
             const attempts = await this.redis.get(key);
-            
             if (!attempts) {
                 return {
                     isLocked: false,
@@ -139,10 +109,8 @@ class AccountLockService {
                     remainingTime: 0
                 };
             }
-
             const numAttempts = parseInt(attempts, 10);
             const ttl = await this.redis.ttl(key);
-
             return {
                 isLocked: numAttempts >= this.maxAttempts,
                 attempts: numAttempts,
@@ -159,32 +127,9 @@ class AccountLockService {
             };
         }
     }
-
-    // Close Redis connection
     async close() {
         await this.redis.quit();
     }
 }
 
 export default AccountLockService;
-
-// Usage example:
-/*
-const lockService = new AccountLockService({
-    redisUrl: 'redis://localhost:6379',
-    maxAttempts: 5,
-    lockDuration: 900 // 15 minutes
-});
-
-// Check if account is locked
-const isLocked = await lockService.isAccountLocked('user@example.com');
-
-// Record failed attempt
-const result = await lockService.recordFailedAttempt('user@example.com');
-
-// Get lock details
-const details = await lockService.getLockDetails('user@example.com');
-
-// Clear lock
-await lockService.clearLock('user@example.com');
-*/

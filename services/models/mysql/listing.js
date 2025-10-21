@@ -24,7 +24,9 @@ Listing.init(
     sequelize,
     modelName: 'Listing',
     tableName: 'listings',
-    timestamps: true, //whatever it is true or false, it always has "Unknown column 'createdAt' in 'field list'",
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   }
 );
 

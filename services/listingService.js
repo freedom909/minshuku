@@ -128,6 +128,27 @@ async updateListingTitle(listingId, suggestTitle) {
   }
 }
 
+async updateListingDescription(listingId, suggestDescription) {
+  try {
+    if (!listingId) throw new Error('Listing ID is required');
+    if (typeof suggestDescription !== 'string') throw new Error('Invalid suggestDescription format');
+
+const listing = await Listing.findOne({
+  where: { id: listingId },
+  attributes: ['id', 'title', 'description', 'pictures', 'numOfBeds', 'price', 'isFeatured', 'saleAmount', 'checkInDate', 'checkOutDate', 'hostId', 'listingStatus', 'locationType']
+});
+    if (!listing) throw new Error('Listing not found');
+
+    listing.description = suggestDescription;
+    await listing.save();
+    return listing;
+  } catch (error) {
+    console.error('Error updating listing description:', error);
+    throw new Error('Failed to update listing description');
+  }
+}
+
+
   async hotListingsByMoneyBookingTop5() {
     const query = `
     SELECT saleAmount FROM listings ORDER BY saleAmount DESC LIMIT 5

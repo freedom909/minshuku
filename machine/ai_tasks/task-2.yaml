@@ -1,0 +1,39 @@
+# task-2.yaml
+task_name: generateDescriptionSuggestions
+description: 改善房源描述文字，使信息更清晰、吸引力更高
+trigger: api
+version: 1.0
+
+input:
+  source: mysql
+  query: "SELECT listingId, description FROM listings WHERE listingId = :listingId"
+  parameters:
+    - name: listingId
+      type: string
+      required: true
+
+operation:
+  type: http
+  method: POST
+  endpoint: /description/suggest
+  body:
+    listingId: "{{listingId}}"
+    description: "{{description}}"
+
+output:
+  schema:
+    improvedDescriptions:
+      type: list
+      items: string
+  example:
+    improvedDescriptions:
+      - "现代舒适公寓，步行至地铁5分钟"
+      - "阳光充足，适合家庭入住，附近有超市和公园"
+
+store:
+  destination: mysql
+  query: "UPDATE listings SET suggestedDescriptions = :improvedDescriptions WHERE listingId = :listingId"
+
+logging:
+  level: info
+  message: "✅ 描述优化任务完成: listingId={{listingId}}"

@@ -1,11 +1,10 @@
-import { RESTDataSource } from '@apollo/datasource-rest'; // Make sure the import is correct
-
+import { RESTDataSource } from '@apollo/datasource-rest';
 class PaymentRepository extends RESTDataSource {
 
-    constructor({ bookingRepository, paymentRepository, cartRepository }) {
+    constructor({ bookingRepository, listingRepository, cartRepository }) {
         super();
         this.bookingRepository = bookingRepository;
-        this.paymentRepository = paymentRepository;
+        this.listingRepository = listingRepository;
         this.cartRepository = cartRepository;
         this.baseURL = 'http://localhost:4004/api/v1/payments/';
     }

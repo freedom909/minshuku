@@ -1,0 +1,16 @@
+# ai_tasks/runTask.yaml
+name: runTask
+description: Example task to test FastAPI + YAML runner
+steps:
+  - name: Log start
+    action: log
+    params:
+      message: "🚀 Task started for {{ listingId }}"
+  - name: Validate
+    action: validate
+    params:
+      expected_fields: ["listingId"]
+  - name: Log end
+    action: log
+    params:
+      message: "✅ Task completed for {{ listingId }}"

@@ -1,4 +1,4 @@
-import hashPassword  from '../infrastructure/helpers/hassPassword.js';
+import hashPassword  from '../infrastructure/helpers/passwordHasher.js';
 import { GraphQLError } from 'graphql';
 import { ForbiddenError } from '../infrastructure/utils/errors.js';
 

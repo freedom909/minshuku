@@ -1,0 +1,39 @@
+# task-3.yaml
+task_name: generateReplyToReview
+description: 提供礼貌、专业的评论回复，提高用户满意度
+trigger: api
+version: 1.0
+
+input:
+  source: mysql
+  query: "SELECT listingId, reviewText FROM reviews WHERE listingId = :listingId"
+  parameters:
+    - name: listingId
+      type: string
+      required: true
+
+operation:
+  type: http
+  method: POST
+  endpoint: /review/reply
+  body:
+    listingId: "{{listingId}}"
+    reviewText: "{{reviewText}}"
+
+output:
+  schema:
+    replySuggestions:
+      type: list
+      items: string
+  example:
+    replySuggestions:
+      - "感谢您的反馈，我们会检查空调，期待您的下次入住！"
+      - "感谢您的评价，我们会改进空调问题，希望您下次入住更舒适！"
+
+store:
+  destination: mysql
+  query: "UPDATE reviews SET suggestedReplies = :replySuggestions WHERE listingId = :listingId"
+
+logging:
+  level: info
+  message: "✅ 评论回复任务完成: listingId={{listingId}}"

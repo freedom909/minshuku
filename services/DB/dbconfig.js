@@ -1,7 +1,6 @@
 import mysql from 'mysql2/promise';
 import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
 let pool;
@@ -31,7 +30,7 @@ const dbConfig = {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
-      mongodb = client.db(process.env.DB_NAME || 'test');
+      mongodb = client.db(process.env.DB_NAME || 'air');
       console.log('Connected to MongoDB');
     }
     return mongodb;

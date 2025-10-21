@@ -9,11 +9,13 @@ console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
 
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'air',
+  
 
   process.env.DB_USER || 'root',  // Default username and password for MySQL,
   process.env.DB_PASSWORD || 'princess',
   {
     host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || '3307',
     dialect: 'mysql',
     logging: console.log
   }

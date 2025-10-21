@@ -1,10 +1,10 @@
-import { Pool } from 'pg';
+import { Pool } from 'mysql2';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://localhost:5432/food'
+  connectionString: process.env.DATABASE_URL || 'postgres://localhost:3306/air'
 });
 
 export default {

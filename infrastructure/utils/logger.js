@@ -1,19 +1,18 @@
-import { createLogger, format, transports } from 'winston';
+// infrastructure/utils/logger.js
+import { createLogger, format, transports } from "winston";
+import path from "path";
 
-// Configure debug logger
 const logger = createLogger({
-    level: process.env.DEBUG_LEVEL || 'info',
-    format: format.combine(
-      format.timestamp(),
-      format.errors({ stack: true }),
-      format.json()
-    ),
-    transports: [
-      new transports.Console(),
-      new transports.File({ filename: 'logs/debug.log' })
-    ]
-  });
+  level: "info",
+  format: format.combine(
+    format.timestamp(),
+    format.json()
+  ),
+  transports: [
+    new transports.File({ filename: path.resolve("logs/debug.log"), level: "debug" }),
+    new transports.File({ filename: path.resolve("logs/combined.log") }),
+    new transports.Console({ format: format.simple() })
+  ],
+});
 
-
-
-  export default logger;
+export default logger;

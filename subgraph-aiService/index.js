@@ -9,7 +9,6 @@ import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import cors from 'cors';
-
 import resolvers from './resolvers.js';
 import initializeAiContainer from '../services/DB/initAiContainer.js';
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
@@ -86,7 +85,8 @@ const startApolloServer = async () => {
               listingService,
               bookingService,
               paymentService,
-              machineUrl: MACHINE_URL   // 👈 add here
+              machineUrl: MACHINE_URL ,
+              logger: console,
             };
 
             console.log('✅ Built context with dataSources:', Object.keys(dataSources));

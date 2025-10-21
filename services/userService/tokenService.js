@@ -10,7 +10,7 @@ dotenv.config();
 
 
 class TokenService {
-    constructor({ secretKey, expiresIn ,options = {}}) {
+    constructor({ secretKey, expiresIn ,options}) {
         if (!secretKey) {
             throw new GraphQLError('Secret key is required for token service', {
                 extensions: { code: 'CONFIGURATION_ERROR' }
@@ -18,6 +18,11 @@ class TokenService {
         }
         if (!expiresIn) {
             throw new GraphQLError('Expires in is required for token service', {
+                extensions: { code: 'CONFIGURATION_ERROR' }
+            });
+        }
+        if (!options) {
+            throw new GraphQLError('Options is required for token service', {
                 extensions: { code: 'CONFIGURATION_ERROR' }
             });
         }

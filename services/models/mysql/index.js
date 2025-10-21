@@ -4,7 +4,6 @@ import Location from './location.js';
 import sequelize from '../config/seq.js';
 import Amenity from './amenity.js';
 
-
 // // models/listing.js
 // Listing.belongsToMany(Amenity, {
 //   through: 'listing_amenities',

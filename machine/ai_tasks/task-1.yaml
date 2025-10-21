@@ -1,0 +1,40 @@
+# task-1.yaml
+task_name: suggestTitleImprovements
+description: 提供多个优化标题选项，提高房源点击率
+trigger: api
+version: 1.0
+
+input:
+  source: mysql
+  query: "SELECT listingId, title FROM listings WHERE listingId = :listingId"
+  parameters:
+    - name: listingId
+      type: string
+      required: true
+
+operation:
+  type: http
+  method: POST
+  endpoint: /suggestTitleImprovements
+  body:
+    listingId: "{{listingId}}"
+    title: "{{title}}"
+
+output:
+  schema:
+    suggestions:
+      type: list
+      items: string
+  example:
+    suggestions:
+      - "宽敞海景房"
+      - "舒适市中心公寓"
+      - "阳光充足家庭房"
+
+store:
+  destination: mysql
+  query: "UPDATE listings SET suggestedTitles = :suggestions WHERE listingId = :listingId"
+
+logging:
+  level: info
+  message: "✅ 标题优化任务完成: listingId={{listingId}}"

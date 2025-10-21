@@ -21,21 +21,29 @@ const logger = createLogger({
 // -----------------------------
 async function callPython(endpoint, body) {
   const machineUrl = process.env.MACHINE_URL || "http://localhost:8000";
-  const response = await fetch(`${machineUrl}${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const url = `${machineUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  console.log(`Calling ${url} with body ${JSON.stringify(body)}`);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
 
-  const data = await response.json();
-  logger.info(`Python response from ${endpoint}: ${JSON.stringify(data)}`);
-  fs.appendFileSync(
-    "debug.log",
-    `Python response from ${endpoint}: ${JSON.stringify(data)}\n`
-  );
+    if (!response.ok) {
+      logger.error(`Request to ${url} failed with status ${response.status}`);
+      throw new Error(`Request failed with status ${response.status}`);
+    }
 
-  return data;
+    const data = await response.json();
+    logger.info(`Python response from ${url}: ${JSON.stringify(data)}`);
+    return data;
+  } catch (error) {
+    logger.error(`Error calling ${url}: ${error.message}`);
+    throw error; // 抛出错误，而不是返回默认值
+  }
 }
+
 
 // -----------------------------
 // Resolvers
@@ -85,22 +93,22 @@ const resolvers = {
 
     // AIService-specific queries
     suggestTitleImprovements: async (_, { listingId }) => {
-      return callPython("/listing/suggest", { listingId });
+      return callPython("/api/listing/suggest", { listingId });
     },
 
     generateDescriptionSuggestions: async (_, { listingId }) => {
-      return callPython("/description/suggest", { listingId });
+      return callPython("/api/description/suggest", { listingId });
     },
 
     getPerformanceTips: async (_, { bookingId }) => {
-      return callPython("/performance/tips", { bookingId });
+      return callPython("/api/performance/tips", { bookingId });
     },
   },
 
   Mutation: {
     // Minimal subgraph mutations
     applyTitleSuggestion: async (_, { listingId }, { dataSources }) => {
-      const data = await callPython("/listing/suggest", { listingId });
+      const data = await callPython("/api/listing/suggest", { listingId });
       const updatedListing = await dataSources.listingService.updateListingTitle(
         listingId,
         data.suggestion
@@ -108,14 +116,24 @@ const resolvers = {
       return { suggestion: updatedListing.title };
     },
 
-    applyDescriptionSuggestion: async (_, { listingId }, { dataSources }) => {
-      const data = await callPython("/description/suggest", { listingId });
-      const updatedListing = await dataSources.listingService.updateListingDescription(
-        listingId,
-        data.suggestion
-      );
-      return { suggestion: updatedListing.description };
-    },
+  applyDescriptionSuggestion: async (_, { listingId }, { dataSources }) => {
+  try {
+    const data = await callPython("/api/description/suggest", { listingId });
+    if (!data?.suggestion || data.suggestion === 'Default suggestion') {
+      throw new Error('Invalid suggestion from Python service');
+    }
+
+    const updatedListing = await dataSources.listingService.updateListingDescription(
+      listingId,
+      data.suggestion
+    );
+    return { suggestion: updatedListing.description };
+  } catch (error) {
+    logger.error(`Error in applyDescriptionSuggestion: ${error.message}`);
+    throw new Error('Failed to apply description suggestion');
+  }
+},
+
 
     replyToReview: async (_, { reviewId, reviewText }) => {
       return callPython("/review/reply", { reviewId, reviewText });

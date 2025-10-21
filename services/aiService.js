@@ -1,6 +1,8 @@
 
-class AiService  {
-  constructor({ userService, listingService, bookingService, paymentService, aiRepository } ) {
+
+class AiService {
+  constructor({ userService, listingService, bookingService, paymentService, aiRepository} ) {
+
     this.userService  = userService;
     this.listingService  = listingService;
     this.bookingService  = bookingService;
