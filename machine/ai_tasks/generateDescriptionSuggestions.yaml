@@ -1,0 +1,6 @@
+name: generateDescriptionSuggestions
+description: Generate improved listing description
+steps:
+  - fetch description
+  - prompt Gemini for rewrite
+  - output improved version

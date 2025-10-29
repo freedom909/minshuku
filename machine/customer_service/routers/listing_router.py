@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Query
 from services.listing_service import suggest_title
 import google.generativeai as genai
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/customer")
+@router.get("/suggest_title")
 
-@router.get("/listing/suggest_title")
 async def suggest_title_route(listing_id: str = Query(..., description="Listing ID to generate title for")):
     """
     Suggest a marketing title for a given listing.

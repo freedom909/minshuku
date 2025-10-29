@@ -1,0 +1,6 @@
+name: suggestTitleImprovements
+description: Generate improved listing title
+steps:
+  - fetch original title
+  - prompt Gemini for improvements
+  - return best option

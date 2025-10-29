@@ -136,7 +136,7 @@ async updateListingDescription(listingId, suggestDescription) {
 const listing = await Listing.findOne({
   where: { id: listingId },
   attributes: ['id', 'title', 'description', 'pictures', 'numOfBeds', 'price', 'isFeatured', 'saleAmount', 'checkInDate', 'checkOutDate', 'hostId', 'listingStatus', 'locationType']
-});
+}); // should it add the 'updatedAt' attribute in the field list?
     if (!listing) throw new Error('Listing not found');
 
     listing.description = suggestDescription;

@@ -117,8 +117,11 @@ const resolvers = {
     },
 
   applyDescriptionSuggestion: async (_, { listingId }, { dataSources }) => {
+      console.log(`Sending request to Python with listingId: ${listingId}`);
   try {
     const data = await callPython("/api/description/suggest", { listingId });
+      console.log(`Python response for listingId ${listingId}: ${JSON.stringify(data)}`);
+
     if (!data?.suggestion || data.suggestion === 'Default suggestion') {
       throw new Error('Invalid suggestion from Python service');
     }
@@ -145,7 +148,8 @@ const resolvers = {
     },
 
     suggestTitleImprovements: async (_, { listingId }) => {
-        const data = await callPython("/listing/suggest", { listingId });
+      console.log(`Sending request to Python with listingId: ${listingId}`);
+        const data = await callPython("/listing/suggest", {  listingId });
 
   // Wrap single suggestion into an array for GraphQL
   return {
@@ -154,14 +158,20 @@ const resolvers = {
     },
 
     applyTitleSuggestionWithReview: async (_, { listingId, reviewId }) => {
+      console.log(`Sending request to Python with listingId: ${listingId}`);
+      console.log(`Sending request to Python with reviewId: ${reviewId}`);
       return callPython("/listing/suggest", { listingId, reviewId });
     },
 
     saveDescriptionSuggestions: async (_, { listingId }) => {
+      console.log(`Sending request to Python with listingId: ${listingId}`);
       return callPython("/description/suggest", { listingId });
     },
 
     draftReplyToReview: async (_, { reviewId, suggestion }) => {
+      console.log(`Sending request to Python with reviewId: ${reviewId}`);
+
+      console.log(`Sending request to Python with suggestion: ${suggestion}`);
       const data = await callPython("/review/reply", {
         reviewId,
         reviewText: suggestion,

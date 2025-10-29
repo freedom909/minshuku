@@ -9,7 +9,7 @@ const gateway = new ApolloGateway({
       { name: 'users', url: 'http://localhost:4010/graphql' },
       { name: 'listings', url: 'http://localhost:4040/graphql' },
       { name: 'bookings', url: 'http://localhost:4050/graphql' },
-      // // { name: 'reviews', url: 'http://localhost:4080/graphql' },
+      // { name: 'reviews', url: 'http://localhost:4080/graphql' },
       { name: 'amenities', url: 'http://localhost:4090/graphql' },
       { name: 'locations', url: 'http://localhost:4140/graphql' },
       { name: 'aiService', url: 'http://localhost:4100/graphql' },
