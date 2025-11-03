@@ -31,15 +31,18 @@ mysql_pool = pooling.MySQLConnectionPool(
 # ==========================
 # Neo4j Configuration
 # ==========================
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USERNAME", os.getenv("NEO4J_USER", "neo4j"))
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "princess")
+NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "air")
 
 try:
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
     with driver.session() as session:
-        result = session.run("RETURN 'Connected to Neo4j' AS msg")
-        print(f"✅ {result.single()['msg']} at {NEO4J_URI}")
+        result = session.run("RETURN 'Connected to Neo4j ✅' AS msg")
+        print(result.single()["msg"])
+        driver.close()
+        driver = None
 except Exception as e:
     print(f"❌ Error connecting to Neo4j: {e}")
     driver = None
@@ -50,25 +53,25 @@ except Exception as e:
 import google.generativeai as genai
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 if not GEMINI_API_KEY:
     print("⚠️ Warning: GEMINI_API_KEY not set in .env")
 else:
     genai.configure(api_key=GEMINI_API_KEY)
-    print("✅ Gemini API configured")
+    print(f"✅ Gemini API configured (default model: {DEFAULT_GEMINI_MODEL})")
 
-    # Optional: list models
-    try:
-        for model_info in genai.list_models():
-            print("Available model:", model_info.name)
-    except Exception as e:
-        print("⚠️ Could not list Gemini models:", e)
+    # Define a helper function to test or use Gemini dynamically
+    def test_gemini(prompt: str = "Test: 日本語で自己紹介してください。"):
+        """Send a test prompt to Gemini and return its response text."""
+        try:
+            model = genai.GenerativeModel(DEFAULT_GEMINI_MODEL)
+            response = model.generate_content(prompt)
+            print("Gemini response:", response.text)
+            return response.text
+        except Exception as e:
+            print("⚠️ Gemini test failed:", e)
+            return None
 
-    # Quick test
-    try:
-        model = genai.GenerativeModel(GEMINI_MODEL)
-        response = model.generate_content("Test: Describe a cozy Airbnb cabin.")
-        print("Gemini test output:", response.text)
-    except Exception as e:
-        print("⚠️ Gemini test failed:", e)
+    # Example: You can comment this out later
+    test_gemini("Hello Gemini, introduce yourself briefly.")

@@ -15,7 +15,8 @@ app.include_router(description_router.router, prefix="/api", tags=["Description"
 app.include_router(title_router.router, prefix="/api", tags=["Title"])
 app.include_router(recommend_router, prefix="/recommend", tags=["Recommendation"])
 app.include_router(trend_router.router, prefix="/analytics", tags=["Analytics"])
-
+app.include_router(description_router.router, prefix="/description") 
+app.include_router(description_router.router)
 @app.get("/")
 def root():
     return {"message": "✅ MACHINE AI Service is running!"}

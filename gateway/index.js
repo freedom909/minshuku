@@ -13,7 +13,6 @@ const gateway = new ApolloGateway({
       { name: 'amenities', url: 'http://localhost:4090/graphql' },
       { name: 'locations', url: 'http://localhost:4140/graphql' },
       { name: 'aiService', url: 'http://localhost:4100/graphql' },
-     //{ name: 'machine', url: 'http://127.0.0.1:8000/graphql' },
     ]
   })
 });
