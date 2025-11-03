@@ -9,7 +9,7 @@ def generate_description_suggestions(listing_id: str):
     # Step 1. Fetch listing data from MySQL
     conn = mysql_pool.get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT title, description FROM listings WHERE listingId = %s", (listing_id,))
+    cursor.execute("SELECT title, description FROM listings WHERE id = %s", (listing_id,))
     listing = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -43,10 +43,11 @@ def generate_description_suggestions(listing_id: str):
     except Exception as e:
         return {"error": str(e)}
 
-def suggest_description(listing_id: str):
-    listing = get_listing_by_id(listing_id)
+def suggest_description(id: str):
+    listing = get_listing_by_id(id)
+    print(f"Received request to suggest description for listingId={id}")
     if not listing:
-        return f"Listing {listing_id} not found in Neo4j."
+        return f"Listing {id} not found in Neo4j."
 
     title = listing.get("title", "")
     description = listing.get("description", "")
@@ -57,5 +58,11 @@ def suggest_description(listing_id: str):
         "Please suggest an improved, more engaging and SEO-friendly description."
     )
 
-    suggestion = test_gemini(prompt)
-    return suggestion
+    try:
+        suggestion = test_gemini(prompt)
+        # Clean up JSON string
+        if suggestion.startswith("```json"):
+            suggestion = suggestion.replace("```json", "").replace("```", "").strip()
+        return suggestion
+    except Exception as e:
+        return {"error": f"Failed to generate description: {str(e)}"}

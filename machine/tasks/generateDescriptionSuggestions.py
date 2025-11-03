@@ -1,7 +1,7 @@
 # tasks/generateDescriptionSuggestions.py
 from google.generativeai import GenerativeModel
-from core.config import DEFAULT_GEMINI_MODEL
-from core.db import mysql_pool  # Assuming you already have this
+from core.config import DEFAULT_GEMINI_MODEL,mysql_pool
+ # Assuming you already have this
 
 def generate_description_suggestions(listing_id: str):
     # Step 1. Fetch listing data
@@ -35,8 +35,8 @@ def generate_description_suggestions(listing_id: str):
 
     # Step 3. Parse and return
     try:
-        text = response.text.strip()
-        # Optional: handle JSON formatting if needed
-        return {"suggestions": text}
+        import json
+        suggestions = json.loads(response.text.strip())
+        return {"suggestions": suggestions}
     except Exception as e:
         return {"error": str(e)}

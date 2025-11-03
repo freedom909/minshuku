@@ -1,47 +1,30 @@
-from fastapi import APIRouter, HTTPException, Query
-from services.listing_service import suggest_title
-import google.generativeai as genai
+from fastapi import APIRouter
+from pydantic import BaseModel
+from customer_service.services.suggest_title import suggest_title_improvement
+from customer_service.services.suggest_description import generate_description_suggestions
 
-router = APIRouter(prefix="/customer")
-@router.get("/suggest_title")
+router = APIRouter()
 
-async def suggest_title_route(listing_id: str = Query(..., description="Listing ID to generate title for")):
-    """
-    Suggest a marketing title for a given listing.
-    Example:
-        GET /customer/suggest_title?listing_id=listing-002
-    """
+class ListingRequest(BaseModel):
+    listingId: str
+
+@router.post("/listing/suggest")
+def suggest_listing_endpoint(request: ListingRequest):
     try:
-        suggestion = suggest_title(listing_id)
-        return {"listing_id": listing_id, "suggestion": suggestion}
+        """Generate AI suggestions for a listing (title + description)."""
+        listing_id = request.listingId
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error suggesting title: {str(e)}")
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid request body: {e}"
+        )
 
-    """
-    Suggest a marketing title for a given listing using Gemini API.
-    Example:
-        POST /api/listing/suggest
-        Body: {"listingId": "listing-001"}
-    """
-    try:
-        # Initialize Gemini API
-        genai.configure(api_key="YOUR_GEMINI_API_KEY")
-        model = genai.GenerativeModel('gemini-pro')
-        
-        # Generate suggestion
-        prompt = f"Generate a short and attractive description for a property with ID {listingId}."
-        response = model.generate_content(prompt)
-        
-        return {"suggestion": response.text}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error suggesting title: {str(e)}")
+    # Reuse existing AI logic
+    title_suggestion = suggest_title_improvement(listing_id)
+    desc_suggestion = generate_description_suggestions(listing_id)
 
-@router.post("/listing/suggest", response_model=ListingResponse)
-async def suggest_listing_endpoint(req: ListingRequest):
-    # TODO: fetch real listing from DB
-    original_listing = f"This is the original listing for {req.listingId}."
-    suggestions = [
-        f"{original_listing} Enjoy a luxurious stay with all amenities.",
-        f"{original_listing} Perfect for cozy getaways and adventures.",
-    ]
-    return ListingResponse(suggestion=suggestions[0])        
+    return {
+        "listingId": listing_id,
+        "titleSuggestion": title_suggestion,
+        "descriptionSuggestion": desc_suggestion,
+    }

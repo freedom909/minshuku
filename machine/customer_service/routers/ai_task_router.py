@@ -4,7 +4,7 @@ from tasks.generateDescriptionSuggestions import generate_description_suggestion
 
 router = APIRouter()
 
-@router.post("/generateDescriptionSuggestions")
+@router.post("/api/generateDescriptionSuggestions")
 async def generate_description_suggestions_api(listingId: str = Query(...)):
     result = generate_description_suggestions(listingId)
     return result

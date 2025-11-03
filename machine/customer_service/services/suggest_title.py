@@ -19,14 +19,22 @@ def suggest_title_improvement(listing_id: str = None):
     MATCH (l:Listing {id: $listing_id})
     RETURN l.title AS title
     """
-    logger.debug(f"Executing Neo4j query: {query}")
-    result = neo4j_query(query, {"listing_id": listing_id})
-    logger.info(f"Query result: {result}")
 
-    if result and isinstance(result, list) and len(result) > 0:
-        title = result[0].get("title")
-        if title:
-            return {"suggestions": [f"{title} (优化版)"]}
-    
-    logger.warning(f"No title found for listing_id: {listing_id}")
-    return {"suggestions": []}
+    logger.debug(f"Executing Neo4j query for listing_id: {listing_id}")
+    logger.debug(f"Query: {query}")
+    logger.debug(f"Parameters: {{\"listing_id\": \"{listing_id}\"}}")
+    result = neo4j_query(query, {"listing_id": listing_id})
+    logger.debug(f"Query result for listing_id {listing_id}: {result}")
+    if not result or (isinstance(result, list) and (not result or not result[0].get("title"))) or (isinstance(result, dict) and not result.get("title")):
+        return {
+        "suggestions": ["No title found for the listing. Ensure the listing exists and has a title."],
+        "debug": {
+            "query": "MATCH (l:Listing {id: $listing_id}) RETURN l.title AS title",
+            "parameters": {"listing_id": listing_id}
+        }
+    }
+
+    original_title = result[0]["title"] if isinstance(result, list) and result and result[0].get("title") else result.get("title")
+    improved_title = f"Optimized: {original_title} (Enhanced for SEO)"
+    return {"suggestions": [original_title, improved_title]}
+

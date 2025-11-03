@@ -41,8 +41,6 @@ try:
     with driver.session() as session:
         result = session.run("RETURN 'Connected to Neo4j ✅' AS msg")
         print(result.single()["msg"])
-        driver.close()
-        driver = None
 except Exception as e:
     print(f"❌ Error connecting to Neo4j: {e}")
     driver = None
