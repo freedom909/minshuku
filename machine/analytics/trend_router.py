@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from core.db_connection import neo4j_query
+from machine.core.db_connection import neo4j_query
 
 router = APIRouter()
 

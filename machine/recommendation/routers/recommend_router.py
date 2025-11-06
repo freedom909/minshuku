@@ -14,7 +14,7 @@
 #     return {"recommendations": result}
 
 from fastapi import APIRouter
-from recommendation.services.recommend_listings import recommend_listings
+from machine.recommendation.services.recommend_listings import recommend_listings
 
 router = APIRouter()
 

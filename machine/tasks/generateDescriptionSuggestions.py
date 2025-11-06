@@ -1,13 +1,12 @@
 # tasks/generateDescriptionSuggestions.py
 from google.generativeai import GenerativeModel
-from core.config import DEFAULT_GEMINI_MODEL,mysql_pool
- # Assuming you already have this
+from machine.core.config import DEFAULT_GEMINI_MODEL,mysql_pool
 
 def generate_description_suggestions(listing_id: str):
     # Step 1. Fetch listing data
     conn = mysql_pool.get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT title, description FROM listings WHERE listingId = %s", (listing_id,))
+    cursor.execute("SELECT title, description FROM listings WHERE id = %s", (listing_id,))
     listing = cursor.fetchone()
     cursor.close()
     conn.close()

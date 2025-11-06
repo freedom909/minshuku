@@ -1,7 +1,7 @@
 import google.generativeai as genai
-from core.config import GEMINI_API_KEY, DEFAULT_GEMINI_MODEL,mysql_pool,test_gemini
+from machine.core.config import GEMINI_API_KEY, DEFAULT_GEMINI_MODEL,mysql_pool,test_gemini
 from google.generativeai import GenerativeModel
-from core.neo4j_client import get_listing_by_id
+from machine.core.neo4j_client import get_listing_by_id
 
 genai.configure(api_key=GEMINI_API_KEY)
 

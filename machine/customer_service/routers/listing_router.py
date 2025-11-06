@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from customer_service.services.suggest_title import suggest_title_improvement
-from customer_service.services.suggest_description import generate_description_suggestions
+from fastapi import HTTPException
+from machine.customer_service.services.suggest_title import suggest_title_improvement
+from machine.customer_service.services.suggest_description import generate_description_suggestions
 
 router = APIRouter()
 

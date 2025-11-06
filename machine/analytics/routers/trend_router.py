@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from analytics.services.booking_trends import get_booking_trends
+from machine.analytics.services.booking_trends import get_booking_trends
 
 router = APIRouter()
 

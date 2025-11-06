@@ -1,5 +1,5 @@
 # customer_service/services/suggest_title.py
-from core.db_connection import neo4j_query
+from machine.core.db_connection import neo4j_query
 import logging
 
 logger = logging.getLogger(__name__)

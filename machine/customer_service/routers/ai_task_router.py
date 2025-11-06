@@ -1,6 +1,6 @@
 # routers/ai_task_router.py
 from fastapi import APIRouter, Query
-from tasks.generateDescriptionSuggestions import generate_description_suggestions
+from machine.tasks.generateDescriptionSuggestions import generate_description_suggestions
 
 router = APIRouter()
 

@@ -1,6 +1,6 @@
 # core/db_connection.py
 from typing import Dict, List, Optional, Any
-from core.config import driver as neo4j_driver, mysql_pool
+from machine.core.config import driver as neo4j_driver, mysql_pool
 import logging
 
 
