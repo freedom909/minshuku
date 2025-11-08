@@ -1,6 +1,6 @@
 # tasks/generateDescriptionSuggestions.py
 from google.generativeai import GenerativeModel
-from machine.core.config import DEFAULT_GEMINI_MODEL,mysql_pool
+from machine.core.db_connection import DEFAULT_GEMINI_MODEL,mysql_pool
 
 def generate_description_suggestions(listing_id: str):
     # Step 1. Fetch listing data

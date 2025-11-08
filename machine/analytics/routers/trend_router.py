@@ -1,3 +1,4 @@
+# machine/analytics/routers/trend_router.py
 from fastapi import APIRouter
 from machine.analytics.services.booking_trends import get_booking_trends
 

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import JoinNowButton from '@/components/ui/JoinNowButton';
 import ProfileMenu from '@/components/ui/ProfilesMenu';
 import HeaderClient from '../components/ui/HeaderClient';
+import Chatbot from '@/components/Chatbot';
 export default function Home() {
 
 
@@ -92,6 +93,21 @@ export default function Home() {
       <section className="bg-blue-900 text-white text-center py-4">
         <h2 className="text-lg font-semibold">🧠 Personalized AI Suggestions – Powered by aiService</h2>
       </section>
+
+      {/* Admin Dashboard Link */}
+      <section className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6">
+        <h2 className="text-xl font-bold mb-2">🚀 Advanced AI Dashboard</h2>
+        <p className="mb-4">Access real-time analytics and business optimization tools</p>
+        <a 
+          href="/admin" 
+          className="bg-white text-purple-600 px-6 py-2 rounded-md font-semibold hover:bg-gray-100 transition-colors inline-block"
+        >
+          Open Admin Dashboard
+        </a>
+      </section>
+
+      {/* Chatbot Component */}
+      <Chatbot />
     </div>
   );
 }
