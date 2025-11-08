@@ -15,12 +15,19 @@ from machine.customer_service.routers import (
     listing_router,
     ai_task_router,
     chatbot_router,
+    review_reply_router,
 )
 from machine.recommendation.routers import recommend_router
 from machine.analytics.routers import trend_router, report_router
 
 # Import ML routers
-from machine.ml.routers import predictive_router, recommendation_router, automation_router, analytics_router, optimization_router
+from machine.ml.routers import predictive_router, recommendation_router, automation_router, analytics_router, optimization_router, training_router
+
+# Import monitoring router
+from machine.core.routers.monitoring_router import router as monitoring_router
+
+# Import config router
+from machine.core.routers.config_router import router as config_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -28,12 +35,17 @@ logging.basicConfig(level=logging.INFO)
 # FastAPI app
 app = FastAPI(title="Machine AI Service")
 
+# Add monitoring middleware
+from machine.core.middleware import monitoring_middleware
+app.middleware("http")(monitoring_middleware)
+
 # ===== ROUTERS =====
 app.include_router(description_router.router, prefix="/api/description", tags=["Description"])
 app.include_router(title_router.router, prefix="/api/title", tags=["Title"])
 app.include_router(performance_tips_router.router, prefix="/api/performance", tags=["Performance Tips"])
 app.include_router(ai_task_router.router, prefix="/api/tasks", tags=["AI Tasks"])
 app.include_router(chatbot_router.router, prefix="/api/chatbot", tags=["Chatbot"])
+app.include_router(review_reply_router.router, prefix="/api/review-reply", tags=["Review Reply"])
 
 app.include_router(listing_router.router, prefix="/api/listings", tags=["Listings"])
 app.include_router(recommend_router, prefix="/recommend", tags=["Recommendation"])
@@ -47,6 +59,13 @@ app.include_router(recommendation_router.router, prefix="/ml/recommendation", ta
 app.include_router(automation_router.router, prefix="/ml/automation", tags=["Machine Learning - Automation"])
 app.include_router(analytics_router.router, prefix="/ml/analytics", tags=["Machine Learning - Real-time Analytics"])
 app.include_router(optimization_router.router, prefix="/ml/optimization", tags=["Machine Learning - Advanced Optimization"])
+app.include_router(training_router.router, prefix="/ml/training", tags=["Machine Learning - Model Training"])
+
+# ===== MONITORING =====
+app.include_router(monitoring_router, prefix="/monitoring", tags=["System Monitoring"])
+
+# ===== CONFIGURATION =====
+app.include_router(config_router, prefix="/config", tags=["Configuration Management"])
 
 # ===== ROOT =====
 @app.get("/")
