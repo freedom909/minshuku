@@ -2,7 +2,7 @@
 import config from '@/config/config.js'
 
 // Define the GraphQL endpoint URL
-const SUBGRAPH_USER_URL = `${config.API_URL}/graphql`;
+const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || 'http://localhost:4000/graphql';
 
 class OAuthService {
     constructor() {
@@ -15,7 +15,7 @@ class OAuthService {
         console.log("🔄 Sending request to subgraph...");
 
         try {
-            const response = await fetch('http://localhost:4010/graphql', { //it did not use post
+            const response = await fetch(SUBGRAPH_USER_URL, { //it did not use post
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,

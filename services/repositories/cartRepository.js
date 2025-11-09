@@ -10,6 +10,10 @@ class CartRepository extends RESTDataSource {
         return await this.get(`/${cartId}`);
     }
 
+      async getCartForListing(listingId) {
+    return { id: 'mock-cart-1', paymentId: 'mock-payment-1', listingId };
+  }
+  
     async addToCart(cartId, item) {
         return await this.post(`/${cartId}/items`, item);
     }

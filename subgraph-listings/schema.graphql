@@ -95,7 +95,7 @@ type Listing @key(fields: "id") {
   totalCostRange: TotalCostRange @shareable
 
   # 👇 Federated relationship (host is stored in Mongo, subgraph-users)
-  host: User!
+  host: User! @shareable
   hostId: ID! @shareable
 }
 

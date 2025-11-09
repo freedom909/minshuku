@@ -17,6 +17,7 @@ import connect from './connectNeo4jDB.js'; // Import your Neo4j database connect
 import sequelize from '../models/config/seq.js'
 import axios from 'axios';
 import LocationRepository from '../repositories/locationRepository.js';
+import PaymentRepository from '../repositories/paymentRepository.js';
 
 const initializeReviewContainer = async () => {
   try {

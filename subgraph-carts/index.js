@@ -6,31 +6,17 @@ import express from 'express';
 import http from 'http';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import initializeBookingContainer from '../services/DB/initBookingContainer.js';
 import cors from 'cors';
 
 import resolvers from './resolvers.js';
-import ListingService from '../services/listingService.js';
-import BookingService from '../services/bookingService.js';
-import UserService from '../services/userService/index.js';
-import initMongoContainer from '../services/DB/initMongoContainer.js';
 import initializeCartContainer from '../services/DB/initCartContainer.js';
-import CartService from '../services/cartService.js';
-import PaymentRepository from '../services/repositories/paymentRepository.js';
-import PaymentService from '../services/paymentService.js';
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
 const startApolloServer = async () => {
   try {
-    // Initialize MySQL and MongoDB containers
-    const mysqlContainer = await initializeCartContainer({
-      services: [ListingService, BookingService]
-    });
-
-    const mongoContainer = await initMongoContainer({
-      services: [UserService]
-    });
+    // Initialize MySQL container
+    const mysqlContainer = await initializeCartContainer();
 
     const app = express();
     const httpServer = http.createServer(app);
@@ -44,10 +30,10 @@ const startApolloServer = async () => {
           async serverWillStart() {
             return {
               async drainServer() {
-                // Close the WebSocket server and database connections
-                serverCleanup.dispose();
-                await mysqlContainer.resolve('mysqldb').close();
-                await mongoContainer.resolve('mongodb').close();
+                // Close the database connections
+                if (mysqlContainer.resolve('mysqldb')) {
+                  await mysqlContainer.resolve('mysqldb').close();
+                }
               }
             };
           }
@@ -56,24 +42,11 @@ const startApolloServer = async () => {
 
       context: async ({ req }) => {
         const token = req.headers.authorization || '';
-        const user = getUserFromToken(token);
-        const userService = {
-          localAuthService: container.resolve('localAuthService'),
-          oAuthService: container.resolve('oAuthService'),
-          tokenService: container.resolve('tokenService'),
-        };
-
+        
         return {
-          user,
+          user: { token },
           dataSources: {
-            listingService: mysqlContainer.resolve('listingService'),  // Resolve MySQL services
-            bookingService: mysqlContainer.resolve('bookingService'),
             cartService: mysqlContainer.resolve('cartService'),
-            paymentService: mysqlContainer.resolve('paymentService'),
-            paymentRepository: mysqlContainer.resolve('paymentRepository'), //
-            // paymentService: mysqlContainer.resolve('paymentService'),  // Resolve MySQL services
-            userService,// Resolve MongoDB services
-            cacheClient, // Cache client is available globally, no need to resolve from container
           }
         };
       }
