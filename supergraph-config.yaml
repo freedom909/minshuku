@@ -17,10 +17,6 @@ subgraphs:
     routing_url: http://localhost:4010/graphql
     schema:
       file: ./subgraph-users/schema.graphql
-  listings:
-    routing_url: http://localhost:4040/graphql
-    schema:
-      file: ./subgraph-listings/schema.graphql
   # accounts:
   #   routing_url: http://localhost:4020
   #   schema:
