@@ -4,193 +4,119 @@ extend schema
     import: ["@key", "@shareable", "@external", "@requires", "@provides", "@override", "@inaccessible"]
   )
 
-enum CacheControlScope {  
-  PUBLIC  
-  PRIVATE  
-  INHERIT  
-}
 scalar DateTime
-directive @cacheControl(maxAge: Int, scope: CacheControlScope) on FIELD_DEFINITION | OBJECT | INTERFACE  
 
-# Query type for fetching payment information
-type Query {
-  """
-  Fetch the payment information. The return value represents the payment amount.
-  """
-  payment: Int @shareable
-}
-
-enum Role {
-  HOST
-  GUEST
-  ADMIN
-  USER
-}
-
-### User Types
-interface User {
+# --------------------------
+# PAYMENT TYPES
+# --------------------------
+type Payment @key(fields: "id") {
   id: ID!
-  name: String
-  "The user's profile photo URL"
-  picture: String!  
-  role:Role
+  orderId: ID! @shareable
+  guestId: ID! @shareable
+  amount: Float! @shareable
+  status: PaymentStatus! @shareable
+  paymentIntentId: String @shareable
+  createdAt: DateTime! @shareable
+  updatedAt: DateTime! @shareable
 }
 
-type Host implements User @key(fields: "id") {
-  role: Role @shareable
-  id: ID! @shareable
-  name: String! @shareable
-  overallRating: Float @shareable
-  picture: String! @shareable
-  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
-  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
-}
- 
-type Guest implements User @key(fields: "id") {
-  id: ID! @shareable 
-  name: String! @shareable
-  picture: String! @shareable
-  role: Role @shareable
-  overallRating: Float @shareable
-  locationReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  hostReviews: [Review!] @relation(name: "REVIEWED_BY", direction: IN)
-  bookings: [Booking!] @relation(name: "BOOKED_BY", direction: IN)@shareable
-  listings: [Listing!] @relation(name: "HOSTED_BY", direction: IN) @shareable
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELLED
 }
 
-# Mutation type for wallet operations and payment processing
-type Mutation {
-  addFunds(userId: ID!, amount: Float!): Float! @shareable
-  subtractFunds(userId: ID!, amount: Float!): Float! @shareable
-}
-
-# Payment processing input
-
-# Represents the funds of a user
-type Funds {
+# --------------------------
+# WALLET TYPES
+# --------------------------
+type Wallet @key(fields: "userId") {
   userId: ID!
-  amount: Float!
+  balance: Float! @shareable
+  currency: String! @shareable
+  createdAt: DateTime! @shareable
+  updatedAt: DateTime! @shareable
 }
 
-# Represents a payment transaction
-type Payment {
-  id: ID!
-  userId: ID!
-  amount: Float!
-  date: DateTime!
-  type: String! # e.g., 'DEPOSIT', 'WITHDRAWAL'
+# --------------------------
+# EXTERNAL TYPES
+# --------------------------
+extend type Guest @key(fields: "id") {
+  id: ID! @external
 }
 
-# Payment processing input
-input PaymentProcessingInput {
-  userId: ID!
-  amount: Float!
+extend type Order @key(fields: "id") {
+  id: ID! @external
 }
 
-# Refund processing input
-input RefundProcessingInput {
-  userId: ID!
-  amount: Float!
-}
-
-# Mutation type for wallet operations
-type Mutation {
-  """
-  Add funds to the user's wallet.
-  @param amount: The amount of funds to be added.
-  @returns: The response of adding funds to the wallet.
-  """
-  addFundsToWallet(amount: Float!): AddFundsToWalletResponse! @shareable
-  processPayment(input: PaymentProcessingInput!): PaymentProcessingResponse! @shareable
-  processRefund(input: RefundProcessingInput!): RefundProcessingResponse! @shareable
-  """
-  Cancel a booking and refund the guest.
-  @param id: The ID of the booking to be cancelled.
-  @returns: The response of cancelling the booking.
-  """
-  cancelBooking(id: ID!): CancelBookingResponse! @shareable
-}
-
-# User interface with common user fields
-interface User {
-  id: ID!
-  name: String!
-  picture: String!
-}
-
-# Interface for mutation responses
-interface MutationResponse {
+# --------------------------
+# RESPONSE TYPES
+# --------------------------
+interface Response {
   code: Int!
   success: Boolean!
   message: String!
 }
 
-# Response type for addFundsToWallet mutation
-
-# Response type for payment processing
- type PaymentProcessingResponse implements MutationResponse {
+type ProcessPaymentResponse implements Response {
   code: Int! @shareable
   success: Boolean! @shareable
   message: String! @shareable
+  payment: Payment @shareable
 }
 
-# Response type for refund processing
- type RefundProcessingResponse implements MutationResponse {
+type AddFundsResponse implements Response {
   code: Int! @shareable
   success: Boolean! @shareable
   message: String! @shareable
+  wallet: Wallet @shareable
 }
 
-# Response type for addFundsToWallet mutation
-type AddFundsToWalletResponse implements MutationResponse {
+type RefundResponse implements Response {
   code: Int! @shareable
   success: Boolean! @shareable
   message: String! @shareable
-  amount: Float @shareable
-}
-
-type Booking @key(fields: "id") {
-  id: ID!
-  listing: Listing! @shareable
-  guest: Guest! @shareable
-}
-
-type Listing @key(fields: "id") {
-  id: ID!
-  "The list of bookings for a listing"
-  bookings: [Booking]! @shareable
-}
-
-# Response type for cancelBooking mutation
-type CancelBookingResponse implements MutationResponse {
-  "Similar to HTTP status code, represents the status of the mutation"
-  code: Int! @shareable
-  "Indicates whether the mutation was successful"
-  success: Boolean! @shareable
-  "Human-readable message for the UI"
-  message: String! @shareable
-  "The newly-created booking"
-  booking: Booking @shareable
-  "The amount of money refunded to the guest"
   refundAmount: Float! @shareable
 }
 
-# Guest type implementing User interface with federated key
-type Guest implements User @key(fields: "id") {
-  id: ID!
-  name: String! @shareable
-  funds: Float! @shareable
-  picture: String! @shareable
+# --------------------------
+# INPUT TYPES
+# --------------------------
+input ProcessPaymentInput {
+  orderId: ID!
+  paymentIntentId: String!
+  amount: Float!
 }
 
-# Host type implementing User interface with federated key
-type Host implements User @key(fields: "id") {
-  id: ID!
-  name: String! @shareable
-  earnings: Float! @shareable
-  "The HOST's profile photo URL"
-  picture: String! @shareable
+input AddFundsInput {
+  userId: ID!
+  amount: Float!
+}
+
+input RefundInput {
+  paymentId: ID!
+  amount: Float!
+}
+
+# --------------------------
+# QUERIES
+# --------------------------
+type Query {
+  payment(id: ID!): Payment @shareable
+  paymentsByGuest(guestId: ID!): [Payment!]! @shareable
+  paymentsByOrder(orderId: ID!): [Payment!]! @shareable
+  wallet(userId: ID!): Wallet @shareable
+}
+
+# --------------------------
+# MUTATIONS
+# --------------------------
+type Mutation {
+  processPayment(input: ProcessPaymentInput!): ProcessPaymentResponse! @shareable
+  addFunds(input: AddFundsInput!): AddFundsResponse! @shareable
+  processRefund(input: RefundInput!): RefundResponse! @shareable
+  confirmPayment(paymentId: ID!): ProcessPaymentResponse! @shareable
 }
 

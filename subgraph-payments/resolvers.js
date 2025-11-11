@@ -1,128 +1,132 @@
-import { AuthenticationError, ForbiddenError } from '../infrastructure/utils/errors.js';
+import { AuthenticationError } from '../infrastructure/utils/errors.js';
 import { requireAuth } from '../infrastructure/auth/authAndRole.js';
-import { permissions } from '../infrastructure/auth/permission.js';
+
 const resolvers = {
   Query: {
-    payment: async (_, __, { dataSources, userId, userRole }) => {
+    payment: async (_, { id }, { dataSources, userId }) => {
       if (!userId) {
         throw new AuthenticationError('You must be logged in to view payment information');
       }
       const { paymentService } = dataSources;
-      const payment = await paymentService.getPayment(userId);
+      const payment = await paymentService.getPaymentInfo(id);
       if (!payment) {
-        return {
-          code: 404,
-          success: false,
-          message: 'Payment not found',
-        };
+        throw new Error('Payment not found');
       }
-      // Implement the logic to fetch payment information
       return payment;
-      // Implement the logic to fetch payment information
-
+    },
+    
+    paymentsByGuest: async (_, { guestId }, { dataSources, userId }) => {
+      if (!userId) {
+        throw new AuthenticationError('You must be logged in to view payment information');
+      }
+      const { paymentService } = dataSources;
+      return await paymentService.getPaymentsByGuest(guestId);
+    },
+    
+    paymentsByOrder: async (_, { orderId }, { dataSources, userId }) => {
+      if (!userId) {
+        throw new AuthenticationError('You must be logged in to view payment information');
+      }
+      const { paymentService } = dataSources;
+      return await paymentService.getPaymentsByOrder(orderId);
+    },
+    
+    wallet: async (_, { userId: walletUserId }, { dataSources, userId }) => {
+      if (!userId) {
+        throw new AuthenticationError('You must be logged in to view wallet information');
+      }
+      const { paymentService } = dataSources;
+      return await paymentService.getWallet(walletUserId);
     },
   },
+  
   Mutation: {
-  addFunds: async (_, { userId, amount }, { dataSources }) => {
-    const { paymentService } = dataSources;
-    return await paymentService.addFunds({ userId, amount });
-  },
-  subtractFunds: async (_, { userId, amount }, { dataSources }) => {
-    const { paymentService } = dataSources;
-    return await paymentService.subtractFunds({ userId, amount });
-  },
-    addFundsToWallet: requireAuth(async (_, { amount }, { dataSources, userId }) => {
+    processPayment: requireAuth(async (_, { input }, { dataSources, userId }) => {
+      const { paymentService } = dataSources;
       try {
-        const updateWallet = await dataSources.paymentService.addFunds({ userId, amount });
-
-        if (!updateWallet) {
-          throw new Error('Unable to add funds to wallet');
-        }
-
-        // Broadcast updated wallet info via subscription
-        broadcast(subscriptionTopics.USER_UPDATED, updateWallet);
-
-        // Return success response
+        const payment = await paymentService.processPayment({
+          ...input,
+          guestId: userId
+        });
+        
+        return {
+          code: 200,
+          success: true,
+          message: 'Payment processed successfully',
+          payment
+        };
+      } catch (error) {
+        return {
+          code: 400,
+          success: false,
+          message: error.message || 'Payment processing failed',
+          payment: null
+        };
+      }
+    }),
+    
+    addFunds: requireAuth(async (_, { input }, { dataSources, userId }) => {
+      const { paymentService } = dataSources;
+      try {
+        const wallet = await paymentService.addFunds(input);
+        
         return {
           code: 200,
           success: true,
           message: 'Funds added successfully',
-          amount: updateWallet.amount,
+          wallet
         };
       } catch (error) {
-        // Return failure response with appropriate error message
         return {
           code: 400,
           success: false,
-          message: 'We couldn’t complete your request due to insufficient funds or an error occurred.',
+          message: error.message || 'Failed to add funds',
+          wallet: null
         };
       }
     }),
-
-    cancelBooking: async (_, { bookingId }, { dataSources, user }) => {
-      const userId = user?.id;
-      if (!{ guestId: userId }) {
-        throw new AuthenticationError('You must be logged in to cancel a booking');
-      }
-      if (criteria.time >= new now()) {
-        throw new Error('You can only cancel a booking if it is in the future');
-
-      }
-      const { bookingService, listingService, paymentService } = dataSources;
-      // Fetch the booking details
-      const booking = await bookingService.getBooking(bookingId);
-      if (!booking) {
-        return {
-          code: 404,
-          success: false,
-          message: 'Booking not found',
-          refundAmount: 0,
-        };
-      }
-      // Check if the user is allowed to cancel the booking
-      if (userRole !== 'admin' && booking.guestId !== userId) {
-        throw new AuthenticationError('You do not have permission to cancel this booking');
-      }
-      // Calculate the refund amount
-      const refundAmount = booking.totalCost;
-
+    
+    processRefund: requireAuth(async (_, { input }, { dataSources, userId }) => {
+      const { paymentService } = dataSources;
       try {
-        // Update the guest's funds by adding the refund amount
-        await bookingService.addFunds({ userId: booking.guestId, amount: refundAmount });
-
-        // Update the host's earnings by subtracting the refund amount
-        const hostId = await listingService.getHostIdForListing(booking.listingId);
-        await paymentService.subtractFunds({ userId: hostId, amount: refundAmount });
-
-        // Optionally, update the booking status to 'CANCELLED'
-        await bookingService.updateBookingStatus(bookingId, 'CANCELLED');
-
+        const refundAmount = await paymentService.processRefund(input);
+        
         return {
           code: 200,
           success: true,
-          message: 'Booking cancelled and refund issued',
-          refundAmount,
+          message: 'Refund processed successfully',
+          refundAmount
         };
       } catch (error) {
         return {
-          code: 500,
+          code: 400,
           success: false,
-          message: 'Error processing the cancellation',
-          refundAmount: 0,
+          message: error.message || 'Refund processing failed',
+          refundAmount: 0
         };
       }
-    },
-  },
-  User: {
-    __resolveType(user) {
-      if (user.funds !== undefined) {
-        return 'Guest';
+    }),
+    
+    confirmPayment: requireAuth(async (_, { paymentId }, { dataSources, userId }) => {
+      const { paymentService } = dataSources;
+      try {
+        const payment = await paymentService.confirmPayment(paymentId);
+        
+        return {
+          code: 200,
+          success: true,
+          message: 'Payment confirmed successfully',
+          payment
+        };
+      } catch (error) {
+        return {
+          code: 400,
+          success: false,
+          message: error.message || 'Payment confirmation failed',
+          payment: null
+        };
       }
-      if (user.earnings !== undefined) {
-        return 'Host';
-      }
-      return null;
-    },
+    }),
   },
 };
 
