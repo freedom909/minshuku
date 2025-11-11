@@ -3,7 +3,7 @@ import { RESTDataSource } from '@apollo/datasource-rest';
 class CartRepository extends RESTDataSource {
     constructor() {
         super();
-        this.baseURL = 'http://localhost:4004/api/v1/carts/';
+        this.baseURL = 'http://localhost:4060/api/v1/carts/';
     }
 
     async getCart(cartId) {

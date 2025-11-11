@@ -197,6 +197,8 @@ type _Service {
 
 scalar _Any
 
+# Federation entities
+union _Entity = Account | Host | Guest | Cart | Listing | Location
 
 
 type Query {
@@ -219,7 +221,7 @@ type Query {
   "Cart of the currently logged-in user."
   carts: [Cart]! @shareable
   _service: _Service!
-  _entities(representations: [_Any!]!)
+  _entities(representations: [_Any!]!): [_Entity]!
 }
 
 type Mutation {
@@ -377,5 +379,5 @@ input CreateLocationInput {
   "The postal code of the location"
   zip: String!
   "Units for the radius (e.g., kilometers, miles)"
-  units: String! 
+  units: String!
 }
