@@ -68,7 +68,7 @@ const resolvers = {
   },
 
   Query: {
-    getUser: async (_, { id }, { dataSources }) => {
+    user: async (_, { id }, { dataSources }) => {
       const { accountService } = dataSources;
       const user = await accountService.getUser(id);
       if (!user) {
@@ -96,37 +96,10 @@ const resolvers = {
       }
       return null;
     },
-    bookings: async (_, __, { ctx, dataSources }) => {
-      const { cartService } = dataSources;
-      const { user } = ctx;
-      if (!user) {
-        throw new GraphQLError('No user found', { extensions: { code: 'NO_USER_FOUND' } });
-      }
-      return cartService.getBookingsForUser(user);
-    },
-    bookingsByUser: async (_, { userId }, { dataSources }) => {
-      const { cartService } = dataSources;
-      return cartService.getBookingsByUserId(userId);
-    },
-    bookingById: async (_, { id }, { dataSources }) => {
-      const { cartService } = dataSources;
-      return cartService.getBookingById(id);
-    },
-    listings: async (_, __, { ctx, dataSources }) => {
-      const { listingsAPI } = dataSources;
-      const { user } = ctx;
-      if (!user) throw new GraphQLError('You must be logged in to view your listing', { extensions: { code: 'UNAUTHENTICATED' } });
-
-      if (user.role === 'HOST') {
-        const listings = await listingsAPI.getListingsForHost(user.id);
-        if (listings) {
-          return listings;
-        }
-        throw new GraphQLError('No listings found for this host', { extensions: { code: 'NO_LISTINGS_FOUND' } });
-      } else {
-        throw new GraphQLError('You are not authorized to view listings', { extensions: { code: 'UNAUTHORIZED' } });
-      }
-    },
+    userDashboard: async (_, { userId }, { dataSources }) =>
+      dataSources.userService.getUserDashboard(userId),
+    users: async (_, __, { dataSources }) =>
+      dataSources.userService.getUsers(),
   },
 
   Mutation: {
@@ -140,16 +113,9 @@ const resolvers = {
       return newUser;
     },
 
-    createListing: async (_, { title, description, price, locationId, hostId }, { dataSources, user }) => {
-      const { listingsAPI } = dataSources;
-      if (!user || user.role !== 'HOST') {
-        throw new GraphQLError('You do not have the right to create a listing', { extensions: { code: 'UNAUTHORIZED' } });
-      }
-      if (!locationId) {
-        throw new GraphQLError('You must select a location', { extensions: { code: 'LOCATION_REQUIRED' } });
-      }
-      const newListing = await listingsAPI.createListing({ title, description, price, locationId, hostId });
-      return newListing;
+    updateUserProfile: async (_, { input }, { dataSources }) => {
+      const { accountService } = dataSources;
+      return accountService.updateUser(input.id, input);
     },
 
     updateUser: async (_, { id, input }, { dataSources }) => {
@@ -179,36 +145,16 @@ const resolvers = {
       return accountService.updateAccountPassword(id, newPassword, password);
     },
 
-    researchListing: async (_, { hostId }, { dataSources }) => {
-      const { listingService } = dataSources;
-      return listingService.getListingsByHost(hostId)
-    },
-
-    async updateListingStatus(id, status) {
-      // Update the status of a listing in the database
-
-      // Implement the logic here
-    },
-
-    cancelListing: async (_, { id }, { dataSources }) => {
-      const { listingService } = dataSources;
-      return listingService.updateListingStatus(id, 'CANCELLED');
-    },
     updateProfile: async (_, { id, input }, { dataSources }) => {
       const { accountService } = dataSources;
       return accountService.updateUser(id, input);
     },
+  },
 
-    logout: (_, __, context) => {
-      if (context.session) {
-        context.session.destroy(err => {
-          if (err) {
-            throw new GraphQLError('Failed to terminate the session', { extensions: { code: 'FAILED_TO_TERMINATE_SESSION' } });
-          }
-        });
-      }
-      return true;
-    },
+  User: {
+    // Federated references
+    __resolveReference: async (user, { dataSources }) => 
+      dataSources.userService.getUserById(user.id),
   }
 };
 

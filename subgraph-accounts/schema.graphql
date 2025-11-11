@@ -1,383 +1,159 @@
+# accounts.graphql
 extend schema
   @link(
-    url: "https://specs.apollo.dev/federation/v2.8"
-    import: ["@key", "@shareable", "@external", "@requires", "@provides", "@override", "@inaccessible"]
+    url: "https://specs.apollo.dev/federation/v2.8",
+    import: ["@key", "@shareable", "@external", "@provides"]
   )
 
-
+# --------------------------
 # SCALARS
+# --------------------------
 scalar DateTime
- 
-# OBJECTS
 
-type Account @key(fields: "id") {
-  "The unique ID associated with the account."
-  id: ID! 
-  "The date and time the account was created."
-  createdAt: DateTime! @shareable
-  "The email associated with the account (must be unique)."
-  email: String! @shareable
+# --------------------------
+# QUERIES
+# --------------------------
+type Query {
+  me: User @shareable
+  user(id: ID!): User @shareable
+  users: [User!]! @shareable
+  userDashboard(userId: ID!): UserDashboard
+  account(id: ID!): Account
+  accounts: [Account!]
+  viewer: Account
 }
 
-type AuthPayload {
-  "The user's JWT"
-  token: String! @shareable
-  "The user's ID"
-  userId: ID! @shareable
-  "The user's role"
-  role: Role! @shareable
+# --------------------------
+# MUTATIONS
+# --------------------------
+type Mutation {
+  updateUserProfile(input: UpdateUserInput!): User @shareable
+  deleteUser(id: ID!): Boolean @shareable
+  createUser(name: String!, email: String!, password: String): User @shareable
+  updateUser(id: ID!, input: UpdateUserInput): User @shareable
+  createAccount(input: CreateAccountInput!): Account
+  deleteAccount(id: ID!): Boolean
+  updateAccountEmail(input: UpdateAccountEmailInput!): Account
+  updateAccountPassword(input: UpdateAccountPasswordInput!): Boolean
+  updateProfile(id: ID!, input: UpdateUserInput!): User @shareable
 }
 
-"Represents an Airlock user's common properties"
+# --------------------------
+# USER INTERFACE & TYPES
+# --------------------------
 interface User @key(fields: "id") {
   id: ID!
-  "The user's full name"
   name: String!
-  "The user's role"
-  role: Role!
-  "The user's profile photo URL"
-  picture: String!
-  "The email address of the user (must be unique)."
   email: String!
-  "The nickname of the user"
-  nickname: String!
-  "The listings of the user"
-  listings: [Listing]
-}
-
-type Host implements User @key(fields: "id") {
-  id: ID! 
-  "The user's first and last name"
-  name: String! @shareable
-  "The user's profile photo URL"
-  picture: String! @shareable
-  "The host's profile bio description, will be shown in the listing"
-  description: String @shareable
-  "The email address of the user (must be unique)."
-  email: String! @shareable
-  "The user's chosen nickname (must be unique)."
-  nickname: String! @shareable
-  "The role of the user"
-  role: Role! @shareable
-  "The listings of the user"
-  listings: [Listing]! @shareable
-  overallRating: Float! @shareable
-}
-
-enum Role {
-  ADMIN
-  GUEST
-  HOST
-  EDITOR
+  avatar: String
+  role: Role
+  joinedAt: DateTime
 }
 
 type Guest implements User @key(fields: "id") {
-  "The unique ID associated with the account."
-  id: ID!
-  "The user's first and last name"
+  id: ID! @shareable
   name: String! @shareable
-  "The user's profile photo URL"
-  picture: String! @shareable
-  "The email address of the user (must be unique)."
   email: String! @shareable
-  "The user's chosen nickname (must be unique)."
-  nickname: String! @shareable
-  "The role of the user"
-  role: Role! @shareable
-  "The bookings of the user"  
-  bookings: [Booking!]! @shareable
-  "The carts of the user"
-  carts: [Cart]! @shareable
-  listings:[Listing] @shareable
+  avatar: String @shareable
+  role: Role @shareable
+  joinedAt: DateTime @shareable
+  bookings: [Booking!] @shareable
 }
 
-type Cart @key(fields: "id") {
-  "The unique ID associated with the cart."
+type Host implements User @key(fields: "id") {
+  id: ID! @shareable
+  name: String! @shareable
+  email: String! @shareable
+  avatar: String @shareable
+  role: Role @shareable
+  joinedAt: DateTime @shareable
+  listings: [Listing!] @shareable
+}
+
+# External types from other subgraphs
+extend type Booking @key(fields: "id") {
+  id: ID! @external
+}
+
+extend type Listing @key(fields: "id") {
+  id: ID! @external
+}
+
+# --------------------------
+# ENUMS
+# --------------------------
+enum Role {
+  ADMIN
+  HOST
+  GUEST
+  USER
+}
+
+# --------------------------
+# DASHBOARD TYPES
+# --------------------------
+type UserDashboard {
+  user: User
+  totalListings: Int
+  totalBookings: Int
+  recentBookings: [Booking!]
+  recentListings: [Listing!]
+  notifications: [Notification!]
+}
+
+type BookingSummary {
   id: ID!
-  "The items in the cart."
-  items: [CartItem]! @shareable
-  "The date and time the cart was created."
-  createdAt: DateTime! @shareable
+  listingTitle: String
+  checkIn: DateTime
+  checkOut: DateTime
+  totalPrice: Float
+  createdAt: DateTime
 }
 
-type CartItem @key(fields: "id") {
-  "The unique ID associated with the cart item."
+type ListingSummary {
   id: ID!
-  "The listing associated with the cart item."
-  listing: Listing! @shareable
-  "The quantity of the cart item."
-  quantity: Int! @shareable
+  title: String
+  price: Float
+  imageUrl: String
+  createdAt: DateTime
 }
 
-interface Response {
-  "Similar to HTTP status code, represents the status of the mutation"
-  code: Int! 
-  "Indicates whether the mutation was successful"
-  success: Boolean! 
-  "Human-readable message for the UI"
+type Notification {
+  id: ID!
   message: String!
+  createdAt: DateTime!
 }
 
-"""
-Provides data to update an existing account's email.
-"""
-input UpdateAccountEmailInput {
-  "The unique ID associated with the account."
+# --------------------------
+# ACCOUNT TYPE
+# --------------------------
+type Account @key(fields: "id") {
   id: ID!
-  "The updated account email."
   email: String!
+  createdAt: DateTime!
 }
 
-"""
-Provides data to update an existing account's password. A current password and new password are required to update a password.
-"""
-input UpdateAccountPasswordInput {
-  "The unique ID associated with the account."
-  id: ID!
-  "The updated account password."
-  newPassword: String!
-  "The existing account password."
-  password: String!
+# --------------------------
+# INPUT TYPES
+# --------------------------
+input UpdateUserInput {
+  name: String
+  avatar: String
+  role: Role
 }
 
-"""
-Provides data to create a new account.
-"""
 input CreateAccountInput {
-  "The new account's email (must be unique)."
   email: String!
-  "The new account's password."
   password: String!
 }
 
-type Listing @key(fields: "id") {
-  "The unique ID associated with the listing."
+input UpdateAccountEmailInput {
   id: ID!
-  "The title of the listing."
-  title: String! @shareable
-  "The description of the listing."
-  description: String! @shareable
-  "The price of the listing."
-  price: Float! @shareable
-  "The host of the listing."
-  hostId: ID! @shareable
-  "The location of the listing."
-  location: Location! @shareable
-  "The latitude of the listing."
-  latitude: Float! @shareable
-  "The longitude of the listing."
-  longitude: Float! @shareable
+  email: String!
 }
 
-type Location @key(fields:"id") {
-  "The unique ID associated with the location"
-  id: ID! 
-  "The name of the address"
-  name: String! @shareable
-  "The address of the location"
-  address: String! @shareable
-  "The city of the location"
-  city: String! @shareable
-  "The state of the location"
-  state: String! @shareable
-  "The zip code of the location"
-  zip: String! @shareable
-  "The listings of the location"
-  listings: [Listing] @shareable
-}
-
-interface Node {
-  "The node's ID"
+input UpdateAccountPasswordInput {
   id: ID!
-}
-
-type _Service {
-  sdl: String
-}
-
-scalar _Any
-
-# Federation entities
-union _Entity = Account | Host | Guest | Cart | Listing | Location
-
-
-type Query {
-  getUser(id: ID!): User @shareable
-  listings: [Listing] @shareable
-  "User accounts"
-  user(id: ID!): User @shareable
-  "Currently logged-in user"
-  me: User! @shareable
-  "Retrieves the account of the currently logged-in user."
-  viewer: Account @shareable
-  "The booking of the currently user"
-  bookings: [Booking] @shareable
-  "Retrieves the account of the currently logged-in user."
-  account(id: ID!): Account @shareable
-  "Retrieves the accounts of the currently logged-in user."
-  accounts: [Account] @shareable
-  "Cart of the currently logged-in user."
-  cart: Cart @shareable
-  "Cart of the currently logged-in user."
-  carts: [Cart]! @shareable
-  _service: _Service!
-  _entities(representations: [_Any!]!): [_Entity]!
-}
-
-type Mutation {
-  "Creates a new account."
-  createAccount(input: CreateAccountInput!): CreateAccountPayload! @shareable
-  "Updates the email of an existing account."
-  updateAccountEmail(input: UpdateAccountEmailInput!): UpdateAccountEmailPayload! @shareable
-  "Updates the password of an existing account."
-  updateAccountPassword(input: UpdateAccountPasswordInput!): UpdateAccountPasswordPayload! @shareable
-  "Creates a new listing."
-  createListing(input: CreateListingInput!): CreateListingResponse! @shareable
-}
-
-type CreateAccountPayload implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  "The created account." 
-  account: Account @shareable
-}
-
-type UpdateAccountEmailPayload implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  "The updated account."
-  account: Account @shareable
-}
-
-type UpdateAccountPasswordPayload implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  "The updated account."
-  account: Account @shareable
-}
-
-type CreateListingResponse implements Response {
-  "The code status"
-  code: Int! @shareable
-  "The success status"
-  success: Boolean! @shareable
-  "The response message"
-  message: String! @shareable
-  "The listing that was created"
-  listing: Listing! @shareable
-  "The error that occurred, if any"
-  error: String @shareable
-}
-
-
-input CreateListingInput {
-  "The title of the listing"
-  title: String!
-  "The description of the listing"
-  description: String!
-  "The price of the listing"
-  price: Float!
-  "The ID of an existing location if available"
-  locationId: String 
-  "The ID of the host"
-  hostId: String!
-  "The photo thumbnails of the listing"
-  pictures: [String!]!
-  "The number of beds in the listing"
-  numOfBeds: Int!
-  "The type of location"
-  locationType: LocationType!
-  "The amenity IDs for the listing"
-  amenityIds: [String!]!
-  "Status of the listing"
-  listingStatus: ListingStatus
-  "Check-in date for the listing availability"
-  checkInDate: String!
-  "Check-out date for the listing availability"
-  checkOutDate: String!
-  "Indicates if the listing is featured"
-  isFeatured: Boolean
-  "New location details for the listing if creating a new location"
-  locationInput: CreateLocationInput 
-}
-
-input AmenityInput {
-  type: String!
-  description: String
-}
-
-enum AmenityCategory {
-  ACCOMMODATION_DETAILS
-  SPACE_SURVIVAL
-  OUTDOORS
-  UNKNOWN
-}
-
-enum LocationType {
-  SPACESHIP
-  HOUSE
-  CAMPSITE
-  APARTMENT
-  ROOM
-  COTTAGE
-  VILLA
-}
-
-type Amenity @key(fields: "id") {
-  id: ID!
-  category: AmenityCategory! @shareable
-  name: String! @shareable
-}
-
-enum ListingStatus {
-  ACTIVE,
-  PENDING,
-  INACTIVE,
-  ARCHIVED,
-  SOLD,
-  DELETED,
-  REJECT,
-  CANCELLED,
-  EXPIRED,
-  COMPLETED
-}
-
-type Booking @key(fields: "id") {
-  id: ID!
-  "The user who made the booking"
-  userId: ID! @shareable
-  "The listing booked"
-  listingId: ID! @shareable
-  "The check-in date for the booking"
-  checkInDate: DateTime! @shareable
-  "The check-out date for the reservation"
-  checkOutDate: DateTime! @shareable
-  "Total price price, calculated using the listing's price and the check-in check-out dates"
-  totalPrice: Float! @shareable
-}
-
-input CreateLocationInput {
-  "The name of the location"
-  name: String!
-  "The latitude of the location"
-  latitude: Float!
-  "The radius around the location"
-  radius: Int!
-  "The longitude of the location"
-  longitude: Float!
-  "The street address of the location"
-  address: String!
-  "The city where the location is situated"
-  city: String!
-  "The state or province of the location"
-  state: String!
-  "The country of the location"
-  country: String!
-  "The postal code of the location"
-  zip: String!
-  "Units for the radius (e.g., kilometers, miles)"
-  units: String!
+  newPassword: String!
+  password: String!
 }
