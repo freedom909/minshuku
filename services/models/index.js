@@ -8,12 +8,15 @@ import Payment from './payment.js';
 import Amenity from './mysql/amenity.js';
 import ListingAmenities from './mysql/listingAmenities.js';
 import Category from './mysql/category.js';
-
 import Location from './mysql/location.js';
-
+import Cart from './cart.js';
+import CartItem from './cartItem.js';
 
 // Define associations
-const models = { User, Account, Listing, Review, Booking, Payment, Amenity, ListingAmenities, Location };
+const models = { 
+  User, Account, Listing, Review, Booking, Payment, 
+  Amenity, ListingAmenities, Location, Cart, CartItem 
+};
 
 Object.keys(models).forEach((modelName) => {
   if (models[modelName].associate) {
@@ -25,6 +28,11 @@ Object.keys(models).forEach((modelName) => {
 // Listing.hasOne(Coordinate, { foreignKey: 'listingId', as: 'coordinate' });
 Listing.hasOne(Location, { foreignKey: 'listingId', as: 'location' });
 Location.belongsTo(Listing, { foreignKey: 'listingId', as: 'listing' });
+
+// Cart associations
+Cart.hasMany(CartItem, { foreignKey: 'cartId', as: 'cartItems' });
+CartItem.belongsTo(Cart, { foreignKey: 'cartId', as: 'cart' });
+CartItem.belongsTo(Listing, { foreignKey: 'listingId', as: 'listing' });
 
 // Sync database
 (async () => {

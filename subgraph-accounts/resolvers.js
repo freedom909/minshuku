@@ -1,25 +1,16 @@
 import { GraphQLError } from 'graphql';
-// import DateTimeType from '../infrastructure/scalar/dateTime.js';
-// import { authenticateJWT, checkPermissions } from '../../infrastructure/middleware/auth.js';
-// import { permissions } from '../infrastructure/auth/permission.js';
-// const { isAdmin, isHost } = permissions;
 
 const resolvers = {
-  // DateTime: DateTimeType,
-
   Account: {
-    __resolveReference(account, { dataSources }) {
+    __resolveReference: async (account, { dataSources }) => {
       const { accountService } = dataSources;
-      if (account?.user?.sub) {
-        return accountService.getAccountById(account.id);
-      }
-      throw new GraphQLError("Not authorized!", { extensions: { code: 'UNAUTHORIZED' } });
+      return await accountService.getAccountById(account.id);
     },
     id(account) {
-      return account.user_id;
+      return account._id || account.id;
     },
     createdAt(account) {
-      return account.created_at;
+      return account.createdAt || account.created_at;
     },
     email(account) {
       return account.email;
@@ -33,7 +24,7 @@ const resolvers = {
       } else if (user.role === 'GUEST') {
         return 'Guest';
       }
-      return null;
+      return 'User';
     },
     listings(user, _, { dataSources }) {
       const { listingService } = dataSources;
@@ -42,9 +33,9 @@ const resolvers = {
   },
 
   Host: {
-    __resolveReference: (user, { dataSources }) => {
+    __resolveReference: async (user, { dataSources }) => {
       const { accountService } = dataSources;
-      return accountService.getUser(user.id);
+      return await accountService.getUser(user.id);
     },
     listings(user, _, { dataSources }) {
       const { listingService } = dataSources;
@@ -53,9 +44,9 @@ const resolvers = {
   },
 
   Guest: {
-    __resolveReference: (user, { dataSources }) => {
+    __resolveReference: async (user, { dataSources }) => {
       const { accountService } = dataSources;
-      return accountService.getUser(user.id);
+      return await accountService.getUser(user.id);
     },
     bookings(user, _, { dataSources }) {
       const { bookingService } = dataSources;
@@ -79,82 +70,133 @@ const resolvers = {
     me: async (_, __, { dataSources, userId }) => {
       const { accountService } = dataSources;
       if (!userId) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
-      return accountService.getUser(userId);
+      return await accountService.getUser(userId);
     },
     account: async (_, { id }, { dataSources }) => {
       const { accountService } = dataSources;
-      return accountService.getAccountById(id);
+      return await accountService.getAccountById(id);
     },
     accounts: async (_, __, { dataSources }) => {
       const { accountService } = dataSources;
-      return accountService.getAllAccounts();
+      return await accountService.getAllAccounts();
     },
     viewer: async (_, __, { dataSources, user }) => {
       const { accountService } = dataSources;
       if (user?.sub) {
-        return accountService.getAccountById(user.sub);
+        return await accountService.getAccountById(user.sub);
       }
       return null;
     },
-    userDashboard: async (_, { userId }, { dataSources }) =>
-      dataSources.userService.getUserDashboard(userId),
-    users: async (_, __, { dataSources }) =>
-      dataSources.userService.getUsers(),
+    userDashboard: async (_, { userId }, { dataSources }) => {
+      const { userService } = dataSources;
+      return await userService.getUserDashboard(userId);
+    },
+    users: async (_, __, { dataSources }) => {
+      const { userService } = dataSources;
+      return await userService.getUsers();
+    },
   },
 
   Mutation: {
     createUser: async (_, { name, email, password }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      const user = await accountService.getUser(userId);
-      if (user.role !== 'ADMIN') {
-        throw new GraphQLError('Only admin can create a user', { extensions: { code: 'UNAUTHORIZED' } });
+      // Check if current user is admin
+      if (userId) {
+        const currentUser = await accountService.getUser(userId);
+        if (currentUser.role !== 'ADMIN') {
+          throw new GraphQLError('Only admin can create a user', { extensions: { code: 'UNAUTHORIZED' } });
+        }
       }
       const newUser = await accountService.createUser({ name, email, password });
       return newUser;
     },
 
-    updateUserProfile: async (_, { input }, { dataSources }) => {
+    updateUserProfile: async (_, { input }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      return accountService.updateUser(input.id, input);
+      // Users can only update their own profile unless they are admin
+      if (input.id !== userId) {
+        const currentUser = await accountService.getUser(userId);
+        if (currentUser.role !== 'ADMIN') {
+          throw new GraphQLError('Can only update your own profile', { extensions: { code: 'UNAUTHORIZED' } });
+        }
+      }
+      return await accountService.updateUser(input.id, input);
     },
 
-    updateUser: async (_, { id, input }, { dataSources }) => {
+    updateUser: async (_, { id, input }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      return accountService.updateUser(id, input);
+      // Users can only update their own profile unless they are admin
+      if (id !== userId) {
+        const currentUser = await accountService.getUser(userId);
+        if (currentUser.role !== 'ADMIN') {
+          throw new GraphQLError('Can only update your own profile', { extensions: { code: 'UNAUTHORIZED' } });
+        }
+      }
+      return await accountService.updateUser(id, input);
     },
 
-    deleteUser: async (_, { id }, { dataSources }) => {
+    deleteUser: async (_, { id }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      return accountService.deleteUser(id);
+      // Only admin can delete users
+      const currentUser = await accountService.getUser(userId);
+      if (currentUser.role !== 'ADMIN') {
+        throw new GraphQLError('Only admin can delete users', { extensions: { code: 'UNAUTHORIZED' } });
+      }
+      return await accountService.deleteUser(id);
     },
 
     createAccount: async (_, { input: { email, password } }, { dataSources }) => {
       const { accountService } = dataSources;
-      return accountService.createAccount(email, password);
+      return await accountService.createAccount({ email, password });
     },
-    deleteAccount: async (_, { id }, { dataSources }) => {
+    
+    deleteAccount: async (_, { id }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      return accountService.deleteAccount(id);
+      // Users can only delete their own account unless they are admin
+      if (id !== userId) {
+        const currentUser = await accountService.getUser(userId);
+        if (currentUser.role !== 'ADMIN') {
+          throw new GraphQLError('Can only delete your own account', { extensions: { code: 'UNAUTHORIZED' } });
+        }
+      }
+      return await accountService.deleteAccount(id);
     },
-    updateAccountEmail: async (_, { input: { id, email } }, { dataSources }) => {
+    
+    updateAccountEmail: async (_, { input: { id, email } }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      return accountService.updateAccountEmail(id, email);
+      // Users can only update their own email unless they are admin
+      if (id !== userId) {
+        const currentUser = await accountService.getUser(userId);
+        if (currentUser.role !== 'ADMIN') {
+          throw new GraphQLError('Can only update your own email', { extensions: { code: 'UNAUTHORIZED' } });
+        }
+      }
+      return await accountService.updateAccountEmail(id, email);
     },
-    updateAccountPassword: async (_, { input: { id, newPassword, password } }, { dataSources }) => {
+    
+    updateAccountPassword: async (_, { input: { id, newPassword, password } }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      return accountService.updateAccountPassword(id, newPassword, password);
+      // Users can only update their own password
+      if (id !== userId) {
+        throw new GraphQLError('Can only update your own password', { extensions: { code: 'UNAUTHORIZED' } });
+      }
+      return await accountService.updateAccountPassword(id, newPassword, password);
     },
 
-    updateProfile: async (_, { id, input }, { dataSources }) => {
+    updateProfile: async (_, { id, input }, { dataSources, userId }) => {
       const { accountService } = dataSources;
-      return accountService.updateUser(id, input);
+      // Users can only update their own profile
+      if (id !== userId) {
+        throw new GraphQLError('Can only update your own profile', { extensions: { code: 'UNAUTHORIZED' } });
+      }
+      return await accountService.updateUser(id, input);
     },
   },
 
   User: {
     // Federated references
     __resolveReference: async (user, { dataSources }) => 
-      dataSources.userService.getUserById(user.id),
+      await dataSources.userService.getUserById(user.id),
   }
 };
 

@@ -1,20 +1,20 @@
 import axios from 'axios';
 import mysql from 'mysql2/promise';
-import dbConfig from '../DB/dbConfig.js';
+
 
 class BookingRepository {
-  constructor(dbConfig) {
-    if (!dbConfig || typeof dbConfig !== 'object') {
-      throw new Error('Invalid dbConfig object');
+  constructor({ mysqldb }) {
+    if (!mysqldb) {
+      throw new Error('MySQL database connection is required');
     }
-    this.dbConfig = dbConfig;
+    this.mysqldb = mysqldb;
     this.httpClient = axios.create({
       baseURL: 'http://localhost:4050', // Adjust as needed
     });
   }
 
   async getConnection() {
-    return await mysql.createConnection(this.dbConfig);
+    return await this.mysqldb.getConnection();
   }
 
   async findOne(query) {

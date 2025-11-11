@@ -80,36 +80,18 @@ const startApolloServer = async () => {
 
       context: async ({ req }) => {
         const token = req.headers.authorization || '';
-        console.log('🔑 Authorization token:', token); // 添加日志
+        console.log('🔑 Authorization token:', token);
         const user = getUserFromToken(token);
         if (!user) {
           console.warn('⚠️ Unauthorized: Invalid or missing token');
         }
-        const userService = {
-          localAuthService: container.resolve('localAuthService'),
-          oAuthService: container.resolve('oAuthService'),
-          tokenService: container.resolve('tokenService'),
-        };
-  // Instantiate AiService with required dependencies
-  const listingService = mysqlContainer.resolve('listingService');
-    const bookingService = mysqlContainer.resolve('bookingService');
-    const paymentService = mysqlContainer.resolve('paymentService');
-    console.log('🔍 Resolved services:', { listingService, bookingService, paymentService });
-    const aiService = new AiService({
-      userService,
-      listingService,
-      bookingService,
-      paymentService,
-    });
+        
         return {
           user,
           dataSources: {
-            listingService: mysqlContainer.resolve('listingService'),  // Resolve MySQL services
+            listingService: mysqlContainer.resolve('listingService'),
             bookingService: mysqlContainer.resolve('bookingService'),
-            userService: userService,
             paymentService: mysqlContainer.resolve('paymentService'),
-            aiService, // ✅ Add this line!
-            cacheClient,
           }
         };
       }

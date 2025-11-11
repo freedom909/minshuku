@@ -12,6 +12,19 @@ import ListingRepository from '../repositories/listingRepository.js';
 import ListingService from '../listingService.js';
 import CartRepository from '../repositories/cartRepository.js';
 import CartService from '../cartService.js';
+import BookingService from '../bookingService.js';
+import BookingRepository from '../repositories/bookingRepository.js';
+import LocalAuthService from '../userService/localAuthService.js';
+import TokenService from '../userService/tokenService.js';
+import AccountLockService from '../userService/accountLockService.js';
+import OAuthService from '../userService/oauthService.js';
+import passwordHasher from '../../infrastructure/helpers/passwordHasher.js';
+import logger from '../../infrastructure/utils/logger.js';
+import redisClient from '../redisClient.js';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config({ path: '../../.env' });
 
 const initAccountContainer = async ({ services = [] } = {}) => {
   let mongodb;
@@ -49,14 +62,39 @@ const initAccountContainer = async ({ services = [] } = {}) => {
     mongodb: asValue(mongodb),
     mysqldb: asValue(mysqldb),
     neo4jdb: asValue(neo4jdb),
+    
+    // Infrastructure
+    passwordHasher: asValue(passwordHasher),
+    logger: asValue(logger),
+    
+    // JWT Configuration
+    secretKey: asValue(process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string'),
+    expiresIn: asValue(process.env.JWT_EXPIRY || '1d'),
+    options: asValue({ algorithm: process.env.JWT_ALGORITHM || 'HS256' }),
+    
+    // Redis Configuration
+    redisClient: asValue(redisClient),
+    maxAttempts: asValue(parseInt(process.env.MAX_ATTEMPTS || '5')),
+    lockDuration: asValue(parseInt(process.env.LOCK_DURATION || '900000')), // 15 minutes in milliseconds
+    namespace: asValue('auth:lockout:'),
+    
+    // Repositories
     userRepository: asClass(UserRepository).singleton(),
-    userService: asClass(UserService).singleton(),
-    accountService: asClass(AccountService).singleton(),
     accountRepository: asClass(AccountRepository).singleton(),
     listingRepository: asClass(ListingRepository).singleton(),
-    listingService: asClass(ListingService).singleton(),
     cartRepository: asClass(CartRepository).singleton(),
+    bookingRepository: asClass(BookingRepository).singleton(),
+    
+    // Services
+    tokenService: asClass(TokenService).singleton(),
+    accountLockService: asClass(AccountLockService).singleton(),
+    localAuthService: asClass(LocalAuthService).singleton(),
+    oauthService: asClass(OAuthService).singleton(),
+    userService: asClass(UserService).singleton(),
+    accountService: asClass(AccountService).singleton(),
+    listingService: asClass(ListingService).singleton(),
     cartService: asClass(CartService).singleton(),
+    bookingService: asClass(BookingService).singleton(),
   });
   return container;
 };

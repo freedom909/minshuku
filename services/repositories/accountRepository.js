@@ -1,6 +1,7 @@
 class AccountRepository {
   constructor({ mongodb }) {
-    this.collection = this.mongodb.collection('accounts');
+    this.mongodb = mongodb;
+    this.collection = mongodb.collection('accounts');
   }
 
   async findOne(query) {

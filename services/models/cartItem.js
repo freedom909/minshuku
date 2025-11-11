@@ -1,17 +1,39 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from './config/seq.js';
 
+class CartItem extends Model {}
 
-export class Cart extends Model {}
-
-Cart.init({
+CartItem.init({
   id: {
     type: DataTypes.STRING,
     primaryKey: true,
   },
-  guestId: {
+  cartId: {
     type: DataTypes.STRING,
     allowNull: false,
+    references: {
+      model: 'carts',
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
+  },
+  listingId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: 'listings',
+      key: 'id',
+    },
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+  },
+  price: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0.0,
   },
   checkInDate: {
     type: DataTypes.DATE,
@@ -38,18 +60,23 @@ Cart.init({
   },
 }, {
   sequelize,
-  modelName: 'Cart',
-  tableName: 'carts', // specify table name if different from model name
-  timestamps: true, // this will automatically add `createdAt` and `updatedAt` fields
+  modelName: 'CartItem',
+  tableName: 'cart_items',
+  timestamps: true,
 });
 
 // Define associations
-Cart.associate = function(models) {
-  Cart.hasMany(models.CartItem, {
+CartItem.associate = function(models) {
+  CartItem.belongsTo(models.Cart, {
     foreignKey: 'cartId',
-    as: 'cartItems',
+    as: 'cart',
     onDelete: 'CASCADE'
+  });
+  
+  CartItem.belongsTo(models.Listing, {
+    foreignKey: 'listingId',
+    as: 'listing'
   });
 };
 
-export default Cart;
+export default CartItem;

@@ -8,68 +8,92 @@ import { readFileSync } from 'fs';
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
+import initAccountContainer from '../services/DB/initAccountContainer.js';
+import resolvers from './resolvers.js';
 
 // ✅ Load schema
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
-
-// ✅ Simple in-memory data
-let accounts = [
-  { id: '1', email: 'john@example.com', createdAt: new Date().toISOString() }
-];
-let users = [
-  { id: '1', name: 'John Doe', role: 'HOST', email: 'john@example.com' }
-];
-
-// ✅ Federation resolvers
-const resolvers = {
-  Query: {
-    hello: () => 'Hello from Accounts subgraph!',
-    account: (_, { id }) => accounts.find(a => a.id === id),
-    accounts: () => accounts,
-    user: (_, { id }) => users.find(u => u.id === id),
-    me: () => users[0],
-  },
-  Mutation: {
-    createAccount: (_, { email }) => {
-      const newAcc = { id: String(accounts.length + 1), email, createdAt: new Date().toISOString() };
-      accounts.push(newAcc);
-      return newAcc;
-    }
-  },
-  // Federation entity resolver
-  Account: {
-    __resolveReference(ref) {
-      return accounts.find(a => a.id === ref.id);
-    }
-  }
-};
-
-// ✅ Build Apollo subgraph schema
-const schema = buildSubgraphSchema({ typeDefs, resolvers });
 
 async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
 
+  // ✅ Initialize dependency injection container
+  let container;
+  try {
+    container = await initAccountContainer();
+    console.log('✅ Account container initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize account container:', error);
+    process.exit(1);
+  }
+
+  // ✅ Build Apollo subgraph schema
+  const schema = buildSubgraphSchema({ typeDefs, resolvers });
+
   const server = new ApolloServer({
     schema,
     introspection: true,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    includeStacktraceInErrorResponses: true,
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      {
+        async serverWillStart() {
+          console.log('✅ Apollo Server starting with introspection enabled');
+          return {
+            async drainServer() {
+              console.log('Server is shutting down');
+            }
+          };
+        }
+      }
+    ],
   });
 
   await server.start();
 
-  // ✅ CORS
+  // ✅ CORS - More permissive for development
   app.use(cors({
-    origin: ['https://studio.apollographql.com', 'http://localhost:4030'],
+    origin: true, // Allow all origins in development
     credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Apollo-Require-Preflight', 'X-Requested-With'],
   }));
 
-  // ✅ GraphQL endpoint (browser + gateway compatible)
+  // ✅ GraphQL endpoint with dependency injection
   app.use(
     '/graphql',
     express.json(),
-    expressMiddleware(server)
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        // Extract user from JWT token
+        const authHeader = req.headers.authorization;
+        let user = null;
+        let userId = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          try {
+            const token = authHeader.substring(7);
+            // In a real implementation, you would verify the JWT token here
+            // For now, we'll extract user ID from token if available
+            const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+            userId = decoded.sub || decoded.id;
+            user = { sub: userId };
+          } catch (error) {
+            console.warn('Invalid token format:', error.message);
+          }
+        }
+
+        return {
+          dataSources: {
+            accountService: container.resolve('accountService'),
+            userService: container.resolve('userService'),
+          },
+          userId,
+          user,
+        };
+      },
+    })
   );
 
   // ✅ Add a friendly homepage (for Sandbox)

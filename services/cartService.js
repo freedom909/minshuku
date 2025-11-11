@@ -1,8 +1,6 @@
-import CartRepository from './repositories/cartRepository.js';
-
 class CartService {
-    constructor() {
-        this.cartRepository = new CartRepository();
+    constructor({ cartRepository }) {
+        this.cartRepository = cartRepository;
     }
 
     async getCart(cartId) {
