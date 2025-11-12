@@ -6,7 +6,8 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
-      { name: 'accounts', url: 'http://localhost:4030/graphql' },
+      { name: 'accounts', url: 'http://localhost:4020/graphql' },
+      { name: 'profiles', url: 'http://localhost:4030/graphql' },
       { name: 'users', url: 'http://localhost:4010/graphql' },
       { name: 'listings', url: 'http://localhost:4040/graphql' },
       { name: 'carts', url: 'http://localhost:4060/graphql' },

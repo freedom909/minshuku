@@ -14,7 +14,7 @@ const typeDefs = gql`
     createdAt: String!
   }
 
-  type User @key(fields: "id") {
+  interface User @key(fields: "id") {
     id: ID!
     name: String!
     email: String!

@@ -110,8 +110,8 @@ async function startServer() {
     `);
   });
 
-  httpServer.listen(4030, () => {
-    console.log('✅ Accounts Subgraph running at http://localhost:4030/graphql');
+  httpServer.listen(4020, () => {
+    console.log('✅ Accounts Subgraph running at http://localhost:4020/graphql');
   });
 }
 
