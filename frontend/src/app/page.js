@@ -7,6 +7,7 @@ import Link from 'next/link';
 import JoinNowButton from '@/components/ui/JoinNowButton';
 import ProfileMenu from '@/components/ui/ProfilesMenu';
 import HeaderClient from '../components/ui/HeaderClient';
+import HostNavigation from '@/components/HostNavigation';
 import Chatbot from '@/components/Chatbot';
 export default function Home() {
 
@@ -23,6 +24,8 @@ export default function Home() {
           {/* <a href="#" className="underline">Get the Minshuku App</a> */}
           {/* Client-side header */}
           <HeaderClient />
+          {/* 房东导航 */}
+          <HostNavigation />
         </div>
 
       </div>
@@ -35,6 +38,7 @@ export default function Home() {
           <a href="#" className="hover:underline">Recommended</a>
           <a href="#" className="hover:underline">Search</a>
           <a href="#" className="hover:underline">Categories</a>
+          <a href="/create-listing" className="hover:underline">Create Listing</a>
         </nav>
         <div className="flex items-center space-x-2">
           <input
@@ -92,6 +96,18 @@ export default function Home() {
       {/* AI Features */}
       <section className="bg-blue-900 text-white text-center py-4">
         <h2 className="text-lg font-semibold">🧠 Personalized AI Suggestions – Powered by aiService</h2>
+      </section>
+
+      {/* Become Host Section */}
+      <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-center py-8">
+        <h2 className="text-2xl font-bold mb-2">🏠 Become a Host</h2>
+        <p className="mb-4 text-lg">Share your space and earn extra income</p>
+        <a 
+          href="/become-host" 
+          className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block text-lg"
+        >
+          Start Hosting Today
+        </a>
       </section>
 
       {/* Admin Dashboard Link */}

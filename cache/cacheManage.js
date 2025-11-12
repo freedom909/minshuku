@@ -3,7 +3,7 @@ const { set, get } = cacheClient;
 
 const setCache = async (key, data, maxAge) => {
     try {
-        await set(key, maxAge, JSON.stringify(data));
+        await cacheClient.set(key, JSON.stringify(data), maxAge);
     } catch (err) {
         console.error('Error setting cache:', err);
     }

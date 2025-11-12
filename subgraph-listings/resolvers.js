@@ -405,8 +405,6 @@ const resolvers = {
         locationId: locationId,
       });
 
-      // Transaction for listing creation  
-      const transaction = await listingService.sequelize.transaction();//"listingService is not defined",
       try {
         // if (!input.hostId || !uuidValidate(input.hostId)) {
         //   throw new Error("Invalid hostId.");
@@ -418,7 +416,7 @@ const resolvers = {
         };
         console.log("Listing input before creation:", listingInput);
 
-        const newListing = await listingService.createListing(listingInput, { transaction });
+        const newListing = await listingService.createListing(listingInput);
 
         // Log immediately after creation  
         console.log("New listing created:", newListing);
@@ -432,8 +430,6 @@ if (!newListing.id) {
   throw new Error("Listing ID was not generated.");
 }
 
-        // Continue processing...  
-        await transaction.commit();
         return {
           code: 200,
           success: true,
@@ -441,9 +437,8 @@ if (!newListing.id) {
           listing: newListing,
         };
       } catch (error) {
-        await transaction.rollback();
         console.error("Error creating listing:", error.message); // Log error message  
-        throw new GraphQLError("Listing creation failed.");
+        throw new GraphQLError("Listing creation failed: " + error.message);
       }
     },
 

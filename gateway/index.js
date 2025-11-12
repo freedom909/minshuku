@@ -6,18 +6,18 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
-      { name: 'accounts', url: 'http://localhost:4020/graphql' },
-      { name: 'profiles', url: 'http://localhost:4030/graphql' },
+      // { name: 'accounts', url: 'http://localhost:4020/graphql' },
+      // { name: 'profiles', url: 'http://localhost:4030/graphql' },
       { name: 'users', url: 'http://localhost:4010/graphql' },
-      { name: 'listings', url: 'http://localhost:4040/graphql' },
-      { name: 'carts', url: 'http://localhost:4060/graphql' },
-      { name: 'bookings', url: 'http://localhost:4050/graphql' },
-      { name: 'reviews', url: 'http://localhost:4080/graphql' },
-      { name: 'amenities', url: 'http://localhost:4090/graphql' },
-      { name: 'locations', url: 'http://localhost:4140/graphql' },
-      { name: 'aiService', url: 'http://localhost:4100/graphql' },
-      { name: 'orders', url: 'http://localhost:4110/graphql' },
-      { name: 'payments', url: 'http://localhost:4070/graphql' }
+      // { name: 'listings', url: 'http://localhost:4040/graphql' },
+      // { name: 'carts', url: 'http://localhost:4060/graphql' },
+      // { name: 'bookings', url: 'http://localhost:4050/graphql' },
+      // { name: 'reviews', url: 'http://localhost:4080/graphql' },
+      // { name: 'amenities', url: 'http://localhost:4090/graphql' },
+      // { name: 'locations', url: 'http://localhost:4140/graphql' },
+      // { name: 'aiService', url: 'http://localhost:4100/graphql' },
+      // { name: 'orders', url: 'http://localhost:4110/graphql' },
+      // { name: 'payments', url: 'http://localhost:4070/graphql' }
     ],
     // Add configuration to handle introspection better
     introspectionHeaders: {

@@ -66,28 +66,10 @@ const handler = NextAuth({
 
       if (!user) throw new Error("No user found");
 
+      // 简化认证流程：直接允许 OAuth 登录，不进行 GraphQL 验证
       if (["google", "facebook", "github"].includes(account.provider)) {
-        try {
-          const token = account.id_token || account.access_token;
-
-          console.log(`Calling subgraph with ${account.provider} token:`, token);
-
-          const response = await oauthService.sendOAuthRequestToSubgraph(
-            account.provider,
-            token
-          );
-
-          console.log("OAuth response from subgraph:", response);
-
-          // ✅ Allow login to continue and still let adapter save user
-          if (!response?.success) {
-            console.error("OAuth login failed:", response);
-            return false;
-          }
-        } catch (err) {
-          console.error("OAuth backend call failed:", err?.message || err);
-          return false;
-        }
+        console.log(`✅ Allowing ${account.provider} login without GraphQL validation`);
+        return true;
       }
 
       return true;

@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@sequelize/mysql": "^7.0.0-alpha.46",
-    "dotenv": "^17.2.2"
+    "dotenv": "^17.2.2",
+    "mongodb": "^7.0.0"
   }
 }

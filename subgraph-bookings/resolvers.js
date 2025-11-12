@@ -5,6 +5,7 @@ import { AuthenticationError, ForbiddenError,UserInputError } from '../infrastru
 import { permissions } from '../infrastructure/auth/permission.js';
 import cacheClient from '../cache/cacheClient.js';
 import { broadcast, subscriptionTopics } from '../cache/cachePubSub.js';
+import bookingMQService from '../services/bookingMQService.js';
 const { bookingsWithPermission } = permissions;
 const resolvers = {
 
@@ -160,6 +161,12 @@ const resolvers = {
 
         const booking = await bookingService.createBooking(bookingData);
         
+        // Send MQ notification for booking creation
+        await bookingMQService.notifyBookingCreated(booking);
+        
+        // Schedule booking reminders
+        await bookingMQService.scheduleBookingReminders(booking);
+        
         // Broadcast booking creation to subscribers
         broadcast(subscriptionTopics.BOOKING_CREATED, booking);
         
@@ -215,6 +222,9 @@ const resolvers = {
       cancelledAt: new Date().toISOString(),
     });
 
+    // Send MQ notification for booking cancellation
+    await bookingMQService.notifyBookingCancelled(booking);
+
     // Notify subscribers
     broadcast(subscriptionTopics.BOOKING_CANCELLED, booking);
 
@@ -260,6 +270,9 @@ const resolvers = {
           status: 'CONFIRMED',
           confirmedAt: new Date().toISOString(),
         });
+
+        // Send MQ notification for booking confirmation
+        await bookingMQService.notifyBookingConfirmed(updatedBooking);
 
         // Broadcast the booking confirmation event
         broadcast(subscriptionTopics.BOOKING_CONFIRMED, updatedBooking);
