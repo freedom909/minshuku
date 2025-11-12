@@ -77,9 +77,10 @@ Location: {
     locations: async (_, { locationId }, { dataSources }) => {
       const service = dataSources.locationService;
       if (locationId) {
-        return [await service.getById(locationId)];
+        const loc = await service.getLocationById(locationId);
+        return loc ? [loc] : [];
       }
-      return service.getAll();
+      return service.getAllLocations();
     },
   },
   Location: {

@@ -87,6 +87,7 @@ enum Role {
   HOST
   GUEST
   USER
+  PENDING_HOST
 }
 
 # --------------------------

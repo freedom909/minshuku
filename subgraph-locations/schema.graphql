@@ -11,6 +11,7 @@ enum Role {
   GUEST
   ADMIN
   USER
+  PENDING_HOST
 }
 
 ### User Types

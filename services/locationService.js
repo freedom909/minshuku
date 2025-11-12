@@ -50,8 +50,13 @@ class LocationService {
         }
     }
     async getLocationById(id) {
-        const location = await Location.findOne(id)
-        return location;
+        try {
+            const location = await this.Location.findByPk(id);
+            return location;
+        } catch (error) {
+            console.error('Error fetching location by id:', error);
+            throw new Error('Failed to fetch location by id');
+        }
     }
 
     async createLocation(locationData,transaction) {

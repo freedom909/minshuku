@@ -11,6 +11,7 @@ import { GraphQLError } from 'graphql';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
+// trigger nodemon reload to pick up updated schema (enum Role: +PENDING_HOST)
 
 
 dotenv.config();
@@ -83,8 +84,9 @@ const startApolloServer = async () => {
       })
     );
 
-    httpServer.listen({ port: 4140 }, () =>
-      console.log('Server is running on http://localhost:4140/graphql')
+    const port = process.env.LOCATIONS_PORT || 4140;
+    httpServer.listen({ port }, () =>
+      console.log(`Server is running on http://localhost:${port}/graphql`)
     );
   } catch (error) {
     console.error('Error starting Apollo Server:', error);

@@ -33,6 +33,10 @@ subgraphs:
     routing_url: http://localhost:4050/graphql
     schema:
       file: ./subgraph-bookings/schema.graphql
+  orders:
+    routing_url: http://localhost:4110/graphql
+    schema:
+      file: ./subgraph-orders/schema.graphql
   carts:
     routing_url: http://localhost:4060/graphql
     schema:

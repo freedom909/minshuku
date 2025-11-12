@@ -46,7 +46,7 @@ const startApolloServer = async () => {
         return {
           user: { token },
           dataSources: {
-            orderService: mysqlContainer.resolve('orderService'),
+            orderService: orderContainer.resolve('orderService'),
           }
         };
       }
@@ -64,8 +64,9 @@ const startApolloServer = async () => {
     );
 
     // Start the HTTP server
-    httpServer.listen({ port: 4110 }, () => {
-      console.log(`🚀 Server ready at http://localhost:4110/graphql`);
+    const port = Number(process.env.ORDERS_PORT) || 4110;
+    httpServer.listen({ port }, () => {
+      console.log(`🚀 Server ready at http://localhost:${port}/graphql`);
     });
   } catch (error) {
     console.error('Error starting server:', error);

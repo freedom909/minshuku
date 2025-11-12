@@ -3,8 +3,11 @@
 import React from 'react';
 import BecomeHostApplication from '@/components/BecomeHostApplication';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function BecomeHostPage() {
+  const { data: session } = useSession();
+  const isHost = session?.user?.role === 'HOST';
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -25,7 +28,9 @@ export default function BecomeHostPage() {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Become a Host</h1>
-          <p className="text-xl md:text-2xl mb-6">Turn your extra space into extra income</p>
+          {!isHost && (
+            <p className="text-xl md:text-2xl mb-6">Turn your extra space into extra income</p>
+          )}
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <div className="flex items-center">
               <span className="mr-2">💰</span> Earn up to $5,000/month
@@ -63,15 +68,26 @@ export default function BecomeHostPage() {
           </div>
 
           {/* Application Section */}
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="bg-blue-600 text-white p-6">
-              <h2 className="text-2xl font-bold">Ready to Get Started?</h2>
-              <p className="text-blue-100">Complete your host application in just a few minutes</p>
+          {!isHost ? (
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="bg-blue-600 text-white p-6">
+                <h2 className="text-2xl font-bold">Ready to Get Started?</h2>
+                <p className="text-blue-100">Complete your host application in just a few minutes</p>
+              </div>
+              <div className="p-6">
+                <BecomeHostApplication />
+              </div>
             </div>
-            <div className="p-6">
-              <BecomeHostApplication />
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+              <h2 className="text-2xl font-semibold mb-2">You are already a host</h2>
+              <p className="text-gray-600 mb-4">Manage your listings or create a new one.</p>
+              <div className="flex justify-center gap-4">
+                <Link href="/create-listing" className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700">Create Listing</Link>
+                <Link href="/dashboard" className="border border-blue-600 text-blue-600 px-6 py-3 rounded-md hover:bg-blue-50">Go to Dashboard</Link>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* FAQ Section */}
           <div className="mt-16">

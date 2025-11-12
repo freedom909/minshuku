@@ -11,6 +11,7 @@ enum Role {
   GUEST
   HOST
   USER
+  PENDING_HOST
 }
 
 enum BookingStatus {

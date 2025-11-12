@@ -65,6 +65,7 @@ enum Role {
   HOST
   GUEST
   USER
+  PENDING_HOST
 }
 
 type Amenity @key(fields: "id") {

@@ -69,20 +69,34 @@ const handler = NextAuth({
       // 简化认证流程：直接允许 OAuth 登录，不进行 GraphQL 验证
       if (["google", "facebook", "github"].includes(account.provider)) {
         console.log(`✅ Allowing ${account.provider} login without GraphQL validation`);
+        
+        // Ensure Google profile picture is properly mapped
+        if (account.provider === "google" && profile?.picture) {
+          user.picture = profile.picture;
+          console.log("📸 Google profile picture set:", profile.picture);
+        }
+        
         return true;
       }
 
       return true;
     },
 
-    jwt: async ({ token, user }) => {
+    jwt: async ({ token, user, account, profile }) => {
       if (user) {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.picture = user.picture;
+        token.picture = user.picture || profile?.picture;
         token.accessToken = user.token; // Optional
       }
+      
+      // Handle Google profile picture specifically
+      if (account?.provider === "google" && profile?.picture) {
+        token.picture = profile.picture;
+        console.log("📸 Google picture set in JWT:", profile.picture);
+      }
+      
       return token;
 
     },
@@ -91,6 +105,7 @@ const handler = NextAuth({
       session.user.name = token.name;
       session.user.email = token.email;
       session.user.image = token.picture;
+      console.log("📸 Session user image set:", token.picture);
       return session;
     }
   },
