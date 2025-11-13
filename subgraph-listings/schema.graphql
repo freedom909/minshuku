@@ -127,7 +127,6 @@ enum Role {
   HOST
   GUEST
   USER
-  PENDING_HOST
 }
 type Category @key(fields: "id") {
   id: ID! @shareable
@@ -175,7 +174,6 @@ input CreateListingInput {
   pictures: [String!]!
   numOfBeds: Int!
   price: Float!
-  saleAmount: Float
   locationType: LocationType!
   amenityIds: [ID!]!    # references to Amenity entities
   categoryIds: [ID]     # references to Category entities

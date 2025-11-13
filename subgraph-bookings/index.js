@@ -115,16 +115,12 @@ const startApolloServer = async () => {
       console.log(`🚀 Server ready at http://localhost:4050/graphql`);
       
       // Start MQ consumer for booking notifications
-      // Temporarily disabled due to Kafka connection issues
-      /*
       try {
         await bookingConsumer.startConsuming();
         console.log('✅ Booking MQ Consumer started successfully');
       } catch (error) {
         console.error('❌ Failed to start Booking MQ Consumer:', error);
       }
-      */
-      console.log('ℹ️  MQ Consumer temporarily disabled - Kafka service not running');
     });
   } catch (error) {
     console.error('Error starting server:', error);

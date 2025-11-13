@@ -671,19 +671,6 @@ async createListing(listingInput) {
       picturesValue = picturesValue; // leave as-is if model column is JSON
     }
 
-    // ------------------- Map listingStatus to database values -------------------
-    const statusMapping = {
-      'ACTIVE': 'available',
-      'PENDING': 'pending', 
-      'SOLD': 'sold',
-      'DELETED': 'archived',
-      'REJECT': 'archived',
-      'CANCELLED': 'archived',
-      'EXPIRED': 'archived',
-      'COMPLETED': 'archived'
-    };
-    const dbListingStatus = statusMapping[listingInput.listingStatus] || 'available';
-
     // ------------------- Transactional create -------------------
     const createdListing = await sequelize.transaction(async (transaction) => {
       // Create listing
@@ -696,26 +683,36 @@ async createListing(listingInput) {
           numOfBeds: listingInput.numOfBeds ?? null,
           price: listingInput.price,
           isFeatured: listingInput.isFeatured ?? false,
+          saleAmount: listingInput.saleAmount ?? 0,
           checkInDate,
           checkOutDate,
           distance: listingInput.distance ?? null,
           locationId: listingInput.locationId,
           locationType: listingInput.locationType ?? null,
           hostId: listingInput.hostId,
-          listingStatus: dbListingStatus,
+          listingStatus: listingInput.listingStatus ?? 'ACTIVE',
+          categoryIds:listingInput.categoryIds,
+          amenityIds:listingInput.amenityIds,
         },
         { transaction }
       );
 
       if (!row || !row.id) throw new Error('Failed to create listing');
 
-      // 简化处理：只记录category和amenity信息，不创建关联
+      // Link amenities
       if (amenityIds.length > 0) {
-        console.log('[ListingService] Amenities to link:', amenityIds);
+        const amenityRows = amenityIds.map((amenityId) => ({
+          listingId: row.id,
+          amenityId,
+        }));
+        await ListingAmenity.bulkCreate(amenityRows, { transaction });
+        console.log('[ListingService] Amenities linked:', amenityIds);
       }
 
+      // Link categories
       if (categoryIds.length > 0) {
-        console.log('[ListingService] Categories to link:', categoryIds);
+        await row.addCategories(categoryIds, { transaction });
+        console.log('[ListingService] Categories linked:', categoryIds);
       }
 
       return row;
@@ -726,7 +723,7 @@ async createListing(listingInput) {
 
   } catch (error) {
     console.error('[ListingService] Error creating listing:', error);
-    throw new GraphQLError(`Database error while creating listing: ${error.message}`);
+    throw new GraphQLError('Database error while creating listing.');
   }
 }
 

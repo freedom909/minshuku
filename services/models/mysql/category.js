@@ -23,6 +23,12 @@ Category.init({
     allowNull: true, 
     defaultValue: 'icon' 
   },
+  type: { 
+    type: DataTypes.ENUM('theme', 'space'), 
+    allowNull: false 
+  },
+  featured_title: { type: DataTypes.STRING },          // New
+  featured_booked_count: { type: DataTypes.INTEGER, defaultValue: 0 } // New
 }, 
 {
   sequelize,

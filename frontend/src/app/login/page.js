@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import FacebookSignInButton from "@/components/FacebookSignInButton";
-import GithubSignInButton from "@/components/GithubSignInButton";
+import GithubSignInButton from "@/components/GitHubSignInButton";
 
 export default function Login() {
   const [email, setEmail] = useState("");

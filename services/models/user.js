@@ -8,13 +8,6 @@ export const Role = {
   HOST: 'HOST',
   ADMIN: 'ADMIN',
   GUEST: 'GUEST',
-  PENDING_HOST: 'PENDING_HOST',
-};
-
-export const UserStatus = {
-  ACTIVE: 'ACTIVE',
-  PENDING_HOST_REGISTRATION: 'PENDING_HOST_REGISTRATION',
-  SUSPENDED: 'SUSPENDED',
 };
 
 export const Provider = {
@@ -58,13 +51,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: Object.values(Role),
       default: Role.USER,
-      required: true,
-    },
-
-    status: {
-      type: String,
-      enum: Object.values(UserStatus),
-      default: UserStatus.ACTIVE,
       required: true,
     },
 

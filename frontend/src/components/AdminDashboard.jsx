@@ -5,7 +5,6 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import HostManagement from './HostManagement';
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -154,7 +153,7 @@ const AdminDashboard = () => {
       {/* Navigation */}
       <div className="bg-white border-b">
         <div className="flex space-x-4 p-4">
-          {['overview', 'analytics', 'optimization', 'alerts', 'hosts'].map(tab => (
+          {['overview', 'analytics', 'optimization', 'alerts'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -164,7 +163,7 @@ const AdminDashboard = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {tab === 'hosts' ? '👥 Host Management' : tab}
+              {tab}
             </button>
           ))}
         </div>
@@ -567,31 +566,6 @@ const AdminDashboard = () => {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'hosts' && (
-          <div className="space-y-6">
-            <HostManagement />
-            
-            {/* Additional host management statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h4 className="font-medium mb-2">📈 Host Growth</h4>
-                <p className="text-2xl font-bold text-blue-600">+15%</p>
-                <p className="text-sm text-gray-600">This month</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h4 className="font-medium mb-2">⭐ Average Rating</h4>
-                <p className="text-2xl font-bold text-green-600">4.7/5</p>
-                <p className="text-sm text-gray-600">Host performance</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h4 className="font-medium mb-2">💰 Revenue</h4>
-                <p className="text-2xl font-bold text-purple-600">$45,200</p>
-                <p className="text-sm text-gray-600">From hosts this month</p>
               </div>
             </div>
           </div>
