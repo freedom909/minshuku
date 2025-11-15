@@ -18,9 +18,18 @@ import UserRepository from '../repositories/userRepository.js';
 import PaymentService from '../paymentService.js';
 import PaymentRepository from '../repositories/paymentRepository.js';
 import sequelize from '../models/config/seq.js';
+import { Cart } from '../models/cart.js';
+import CartItem from '../models/cartItem.js';
+import Listing from '../models/mysql/listing.js';
 const initializeCartContainer = async ({ services = [] } = {}) => {
   // Establishing connection to MySQL database
   const mysqldb = await connectMysql();
+  await sequelize.sync({ alter: true });
+  console.log('✅ Sequelize models synced');
+  await Cart.sync({ alter: true });
+  await CartItem.sync({ alter: true });
+  await Listing.sync({ alter: true });
+  console.log('✅ Cart and CartItem tables ensured');
 
   // Establishing connection to MongoDB database
   const mongodb = await connectToMongoDB();

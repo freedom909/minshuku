@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import ReviewSection from '@/components/ReviewSection';
 
 // Mock data for listing details
 const mockListingDetails = {
@@ -260,15 +259,8 @@ export default function ListingDetailPage() {
       return;
     }
     
-    // Redirect to order creation page with booking details
-    const params = new URLSearchParams({
-      listingId: listing.id,
-      checkIn: bookingDates.checkIn,
-      checkOut: bookingDates.checkOut,
-      guests: bookingDates.guests
-    });
-    
-    router.push(`/orders/create?${params.toString()}`);
+    // For now, show alert. In production, this would redirect to booking page
+    alert(`Booking initiated for ${listing.title}\nCheck-in: ${bookingDates.checkIn}\nCheck-out: ${bookingDates.checkOut}\nGuests: ${bookingDates.guests}`);
   };
 
   if (loading) {
@@ -313,7 +305,6 @@ export default function ListingDetailPage() {
                 <Link href="/search" className="text-gray-700 hover:text-blue-600 transition-colors">🔍 Search</Link>
                 <Link href="/listings" className="text-blue-600 font-semibold">📋 Listings</Link>
                 <Link href="/bookings" className="text-gray-700 hover:text-blue-600 transition-colors">📅 Bookings</Link>
-                <Link href="/orders" className="text-gray-700 hover:text-blue-600 transition-colors">📦 Orders</Link>
                 <Link href="/profile" className="text-gray-700 hover:text-blue-600 transition-colors">👤 Profile</Link>
               </div>
             </div>
@@ -574,11 +565,6 @@ export default function ListingDetailPage() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Reviews Section */}
-          <div className="mt-8">
-            <ReviewSection listingId={listing.id} listingTitle={listing.title} />
           </div>
         </div>
       </div>

@@ -130,3 +130,63 @@ type Query {
 type Mutation {
   createBooking(input: CreateBookingInput!): CreateBookingResponse! @shareable
 }
+
+type CartItem {
+  id: ID!
+  cartId: ID!
+  listingId: ID!
+  quantity: Int!
+  price: Float!
+  checkInDate: DateTime
+  checkOutDate: DateTime
+  totalPrice: Float!
+}
+
+type Cart {
+  id: ID!
+  guestId: ID!
+  checkInDate: DateTime
+  checkOutDate: DateTime
+  totalPrice: Float!
+  cartItems: [CartItem!]!
+}
+
+type CartResponse implements MutationResponse {
+  code: Int!
+  success: Boolean!
+  message: String!
+  cart: Cart
+}
+
+input AddToCartInput {
+  cartId: ID!
+  guestId: ID!
+  listingId: ID!
+  quantity: Int
+  price: Float
+  checkInDate: DateTime
+  checkOutDate: DateTime
+}
+
+input UpdateCartItemInput {
+  cartId: ID!
+  itemId: ID!
+  quantity: Int
+  price: Float
+}
+
+input RemoveFromCartInput {
+  cartId: ID!
+  itemId: ID!
+}
+
+extend type Query {
+  getCart(cartId: ID!): Cart @shareable
+  getCartsByGuest(guestId: ID!): [Cart!]! @shareable
+}
+
+extend type Mutation {
+  addToCart(input: AddToCartInput!): CartResponse! @shareable
+  updateCartItem(input: UpdateCartItemInput!): CartResponse! @shareable
+  removeFromCart(input: RemoveFromCartInput!): CartResponse! @shareable
+}

@@ -11,9 +11,17 @@ class CartService {
         return this.cartRepository.addToCart(cartId, item);
     }
 
-    async removeFromCart(cartId, itemId) {
-        return this.cartRepository.removeFromCart(cartId, itemId);
-    }
+  async removeFromCart(cartId, itemId) {
+    return this.cartRepository.removeFromCart(cartId, itemId);
+  }
+
+  async updateCartItem(cartId, { itemId, quantity, price }) {
+    return this.cartRepository.updateCartItem(cartId, itemId, { quantity, price });
+  }
+
+  async getCartsByGuest(guestId) {
+    return this.cartRepository.getCartsByGuest(guestId);
+  }
 }
 
 export default CartService;

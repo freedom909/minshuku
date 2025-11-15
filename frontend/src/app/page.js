@@ -1,5 +1,7 @@
 
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import { useSession } from "next-auth/react";
 import Image from 'next/image';
 import Button from '@/components/ui/button';
@@ -7,9 +9,20 @@ import Link from 'next/link';
 import JoinNowButton from '@/components/ui/JoinNowButton';
 import ProfileMenu from '@/components/ui/ProfilesMenu';
 import HeaderClient from '../components/ui/HeaderClient';
+import HostNavigation from '@/components/HostNavigation';
 import Chatbot from '@/components/Chatbot';
 export default function Home() {
+  const { data: session } = useSession();
+  const [featuredStats, setFeaturedStats] = useState([0, 0, 0, 0]);
 
+  useEffect(() => {
+    setFeaturedStats([
+      Math.floor(Math.random() * 1000),
+      Math.floor(Math.random() * 1000),
+      Math.floor(Math.random() * 1000),
+      Math.floor(Math.random() * 1000)
+    ]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -23,6 +36,8 @@ export default function Home() {
           {/* <a href="#" className="underline">Get the Minshuku App</a> */}
           {/* Client-side header */}
           <HeaderClient />
+          {/* 房东导航 */}
+          <HostNavigation />
         </div>
 
       </div>
@@ -35,6 +50,7 @@ export default function Home() {
           <a href="#" className="hover:underline">Recommended</a>
           <a href="#" className="hover:underline">Search</a>
           <a href="#" className="hover:underline">Categories</a>
+          <a href="/create-listing" className="hover:underline">Create Listing</a>
         </nav>
         <div className="flex items-center space-x-2">
           <input
@@ -68,7 +84,7 @@ export default function Home() {
               <div className="h-32 bg-gray-100 mb-2 flex items-center justify-center">
                 <span className="text-sm text-gray-500">{item}</span>
               </div>
-              <p className="text-xs text-gray-700">{Math.floor(Math.random() * 1000)}+ Booked</p>
+              <p className="text-xs text-gray-700">{featuredStats[i]}+ Booked</p>
             </div>
           ))}
         </div>
@@ -93,6 +109,20 @@ export default function Home() {
       <section className="bg-blue-900 text-white text-center py-4">
         <h2 className="text-lg font-semibold">🧠 Personalized AI Suggestions – Powered by aiService</h2>
       </section>
+
+      {/* Become Host Section */}
+      {session?.user?.role !== 'HOST' && session?.user?.role !== 'PENDING_HOST' && (
+        <section className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-center py-8">
+          <h2 className="text-2xl font-bold mb-2">🏠 Become a Host</h2>
+          <p className="mb-4 text-lg">Share your space and earn extra income</p>
+          <a 
+            href="/become-host" 
+            className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-block text-lg"
+          >
+            Start Hosting Today
+          </a>
+        </section>
+      )}
 
       {/* Admin Dashboard Link */}
       <section className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-6">

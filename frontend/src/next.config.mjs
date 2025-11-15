@@ -3,13 +3,16 @@
 
 
 const nextConfig = {
-    images: {
-      remotePatterns: [
-        {
-          protocol: 'https',
-          hostname: 'lh3.googleusercontent.com'
-        }
-      ]
-    },
-  };
+  output: 'standalone',
+  reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**'
+      }
+    ]
+  },
+};
 export default nextConfig;

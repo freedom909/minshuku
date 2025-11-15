@@ -4,7 +4,7 @@ import { getSession } from 'next-auth/react';
 
 // Prefer central env over hardcoded URLs
 // Gateway GraphQL endpoint
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:4000/graphql';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:4001/graphql';
 
 const httpLink = createHttpLink({
   uri: GATEWAY_URL,

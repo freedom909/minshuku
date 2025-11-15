@@ -66,41 +66,37 @@ const handler = NextAuth({
 
       if (!user) throw new Error("No user found");
 
+      // 简化认证流程：直接允许 OAuth 登录，不进行 GraphQL 验证
       if (["google", "facebook", "github"].includes(account.provider)) {
-        try {
-          const token = account.id_token || account.access_token;
-
-          console.log(`Calling subgraph with ${account.provider} token:`, token);
-
-          const response = await oauthService.sendOAuthRequestToSubgraph(
-            account.provider,
-            token
-          );
-
-          console.log("OAuth response from subgraph:", response);
-
-          // ✅ Allow login to continue and still let adapter save user
-          if (!response?.success) {
-            console.error("OAuth login failed:", response);
-            return false;
-          }
-        } catch (err) {
-          console.error("OAuth backend call failed:", err?.message || err);
-          return false;
+        console.log(`✅ Allowing ${account.provider} login without GraphQL validation`);
+        
+        // Ensure Google profile picture is properly mapped
+        if (account.provider === "google" && profile?.picture) {
+          user.picture = profile.picture;
+          console.log("📸 Google profile picture set:", profile.picture);
         }
+        
+        return true;
       }
 
       return true;
     },
 
-    jwt: async ({ token, user }) => {
+    jwt: async ({ token, user, account, profile }) => {
       if (user) {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.picture = user.picture;
+        token.picture = user.picture || profile?.picture;
         token.accessToken = user.token; // Optional
       }
+      
+      // Handle Google profile picture specifically
+      if (account?.provider === "google" && profile?.picture) {
+        token.picture = profile.picture;
+        console.log("📸 Google picture set in JWT:", profile.picture);
+      }
+      
       return token;
 
     },
@@ -109,6 +105,7 @@ const handler = NextAuth({
       session.user.name = token.name;
       session.user.email = token.email;
       session.user.image = token.picture;
+      console.log("📸 Session user image set:", token.picture);
       return session;
     }
   },

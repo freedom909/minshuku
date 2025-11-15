@@ -10,6 +10,10 @@ import cors from 'cors';
 
 import resolvers from './resolvers.js';
 import initializeCartContainer from '../services/DB/initCartContainer.js';
+import sequelize from '../services/models/config/seq.js';
+import { Cart } from '../services/models/cart.js';
+import CartItem from '../services/models/cartItem.js';
+import Listing from '../services/models/mysql/listing.js';
 
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
 
@@ -17,6 +21,10 @@ const startApolloServer = async () => {
   try {
     // Initialize MySQL container
     const mysqlContainer = await initializeCartContainer();
+    await sequelize.sync({ alter: true });
+    await Listing.sync({ alter: true });
+    await Cart.sync({ alter: true });
+    await CartItem.sync({ alter: true });
 
     const app = express();
     const httpServer = http.createServer(app);
@@ -58,9 +66,19 @@ const startApolloServer = async () => {
     // Apply Express middleware for handling requests
     app.use(
       '/graphql',
-      cors(),
+      cors({ origin: '*', methods: ['GET','POST','OPTIONS'], allowedHeaders: ['Content-Type','Authorization'] }),
       express.json(),
-      expressMiddleware(server)
+      expressMiddleware(server, {
+        context: async ({ req }) => {
+          const token = req.headers.authorization || '';
+          return {
+            user: { token },
+            dataSources: {
+              cartService: mysqlContainer.resolve('cartService'),
+            }
+          };
+        }
+      })
     );
 
     // Start the HTTP server

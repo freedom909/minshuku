@@ -255,7 +255,6 @@ export default function SearchPage() {
                 <Link href="/search" className="text-blue-600 font-semibold">🔍 Search</Link>
                 <Link href="/listings" className="text-gray-700 hover:text-blue-600 transition-colors">📋 Listings</Link>
                 <Link href="/bookings" className="text-gray-700 hover:text-blue-600 transition-colors">📅 Bookings</Link>
-                <Link href="/orders" className="text-gray-700 hover:text-blue-600 transition-colors">📦 Orders</Link>
                 <Link href="/profile" className="text-gray-700 hover:text-blue-600 transition-colors">👤 Profile</Link>
               </div>
             </div>
