@@ -1,8 +1,7 @@
-# accounts.graphql
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.8",
-    import: ["@key", "@shareable", "@external", "@provides"]
+    import: ["@key", "@shareable", "@external"]
   )
 
 # --------------------------
@@ -15,27 +14,22 @@ scalar DateTime
 # --------------------------
 type Query {
   me: User @shareable
+
   user(id: ID!): User @shareable
   users: [User!]! @shareable
+ 
   userDashboard(userId: ID!): UserDashboard
   account(id: ID!): Account
   accounts: [Account!]
-  viewer: Account
 }
 
 # --------------------------
 # MUTATIONS
 # --------------------------
 type Mutation {
-  updateUserProfile(input: UpdateUserInput!): User @shareable
-  deleteUser(id: ID!): Boolean @shareable
   createUser(name: String!, email: String!, password: String): User @shareable
-  updateUser(id: ID!, input: UpdateUserInput): User @shareable
-  createAccount(input: CreateAccountInput!): Account
-  deleteAccount(id: ID!): Boolean
-  updateAccountEmail(input: UpdateAccountEmailInput!): Account
-  updateAccountPassword(input: UpdateAccountPasswordInput!): Boolean
-  updateProfile(id: ID!, input: UpdateUserInput!): User @shareable
+  updateUser(id: ID!, input: UpdateUserInput!): User @shareable
+  deleteUser(id: ID!): Boolean 
 }
 
 # --------------------------
@@ -70,7 +64,9 @@ type Host implements User @key(fields: "id") {
   listings: [Listing!] @shareable
 }
 
+# --------------------------
 # External types from other subgraphs
+# --------------------------
 extend type Booking @key(fields: "id") {
   id: ID! @external
 }
@@ -93,7 +89,9 @@ enum Role {
 # --------------------------
 # DASHBOARD TYPES
 # --------------------------
+# Renamed to be neutral: could have separate HostDashboard/GuestDashboard later
 type UserDashboard {
+  id: ID!
   user: User
   totalListings: Int
   totalBookings: Int
@@ -117,6 +115,7 @@ type ListingSummary {
   price: Float
   imageUrl: String
   createdAt: DateTime
+  # No @shareable needed here, unless other subgraphs query this type directly
 }
 
 type Notification {
@@ -139,22 +138,6 @@ type Account @key(fields: "id") {
 # --------------------------
 input UpdateUserInput {
   name: String
-  avatar: String
+  picture: String
   role: Role
-}
-
-input CreateAccountInput {
-  email: String!
-  password: String!
-}
-
-input UpdateAccountEmailInput {
-  id: ID!
-  email: String!
-}
-
-input UpdateAccountPasswordInput {
-  id: ID!
-  newPassword: String!
-  password: String!
 }

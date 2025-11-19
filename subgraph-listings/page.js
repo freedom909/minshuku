@@ -49,43 +49,6 @@ async function getHostListings(hostId, token) {
   }
 }
 
-async function getHostMetrics(hostId, token) {
-  const query = `
-    query GetHostMetrics($hostId: ID!) {
-      user(id: $hostId) {
-        id
-        name
-        # The following fields are likely resolved from other subgraphs 
-        # like subgraph-users or subgraph-accounts by the gateway.
-        totalRevenue
-        totalBookings
-        averageRating
-      }
-    }
-  `;
-
-  try {
-    const res = await fetch(GATEWAY_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ query, variables: { hostId } }),
-      cache: 'no-store',
-    });
-
-    const { data, errors } = await res.json();
-    if (errors) {
-      console.error('GraphQL errors fetching host metrics:', errors);
-    }
-    return data?.user || {};
-  } catch (error) {
-    console.error('Error fetching host metrics:', error);
-    return {};
-  }
-}
-
 export default async function HostDashboard() {
   const session = await getServerSession(authOptions);
 
@@ -98,56 +61,16 @@ export default async function HostDashboard() {
     );
   }
 
-  const [listings, metrics] = await Promise.all([
-    getHostListings(session.user.id, session.accessToken),
-    getHostMetrics(session.user.id, session.accessToken),
-  ]);
-
-  const hostName = metrics.name || session.user.name || 'Host';
+  const listings = await getHostListings(session.user.id, session.accessToken);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Host Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome back, {hostName}</p>
-          </div>
+          <h1 className="text-3xl font-bold">Host Dashboard</h1>
           <Link href="/create-listing" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
             + Create New Listing
           </Link>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Total Listings</p>
-            <p className="text-2xl font-bold text-gray-900">{listings.length}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-            <p className="text-2xl font-bold text-gray-900">
-              ¥{metrics.totalRevenue?.toLocaleString() || 0}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {metrics.totalBookings || 0}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm font-medium text-gray-600">Average Rating</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {metrics.averageRating ? (
-                <>
-                  {metrics.averageRating.toFixed(1)} <span className="text-yellow-500">★</span>
-                </>
-              ) : (
-                'N/A'
-              )}
-            </p>
-          </div>
         </div>
 
         {listings.length > 0 ? (
@@ -183,3 +106,14 @@ export default async function HostDashboard() {
     </div>
   );
 }
+
+```
+
+With these changes, your host dashboard is now fully dynamic and integrated with your database. It securely fetches and displays the listings for the currently logged-in user.
+
+Let me know if you have any other questions!
+
+<!--
+[PROMPT_SUGGESTION]How can I add pagination to the host dashboard?[/PROMPT_SUGGESTION]
+[PROMPT_SUGGESTION]Create the edit listing page that the dashboard links to.[/PROMPT_SUGGESTION]
+-->

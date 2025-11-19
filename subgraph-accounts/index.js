@@ -29,12 +29,21 @@ async function startServer() {
   }
 
   // ✅ Build Apollo subgraph schema
-  const schema = buildSubgraphSchema({ typeDefs, resolvers });
+  let schema;
+  try {
+    console.log('Attempting to build subgraph schema...');
+    schema = buildSubgraphSchema({ typeDefs, resolvers });
+    console.log('✅ Subgraph schema built successfully.');
+  } catch (schemaError) {
+    console.error('❌ Fatal error building subgraph schema:', schemaError);
+    // Log the full error details, which are often very helpful for federation issues.
+    console.error(JSON.stringify(schemaError, null, 2));
+    process.exit(1); // Exit if schema is invalid, as the server cannot run.
+  }
 
   const server = new ApolloServer({
     schema,
     introspection: true,
-    includeStacktraceInErrorResponses: true,
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
       {
@@ -48,6 +57,17 @@ async function startServer() {
         }
       }
     ],
+    // Add detailed error formatting for runtime errors
+    formatError: (formattedError, error) => {
+      console.error('[GraphQL Error]', JSON.stringify(formattedError, null, 2));
+      return {
+        ...formattedError,
+        extensions: {
+          ...formattedError.extensions,
+          stacktrace: process.env.NODE_ENV !== 'production' ? error?.stack?.split('\n') : undefined,
+        },
+      };
+    },
   });
 
   await server.start();
@@ -103,8 +123,8 @@ async function startServer() {
         <head><title>Accounts Subgraph</title></head>
         <body style="font-family:sans-serif;">
           <h1>🚀 Accounts Subgraph Running</h1>
-          <p>GraphQL endpoint: <a href="http://localhost:4030/graphql">/graphql</a></p>
-          <p><a href="https://studio.apollographql.com/sandbox?endpoint=http://localhost:4030/graphql" target="_blank">Open Apollo Sandbox</a></p>
+          <p>GraphQL endpoint: <a href="http://localhost:4020/graphql">/graphql</a></p>
+          <p><a href="https://studio.apollographql.com/sandbox?endpoint=http://localhost:4020/graphql" target="_blank">Open Apollo Sandbox</a></p>
         </body>
       </html>
     `);

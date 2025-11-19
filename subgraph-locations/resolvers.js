@@ -16,6 +16,10 @@ const resolvers = {
         throw new Error('Location input is required but was not provided');
       }
       // if (!isListingCreation) {
+
+      //   throw new AuthenticationError(
+      //     'Cannot create location without proper listing context'
+      //   );
       //   throw new AuthenticationError(
       //     'Cannot create location without proper listing context'
       //   );
@@ -54,7 +58,7 @@ Location: {
     }
   },
 
-        deleteLocation: (_, { id }, { dataSources, user }) => {
+        deleteLocation: async (_, { locationId }, { dataSources }) => {
             // if (!userId) throw new AuthenticationError('User not authenticated');
             // if (!isHostOfListing || !isAdmin) {
             //   throw new AuthenticationError(`you don't have right to update this list`)
@@ -63,14 +67,32 @@ Location: {
             //     throw new Error('you must input a location ID ');
             // }
             try {
-                return dataSources.locationService.deleteLocation(id);
+                await dataSources.locationService.deleteLocation({ id: locationId });
+                return true;
             } catch (error) {
                 console.error('Error in deleteLocation resolver:', error);
+                return false;
             }
         },
-        // updateLocation: (_, { id, input }, { dataSources }) => {
-        updateLocation: (_, { input }, { dataSources }) => {
-            return dataSources.locationService.updateLocation(input);
+        updateLocation: async (_, { locationId, location }, { dataSources }) => {
+            try {
+                await dataSources.locationService.updateLocation({ id: locationId, ...location });
+                const updated = await dataSources.locationService.getLocationById(locationId);
+                return {
+                    code: 200,
+                    success: true,
+                    message: 'Location updated successfully',
+                    location: updated,
+                };
+            } catch (error) {
+                console.error('Error in updateLocation resolver:', error);
+                return {
+                    code: 500,
+                    success: false,
+                    message: 'Failed to update location',
+                    location: null,
+                };
+            }
         },
     },
     Query: {

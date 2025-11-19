@@ -90,7 +90,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header Navigation Menu */}
-      <nav className="bg-white shadow-sm border-b">
+      <nav className="bg-blue-100 shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-8">
@@ -342,7 +342,7 @@ export default function Dashboard() {
               </a>
               {dashboardData?.user?.role !== 'HOST' && (
                 <a 
-                  href="/become-host" 
+                  become-host
                   className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-md text-center transition-colors"
                 >
                   🏠 Become a Host

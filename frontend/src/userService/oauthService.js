@@ -125,7 +125,7 @@ class OAuthService {
             const registerResult = result.data.register;
 
             if (!registerResult.success) {
-                throw new Error(registerResult.message || '注册失败');
+                throw new Error(registerResult.message || 'Registration failed');
             }
 
             // 存储JWT令牌
@@ -141,10 +141,10 @@ class OAuthService {
                 message: registerResult.message
             };
         } catch (error) {
-            console.error('注册失败:', error);
+            console.error('Registration failed:', error);
             return {
                 success: false,
-                error: error.message || '注册过程中发生错误'
+                error: error.message || 'An error occurred during registration'
             };
         }
     }

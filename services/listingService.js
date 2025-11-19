@@ -640,8 +640,18 @@ async createListing(listingInput) {
       throw new Error('Check-out date must be after check-in date');
     }
 
+    // ------------------- Normalize IDs -------------------
+    const normalizeIds = (ids) => (Array.isArray(ids) ? ids : []).map((id) => {
+      if (typeof id === 'number') return id;
+      if (typeof id === 'string') {
+        const match = id.match(/(\d+)/);
+        if (match) return Number(match[1]);
+      }
+      return id;
+    });
+
     // ------------------- Validate amenity IDs -------------------
-    const amenityIds = Array.isArray(listingInput.amenityIds) ? listingInput.amenityIds : [];
+    const amenityIds = normalizeIds(listingInput.amenityIds);
     if (amenityIds.length > 0) {
       const existingAmenities = await Amenity.findAll({ where: { id: amenityIds } });
       if (existingAmenities.length !== amenityIds.length) {
@@ -652,7 +662,7 @@ async createListing(listingInput) {
     }
 
     // ------------------- Validate category IDs -------------------
-    const categoryIds = Array.isArray(listingInput.categoryIds) ? listingInput.categoryIds : [];
+    const categoryIds = normalizeIds(listingInput.categoryIds);
     if (categoryIds.length > 0) {
       const existingCategories = await Category.findAll({ where: { id: categoryIds } });
       if (existingCategories.length !== categoryIds.length) {
@@ -667,8 +677,15 @@ async createListing(listingInput) {
 
     // ------------------- Normalize pictures -------------------
     let picturesValue = listingInput.pictures;
-    if (Array.isArray(picturesValue)) {
-      picturesValue = picturesValue; // leave as-is if model column is JSON
+    if (typeof picturesValue === 'string') {
+      try {
+        const parsed = JSON.parse(picturesValue);
+        picturesValue = Array.isArray(parsed) ? parsed : [picturesValue];
+      } catch {
+        picturesValue = [picturesValue];
+      }
+    } else if (!Array.isArray(picturesValue)) {
+      picturesValue = [];
     }
 
     // ------------------- Transactional create -------------------
@@ -691,8 +708,6 @@ async createListing(listingInput) {
           locationType: listingInput.locationType ?? null,
           hostId: listingInput.hostId,
           listingStatus: listingInput.listingStatus ?? 'ACTIVE',
-          categoryIds:listingInput.categoryIds,
-          amenityIds:listingInput.amenityIds,
         },
         { transaction }
       );

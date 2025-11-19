@@ -1,85 +1,10 @@
 schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable","@external"]) {
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.8"
+    import: ["@key", "@shareable"]
+  ) {
   query: Query
-  mutation: Mutation
 }
-
-scalar DateTime
-
-interface User @key(fields: "id") {
-  id: ID!
-  email: String! 
-  fullName: String
-  firstName: String!
-  lastName: String!
-  role: Role!
-  picture: String!
-  nickname: String!
-  provider: OAuthProvider
-  oauthId: String!
-}
-
-type Guest implements User @key(fields: "id") {
-  id: ID! @shareable
-  email: String! @shareable
-  fullName: String @shareable
-  firstName: String! @shareable
-  lastName: String! @shareable
-  picture: String! @shareable
-  nickname: String! @shareable
-  role: Role! @shareable
-  provider: OAuthProvider @shareable
-  oauthId: String! @shareable
-  idToken: String! @shareable
-  accessToken: String! @shareable
-  refreshToken: String @shareable
-}
-
-extend enum OAuthProvider  {
-  GOOGLE 
-  FACEBOOK 
-  APPLE 
-  GITHUB 
-  LOCAL 
-}
-
-type Host implements User @key(fields: "id") {
-  id: ID! @shareable
-  email: String! @shareable
-  fullName: String @shareable
-  firstName: String! @shareable
-  lastName: String! @shareable
-  picture: String! @shareable
-  nickname: String! @shareable
-  role: Role! @shareable
-  provider: OAuthProvider @shareable
-  oauthId: String! @shareable
-  idToken: String! @shareable
-  accessToken: String! @shareable
-  refreshToken: String @shareable
-  description: String @shareable
-}
-
-enum Role {
-  ADMIN
-  HOST
-  GUEST
-  USER
-  PENDING_HOST
-}
-
-type Amenity @key(fields: "id") {
-  id: ID! @shareable
-  name: String! @shareable
-  locationId: ID! @shareable
-  categoryId: ID !@shareable
-  description: String! @shareable
-}
-
-extend type Booking @key(fields: "id") {
-  id: ID! @shareable
-}
-
 
 interface Response {
   code: Int!
@@ -87,35 +12,38 @@ interface Response {
   message: String!
 }
 
-type AddAmenityResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  amenity: Amenity! @shareable
+type Amenity @key(fields: "id") {
+  id: ID! @shareable
+  name: String! @shareable
+  category: AmenityCategory! @shareable
 }
 
-type AmenityResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  amenity: Amenity! @shareable
+enum AmenityCategory {
+  ACCOMMODATION_DETAILS
+  SPACE_SURVIVAL
+  OUTDOORS
+  UNKNOWN
 }
 
-input AmenityInput {
+input CreateAmenityInput {
   name: String!
-  locationId: ID!
-  categoryId: ID!
-  description: String
+  category: AmenityCategory!
+}
+
+type CreateAmenityResponse implements Response {
+  success: Boolean! @shareable
+  code: Int! @shareable
+  message: String! @shareable
+  amenity: Amenity @shareable
 }
 
 type Query {
-  amenities: [Amenity!]! @shareable
+  amenities: [Amenity] @shareable
   amenity(id: ID!): Amenity @shareable
-  listingAmenities(listingId: ID!): [Amenity!]! @shareable
 }
 
 type Mutation {
-  addAmenity(input: AmenityInput!): AddAmenityResponse! @shareable
-  updateAmenity(id: ID!, input: AmenityInput!): AmenityResponse! @shareable
-  deleteAmenity(id: ID!): AmenityResponse! @shareable
-}
+  createAmenity(input: CreateAmenityInput!): CreateAmenityResponse @shareable
+  updateAmenity(id: ID!, name: String, category: AmenityCategory): Amenity @shareable
+  deleteAmenity(id: ID!): Amenity @shareable
+  }

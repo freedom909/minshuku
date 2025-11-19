@@ -166,7 +166,7 @@ type Mutation {
   sendInviteCode(email: String!): InviteCodeResponse! @shareable
   logout(provider: OAuthProvider): Boolean! @shareable
   createUser(name: String!, email: String!): User @shareable
-  updateUser(id: ID!, name: String): User @shareable
+  updateUser(id: ID!, input: UpdateUserInput!): User @shareable
   verifyGoogleToken(token: String): AuthPayload @shareable
   verifyFacebookToken(token: String): AuthPayload @shareable
   verifyAppleToken(token: String): AuthPayload @shareable
@@ -191,8 +191,16 @@ input OAuthInput {
 }
 type Query {
   getUser(id: ID!): User @shareable
+  
+  me: User @shareable
   user(id: ID!): User @shareable
   users: [User]! @shareable
+}
+
+input UpdateUserInput{
+  name: String
+  picture: String
+  role: Role
 }
 
 # Federation

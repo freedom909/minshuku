@@ -126,7 +126,7 @@ const localAuthService = {
       try {
         result = JSON.parse(text);
       } catch (err) {
-        console.error("非JSON响应:", text);
+        console.error("Non-JSON response:", text);
         return {
           success: false,
           error: "Server response is not valid JSON",

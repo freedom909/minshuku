@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useQuery } from "@apollo/client";
 import client from "@/lib/apolloClient";
 import { GET_USER_BOOKINGS, GET_UPCOMING_BOOKINGS } from "@/graphql/bookings";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import FacebookSignInButton from "@/components/FacebookSignInButton";
-import HeaderClient from "@/components/ui/HeaderClient";
 
 function BookingCard({ booking }) {
   return (
@@ -61,11 +61,24 @@ export default function BookingsPage() {
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="flex justify-between items-center p-4 border-b bg-white">
-          <h1 className="text-2xl font-semibold">My Bookings</h1>
-          <HeaderClient />
-        </div>
+        <nav className="bg-blue-100 shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-8">
+                <Link href="/" className="text-xl font-bold text-blue-600">🏠 Minshuku</Link>
+                <div className="hidden md:flex space-x-6">
+                  <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">🏠 Home</Link>
+                  <Link href="/search" className="text-gray-700 hover:text-blue-600 transition-colors">🔍 Search</Link>
+                  <Link href="/listings" className="text-gray-700 hover:text-blue-600 transition-colors">📋 Listings</Link>
+                  <Link href="/bookings" className="text-gray-700 hover:text-blue-600 transition-colors">📅 Bookings</Link>
+                  <Link href="/profile" className="text-gray-700 hover:text-blue-600 transition-colors">👤 Profile</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </nav>
         <div className="max-w-2xl mx-auto p-6">
+          <h1 className="text-3xl font-bold mb-6">My Bookings</h1>
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-2">Sign in to view your bookings</h2>
             <p className="text-gray-600 mb-4">Connect your account to see current, upcoming, and past bookings.</p>
@@ -91,11 +104,24 @@ export default function BookingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="flex justify-between items-center p-4 border-b bg-white">
-        <h1 className="text-2xl font-semibold">My Bookings</h1>
-        <HeaderClient />
-      </div>
+      <nav className="bg-blue-100 shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-8">
+              <Link href="/" className="text-xl font-bold text-blue-600">🏠 Minshuku</Link>
+              <div className="hidden md:flex space-x-6">
+                <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">🏠 Home</Link>
+                <Link href="/search" className="text-gray-700 hover:text-blue-600 transition-colors">🔍 Search</Link>
+                <Link href="/listings" className="text-gray-700 hover:text-blue-600 transition-colors">📋 Listings</Link>
+                <Link href="/bookings" className="text-gray-700 hover:text-blue-600 transition-colors">📅 Bookings</Link>
+                <Link href="/profile" className="text-gray-700 hover:text-blue-600 transition-colors">👤 Profile</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
       <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">My Bookings</h1>
         <div className="flex gap-2 mb-4">
           {[
             { key: "Upcoming", count: upcoming.length },

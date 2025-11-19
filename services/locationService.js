@@ -49,6 +49,16 @@ class LocationService {
             throw new Error('Failed to fetch locations');
         }
     }
+
+    async getLocationById(id) {
+        try {
+            const location = await this.Location.findByPk(id);
+            return location || null;
+        } catch (error) {
+            console.error('Error fetching location by ID:', error);
+            throw new Error('Failed to fetch location by ID');
+        }
+    }
     async getLocationById(id) {
         try {
             const location = await this.Location.findByPk(id);
@@ -73,28 +83,31 @@ class LocationService {
     }
 
     updateLocation(input) {
-        console.log('input in LocationService:', input);
         const updateData = {
-            listingId: input?.listingId || undefined,
-            match: input?.match,
+            name: input?.name,
+            latitude: input?.latitude,
+            longitude: input?.longitude,
+            radius: input?.radius,
+            address: input?.address,
+            city: input?.city,
+            state: input?.state,
+            country: input?.country,
+            zip: input?.zip,
+            units: input?.units,
         };
         const options = {
             transaction: this.transaction,
             logging: true,
-            where: {
-                id: input.id,
-            },
+            where: { id: input.id },
         };
         return this.Location.update(updateData, options);
     }
+
     async deleteLocation(input) {
-        console.log('input in LocationService:', input);
         const options = {
             transaction: this.transaction,
             logging: true,
-            where: {
-                id: input.id,
-            },
+            where: { id: input.id },
         };
         return this.Location.destroy(options);
     }

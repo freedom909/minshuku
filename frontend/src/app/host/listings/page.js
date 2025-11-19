@@ -7,15 +7,14 @@ export default function HostListings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 模拟获取房源数据
     setTimeout(() => {
       setListings([
         {
           id: 'listing-1',
-          title: '京都传统日式旅馆',
-          description: '位于京都中心的传统日式旅馆，体验纯正日本文化',
+          title: 'Kyoto Traditional Inn',
+          description: 'Traditional Japanese inn in central Kyoto, experience authentic culture',
           price: 150,
-          location: '京都',
+          location: 'Kyoto',
           status: 'ACTIVE',
           bookings: 12,
           rating: 4.7,
@@ -23,10 +22,10 @@ export default function HostListings() {
         },
         {
           id: 'listing-2',
-          title: '大阪现代公寓',
-          description: '大阪市中心现代化公寓，交通便利',
+          title: 'Osaka Modern Apartment',
+          description: 'Modern apartment in downtown Osaka, convenient transportation',
           price: 120,
-          location: '大阪',
+          location: 'Osaka',
           status: 'ACTIVE',
           bookings: 8,
           rating: 4.5,
@@ -34,10 +33,10 @@ export default function HostListings() {
         },
         {
           id: 'listing-3',
-          title: '富士山景观小屋',
-          description: '富士山脚下的小屋，享受宁静的自然风光',
+          title: 'Mt. Fuji View Cabin',
+          description: 'Cabin at the foot of Mt. Fuji, enjoy tranquil nature',
           price: 200,
-          location: '山梨县',
+          location: 'Yamanashi Prefecture',
           status: 'PENDING',
           bookings: 0,
           rating: null,
@@ -49,11 +48,11 @@ export default function HostListings() {
   }, []);
 
   const handleEdit = (listingId) => {
-    console.log('编辑房源:', listingId);
+    console.log('Edit listing:', listingId);
   };
 
   const handleStatusChange = (listingId, newStatus) => {
-    console.log('更新状态:', listingId, newStatus);
+    console.log('Update status:', listingId, newStatus);
   };
 
   if (loading) {
@@ -61,7 +60,7 @@ export default function HostListings() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">加载房源数据...</p>
+          <p className="mt-4 text-gray-600">Loading listings...</p>
         </div>
       </div>
     );
@@ -71,12 +70,12 @@ export default function HostListings() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">我的房源</h1>
+          <h1 className="text-3xl font-bold text-gray-900">My Listings</h1>
           <a 
             href="/create-listing"
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
-            创建新房源
+            Create New Listing
           </a>
         </div>
 
@@ -84,7 +83,7 @@ export default function HostListings() {
           {listings.map((listing) => (
             <div key={listing.id} className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="h-48 bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">房源图片</span>
+                <span className="text-gray-500">Listing Image</span>
               </div>
               
               <div className="p-6">
@@ -95,8 +94,8 @@ export default function HostListings() {
                     listing.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-red-100 text-red-800'
                   }`}>
-                    {listing.status === 'ACTIVE' ? '活跃' : 
-                     listing.status === 'PENDING' ? '审核中' : '已下架'}
+                    {listing.status === 'ACTIVE' ? 'Active' : 
+                     listing.status === 'PENDING' ? 'Pending Review' : 'Inactive'}
                   </span>
                 </div>
                 
@@ -105,7 +104,7 @@ export default function HostListings() {
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <span className="text-2xl font-bold text-gray-900">¥{listing.price}</span>
-                    <span className="text-gray-600 text-sm">/晚</span>
+                    <span className="text-gray-600 text-sm">/night</span>
                   </div>
                   <div className="text-sm text-gray-600">
                     {listing.location}
@@ -113,8 +112,8 @@ export default function HostListings() {
                 </div>
 
                 <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
-                  <span>预订数: {listing.bookings}</span>
-                  <span>{listing.rating ? `${listing.rating} ⭐` : '暂无评分'}</span>
+                  <span>Bookings: {listing.bookings}</span>
+                  <span>{listing.rating ? `${listing.rating} ⭐` : 'No rating yet'}</span>
                 </div>
 
                 <div className="flex space-x-2">
@@ -122,7 +121,7 @@ export default function HostListings() {
                     onClick={() => handleEdit(listing.id)}
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
                   >
-                    编辑
+                    Edit
                   </button>
                   <button 
                     onClick={() => handleStatusChange(listing.id, 
@@ -133,7 +132,7 @@ export default function HostListings() {
                         : 'bg-green-600 text-white hover:bg-green-700'
                     }`}
                   >
-                    {listing.status === 'ACTIVE' ? '下架' : '上架'}
+                    {listing.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                   </button>
                 </div>
               </div>
@@ -144,13 +143,13 @@ export default function HostListings() {
         {listings.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🏠</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">暂无房源</h3>
-            <p className="text-gray-600 mb-4">开始您的房东之旅，创建第一个房源</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Listings</h3>
+            <p className="text-gray-600 mb-4">Start your hosting journey, create your first listing</p>
             <a 
               href="/create-listing"
               className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700"
             >
-              创建新房源
+              Create New Listing
             </a>
           </div>
         )}

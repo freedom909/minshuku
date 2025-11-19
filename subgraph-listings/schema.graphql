@@ -127,6 +127,7 @@ enum Role {
   HOST
   GUEST
   USER
+  PENDING_HOST
 }
 type Category @key(fields: "id") {
   id: ID! @shareable

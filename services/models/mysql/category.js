@@ -1,40 +1,31 @@
+// models/mysql/category.js
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/seq.js';
 
 class Category extends Model {}
 
-Category.init({
-  id: { 
-    type: DataTypes.INTEGER, 
-    autoIncrement: true, 
-    primaryKey: true
+Category.init(
+  {
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    name: { type: DataTypes.STRING, allowNull: false },
+    type: { type: DataTypes.STRING, allowNull: false },             // <--- First dropdown
+    featured_title: { type: DataTypes.STRING, allowNull: true },   // <--- Temporarily allow null
+    image: { type: DataTypes.STRING }
   },
-  name: { 
-    type: DataTypes.STRING, 
-    allowNull: false, 
-    unique: true 
-  },
-  description: { 
-    type: DataTypes.STRING, 
-    allowNull: true 
-  },
-  image: { 
-    type: DataTypes.STRING, 
-    allowNull: true, 
-    defaultValue: 'icon' 
-  },
-  type: { 
-    type: DataTypes.ENUM('theme', 'space'), 
-    allowNull: false 
-  },
-  featured_title: { type: DataTypes.STRING },          // New
-  featured_booked_count: { type: DataTypes.INTEGER, defaultValue: 0 } // New
-}, 
-{
-  sequelize,
-  modelName: 'Category',
-  tableName: 'categories',
-  timestamps: false, // no createdAt/updatedAt
-});
+  {
+    sequelize,
+    modelName: 'Category',
+    tableName: 'categories',
+    timestamps: false
+  }
+);
 
+export const validateCategoryInput = (input) => {
+  if (!input.name) {
+    throw new Error('Category name is required');
+  }
+  if (!input.type) {
+    throw new Error('Category type is required');
+  }
+};
 export default Category;

@@ -17,8 +17,30 @@ Listing.init(
     checkInDate: { type: DataTypes.DATEONLY },
     checkOutDate: { type: DataTypes.DATEONLY },
     hostId: { type: DataTypes.STRING, allowNull: false }, 
-    listingStatus: { type: DataTypes.ENUM('available', 'pending', 'sold', 'archived'), allowNull: false },
-    locationType: { type: DataTypes.ENUM('ROOM', 'APARTMENT', 'HOUSE', 'COTTAGE', 'VILLA', 'OTHER'), allowNull: false },
+    locationId: { type: DataTypes.STRING },
+    amenityIds: {
+  type: DataTypes.VIRTUAL,
+  get() {
+    return this.getDataValue('amenityIds') ?? [];
+  }
+},
+    listingStatus: { 
+      type: DataTypes.ENUM(
+        'ACTIVE',
+        'PENDING',
+        'SOLD',
+        'DELETED',
+        'REJECT',
+        'CANCELLED',
+        'EXPIRED',
+        'COMPLETED'
+      ), 
+      allowNull: false 
+    },
+    locationType: { 
+      type: DataTypes.ENUM('ROOM', 'APARTMENT', 'HOUSE', 'COTTAGE', 'VILLA', 'SPACESHIP', 'CAMPSITE', 'OTHER'), 
+      allowNull: false 
+    },
   },
   {
     sequelize,

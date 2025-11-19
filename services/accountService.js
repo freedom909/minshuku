@@ -3,10 +3,11 @@ import { GraphQLError } from 'graphql';
 import { ForbiddenError } from '../infrastructure/utils/errors.js';
 
 class AccountService {
-  constructor({ accountRepository, listingRepository, cartRepository }) {
+  constructor({ accountRepository, listingRepository, cartRepository, bookingService }) {
     this.accountRepository = accountRepository;
     this.listingRepository = listingRepository;
     this.cartRepository = cartRepository;
+    this.bookingService = bookingService;
   }
 
   async getUser(id) {
@@ -21,7 +22,26 @@ class AccountService {
     if (!user) {
       throw new GraphQLError('No user found', { extensions: { code: 'NOT_FOUND' } });
     }
-    return await this.cartRepository.getBookingsForUser(user.id);
+    // The booking module is not completed, so we use mock data for now.
+    console.log(`[MOCK] Fetching bookings for user: ${user.id}`);
+    return [
+      {
+        id: 'booking-1',
+        listingId: 'listing-101', // This ID will be used by the gateway to fetch listing details
+        checkInDate: '2025-12-01',
+        checkOutDate: '2025-12-05',
+        totalCost: 450.00,
+        status: 'CONFIRMED',
+      },
+      {
+        id: 'booking-2',
+        listingId: 'listing-102',
+        checkInDate: '2026-01-15',
+        checkOutDate: '2026-01-20',
+        totalCost: 800.50,
+        status: 'PENDING',
+      },
+    ];
   }
 
   async createAccount({ email, password, name, nickname, role, picture }) {
@@ -150,7 +170,3 @@ class AccountService {
 }
 
 export default AccountService;
-
-
-
-

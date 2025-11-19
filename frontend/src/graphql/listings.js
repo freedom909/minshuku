@@ -114,13 +114,25 @@ export const GET_USER_LISTINGS = gql`
 export const CREATE_LISTING = gql`
   mutation CreateListing($input: CreateListingInput!) {
     createListing(input: $input) {
-      id
-      title
-      description
-      price
-      location
-      status
-      createdAt
+      code
+      success
+      message
+      listing {
+        id
+        title
+        description
+        price
+        hostId
+        locationId
+        listingStatus
+        locationType
+        pictures
+        numOfBeds
+        isFeatured
+        saleAmount
+        checkInDate
+        checkOutDate
+      }
     }
   }
 `;

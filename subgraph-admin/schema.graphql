@@ -1,15 +1,68 @@
-type AdminQuery {
-  filterBookingsByDateRange(startDate: String!, endDate: String!): [Booking]
-  filterListingsByDateRange(startDate: String!, endDate: String!): [Listing]
-  top5ListingsByRevenue: [Listing]
-  top5ListingsByBookingCount: [Listing]
-  totalListingIncome: Float!
+schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.8",
+    import: ["@key", "@shareable", "@external"]
+  ) {
+  query: Query
+  mutation: Mutation
 }
 
-type Booking {
-  # Define booking fields here
+extend type Query {
+  pendingHosts: [User!]! @shareable
 }
 
-type Listing {
-  # Define listing fields here
+extend type Mutation {
+  approveHost(userId: ID!): ApproveHostResponse! @shareable
+  becomeHost: BecomeHostResponse! @shareable
 }
+
+interface User @key(fields: "id")  {
+  id: ID! 
+  role: Role 
+}
+
+enum Role {
+  ADMIN
+  HOST
+  PENDING_HOST
+  GUEST
+  USER
+}
+
+interface Response {
+  code: Int!
+  success: Boolean!
+  message: String!
+}
+
+type BecomeHostResponse implements Response {
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+  user: User @shareable
+}
+
+type ApproveHostResponse implements Response {
+  code: Int! @shareable
+  success: Boolean! @shareable
+  message: String! @shareable
+  user: User @shareable
+}
+
+type Host implements User @key(fields: "id") {
+  id: ID! @shareable
+  email: String! @shareable
+  fullName: String @shareable
+  picture: String! @shareable
+  role: Role! @shareable
+}
+
+type Guest implements User @key(fields: "id") {
+  id: ID! @shareable
+  email: String! @shareable
+  fullName: String @shareable
+  picture: String! @shareable
+  role: Role! @shareable
+}
+
+

@@ -23,7 +23,7 @@ class AmenityService {
         id: a.id,
         name: a.name,
         description: a.description,
-        category: a.category ? a.category.name : null,
+        categoryId: a.category ? a.category.id : a.categoryId,
         locationId: a.locationId,
       }));
     } catch (error) {
@@ -49,43 +49,30 @@ class AmenityService {
   }
 
   // 🔹 Add a new amenity
-// 🔹 Add a new amenity
-async addAmenity({ name, categoryId, description, locationId }) {
-  if (!name || !categoryId || !description || !locationId) {
-    throw new Error('Name, category, description, and location are required');
+  async addAmenity({ name, category, description = '', locationId = null }) {
+    if (!name || !category) {
+      throw new Error('Name and category are required');
+    }
+  
+    try {
+      // Check for duplicates
+      const existingAmenity = await Amenity.findOne({
+        where: { name, category },
+      });
+      if (existingAmenity) {
+        // Return existing amenity if found, to avoid duplicates
+        return existingAmenity;
+      }
+  
+      // Create new amenity
+      const amenity = await Amenity.create({ name, category, description, locationId });
+      return amenity;
+    } catch (error) {
+      console.error('Error adding amenity:', error);
+      throw new Error('Failed to add amenity');
+    }
   }
-
-  try {
-    // Validate category exists
-    const category = await Category.findByPk(categoryId);
-    console.log('category', category);
-    if (!category) throw new Error('Invalid category ID');
-
-    // Check duplicates
-    const existingAmenity = await Amenity.findOne({
-      where: { name, categoryId }, // pass ID, not object
-    });
-    console.log('existingAmenity', existingAmenity);
-    if (existingAmenity) throw new Error('Amenity already exists');
-const { id: categoryIdValue } = category;
-    const amenity = await Amenity.create({
-      id: `am-${Date.now()}`, // simple unique ID
-      name,
-      categoryId: categoryIdValue,
-      description,
-      locationId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    console.log('amenity', amenity);
-    return amenity;
-  } catch (error) {
-    console.error('Error adding amenity:', error);
-    throw new Error('Failed to add amenity');
-  }
-}
-
-
+  
   // 🔹 Ensure amenity IDs exist or create them
   async getAmenityIds(amenities) {
     if (!Array.isArray(amenities)) {
@@ -184,7 +171,6 @@ async deleteAmenity(id) {
   await amenity.destroy();
   return true;
 }
-
 }
 
 export default AmenityService;

@@ -14,6 +14,8 @@ import CartRepository from '../repositories/cartRepository.js';
 import CartService from '../cartService.js';
 import BookingService from '../bookingService.js';
 import BookingRepository from '../repositories/bookingRepository.js';
+import PaymentService from '../paymentService.js';
+import PaymentRepository from '../repositories/paymentRepository.js';
 import LocalAuthService from '../userService/localAuthService.js';
 import TokenService from '../userService/tokenService.js';
 import AccountLockService from '../userService/accountLockService.js';
@@ -84,6 +86,7 @@ const initAccountContainer = async ({ services = [] } = {}) => {
     listingRepository: asClass(ListingRepository).singleton(),
     cartRepository: asClass(CartRepository).singleton(),
     bookingRepository: asClass(BookingRepository).singleton(),
+    paymentRepository: asClass(PaymentRepository).singleton(),
     
     // Services
     tokenService: asClass(TokenService).singleton(),
@@ -95,6 +98,7 @@ const initAccountContainer = async ({ services = [] } = {}) => {
     listingService: asClass(ListingService).singleton(),
     cartService: asClass(CartService).singleton(),
     bookingService: asClass(BookingService).singleton(),
+    paymentService: asClass(PaymentService).singleton(),
   });
   return container;
 };

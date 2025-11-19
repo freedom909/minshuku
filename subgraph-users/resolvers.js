@@ -27,6 +27,94 @@ const logger = {
 };
 
 export const resolvers = {
+  User: {
+    __resolveType(obj) {
+      if (!obj) return null;
+      const role = obj.role || obj?.__typename;
+      if (role === 'HOST') return 'Host';
+      if (role === 'GUEST') return 'Guest';
+      return null;
+    },
+  },
+  Host: {
+    __resolveReference: async (ref, { container }) => {
+      try {
+        const userService = container.resolve('userService');
+        const u = await userService.localAuthService.getUserById(ref.id);
+        if (!u) return null;
+
+        const id = (u._id?.toString?.() ?? u.id ?? ref.id);
+        const name = u.fullName || u.name || '';
+        const firstName = u.firstName || (name ? name.split(' ')[0] : '');
+        const lastName = u.lastName || (name ? name.split(' ').slice(1).join(' ') : '');
+        const nickname = u.nickName || u.nickname || name || 'User';
+        const picture = u.picture || '';
+        const role = u.role || 'HOST';
+        const provider = u.provider || null;
+        const oauthId = u.oauthId || u.sub || '';
+        const email = u.email || (provider ? `${String(provider).toLowerCase()}:${oauthId || id}@placeholder.local` : `user-${id}@placeholder.local`);
+
+        return {
+          __typename: 'Host',
+          id,
+          email,
+          fullName: name || `${firstName} ${lastName}`.trim(),
+          firstName: firstName || 'Unknown',
+          lastName: lastName || '',
+          picture,
+          nickname,
+          role,
+          provider,
+          oauthId,
+          description: u.description || '',
+        };
+      } catch (err) {
+        return null;
+      }
+    },
+  },
+  Guest: {
+    __resolveReference: async (ref, { container }) => {
+      try {
+        const userService = container.resolve('userService');
+        const u = await userService.localAuthService.getUserById(ref.id);
+        if (!u) return null;
+
+        const id = (u._id?.toString?.() ?? u.id ?? ref.id);
+        const name = u.fullName || u.name || '';
+        const firstName = u.firstName || (name ? name.split(' ')[0] : '');
+        const lastName = u.lastName || (name ? name.split(' ').slice(1).join(' ') : '');
+        const nickname = u.nickName || u.nickname || name || 'User';
+        const picture = u.picture || '';
+        const role = u.role || 'GUEST';
+        const provider = u.provider || null;
+        const oauthId = u.oauthId || u.sub || '';
+        const email = u.email || (provider ? `${String(provider).toLowerCase()}:${oauthId || id}@placeholder.local` : `user-${id}@placeholder.local`);
+
+        return {
+          __typename: 'Guest',
+          id,
+          email,
+          fullName: name || `${firstName} ${lastName}`.trim(),
+          firstName: firstName || 'Unknown',
+          lastName: lastName || '',
+          picture,
+          nickname,
+          role,
+          provider,
+          oauthId,
+          description: u.description || '',
+        };
+      } catch (err) {
+        return null;
+      }
+    },
+  },
+  Query: {
+    bookingsByGuest: async (_, { guestId }, { dataSources }) => {
+      return dataSources.accountService.getBookingsForUser({ id: guestId });
+    },
+  },
   Mutation: {
     signIn: async (_, { input }, { container }) => {
 

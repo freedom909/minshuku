@@ -11,7 +11,7 @@ class LocationRepository {
     async create(locationData,options) {
       const { transaction } = options; // Safely destructure transaction
         try {
-            const newLocation = await this.model.create(locationData,transaction);
+            const newLocation = await this.model.create(locationData, { transaction });
             console.log("newLocation: ", newLocation);
             return newLocation;
 

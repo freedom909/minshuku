@@ -41,32 +41,32 @@ export default function HostNavigation() {
             href="/host/dashboard"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            📊 房东管理中心
+            📊 Host Management Center
           </a>
           <a
             href="/create-listing"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            ➕ 创建新房源
+            ➕ Create New Listing
           </a>
           <a
             href="/host/listings"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            🏠 我的房源
+            🏠 My Listings
           </a>
           <a
             href="/host/bookings"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            📅 预订管理
+            📅 Bookings
           </a>
           <div className="border-t my-1"></div>
           <a
             href="/host/settings"
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            ⚙️ 房东设置
+            ⚙️ Host Settings
           </a>
         </div>
       )}
