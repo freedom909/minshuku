@@ -1,46 +1,31 @@
 // infrastructure/container/initializeAiContainer.js
 import dotenv from "dotenv";
 dotenv.config();
-
 import { createContainer, asValue, asClass } from "awilix";
-
+import MyNumberCardService from "../../subgraph-accounts/infra/ai/myNumberCardService.js";
+import { StorageService } from "../../subgraph-accounts/infra/storage/storageService.js";
 // DB connectors
-import connectMysql from "./connectMysqlDB.js";
+
 import connectToMongoDB from "./connectMongoDB.js";
-import sequelize from "../models/config/seq.js";
+
 
 // Repositories
-
-import ListingRepository from "../repositories/listingRepository.js";
 import UserRepository from "../repositories/userRepository.js";
-import LocationRepository from "../repositories/locationRepository.js";
-import BookingRepository from "../repositories/bookingRepository.js";
-import AiRepository from "../repositories/aiRepository.js";
-
-// Services
-// import MachineAPI from "../machineAPI.js";
-import ListingService from "../listingService.js";
 import UserService from "../userService/index.js";
 import LocalAuthService from "../userService/localAuthService.js";
 import OAuthService from "../userService/oauthService.js";
 import TokenService from "../userService/tokenService.js";
 import AccountLockService from "../userService/accountLockService.js";
-import LocationService from "../locationService.js";
-import BookingService from "../bookingService.js";
-import PaymentService from "../paymentService.js";
-import AiService from "../aiService.js";
-import CartService from "../cartService.js";
+
 // Infrastructure
 import redisClient from "../redisClient.js";
 import logger from "../../infrastructure/utils/logger.js";
 import passwordHasher from "../../infrastructure/helpers/passwordHasher.js";
-import CartRepository from "../repositories/cartRepository.js";
 
 const initializeAdminContainer = async ({ services = [] } = {}) => {
   // Connect DBs
-  const mysqldb = await connectMysql();
+  
   const mongodb = await connectToMongoDB();
-
   const container = createContainer();
 
   // Config values from .env (with safe defaults)
@@ -56,7 +41,6 @@ const initializeAdminContainer = async ({ services = [] } = {}) => {
   container.register({
     // Databases
     mongodb: asValue(mongodb),
-
     // Config
     secretKey: asValue(jwtSecret),
     expiresIn: asValue(jwtExpiresIn),
@@ -76,11 +60,15 @@ const initializeAdminContainer = async ({ services = [] } = {}) => {
     userRepository: asClass(UserRepository).singleton(), // Needed by UserService
 
     // Services
+    storageService: asClass(StorageService).scoped(),
+    myNumberCardService: asClass(MyNumberCardService).singleton(),
+    adminService: asClass(AdminService).singleton(),
     userService: asClass(UserService).singleton(),
     localAuthService: asClass(LocalAuthService).singleton(),
     oauthService: asClass(OAuthService).singleton(),
     tokenService: asClass(TokenService).singleton(),
     accountLockService: asClass(AccountLockService).singleton(),
+    logger: asValue(console),
   });
 
   // Allow extra services to be injected externally

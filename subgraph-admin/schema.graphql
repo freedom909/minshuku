@@ -13,13 +13,17 @@ extend type Query {
 
 extend type Mutation {
   approveHost(userId: ID!): ApproveHostResponse! @shareable
-  becomeHost: BecomeHostResponse! @shareable
+  becomeHost(input: BecomeHostInput!): BecomeHostResponse! @shareable
 }
 
-interface User @key(fields: "id")  {
-  id: ID! 
-  role: Role 
+interface User @key(fields: "id") {
+  id: ID!
+  email: String
+  fullName: String
+  picture: String
+  role: Role
 }
+
 
 enum Role {
   ADMIN
@@ -64,5 +68,4 @@ type Guest implements User @key(fields: "id") {
   picture: String! @shareable
   role: Role! @shareable
 }
-
 

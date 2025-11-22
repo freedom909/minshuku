@@ -2,8 +2,9 @@
 import { ApolloServer } from '@apollo/server';
 import { ApolloGateway, IntrospectAndCompose } from '@apollo/gateway';
 import { startStandaloneServer } from '@apollo/server/standalone';
-
+import presignRouter from "./routes/presignRouter.js";
 const gateway = new ApolloGateway({
+  
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
       { name: 'accounts', url: process.env.ACCOUNTS_SUBGRAPH_URL || 'http://localhost:4020/graphql' },
@@ -30,19 +31,27 @@ const gateway = new ApolloGateway({
 });
 
 async function startGateway() {
-  const server = new ApolloServer({ gateway, subscriptions: false, context: ({ req }) => ({ req }) });
+  const app = express();
+  const httpServer = http.createServer(app);
+  const server = new ApolloServer({ gateway, subscriptions: false,introspection: true, context: ({ req }) => ({ req }) });
+ 
+  await server.start();
 
-  const { url } = await startStandaloneServer(server, {
-    listen: { port: Number(process.env.GATEWAY_PORT) || 4000 },
+  // CORS first
+  app.use(cors({ origin: true, credentials: true }));
+  app.use(express.json());
+
+  // 👉 Add your custom REST API
+  app.use('/file', presignRouter);
+
+  // GraphQL middleware for Gateway
+  app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }) => ({ req }),
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization']
-    }
+  }));
+    httpServer.listen(4000, () => {
+    console.log(`🚀 Gateway running at http://localhost:4000/graphql`);
+    console.log(`📄 Presign API at http://localhost:4000/file/presign-url`);
   });
-
-  console.log(`🚀 Gateway running at ${url}`);
 }
 
 startGateway();

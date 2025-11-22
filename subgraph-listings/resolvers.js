@@ -206,13 +206,14 @@ const resolvers = {
       }
     },
     //"Return the listings that belong to the currently logged-in host"
-    hostListings: async (_, { hostId }, { dataSources }) => {
-      if (!hostId) {
+    hostListings: async (_, __, { dataSources, userId }) => {
+      // Use userId from context which is derived from the auth token
+      if (!userId) {
         throw new AuthenticationError('You must be logged in to access this resource');
       }
       try {
         const listings = await Listing.findAll({
-          where: { hostId },
+          where: { hostId: userId }, // Securely fetch listings for the authenticated user
           include: [
             {
               model: Amenity,

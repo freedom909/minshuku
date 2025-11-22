@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import Link from 'next/link';
 
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:4001/graphql';
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:4000/graphql';
 
 async function getHostListings(hostId, token) {
   const query = `
@@ -116,4 +116,5 @@ Let me know if you have any other questions!
 <!--
 [PROMPT_SUGGESTION]How can I add pagination to the host dashboard?[/PROMPT_SUGGESTION]
 [PROMPT_SUGGESTION]Create the edit listing page that the dashboard links to.[/PROMPT_SUGGESTION]
--->
+--> 
+```

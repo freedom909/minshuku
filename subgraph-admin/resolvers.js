@@ -1,10 +1,11 @@
 
 import { GraphQLError } from 'graphql';
- 
+
 const resolvers = {
   Query: {
-    pendingHosts: async (_, __, { dataSources, userId }) => {
-      const { userService } = dataSources;
+    pendingHosts: async (_, __, context) => {
+      const { dataSources,logger, userId } = context;
+      const userService = dataSources?.userService;
 
       // 1. Authorization: Check if the current user is an admin.
       if (!userId) {
@@ -12,7 +13,7 @@ const resolvers = {
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
-
+ try {
       // This assumes userService.getUserById can fetch user details including the role.
       const adminUser = await userService.getUserById(userId);
       if (adminUser?.role !== 'ADMIN') {
@@ -22,84 +23,98 @@ const resolvers = {
       }
 
       // 2. Data Fetching: Fetch users with the 'PENDING_HOST' role.
-      // This assumes a method like `findUsersByRole` exists in your userService.
+      // This assumes a method `findUsersByRole` exists in your userService.
       const pending = await userService.findUsersByRole('PENDING_HOST');
 
       // 3. Return fetched data.
       return pending;
-    },
+    } catch (err) {
+      logger.error('Error fetching pending hosts:', err);
+      throw new GraphQLError('Internal server error while fetching pending hosts.', {
+        extensions: { code: 'INTERNAL_SERVER_ERROR' },
+      });
+    }
   },
+},
   Mutation: {
-    becomeHost: async (_, __, context) => {
-      const { userId, dataSources } = context;
+    becomeHost: async (_, { input }, context) => {
+      const { container, userId, logger } = context;
       if (!userId) {
         throw new GraphQLError('You must be logged in to become a host.', {
           extensions: { code: 'UNAUTHENTICATED' },
         });
       }
+      const myNumberService = container.resolve('myNumberCardService');
+            if (!myNumberService) {
+        logger?.error?.("myNumberCardService not registered in container");
+        throw new GraphQLError("Server configuration error", {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+      }
+      try {
+        const result = await myNumberService.verifyMyNumberCard({
+          userId,
+          frontKey: input.frontKey,
+          backKey: input.backKey,
+          selfieKey: input.selfieKey
+        });
+
+        if (result.success) {
+          return { success: true, message: "Your My Number verified and approved. You are now a host." };
+        } else {
+          return { success: true, message: "Verification pending admin review." };
+        }
+      } catch (err) {
+        console.error("becomeHost error:", err);
+        throw new GraphQLError("Verification failed", { extensions: { code: "INTERNAL_SERVER_ERROR" } });
+      }
+    },
+
+ approveHost: async (_, { userId: targetUserId }, context) => {
+      const { dataSources, userId: adminId, logger } = context;
+      const userService = dataSources?.userService;
+      if (!adminId) {
+        throw new GraphQLError("You must be logged in as an admin.", {
+          extensions: { code: "UNAUTHENTICATED" },
+        });
+      }
 
       try {
-        // This assumes a service exists to update the user's role.
-        // The actual implementation might live in the 'users' subgraph.
-        // For now, we'll add a placeholder for the logic.
-        // const updatedUser = await dataSources.userService.updateUserRole(userId, 'PENDING_HOST');
+        const adminUser = await userService.getUserById(adminId);
+        if (!adminUser || adminUser.role !== "ADMIN") {
+          throw new GraphQLError("You are not authorized to approve hosts.", {
+            extensions: { code: "FORBIDDEN" },
+          });
+        }
 
-        // Placeholder response since userService is not fully available here:
-        const updatedUser = {
-          id: userId,
-          role: 'PENDING_HOST', // Simulate role update
-          __typename: 'User'
-        };
+        // Update user role to HOST
+        const updatedUser = await userService.updateUserRole(targetUserId, "HOST");
+        if (!updatedUser) {
+          throw new GraphQLError("Failed to update user role", {
+            extensions: { code: "INTERNAL_SERVER_ERROR" },
+          });
+        }
 
         return {
           code: 200,
           success: true,
-          message: 'Your application to become a host has been submitted!',
+          message: `User ${targetUserId} has been approved as a host.`,
           user: updatedUser,
         };
-      } catch (error) {
-        console.error('Error in becomeHost mutation:', error);
-        throw new GraphQLError('Failed to submit host application.', { extensions: { code: 'INTERNAL_SERVER_ERROR' } });
-      }
-    },
-
-    approveHost: async (_, { userId }, context) => {
-      const { dataSources, userId: adminId } = context;
-      if (!adminId) {
-        throw new GraphQLError('You must be logged in as an admin.', {
-          extensions: { code: 'UNAUTHENTICATED' },
+      } catch (err) {
+        logger?.error?.("approveHost error:", err);
+        throw new GraphQLError("Approve host failed", {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
         });
       }
-      // In a real implementation, you would check if the logged-in user is an admin.
-      // const adminUser = await dataSources.userService.getUser(adminId);
-      // if (adminUser.role !== 'ADMIN') throw new GraphQLError('You are not authorized to approve hosts.', { extensions: { code: 'FORBIDDEN' } });
-
-      // This would call the user service to update the role.
-      // const updatedUser = await dataSources.userService.updateUserRole(userId, 'HOST');
-
-      // Placeholder response:
-      console.warn(`Simulating approval for user ${userId}. Replace with a real service call.`);
-      const updatedUser = {
-        id: userId,
-        role: 'HOST', // Simulate role update
-        __typename: 'User'
-      };
-
-      return {
-        code: 200,
-        success: true,
-        message: `User ${userId} has been approved as a host.`,
-        user: updatedUser,
-      };
     },
   },
+
   User: {
-    __resolveReference(user, { dataSources }) {
-      // In a real implementation, you would fetch user details from the users service.
-      // return dataSources.userService.getUser(user.id);
-      return { ...user };
+    __resolveReference: async (ref, { dataSources }) => {
+      return await dataSources.userService.getUserById(ref.id);
     }
   }
-};
+}
 
 export default resolvers;

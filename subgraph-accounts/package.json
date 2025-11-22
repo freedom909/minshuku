@@ -17,6 +17,7 @@
     "@sequelize/core": "^7.0.0-alpha.37",
     "apollo-server": "^3.13.0",
     "awilix": "^10.0.2",
+    "body-parser": "^2.2.0",
     "express": "^4.19.2",
     "express-validator": "^7.1.0",
     "fs": "^0.0.1-security",

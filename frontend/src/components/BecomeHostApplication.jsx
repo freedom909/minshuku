@@ -3,19 +3,20 @@
 import React, { useState } from 'react';
 import { useSession } from "next-auth/react";
 
-const BecomeHostApplication = () => {
-  const { data: session } = useSession();
+const BecomeHostApplication = ({ session }) => {
+  // We still need updateSession to refresh the session after submission
+  const { update: updateSession } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    address: '',
-    city: '',
-    country: '',
-    experience: '',
-    motivation: '',
-    agreeToTerms: false
+    firstName: 'Taro',
+    lastName: 'Yamada',
+    phoneNumber: '080-1234-5678',
+    address: 'Shibuya 1-1-1',
+    city: 'Tokyo',
+    country: 'Japan',
+    experience: 'Hosted on other platforms for 3 years.',
+    motivation: 'I enjoy meeting people from all over the world.',
+    agreeToTerms: true
   });
   const [myNumberCardFront, setMyNumberCardFront] = useState(null);
   const [myNumberCardBack, setMyNumberCardBack] = useState(null);
@@ -79,6 +80,9 @@ const BecomeHostApplication = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('handleSubmit triggered');
+    console.log('Current form data:', formData);
+    console.log('Session object state during handleSubmit:', session);
     
     if (!session?.user?.id) {
       setMessage('Please log in to apply to become a host.');
@@ -86,12 +90,14 @@ const BecomeHostApplication = () => {
     }
 
     if (!formData.agreeToTerms) {
+      console.log('Validation failed: agreeToTerms is false.');
       setMessage('Please agree to the terms and conditions.');
       return;
     }
 
     // Validate My Number Card uploads
     if (!myNumberCardFront || !myNumberCardBack) {
+      console.log('Validation failed: My Number Card files missing.');
       setMessage('Please upload both front and back sides of your My Number Card.');
       return;
     }
@@ -113,11 +119,11 @@ const BecomeHostApplication = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.accessToken}`,
         },
         body: JSON.stringify({
           query: BECOME_HOST_MUTATION,
           variables: { 
-            userId: session.user.id,
             myNumberCardFront: frontUrl,
             myNumberCardBack: backUrl
           },
@@ -148,6 +154,9 @@ const BecomeHostApplication = () => {
         });
         setMyNumberCardFront(null);
         setMyNumberCardBack(null);
+
+        // 手动触发会话更新，以反映最新的用户角色
+        await updateSession();
       } else {
         setMessage('Failed to submit application: ' + result.data?.becomeHost?.message);
       }
@@ -173,17 +182,6 @@ const BecomeHostApplication = () => {
       reader.readAsDataURL(file);
     });
   };
-
-  if (!session) {
-    return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-        <p className="text-blue-800">Please log in to apply to become a host.</p>
-        <a href="/login" className="text-blue-600 hover:underline mt-2 inline-block">
-          Log in now
-        </a>
-      </div>
-    );
-  }
 
   // Check if user is already a host or pending host
   const userRole = session.user?.role || 'GUEST';

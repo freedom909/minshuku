@@ -30,6 +30,8 @@ type Mutation {
   createUser(name: String!, email: String!, password: String): User @shareable
   updateUser(id: ID!, input: UpdateUserInput!): User @shareable
   deleteUser(id: ID!): Boolean 
+  getPresignedUrl(input: PresignFileInput!): PresignedUrlResponse!
+  requestMyNumberUploadUrl(fileType: String!): PresignResponse!
 }
 
 # --------------------------
@@ -75,6 +77,18 @@ extend type Listing @key(fields: "id") {
   id: ID! @external
 }
 
+type PresignedUrlResponse {
+  success: Boolean!
+  url: String!
+  key: String!
+  message: String
+}
+
+type PresignResponse {
+  uploadUrl: String!
+  key: String!
+  expiresIn: Int!
+}
 # --------------------------
 # ENUMS
 # --------------------------
@@ -140,4 +154,9 @@ input UpdateUserInput {
   name: String
   picture: String
   role: Role
+}
+
+input PresignFileInput {
+  fileName: String!
+  contentType: String!
 }

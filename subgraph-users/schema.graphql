@@ -181,7 +181,6 @@ enum OAuthProvider {
   LOCAL
 }
 
-
 input OAuthInput {
   provider: OAuthProvider!
   token: String!

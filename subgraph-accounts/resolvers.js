@@ -111,6 +111,58 @@ const resolvers = {
       return newUser;
     },
 
+    requestMyNumberUploadUrl: async (_, { fileType }, { dataSources, userId }) => {
+      if (!userId) throw new Error("Unauthorized");
+
+      const validTypes = ["front", "back", "selfie"];
+      if (!validTypes.includes(fileType)) {
+        throw new Error("Invalid fileType");
+      }
+      const presignUrl =
+        await dataSources.documentService.getPresignedUrl({
+          userId,
+          fileType,
+        });
+
+      return {
+        uploadUrl: presignUrl.uploadUrl,
+        key: presignUrl.key,
+        expiresIn: presignUrl.expiresIn
+      };
+    },
+    
+    getPresignedUrl: async (_, { input }, { container, userId }) => {
+      if (!userId) {
+        throw new GraphQLError("Authentication required", {
+          extensions: { code: "UNAUTHENTICATED" }
+        });
+      }
+
+      try {
+        const storageService = container.resolve("storageService");
+        const { fileName, contentType } = input;
+
+        const fileKey = `myNumber/${userId}/${Date.now()}_${fileName}`;
+
+        const presignedUrl = await storageService.generatePresignedUrl(
+          fileKey,
+          contentType
+        );
+
+        return {
+          success: true,
+          url: presignedUrl,
+          key: fileKey,
+          message: "Presigned URL generated"
+        };
+
+      } catch (err) {
+        console.error("getPresignedUrl error:", err);
+        throw new GraphQLError("Failed to generate presigned URL", {
+          extensions: { code: "INTERNAL_SERVER_ERROR" }
+        });
+      }
+    },
     updateUserProfile: async (_, { input }, { dataSources, userId }) => {
       const { accountService } = dataSources;
       // Users can only update their own profile unless they are admin
@@ -149,7 +201,7 @@ const resolvers = {
       const { accountService } = dataSources;
       return await accountService.createAccount({ email, password });
     },
-    
+
     deleteAccount: async (_, { id }, { dataSources, userId }) => {
       const { accountService } = dataSources;
       // Users can only delete their own account unless they are admin
@@ -161,7 +213,7 @@ const resolvers = {
       }
       return await accountService.deleteAccount(id);
     },
-    
+
     updateAccountEmail: async (_, { input: { id, email } }, { dataSources, userId }) => {
       const { accountService } = dataSources;
       // Users can only update their own email unless they are admin
@@ -173,7 +225,7 @@ const resolvers = {
       }
       return await accountService.updateAccountEmail(id, email);
     },
-    
+
     updateAccountPassword: async (_, { input: { id, newPassword, password } }, { dataSources, userId }) => {
       const { accountService } = dataSources;
       // Users can only update their own password
@@ -195,7 +247,7 @@ const resolvers = {
 
   User: {
     // Federated references
-    __resolveReference: async (user, { dataSources }) => 
+    __resolveReference: async (user, { dataSources }) =>
       await dataSources.userService.getUserById(user.id),
   }
 };

@@ -7,7 +7,6 @@ import http from 'http';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import initializeAdminContainer from '../services/DB/initAdminContainer.js';
-import { GraphQLError } from 'graphql';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import resolvers from './resolvers.js';
@@ -32,21 +31,16 @@ const startApolloServer = async () => {
           async serverWillStart() {
             return {
               async drainServer() {
-               const mysql = container.resolve('mysql');
-          if (mysql && mysql.end) {
-            await mysql.end(); // close the DB connection properly
+               const mongodb = container.resolve('mongodb');
+          if (mongodb && mongodb.close) {
+            await mongodb.close(); // close the DB connection properly
           };
               }
             };
           }
         }
       ],
-      context: async ({ req }) => ({
-        token: req.headers.authorization || '',
-        dataSources: {
-          userService: container.resolve('userService'),
-        }
-      }),
+
       formatError: (error) => {
         console.error('GraphQL error:', error);
         return {
@@ -71,12 +65,31 @@ const startApolloServer = async () => {
       express.json(),
       expressMiddleware(server, {
         isListingCreation: true, // mock flag for testing
-        context: async ({ req }) => ({
-          token: req.headers.authorization || '',
-          dataSources: {
-            userService: container.resolve('userService')
-          },
-        })
+context: async ({ req }) => {
+  const token = req.headers.authorization || "";
+  let userId = null;
+
+  if (auth.startsWith('Bearer ')) {
+        try {
+          const token = auth.replace('Bearer ', '');
+          const decoded = container.resolve('tokenService').verify(token); // implement verify to return { userId }
+          userId = decoded?.userId;
+        } catch (e) {
+          // ignore, unauthenticated
+          console.error('Token verification failed:', e);
+        }
+      }
+  return {
+    userId,
+    token,
+    container,
+    dataSources: {
+      userService: container.resolve('userService'),
+      adminService: container.resolve('adminService'),
+    }
+  };
+}
+
       })
     );
 
