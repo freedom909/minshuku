@@ -14,7 +14,7 @@ scalar DateTime
 # --------------------------
 type Query {
   me: User @shareable
-
+  
   user(id: ID!): User @shareable
   users: [User!]! @shareable
  
@@ -32,8 +32,14 @@ type Mutation {
   deleteUser(id: ID!): Boolean 
   getPresignedUrl(input: PresignFileInput!): PresignedUrlResponse!
   requestMyNumberUploadUrl(fileType: String!): PresignResponse!
+  verifyMyNumber(frontKey: ID!, selfieKey: ID!): VerifyResult!
 }
 
+type VerifyResult {
+  success: Boolean!
+  similarity: Float!
+  message: String
+}
 # --------------------------
 # USER INTERFACE & TYPES
 # --------------------------

@@ -9,7 +9,17 @@ import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import initAccountContainer from '../services/DB/initAccountContainer.js';
-import resolvers from './resolvers.js';
+import userResolvers from './resolvers/user.resolver.js';
+import identityResolvers from './resolvers/identity.resolvers.js';
+
+// ✅ Merge resolvers
+const resolvers = {
+  ...userResolvers,
+  Mutation: {
+    ...userResolvers.Mutation,
+    ...identityResolvers.Mutation,
+  },
+};
 
 // ✅ Load schema
 const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));

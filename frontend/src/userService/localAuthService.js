@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const SUBGRAPH_USERS_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || "http://localhost:4000/graphql"; // ✅ point directly to /graphql
+const SUBGRAPH_USERS_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USERS_URL || "http://localhost:4010/graphql"; // ✅ point directly to /graphql
 
 const loginRequestToSubgraph = `
  mutation SignIn($input: SignInInput!) {

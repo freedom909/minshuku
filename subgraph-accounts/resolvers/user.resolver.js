@@ -1,4 +1,6 @@
 import { GraphQLError } from 'graphql';
+import faceService from "../../services/face/faceService.js";
+import storageService from "../services/storage/storageService.js";
 
 const resolvers = {
   Account: {
@@ -174,6 +176,8 @@ const resolvers = {
       }
       return await accountService.updateUser(input.id, input);
     },
+
+
 
     updateUser: async (_, { id, input }, { dataSources, userId }) => {
       const { accountService } = dataSources;
