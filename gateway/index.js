@@ -1,25 +1,32 @@
 // gateway/index.js (nodemon restart trigger)
+import './config.js'; // Import and execute dotenv config first
 import { ApolloServer } from '@apollo/server';
 import { ApolloGateway, IntrospectAndCompose } from '@apollo/gateway';
-import { startStandaloneServer } from '@apollo/server/standalone';
-import presignRouter from "./routes/presignRouter.js";
+import express from 'express';
+import cors from 'cors';
+import http from 'http';
+import { expressMiddleware } from '@as-integrations/express5';
+import fileRouter from "./routes/fileRouter.js";
+import adminRouterFactory from "./routes/adminRouter.js";
+import initializeAdminContainer from "../services/DB/initAdminContainer.js";
+
 const gateway = new ApolloGateway({
   
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
-      { name: 'accounts', url: process.env.ACCOUNTS_SUBGRAPH_URL || 'http://localhost:4020/graphql' },
+      // { name: 'accounts', url: process.env.ACCOUNTS_SUBGRAPH_URL || 'http://localhost:4020/graphql' },
       { name: 'admin', url: process.env.ADMIN_SUBGRAPH_URL || 'http://localhost:4150/graphql' },
-      { name: 'profiles', url: process.env.PROFILES_SUBGRAPH_URL || 'http://localhost:4030/graphql' },
+      // { name: 'profiles', url: process.env.PROFILES_SUBGRAPH_URL || 'http://localhost:4030/graphql' },
       { name: 'users', url: process.env.USERS_SUBGRAPH_URL || 'http://localhost:4010/graphql' },
-      { name: 'listings', url: 'http://localhost:4040/graphql' },
-      { name: 'carts', url: process.env.CARTS_SUBGRAPH_URL || 'http://localhost:4060/graphql' },
-      { name: 'bookings', url: 'http://localhost:4050/graphql' },
-      { name: 'reviews', url: 'http://localhost:4080/graphql' },
-      { name: 'amenities', url: 'http://localhost:4090/graphql' },
-      { name: 'locations', url: process.env.LOCATIONS_SUBGRAPH_URL || 'http://localhost:4140/graphql' },
-      { name: 'aiService', url: 'http://localhost:4100/graphql' },
-      { name: 'orders', url: process.env.ORDERS_SUBGRAPH_URL || 'http://localhost:4110/graphql' },
-      { name: 'payments', url: 'http://localhost:4070/graphql' }
+      // { name: 'listings', url: 'http://localhost:4040/graphql' },
+      // { name: 'carts', url: process.env.CARTS_SUBGRAPH_URL || 'http://localhost:4060/graphql' },
+      // { name: 'bookings', url: 'http://localhost:4050/graphql' },
+      // { name: 'reviews', url: 'http://localhost:4080/graphql' },
+      // { name: 'amenities', url: 'http://localhost:4090/graphql' },
+      // { name: 'locations', url: process.env.LOCATIONS_SUBGRAPH_URL || 'http://localhost:4140/graphql' },
+      // { name: 'aiService', url: 'http://localhost:4100/graphql' },
+      // { name: 'orders', url: process.env.ORDERS_SUBGRAPH_URL || 'http://localhost:4110/graphql' },
+      // { name: 'payments', url: 'http://localhost:4070/graphql' }
     ],
     // Add configuration to handle introspection better
     introspectionHeaders: {
@@ -42,15 +49,18 @@ async function startGateway() {
   app.use(express.json());
 
   // 👉 Add your custom REST API
-  app.use('/file', presignRouter);
-
+  app.use('/file', fileRouter);
+  // Admin REST API (uses dependency injection)
+   const container = await initializeAdminContainer();
+  const adminRouter = adminRouterFactory(container);
+  app.use("/admin", adminRouter);
   // GraphQL middleware for Gateway
   app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }) => ({ req }),
   }));
     httpServer.listen(4000, () => {
     console.log(`🚀 Gateway running at http://localhost:4000/graphql`);
-    console.log(`📄 Presign API at http://localhost:4000/file/presign-url`);
+    console.log(`📄 Presign API at http://localhost:4000/file/presign-url`);// Cannot GET /file/presign-url
   });
 }
 

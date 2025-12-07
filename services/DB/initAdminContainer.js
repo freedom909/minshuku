@@ -2,8 +2,6 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { createContainer, asValue, asClass } from "awilix";
-import MyNumberCardService from "../../subgraph-accounts/infra/ai/myNumberCardService.js";
-import { StorageService } from "../../subgraph-accounts/infra/storage/storageService.js";
 // DB connectors
 
 import connectToMongoDB from "./connectMongoDB.js";
@@ -16,7 +14,8 @@ import LocalAuthService from "../userService/localAuthService.js";
 import OAuthService from "../userService/oauthService.js";
 import TokenService from "../userService/tokenService.js";
 import AccountLockService from "../userService/accountLockService.js";
-
+import AuditLogRepository from "../repositories/auditLogRepository.js";
+import AdminService from "../adminService/index.js";
 // Infrastructure
 import redisClient from "../redisClient.js";
 import logger from "../../infrastructure/utils/logger.js";
@@ -55,13 +54,11 @@ const initializeAdminContainer = async ({ services = [] } = {}) => {
     // Infrastructure
     logger: asValue(logger),
     passwordHasher: asValue(passwordHasher),
-
+    // adminService: asValue(AdminService),
     // Repositories
     userRepository: asClass(UserRepository).singleton(), // Needed by UserService
-
+    auditLogRepository: asClass(AuditLogRepository).singleton(),
     // Services
-    storageService: asClass(StorageService).scoped(),
-    myNumberCardService: asClass(MyNumberCardService).singleton(),
     adminService: asClass(AdminService).singleton(),
     userService: asClass(UserService).singleton(),
     localAuthService: asClass(LocalAuthService).singleton(),

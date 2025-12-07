@@ -6,7 +6,7 @@ import logger from '../utils/logger.js';
 import axios from 'axios';
 import { GraphQLError } from 'graphql';
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ path: '../../.env' });
 
 
 class TokenService {
@@ -343,7 +343,7 @@ class TokenService {
                 });
             }
 
-            throw new GraphQLError('Invalid or expired token', {
+            throw new GraphQLError('Invalid or expired token', { // Token verification failed: GraphQLError: Invalid or expired token
                 extensions: { 
                     code: 'INVALID_TOKEN',
                     error: error.message

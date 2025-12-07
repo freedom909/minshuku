@@ -21,6 +21,10 @@ class UserRepository {
     return { _id: result.insertedId, ...user };
   }
 
+ async findAll() {
+    return await this.collection.find({}).toArray();
+  }
+
   async findUsersByRole(role) {
     return await this.collection.find({ role }).toArray();
   }
@@ -36,6 +40,13 @@ class UserRepository {
       { returnDocument: 'after' }
     );
     return result.value;
+  }
+
+  async findById(id) {
+    if (!ObjectId.isValid(id)) {
+      return null; // Or throw an error for invalid ID format
+    }
+    return await this.collection.findOne({ _id: new ObjectId(id) });
   }
 
   // Add other necessary repository methods here if they don't exist

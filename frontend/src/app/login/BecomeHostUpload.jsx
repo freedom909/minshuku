@@ -5,9 +5,6 @@ import { useState, useCallback } from "react";
 const MAX_SIZE_MB = 8;
 const ALLOWED_TYPES = ["image/jpeg", "image/png"];
 
-type FileKey = "front" | "back" | "selfie";
-type FileMap = Partial<Record<FileKey, File>>;
-
 export default function BecomeHostUpload() {
   const [files, setFiles] = useState<FileMap>({});
   const [progress, setProgress] = useState({ front: 0, back: 0, selfie: 0 });
@@ -25,7 +22,7 @@ export default function BecomeHostUpload() {
     return true;
   };
 
-  const handleFileDrop = (event: React.DragEvent<HTMLDivElement>, key: FileKey) => {
+  const handleFileDrop = (event, key) => {
     event.preventDefault();
     const file = event.dataTransfer.files?.[0];
     if (file && validateFile(file)) {
@@ -33,7 +30,7 @@ export default function BecomeHostUpload() {
     }
   };
 
-  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>, key: FileKey) => {
+  const handleFilePick = (e, key) => {
     const file = e.target.files?.[0];
     if (file && validateFile(file)) {
       setFiles((prev) => ({ ...prev, [key]: file }));
@@ -51,7 +48,7 @@ export default function BecomeHostUpload() {
     return res.json();
   };
 
-  const uploadToPresignedUrl = async (file: File, name: FileKey): Promise<string> => {
+  const uploadToPresignedUrl = async (file, name) => {
     const timestamp = Date.now();
     const key = `my-number/${name}-${timestamp}.${file.name.split(".").pop()}`;
 
@@ -111,7 +108,7 @@ export default function BecomeHostUpload() {
     setSubmitting(false);
   };
 
-  const renderDrop = (label: string, key: FileKey) => (
+  const renderDrop = (label, key) => (
     <div
       className="border-2 border-dashed p-6 rounded-xl text-center cursor-pointer
                 hover:border-blue-500 transition bg-gray-50"

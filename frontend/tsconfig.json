@@ -29,7 +29,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "src/app/login/MyNumberUploadForm.jsx", "src/app/login/BecomeHostUpload.jsx"  ],
   "exclude": [
     "node_modules"
   ]

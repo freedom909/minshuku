@@ -12,7 +12,7 @@ const BECOME_HOST = gql`
   }
 `;
 
-type UploadType = 'front' | 'back' | 'selfie';
+
 
 const allowedTypes = ['image/jpeg', 'image/png'];
 const maxSizeMB = 10;

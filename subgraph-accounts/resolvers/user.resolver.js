@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 import faceService from "../../services/face/faceService.js";
-import storageService from "../services/storage/storageService.js";
+import storageService from "../../services/adminService/storage/storageService.js";
 
 const resolvers = {
   Account: {

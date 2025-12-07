@@ -33,6 +33,14 @@ type Mutation {
   getPresignedUrl(input: PresignFileInput!): PresignedUrlResponse!
   requestMyNumberUploadUrl(fileType: String!): PresignResponse!
   verifyMyNumber(frontKey: ID!, selfieKey: ID!): VerifyResult!
+  becomeHost(input: BecomeHostInput!): BecomeHostResponse!
+}
+
+type BecomeHostResponse implements Response {
+  code: Int!
+  success: Boolean!
+  message: String!
+  user: User
 }
 
 type VerifyResult {
@@ -50,6 +58,12 @@ interface User @key(fields: "id") {
   avatar: String
   role: Role
   joinedAt: DateTime
+}
+
+interface Response {
+  code: Int!
+  success: Boolean!
+  message: String!
 }
 
 type Guest implements User @key(fields: "id") {
@@ -165,4 +179,13 @@ input UpdateUserInput {
 input PresignFileInput {
   fileName: String!
   contentType: String!
+}
+
+# ============================
+# Inputs
+# ============================
+input BecomeHostInput {
+  governmentIdFront: String!
+  governmentIdBack: String!
+  selfie: String!
 }

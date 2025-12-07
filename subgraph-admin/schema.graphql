@@ -1,71 +1,80 @@
-schema
+extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.8",
     import: ["@key", "@shareable", "@external"]
-  ) {
-  query: Query
-  mutation: Mutation
-}
+  )
 
-extend type Query {
-  pendingHosts: [User!]! @shareable
-}
-
-extend type Mutation {
-  approveHost(userId: ID!): ApproveHostResponse! @shareable
-  becomeHost(input: BecomeHostInput!): BecomeHostResponse! @shareable
-}
-
-interface User @key(fields: "id") {
-  id: ID!
-  email: String
-  fullName: String
-  picture: String
-  role: Role
-}
-
-
+##############################################
+# Shared ENUM (must match users EXACTLY)
+##############################################
 enum Role {
-  ADMIN
+  USER
+  GUEST
   HOST
   PENDING_HOST
-  GUEST
-  USER
+  ADMIN
 }
 
-interface Response {
-  code: Int!
-  success: Boolean!
+##############################################
+# EXTEND User interface (required)
+##############################################
+extend interface User @key(fields: "id") {
+  id: ID! @external
+}
+
+##############################################
+# STUB TYPES
+##############################################
+extend type Admin implements User @key(fields: "id") {
+  id: ID! @external
+}
+
+extend type Guest implements User @key(fields: "id") {
+  id: ID! @external
+}
+
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+  APPLE
+  GITHUB
+  LOCAL
+}
+extend type Host implements User @key(fields: "id") {
+  id: ID! @external
+}
+
+##############################################
+# Queries
+##############################################
+extend type Query {
+  me: User @shareable
+  auditLogs: [AuditLog]! @shareable
+}
+
+##############################################
+# Mutations
+##############################################
+extend type Mutation {
+  forceVerifyHost(userId: ID!): User @shareable
+  lockUser(userId: ID!): User @shareable
+  unlockUser(userId: ID!): User @shareable
+  issueAdminToken(adminId: ID!): AdminTokenResponse @shareable
+}
+
+type AdminTokenResponse {
+  token: String!
+  expiredAt: String!
+}
+
+type AuditLog {
+  id: ID!
+  type: String!
+  actorUserId: ID!
+  targetUserId: ID
   message: String!
+  createdAt: String!
 }
 
-type BecomeHostResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  user: User @shareable
-}
-
-type ApproveHostResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  user: User @shareable
-}
-
-type Host implements User @key(fields: "id") {
-  id: ID! @shareable
-  email: String! @shareable
-  fullName: String @shareable
-  picture: String! @shareable
-  role: Role! @shareable
-}
-
-type Guest implements User @key(fields: "id") {
-  id: ID! @shareable
-  email: String! @shareable
-  fullName: String @shareable
-  picture: String! @shareable
-  role: Role! @shareable
-}
-
+# If you use federation _Entity union, include all types you want to resolve across subgraphs
+union _Entity = Admin | Guest | Host

@@ -1,17 +1,17 @@
 // services/myNumberCard.service.js
-import { injectable } from "tsyringe";
+import { createContainer, asValue, asClass } from 'awilix';
 import crypto from "crypto";
-import { StorageService } from "./storage.service.js";
-import UserRepository from "../repositories/userRepository.js";
+// import { StorageService } from "./storage/storageService.js";
+// import UserRepository from "../repositories/userRepository.js";
+// import OcrService from "./ocr/ocrService.js";
 import AWS from "aws-sdk";
 
 // Google Vision client (for OCR)
 import vision from "@google-cloud/vision";
 
-@injectable()
 export default class MyNumberCardService {
   constructor({ocrService, storageService, userRepository }) {
-    this.ocrService = ocrService;
+    this.ocrService = ocrService;//what should it have something to do with ocrService?
     this.storage = storageService;
     this.userRepository = userRepository;
     // AWS Rekognition client (for face compare)

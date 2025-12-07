@@ -31,10 +31,10 @@ const startApolloServer = async () => {
           async serverWillStart() {
             return {
               async drainServer() {
-               const mongodb = container.resolve('mongodb');
-          if (mongodb && mongodb.close) {
-            await mongodb.close(); // close the DB connection properly
-          };
+                const mongodb = container.resolve('mongodb');
+                if (mongodb && mongodb.close) {
+                  await mongodb.close(); // close the DB connection properly
+                };
               }
             };
           }
@@ -65,30 +65,30 @@ const startApolloServer = async () => {
       express.json(),
       expressMiddleware(server, {
         isListingCreation: true, // mock flag for testing
-context: async ({ req }) => {
-  const token = req.headers.authorization || "";
-  let userId = null;
+        context: async ({ req }) => {
+          const token = req.headers.authorization || "";
+          let userId = null;
 
-  if (auth.startsWith('Bearer ')) {
-        try {
-          const token = auth.replace('Bearer ', '');
-          const decoded = container.resolve('tokenService').verify(token); // implement verify to return { userId }
-          userId = decoded?.userId;
-        } catch (e) {
-          // ignore, unauthenticated
-          console.error('Token verification failed:', e);
+          if (token.startsWith('Bearer ')) { //  'ReferenceError: auth is not defined',
+            try {
+              const authToken = token.replace('Bearer ', '');
+              const decoded = await container.resolve('tokenService').verifyToken(authToken); // implement verify to return { userId }
+              userId = decoded?.userId;
+            } catch (e) {
+              // ignore, unauthenticated
+              console.error('Token verification failed:', e);
+            }
+          }
+          return {
+            userId,
+            token,
+            container,
+            dataSources: {
+              userService: container.resolve('userService'),
+              adminService: container.resolve('adminService'),
+            }
+          };
         }
-      }
-  return {
-    userId,
-    token,
-    container,
-    dataSources: {
-      userService: container.resolve('userService'),
-      adminService: container.resolve('adminService'),
-    }
-  };
-}
 
       })
     );

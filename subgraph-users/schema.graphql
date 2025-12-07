@@ -1,68 +1,123 @@
-
-
+# users schema.graphql
 schema
   @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable"]) {
   query: Query
+  mutation: Mutation
 }
 
-directive @cacheControl(
-  maxAge: Int
-  scope: CacheControlScope
-  inheritMaxAge: Boolean
-) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION
-
-enum CacheControlScope {
-  PUBLIC
-  PRIVATE
-}
-# Enums
+# Enums (authoritative; MUST match other subgraphs)
 enum Role {
-  ADMIN
-  HOST
-  GUEST
   USER
+  GUEST
+  HOST
   PENDING_HOST
+  ADMIN
 }
 
 # Scalars
 scalar DateTime
 
+# Common Response interface
 interface Response {
-  "Similar to HTTP status code, represents the status of the mutation"
   code: Int!
-  "Indicates whether the mutation was successful"
   success: Boolean!
-  "Human-readable message for the UI"
   message: String!
 }
 
+# Canonical User interface (authoritative)
 interface User @key(fields: "id") {
   id: ID!
-  email: String! 
+  email: String!
   fullName: String
   firstName: String!
   lastName: String!
+  picture: String!
+  nickname: String!
   role: Role!
+  provider: OAuthProvider
+  oauthId: String!
+  createdAt: String!   # ✅ add
+  updatedAt: String!   # ✅ add
+}
+
+
+# Concrete types implementing User — USERS subgraph OWNS the concrete fields
+type Guest implements User @key(fields: "id") {
+  id: ID!
+  email: String!
+  name: String
+  role: Role!
+  isVerified: Boolean!
+  isLocked: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  # extra fields specific to users facing auth/profile
+  fullName: String
+  firstName: String!
+  lastName: String!
+  picture: String!
+  nickname: String!
+  provider: OAuthProvider
+  oauthId: String!
+  # tokens stored/returned by auth flows (if needed)
+  idToken: String
+  accessToken: String
+  refreshToken: String
+}
+
+type Host implements User @key(fields: "id") {
+  id: ID!
+  email: String!
+  name: String
+  role: Role!
+  isVerified: Boolean!
+  isLocked: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  # host-specific fields
+  fullName: String!
+  firstName: String!
+  lastName: String!
+  picture: String!
+  nickname: String!
+  provider: OAuthProvider
+  oauthId: String!
+  idToken: String
+  accessToken: String
+  refreshToken: String
+  description: String
+}
+
+# Admin type must exist in users subgraph and implement User (authoritative owner)
+type Admin implements User @key(fields: "id") {
+  id: ID!
+  email: String!
+  name: String
+  role: Role!
+  isVerified: Boolean!
+  isLocked: Boolean!
+  createdAt: String!
+  updatedAt: String!
+
+  # admin-specific fields
+  fullName: String
+  firstName: String!
+  lastName: String!
   picture: String!
   nickname: String!
   provider: OAuthProvider
   oauthId: String!
 }
 
-type Guest implements User @key(fields: "id") {
-  id: ID! @shareable
-  email: String! @shareable
-  fullName: String @shareable
-  firstName: String! @shareable
-  lastName: String! @shareable
-  picture: String! @shareable
-  nickname: String! @shareable
-  role: Role! @shareable
-  provider: OAuthProvider @shareable
-  oauthId: String! @shareable
-  idToken: String! @shareable
-  accessToken: String! @shareable
-  refreshToken: String @shareable
+# Inputs, Responses, Auth payloads etc. (kept from your original)
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+  APPLE
+  GITHUB
+  LOCAL
 }
 
 input VerifyHostInput {
@@ -71,24 +126,6 @@ input VerifyHostInput {
   faceImageUrl: String!
 }
 
-type Host implements User @key(fields: "id") {
-  id: ID! @shareable
-  email: String! @shareable
-  fullName: String @shareable
-  firstName: String! @shareable
-  lastName: String! @shareable
-  picture: String! @shareable
-  nickname: String! @shareable
-  role: Role! @shareable
-  provider: OAuthProvider @shareable
-  oauthId: String! @shareable
-  idToken: String! @shareable
-  accessToken: String! @shareable
-  refreshToken: String @shareable
-  description: String @shareable
-}
-
-# Input Types
 input SignInInput {
   email: String
   password: String
@@ -116,69 +153,72 @@ input UpdatePasswordInput {
   password: String!
 }
 
-# Response Types
 type AuthPayload {
-  token: String! @shareable
-  userId: ID! @shareable
-  role: Role! @shareable
+  token: String!
+  userId: ID!
+  role: Role!
 }
 
 type SignInResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  auth: AuthPayload @shareable
-  refreshToken: String @shareable
-  role: Role! @shareable
-  userId: ID !@shareable
+  code: Int!
+  success: Boolean!
+  message: String!
+  auth: AuthPayload
+  refreshToken: String
+  role: Role
+  userId: ID
 }
 
 type ReqResetPwdResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  link: String! @shareable
+  code: Int!
+  success: Boolean!
+  message: String!
+  link: String!
 }
 
 type ForgotPasswordResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
-  email: String! @shareable
+  code: Int!
+  success: Boolean!
+  message: String!
+  email: String!
 }
 
 type InviteCodeResponse implements Response {
-  code: Int! @shareable
-  success: Boolean! @shareable
-  message: String! @shareable
+  code: Int!
+  success: Boolean!
+  message: String!
 }
 
-# Queries and Mutations
+input UpdateUserInput {
+  name: String
+  picture: String
+  role: Role
+}
+
+# Queries and Mutations — USERS subgraph owns these resolvers
+type Query {
+  getUser(id: ID!): User
+  me: User @shareable
+  user(id: ID!): User
+  users: [User]!
+}
+
 type Mutation {
-  # Mutations
-  verifyAndUpgradeHost(input: VerifyHostInput!): AuthPayload! @shareable
-  signUp(input: SignUpInput!): SignInResponse! @shareable 
-  signIn(input: SignInInput!): SignInResponse! @shareable
-  oauthSaveUser(input: OAuthInput!): AuthPayload! @shareable
-  updatePassword(input: UpdatePasswordInput!): AuthPayload! @shareable
-  requestResetPassword(email: String!): ReqResetPwdResponse! @shareable
-  forgotPassword(email: String!): ForgotPasswordResponse! @shareable
-  sendInviteCode(email: String!): InviteCodeResponse! @shareable
-  logout(provider: OAuthProvider): Boolean! @shareable
-  createUser(name: String!, email: String!): User @shareable
-  updateUser(id: ID!, input: UpdateUserInput!): User @shareable
-  verifyGoogleToken(token: String): AuthPayload @shareable
-  verifyFacebookToken(token: String): AuthPayload @shareable
-  verifyAppleToken(token: String): AuthPayload @shareable
-  verifyTwitterToken(token: String): AuthPayload @shareable
-}
-
-enum OAuthProvider {
-  GOOGLE
-  FACEBOOK
-  APPLE
-  GITHUB
-  LOCAL
+  verifyAndUpgradeHost(input: VerifyHostInput!): AuthPayload!
+  signUp(input: SignUpInput!): SignInResponse!
+  signIn(input: SignInInput!): SignInResponse!
+  oauthSaveUser(input: OAuthInput!): AuthPayload!
+  updatePassword(input: UpdatePasswordInput!): AuthPayload!
+  requestResetPassword(email: String!): ReqResetPwdResponse!
+  forgotPassword(email: String!): ForgotPasswordResponse!
+  sendInviteCode(email: String!): InviteCodeResponse!
+  logout(provider: OAuthProvider): Boolean!
+  createUser(name: String!, email: String!): User
+  updateUser(id: ID!, input: UpdateUserInput!): User
+  verifyGoogleToken(token: String): AuthPayload
+  verifyFacebookToken(token: String): AuthPayload
+  verifyAppleToken(token: String): AuthPayload
+  verifyTwitterToken(token: String): AuthPayload
 }
 
 input OAuthInput {
@@ -188,23 +228,6 @@ input OAuthInput {
   email: String
   name: String
 }
-type Query {
-  getUser(id: ID!): User @shareable
-  
-  me: User @shareable
-  user(id: ID!): User @shareable
-  users: [User]! @shareable
-}
 
-input UpdateUserInput{
-  name: String
-  picture: String
-  role: Role
-}
-
-# Federation
-type _Service {
-  sdl: String
-}
-
-union _Entity = Host | Guest
+# If you use federation _Entity union, include all types you want to resolve across subgraphs
+union _Entity = Guest | Host | Admin
