@@ -1,3 +1,5 @@
+//frontend/src/components/MyNumberUploadForm.jsx
+
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
@@ -40,7 +42,9 @@ export default function MyNumberUploadForm() {
   async function uploadToPresignedUrl(file, type){
     const res = await fetch('/file/presign-url', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', 
+      headers: { 'Content-Type': 'application/json',
+                 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ fileType: type }),
     });
 

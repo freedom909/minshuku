@@ -8,6 +8,7 @@ export const Role = {
   HOST: 'HOST',
   ADMIN: 'ADMIN',
   GUEST: 'GUEST',
+  PENDING: 'PENDING',
 };
 
 export const Provider = {
@@ -17,7 +18,7 @@ export const Provider = {
   APPLE: 'apple',
   TWITTER: 'twitter',
   GITHUB: 'github',
- LOCAL: 'local',
+  LOCAL: 'local',
 };
 
 const userSchema = new mongoose.Schema(

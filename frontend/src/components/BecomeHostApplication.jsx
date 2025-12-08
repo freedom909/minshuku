@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 
 const BecomeHostApplication = ({ session }) => {
   // We still need updateSession to refresh the session after submission
+  const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:4000';
+
   const { update: updateSession } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -168,23 +170,44 @@ const BecomeHostApplication = ({ session }) => {
     }
   };
 
-  const uploadFile = async (file, fileName) => {
-    // For now, we'll simulate file upload by creating a data URL
-    // In production, you would upload to a file storage service
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // Simulate upload delay
-        setTimeout(() => {
-          resolve(e.target.result);
-        }, 1000);
-      };
-      reader.readAsDataURL(file);
+  const uploadFile = async (file) => {
+    if (!session?.user?.id) {
+      throw new Error("You must be signed in to upload files.");
+    }
+
+    // Step 1: Get the presigned URL from the gateway
+    const presignResponse = await fetch(`${GATEWAY_URL}/file/presign-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: session.user.id,
+        fileType: file.type.split('/')[1] || 'jpeg',
+      }),
     });
+
+    if (!presignResponse.ok) {
+      const errorData = await presignResponse.json();
+      throw new Error(errorData.error || 'Failed to get presigned URL.');
+    }
+
+    const { uploadUrl, key } = await presignResponse.json();
+
+    // Step 2: Upload the file directly to Google Cloud Storage
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) throw new Error('File upload to GCS failed.');
+
+    return key; // Return the GCS object key
   };
 
   // Check if user is already a host or pending host
-  const userRole = session.user?.role || 'GUEST';
+  const userRole = session?.user?.role || 'GUEST';
   
   if (userRole === 'HOST') {
     return (

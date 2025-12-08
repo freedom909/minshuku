@@ -11,8 +11,8 @@ console.log("Environment variables loaded");
 
 // Connect to MongoDB
 console.log("Connecting to MongoDB...");
-console.log("MongoDB URL:", process.env.MONGO_URL || 'mongodb://localhost:27017/minshuku');
-mongoose.connect(process.env.MONGO_URL || 'mongodb://localhost:27017/minshuku')
+console.log("MongoDB URL:", process.env.MONGO_URL || 'mongodb://localhost:27017/air');
+mongoose.connect(process.env.MONGO_URL || 'mongodb://localhost:27017/air')
     .then(() => console.log('✅ Connected to MongoDB'))
     .catch(err => {
         console.error('❌ MongoDB Connection Error:', err);

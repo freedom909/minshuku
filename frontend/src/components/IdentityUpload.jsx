@@ -1,3 +1,5 @@
+//frontend/src/components/IdentityUpload.jsx
+
 import { useState } from "react";
 
 export default function IdentityUpload() {
