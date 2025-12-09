@@ -15,7 +15,7 @@ import OAuthService from "../userService/oauthService.js";
 import TokenService from "../userService/tokenService.js";
 import AccountLockService from "../userService/accountLockService.js";
 import AuditLogRepository from "../repositories/auditLogRepository.js";
-import AdminService from "../adminService/index.js";
+import AdminService from "../accountServices/index.js";
 // Infrastructure
 import redisClient from "../redisClient.js";
 import logger from "../../infrastructure/utils/logger.js";

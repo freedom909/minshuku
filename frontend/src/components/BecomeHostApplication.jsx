@@ -26,20 +26,20 @@ const BecomeHostApplication = ({ session }) => {
   const [message, setMessage] = useState('');
 
   // GraphQL mutation for becoming a host
-  const BECOME_HOST_MUTATION = `
-    mutation BecomeHost($userId: ID!, $myNumberCardFront: String, $myNumberCardBack: String) {
-      becomeHost(userId: $userId, myNumberCardFront: $myNumberCardFront, myNumberCardBack: $myNumberCardBack) {
-        success
-        message
-        user {
-          id
-          email
-          role
-          status
-        }
-      }
-    }
-  `;
+  // const BECOME_HOST_MUTATION = `
+  //   mutation BecomeHost($userId: ID!, $myNumberCardFront: String, $myNumberCardBack: String) {
+  //     becomeHost(userId: $userId, myNumberCardFront: $myNumberCardFront, myNumberCardBack: $myNumberCardBack) {
+  //       success
+  //       message
+  //       user {
+  //         id
+  //         email
+  //         role
+  //         status
+  //       }
+  //     }
+  //   }
+  // `;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -108,11 +108,11 @@ const BecomeHostApplication = ({ session }) => {
     setMessage('');
 
     try {
-      // First, upload the My Number Card images
-      const uploadPromises = [
-        uploadFile(myNumberCardFront, 'my_number_card_front'),
-        uploadFile(myNumberCardBack, 'my_number_card_back')
-      ];
+      // // First, upload the My Number Card images
+      // const uploadPromises = [
+      //   uploadFile(myNumberCardFront, 'my_number_card_front'),
+      //   uploadFile(myNumberCardBack, 'my_number_card_back')
+      // ];
 
       const [frontUrl, backUrl] = await Promise.all(uploadPromises);
 
@@ -123,13 +123,13 @@ const BecomeHostApplication = ({ session }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.accessToken}`,
         },
-        body: JSON.stringify({
-          query: BECOME_HOST_MUTATION,
-          variables: { 
-            myNumberCardFront: frontUrl,
-            myNumberCardBack: backUrl
-          },
-        }),
+        // body: JSON.stringify({
+        //   query: BECOME_HOST_MUTATION,
+        //   variables: {
+        //     myNumberCardFront: frontUrl,
+        //     myNumberCardBack: backUrl
+        //   },
+        // }),
       });
 
       const result = await response.json();
@@ -170,41 +170,41 @@ const BecomeHostApplication = ({ session }) => {
     }
   };
 
-  const uploadFile = async (file) => {
-    if (!session?.user?.id) {
-      throw new Error("You must be signed in to upload files.");
-    }
+  // const uploadFile = async (file) => {
+  //   if (!session?.user?.id) {
+  //     throw new Error("You must be signed in to upload files.");
+  //   }
 
-    // Step 1: Get the presigned URL from the gateway
-    const presignResponse = await fetch(`${GATEWAY_URL}/file/presign-url`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: session.user.id,
-        fileType: file.type.split('/')[1] || 'jpeg',
-      }),
-    });
+  //   // Step 1: Get the presigned URL from the gateway
+  //   const presignResponse = await fetch(`${GATEWAY_URL}/file/presign-url`, {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({
+  //       userId: session.user.id,
+  //       fileType: file.type.split('/')[1] || 'jpeg',
+  //     }),
+  //   });
 
-    if (!presignResponse.ok) {
-      const errorData = await presignResponse.json();
-      throw new Error(errorData.error || 'Failed to get presigned URL.');
-    }
+  //   if (!presignResponse.ok) {
+  //     const errorData = await presignResponse.json();
+  //     throw new Error(errorData.error || 'Failed to get presigned URL.');
+  //   }
 
-    const { uploadUrl, key } = await presignResponse.json();
+  //   const { uploadUrl, key } = await presignResponse.json();
 
-    // Step 2: Upload the file directly to Google Cloud Storage
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.type },
-      body: file,
-    });
+  //   // Step 2: Upload the file directly to Google Cloud Storage
+  //   const uploadResponse = await fetch(uploadUrl, {
+  //     method: 'PUT',
+  //     headers: { 'Content-Type': file.type },
+  //     body: file,
+  //   });
 
-    if (!uploadResponse.ok) throw new Error('File upload to GCS failed.');
+  //   if (!uploadResponse.ok) throw new Error('File upload to GCS failed.');
 
-    return key; // Return the GCS object key
-  };
+  //   return key; // Return the GCS object key
+  // };
 
   // Check if user is already a host or pending host
   const userRole = session?.user?.role || 'GUEST';

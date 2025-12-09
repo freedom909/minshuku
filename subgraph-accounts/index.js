@@ -22,7 +22,7 @@ const resolvers = {
 };
 
 // ✅ Load schema
-const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' }));
+const typeDefs = gql(readFileSync('./schema.graphql', { encoding: 'utf-8' })); // Corrected path
 
 async function startServer() {
   const app = express();

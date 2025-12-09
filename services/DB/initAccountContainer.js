@@ -1,8 +1,11 @@
 import pkg from 'mongodb';
 const { MongoClient } = pkg;
 import { createContainer, asClass, asValue } from 'awilix';
+import MyNumberCardService from '../accountServices/myNumberCard.service.js';
+import OcrService from '../accountServices/ocr/ocrService.js';
+import StorageService from '../accountServices/storage/storageService.js';
 import connectToMongoDB from './connectMongoDB.js';
-import AccountService from '../accountService.js';
+import AccountService from '../accountServices/accountService.js';
 import AccountRepository from '../repositories/accountRepository.js';
 import UserService from '../userService/index.js';
 import UserRepository from '../repositories/userRepository.js';
@@ -95,6 +98,10 @@ const initAccountContainer = async ({ services = [] } = {}) => {
     oauthService: asClass(OAuthService).singleton(),
     userService: asClass(UserService).singleton(),
     accountService: asClass(AccountService).singleton(),
+    userRepository: asClass(UserRepository).singleton(),
+    myNumberCardService: asClass(MyNumberCardService).singleton(),
+    ocrService: asClass(OcrService).singleton(),
+    storageService: asClass(StorageService).singleton(),
     listingService: asClass(ListingService).singleton(),
     cartService: asClass(CartService).singleton(),
     bookingService: asClass(BookingService).singleton(),

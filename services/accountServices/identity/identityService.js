@@ -1,4 +1,4 @@
-// infra/identity/identityService.js
+// services/accountServices/identity/identityService.js
 export default class IdentityService {
   constructor(storageService, faceService, accountService) {
     this.storage = storageService;

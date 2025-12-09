@@ -1,191 +1,80 @@
+# subgraph-accounts/schema.graphql
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.8",
     import: ["@key", "@shareable", "@external"]
   )
 
-# --------------------------
-# SCALARS
-# --------------------------
-scalar DateTime
-
-# --------------------------
-# QUERIES
-# --------------------------
-type Query {
-  me: User @shareable
-  
-  user(id: ID!): User @shareable
-  users: [User!]! @shareable
- 
-  userDashboard(userId: ID!): UserDashboard
-  account(id: ID!): Account
-  accounts: [Account!]
-}
-
-# --------------------------
-# MUTATIONS
-# --------------------------
-type Mutation {
-  createUser(name: String!, email: String!, password: String): User @shareable
-  updateUser(id: ID!, input: UpdateUserInput!): User @shareable
-  deleteUser(id: ID!): Boolean 
-  getPresignedUrl(input: PresignFileInput!): PresignedUrlResponse!
-  requestMyNumberUploadUrl(fileType: String!): PresignResponse!
-  verifyMyNumber(frontKey: ID!, selfieKey: ID!): VerifyResult!
-  becomeHost(input: BecomeHostInput!): BecomeHostResponse!
-}
-
-type BecomeHostResponse implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-  user: User
-}
-
-type VerifyResult {
-  success: Boolean!
-  similarity: Float!
-  message: String
-}
-# --------------------------
-# USER INTERFACE & TYPES
-# --------------------------
+# Define the User interface as a stub from the users subgraph
 interface User @key(fields: "id") {
   id: ID!
-  name: String!
-  email: String!
-  avatar: String
-  role: Role
-  joinedAt: DateTime
 }
 
-interface Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-}
-
-type Guest implements User @key(fields: "id") {
-  id: ID! @shareable
-  name: String! @shareable
-  email: String! @shareable
-  avatar: String @shareable
-  role: Role @shareable
-  joinedAt: DateTime @shareable
-  bookings: [Booking!] @shareable
-}
-
-type Host implements User @key(fields: "id") {
-  id: ID! @shareable
-  name: String! @shareable
-  email: String! @shareable
-  avatar: String @shareable
-  role: Role @shareable
-  joinedAt: DateTime @shareable
-  listings: [Listing!] @shareable
-}
-
-# --------------------------
-# External types from other subgraphs
-# --------------------------
-extend type Booking @key(fields: "id") {
+# Extend concrete User types from the users subgraph
+extend type Guest implements User @key(fields: "id") {
   id: ID! @external
+  # email: String! @external # Only needed if used by a resolver in this subgraph
+  # role: Role! @external # Only needed if used by a resolver in this subgraph
+  # Add any other fields from Guest that 'accounts' needs to reference
+  # e.g., isVerified: Boolean! @external
 }
 
-extend type Listing @key(fields: "id") {
+extend type Host implements User @key(fields: "id") {
   id: ID! @external
+  # Add any other fields from Host that 'accounts' needs to reference
+  # e.g., description: String @external
 }
 
-type PresignedUrlResponse {
-  success: Boolean!
-  url: String!
-  key: String!
-  message: String
+extend type Admin implements User @key(fields: "id") {
+  id: ID! @external
+  # email: String! @external
+  # role: Role! @external
 }
 
-type PresignResponse {
-  uploadUrl: String!
-  key: String!
-  expiresIn: Int!
-}
-# --------------------------
-# ENUMS
-# --------------------------
-enum Role {
-  ADMIN
-  HOST
-  GUEST
-  USER
-  PENDING_HOST
-}
-
-# --------------------------
-# DASHBOARD TYPES
-# --------------------------
-# Renamed to be neutral: could have separate HostDashboard/GuestDashboard later
-type UserDashboard {
-  id: ID!
-  user: User
-  totalListings: Int
-  totalBookings: Int
-  recentBookings: [Booking!]
-  recentListings: [Listing!]
-  notifications: [Notification!]
-}
-
-type BookingSummary {
-  id: ID!
-  listingTitle: String
-  checkIn: DateTime
-  checkOut: DateTime
-  totalPrice: Float
-  createdAt: DateTime
-}
-
-type ListingSummary {
-  id: ID!
-  title: String
-  price: Float
-  imageUrl: String
-  createdAt: DateTime
-  # No @shareable needed here, unless other subgraphs query this type directly
-}
-
-type Notification {
-  id: ID!
-  message: String!
-  createdAt: DateTime!
-}
-
-# --------------------------
-# ACCOUNT TYPE
-# --------------------------
+# Define types that are owned by the accounts subgraph
 type Account @key(fields: "id") {
   id: ID!
   email: String!
   createdAt: DateTime!
+  # Add other account-specific fields here
 }
 
-# --------------------------
-# INPUT TYPES
-# --------------------------
-input UpdateUserInput {
-  name: String
-  picture: String
-  role: Role
-}
-
-input PresignFileInput {
-  fileName: String!
-  contentType: String!
-}
-
-# ============================
-# Inputs
-# ============================
+# Define the BecomeHostInput and BecomeHostResponse
 input BecomeHostInput {
-  governmentIdFront: String!
-  governmentIdBack: String!
-  selfie: String!
+  frontKey: String!
+  backKey: String!
+  selfieKey: String!
 }
+
+type BecomeHostResponse {
+  success: Boolean!
+  message: String!
+  user: Guest # Return a concrete type or the User interface if defined correctly
+}
+
+# Define the mutation owned by the accounts subgraph
+extend type Mutation {
+  becomeHost(input: BecomeHostInput!): BecomeHostResponse!
+}
+
+# NOTE: The 'bookings' and 'listings' subgraphs are currently disabled in the gateway.
+# These extensions are commented out to allow schema composition.
+# To use them, enable the corresponding subgraphs in gateway/index.js.
+# extend type Booking @key(fields: "id") @external {
+#   id: ID! @external
+# }
+# extend type Listing @key(fields: "id") @external {
+#   id: ID! @external
+# }
+
+# Re-declare the Role enum for consistency if it's used in this subgraph's types
+extend enum Role {
+  USER
+  GUEST
+  HOST
+  PENDING_HOST
+  ADMIN
+}
+
+# Scalar for DateTime
+scalar DateTime

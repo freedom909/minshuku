@@ -63,6 +63,14 @@ class AccountRepository {
   async updateAccountPassword(id, password) {
     return await this.collection.updateOne({ _id: id }, { $set: { password } });
   }
+
+  async updateUserRole(id, role) {
+    return await this.collection.updateOne({ _id: id }, { $set: { role } });
+  }
+
+  async updateUserRole(id, role) {
+    return await this.collection.updateOne({ _id: id }, { $set: { role } });
+  }
 }
 
 export default AccountRepository;

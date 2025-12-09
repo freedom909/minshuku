@@ -14,7 +14,7 @@ const BECOME_HOST = gql`
 
 
 
-const allowedTypes = ['image/jpeg', 'image/png'];
+const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
 const maxSizeMB = 10;
 
 export default function MyNumberUploadForm() {
@@ -27,7 +27,7 @@ export default function MyNumberUploadForm() {
   // Validate file
   const validateFile = (file) => {
     if (!allowedTypes.includes(file.type)) {
-      setError('Only JPG/PNG allowed.');
+      setError('Only JPG, JPEG, and PNG allowed.');
       return false;
     }
     if (file.size > maxSizeMB * 1024 * 1024) {

@@ -1,20 +1,21 @@
 // gateway/index.js (nodemon restart trigger)
 import './config.js'; // Import and execute dotenv config first
-import { ApolloServer } from '@apollo/server';
 import { ApolloGateway, IntrospectAndCompose } from '@apollo/gateway';
+import { ApolloServer } from '@apollo/server';
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import { expressMiddleware } from '@as-integrations/express5';
 import fileRouter from "./routes/fileRouter.js";
-import adminRouterFactory from "./routes/adminRouter.js";
-import initializeAdminContainer from "../services/DB/initAdminContainer.js";
+import presignRouter from '../services/accountServices/storage/presignRouter.js';
+import accountRouterFactory from "./routes/accountRouter.js";
+import initializeAccountContainer from "../services/DB/initAccountContainer.js";
 
 const gateway = new ApolloGateway({
-  
+
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
-      // { name: 'accounts', url: process.env.ACCOUNTS_SUBGRAPH_URL || 'http://localhost:4020/graphql' },
+      { name: 'accounts', url: process.env.ACCOUNTS_SUBGRAPH_URL || 'http://localhost:4020/graphql' },
       { name: 'admin', url: process.env.ADMIN_SUBGRAPH_URL || 'http://localhost:4150/graphql' },
       // { name: 'profiles', url: process.env.PROFILES_SUBGRAPH_URL || 'http://localhost:4030/graphql' },
       { name: 'users', url: process.env.USERS_SUBGRAPH_URL || 'http://localhost:4010/graphql' },
@@ -40,20 +41,22 @@ const gateway = new ApolloGateway({
 async function startGateway() {
   const app = express();
   const httpServer = http.createServer(app);
-  const server = new ApolloServer({ gateway, subscriptions: false,introspection: true, context: ({ req }) => ({ req }) });
- 
+  const server = new ApolloServer({ gateway, subscriptions: false, introspection: true, context: async ({ req }) => ({ req }) });
+
   await server.start();
 
   // CORS first
   app.use(cors({ origin: true, credentials: true }));
   app.use(express.json());
 
-  // 👉 Add your custom REST API
-  app.use('/file', fileRouter);
+  // Initialize DI container for REST routes
+  const container = await initializeAccountContainer();
+
   // Admin REST API (uses dependency injection)
-   const container = await initializeAdminContainer();
-  const adminRouter = adminRouterFactory(container);
-  app.use("/admin", adminRouter);
+  const accountRouter = accountRouterFactory(container);
+  app.use("/admin", accountRouter);
+  app.use("/file", presignRouter(container));
+
   // GraphQL middleware for Gateway
   app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }) => ({ req }),

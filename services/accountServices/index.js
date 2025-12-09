@@ -1,6 +1,6 @@
 import { GraphQLError } from 'graphql';
 
-export default class AdminService {
+export default class AccountService {
   constructor({ userRepository, auditLogRepository, logger,tokenService  }) {
 
     this.userRepository = userRepository;

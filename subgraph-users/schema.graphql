@@ -197,10 +197,10 @@ input UpdateUserInput {
 
 # Queries and Mutations — USERS subgraph owns these resolvers
 type Query {
-  getUser(id: ID!): User
-  me: User @shareable
-  user(id: ID!): User
-  users: [User]!
+  getUser(id: ID!): User @shareable
+  me: User @shareable 
+  user(id: ID!): User @shareable
+  users: [User]!@shareable
 }
 
 type Mutation {

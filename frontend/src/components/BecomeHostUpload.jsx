@@ -1,23 +1,22 @@
+//src/components/BecomeHostUpload.jsx
 "use client";
 
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
-
-
 const MAX_SIZE_MB = 8;
-const ALLOWED_TYPES = ["image/jpeg", "image/png"];
+const ALLOWED_TYPES = ["image/jpeg","image/jpg", "image/png"];
 const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:4000';
 
 export default function BecomeHostUpload() {
-  const [files, setFiles] = useState<FileMap>({});
+  const [files, setFiles] = useState({});
   const [progress, setProgress] = useState({ front: 0, back: 0, selfie: 0 });
   const [submitting, setSubmitting] = useState(false);
   const { data: session } = useSession();
 
   const validateFile = (file) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      alert("Only JPG/PNG allowed");
+      alert("Only JPG, JPEG, and PNG allowed");
       return false;
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
@@ -42,42 +41,43 @@ export default function BecomeHostUpload() {
     }
   };
 
-  const getPresignedUrl = async (fileType) => {
-    if (!session?.user?.id) {
-      throw new Error("You must be signed in to upload files.");
-    }
+const getPresignedUrl = async (filePath, contentType) => {
+  const res = await fetch(`${GATEWAY_URL}/file/presign-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      filePath,
+      contentType,
+    }),
+  });
 
-    const res = await fetch(`${GATEWAY_URL}/file/presign-url`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        userId: session.user.id,
-        fileType: fileType.split('/')[1] || 'jpeg'
-      }),
-    });
+  if (!res.ok) throw new Error("Presign failed");
+  return res.json();
+};
 
-    if (!res.ok) throw new Error("Presign failed");
-    return res.json();
-  };
+const uploadToPresignedUrl = async (file, name) => {
+  const timestamp = Date.now();
+  const ext = file.name.split(".").pop();
+  const filePath = `mynumber/${session.user.id}/${name}-${timestamp}.${ext}`;
 
-  const uploadToPresignedUrl = async (file, name) => {
-    // Get the presigned URL from our gateway
-    const { uploadUrl, key } = await getPresignedUrl(file.type);
+  // Ask backend for signed URL
+  const { uploadUrl } = await getPresignedUrl(filePath, file.type);
 
-    const formData = new FormData();
-    // For GCS V4 signed URLs, we don't need to add fields to the form.
-    // The URL itself contains all the necessary authentication info.
-    // Object.entries(fields).forEach(([k, v]) => formData.append(k, v));
-    formData.append("file", file);
+  // Upload directly to GCS
+  const res = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
 
-    await fetch(url, {
-      method: "PUT",
-      body: file,
-    });
+  if (!res.ok) throw new Error("Upload failed");
 
-    setProgress((prev) => ({ ...prev, [name]: 100 }));
-    return key;
-  };
+  setProgress((prev) => ({ ...prev, [name]: 100 }));
+
+  return filePath;
+};
+
+
 
   const onSubmit = async () => {
     if (!files.front || !files.back || !files.selfie) {
@@ -94,7 +94,7 @@ export default function BecomeHostUpload() {
         selfieKey: await uploadToPresignedUrl(files.selfie, "selfie"),
       };
 
-      const gqlRes = await fetch("/api/graphql", {
+      const gqlRes = await fetch(`${GATEWAY_URL}/graphql`, { // Use GATEWAY_URL
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -112,6 +112,7 @@ export default function BecomeHostUpload() {
 
       const result = await gqlRes.json();
       alert(result.data.becomeHost.message);
+      // TODO: Redirect user or update UI to show "Pending" status
     } catch (err) {
       console.error(err);
       alert("Upload failed");
@@ -121,7 +122,8 @@ export default function BecomeHostUpload() {
   };
 
   const renderDrop = (label, key) => (
-    <div
+    <label
+      htmlFor={`file-upload-${key}`} // Associate label with input for accessibility
       className="border-2 border-dashed p-6 rounded-xl text-center cursor-pointer
                 hover:border-blue-500 transition bg-gray-50"
       onDrop={(e) => handleFileDrop(e, key)}
@@ -147,7 +149,7 @@ export default function BecomeHostUpload() {
           />
         </div>
       )}
-    </div>
+    </label>
   );
 
   return (
@@ -155,8 +157,7 @@ export default function BecomeHostUpload() {
       <h2 className="text-xl font-bold text-center">
         My Number Card Verification
       </h2>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"> {/* Removed onClick from here */}
         {renderDrop("Front of Card", "front")}
         {renderDrop("Back of Card", "back")}
       </div>
