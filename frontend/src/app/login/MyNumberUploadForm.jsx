@@ -38,24 +38,32 @@ export default function MyNumberUploadForm() {
   };
 
   // Upload using presign URL
-  async function uploadToPresignedUrl(file, type){
-    const res = await fetch('/file/presign-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileType: type }),
-    });
+async function uploadToPresignedUrl(file, type) {
+  const res = await fetch('/api/presign-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fileType: file.type,
+      key: `${type}-${Date.now()}.${file.type.split('/')[1]}` // optional
+    }),
+  });
 
-    const { uploadUrl, key } = await res.json();
-    if (!uploadUrl) throw new Error('Failed presign.');
-
-    await fetch(uploadUrl, {
-      method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': file.type },
-    });
-
-    return key;
+  if (!res.ok) {
+    throw new Error('Presign failed (proxy error)');
   }
+
+  const { uploadUrl, key } = await res.json();
+  if (!uploadUrl) throw new Error('Failed presign.');
+
+  await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: { 'Content-Type': file.type },
+  });
+
+  return key;
+}
+
 
   const handleDrop = (type) => (e) => {
     e.preventDefault();

@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+insightface
+onnxruntime
+opencv-python
+numpy<2

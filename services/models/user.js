@@ -1,5 +1,4 @@
-// services/models/user.js
-
+// models/user.js
 import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -8,73 +7,59 @@ export const Role = {
   HOST: 'HOST',
   ADMIN: 'ADMIN',
   GUEST: 'GUEST',
-  PENDING: 'PENDING',
-};
-
-export const Provider = {
-  EMAIL: 'email',
-  GOOGLE: 'google',
-  FACEBOOK: 'facebook',
-  APPLE: 'apple',
-  TWITTER: 'twitter',
-  GITHUB: 'github',
-  LOCAL: 'local',
+  PENDING_HOST: 'PENDING_HOST'
 };
 
 const userSchema = new mongoose.Schema(
   {
-    email: { type: String },
+    email: { type: String, index: true, sparse: true },
     password: { type: String },
     name: { type: String },
-    fullName: { type: String },
     firstName: { type: String },
     lastName: { type: String },
-    nickName: { type: String },
     picture: { type: String },
 
     provider: {
       type: String,
-      enum: Object.values(Provider),
-      required: true,
+      default: 'local',
     },
-
-    oauthId: { type: String },
-
-    sub: {
-      type: String,
-      required: function () {
-        // 对 email 登录的用户可以自动生成，不强制
-        return this.provider !== Provider.EMAIL;
-      },
-    },
+    sub: { type: String },
 
     role: {
       type: String,
       enum: Object.values(Role),
       default: Role.USER,
-      required: true,
+      required: true
     },
 
-    version: {
-      type: Number,
-      default: 0,
+    // Host / verification related
+    hostStatus: {
+      type: String,
+      enum: ['NOT_APPLIED', 'PENDING', 'APPROVED', 'REJECTED'],
+      default: 'NOT_APPLIED',
     },
 
-    kycVerified: { type: Boolean, default: false, required: true },// add this field
+    hostVerification: {
+      frontKey: { type: String },
+      backKey: { type: String },
+      selfieKey: { type: String },
+      submittedAt: { type: Date },
+      reviewedAt: { type: Date },
+      reviewerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      result: { type: String } // optional (e.g., 'approved' or 'rejected')
+    },
+
+    kycVerified: { type: Boolean, default: false, required: true },
+
+    version: { type: Number, default: 0 }
   },
   { timestamps: true }
 );
 
-// 唯一索引：provider + sub
-userSchema.index({ provider: 1, sub: 1 }, { unique: true });
-
-// ⚡ 自动生成 sub（仅 email 用户）
-userSchema.pre('validate', function (next) {
-  if (this.provider === Provider.EMAIL && !this.sub) {
-    this.sub = uuidv4();
-  }
+userSchema.pre('validate', function(next) {
+  if (!this.sub) this.sub = uuidv4();
   next();
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 export default User;

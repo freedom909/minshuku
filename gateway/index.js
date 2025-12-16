@@ -5,9 +5,9 @@ import { ApolloServer } from '@apollo/server';
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
+import cookieParser from "cookie-parser";
 import { expressMiddleware } from '@as-integrations/express5';
 import fileRouter from "./routes/fileRouter.js";
-import presignRouter from '../services/accountServices/storage/presignRouter.js';
 import accountRouterFactory from "./routes/accountRouter.js";
 import initializeAccountContainer from "../services/DB/initAccountContainer.js";
 
@@ -45,8 +45,21 @@ async function startGateway() {
 
   await server.start();
 
+  // Define a whitelist of allowed origins
+  const whitelist = [
+    "http://localhost:3000",
+    "http://172.18.160.1:3000", // Your local network IP
+  ];
+
   // CORS first
-  app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: whitelist,
+  credentials: true,
+  exposedHeaders: ["Set-Cookie"]
+}));
+
+
+  app.use(cookieParser()); 
   app.use(express.json());
 
   // Initialize DI container for REST routes
@@ -55,8 +68,8 @@ async function startGateway() {
   // Admin REST API (uses dependency injection)
   const accountRouter = accountRouterFactory(container);
   app.use("/admin", accountRouter);
-  app.use("/file", presignRouter(container));
-
+  app.use("/file", fileRouter);
+console.log("fileRouter loaded from:", import.meta.url);
   // GraphQL middleware for Gateway
   app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }) => ({ req }),

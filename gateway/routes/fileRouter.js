@@ -1,8 +1,7 @@
 // routes/fileRouter.js
-import { Storage } from "@google-cloud/storage";
 import express from "express";
 import authMiddleware from "../../infrastructure/auth/authMiddleware.js";
-import { getPresignedUrl } from "../services/fileService.js";
+import { getPresignedUrl } from "../services/fileService.js"; // ✅ correct import
 
 const router = express.Router();
 
@@ -18,27 +17,40 @@ router.get("/presign-url", (req, res) => {
  */
 router.post("/presign-url", authMiddleware, async (req, res) => {
   try {
-    const { fileType } = req.body;
-
-    if (!fileType) {
-      return res.status(400).json({ error: "Missing fileType" });
-    }
-
     const userId = req.user?.id;
+    const { fileName, fileType } = req.body;
+
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized (userId missing)" });
     }
 
-    // 💡 Use the centralized fileService instead of raw gcsBucket
+    if (!fileName || !fileType) {
+      return res.status(400).json({
+        error: "fileName and fileType required",
+      });
+    }
+
+    // Build key correctly
+    const uniqueKey = `${Date.now()}-${fileName}`;
+
+    // Generate signed URL using your service
     const { uploadUrl, key } = await getPresignedUrl({
+      fileKey: uniqueKey,
       userId,
-      fileType,
+      contentType: fileType,
     });
 
-    return res.json({ uploadUrl, filePath: key });
-  } catch (error) {
-    console.error("🔥 PRESIGN ERROR:", error);
-    res.status(500).json({ error: "Presign failed", details: error.message });
+    return res.json({
+      uploadUrl,
+      key,
+    });
+
+  } catch (err) {
+    console.error("🔥 PRESIGN ERROR:", err);
+    return res.status(500).json({
+      error: "Failed to generate presign URL",
+      details: err.message,
+    });
   }
 });
 

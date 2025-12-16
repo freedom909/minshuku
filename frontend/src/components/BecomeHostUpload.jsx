@@ -44,6 +44,7 @@ export default function BecomeHostUpload() {
 const getPresignedUrl = async (filePath, contentType) => {
   const res = await fetch(`${GATEWAY_URL}/file/presign-url`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       filePath,
@@ -137,6 +138,7 @@ const uploadToPresignedUrl = async (file, name) => {
       )}
       <input
         type="file"
+        id={`file-upload-${key}`}
         accept="image/*"
         className="hidden"
         onChange={(e) => handleFilePick(e, key)}

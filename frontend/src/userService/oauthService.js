@@ -2,7 +2,7 @@
 import config from '@/config/config.js'
 
 // Define the GraphQL endpoint URL
-const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || 'http://localhost:4000/graphql';
+const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || 'http://localhost:4010/graphql';
 
 class OAuthService {
     constructor() {
