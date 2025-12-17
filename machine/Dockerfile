@@ -1,34 +1,44 @@
-# machine/Dockerfile
-FROM python:3.11-slim
+FROM python:3.10-slim
 
-# Set working directory
-WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
+# System deps
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+    git curl \
+    libgl1 libglib2.0-0 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+WORKDIR /app
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# 🔒 NumPy ABI safety
+RUN pip install --no-cache-dir "numpy<2"
 
-# Copy application code
+# 🔒 ABI-sensitive deps
+RUN pip install --no-cache-dir \
+    protobuf==3.20.* \
+    onnxruntime==1.17.3 \
+    insightface==0.7.2 \
+    --no-deps
+
+# App deps (⚠️ python-multipart 必须)
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn \
+    python-multipart \
+    pillow \
+    opencv-python \
+    requests \
+    tqdm
+
+# 🔥 关键：提前下载 InsightFace 模型（build 阶段）
+RUN python - <<EOF
+from insightface.app import FaceAnalysis
+FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+print("InsightFace model downloaded successfully")
+EOF
+
 COPY . .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
-# Expose port
-EXPOSE 9000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:9000/health || exit 1
-
-# Start application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
