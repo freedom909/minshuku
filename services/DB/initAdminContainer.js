@@ -28,7 +28,7 @@ const initializeAdminContainer = async ({ services = [] } = {}) => {
   const container = createContainer();
 
   // Config values from .env (with safe defaults)
-  const jwtSecret = process.env.JWT_SECRET || "minshuku_jwt_secret_key_2024_secure_random_string";
+  const jwtSecret = process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string';
   const jwtExpiresIn = process.env.JWT_EXPIRES_IN || "1h";
   const jwtAlgorithm = process.env.JWT_ALGORITHM || "HS256";
 

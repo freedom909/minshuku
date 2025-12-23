@@ -100,6 +100,7 @@ async function startServer() {
         const authHeader = req.headers.authorization;
         let user = null;
         let userId = null;
+console.log("AUTH HEADER:", req.headers.authorization);
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
           try {

@@ -74,6 +74,21 @@ class UserService {
     }
   }
 
+async findOrCreateOAuthUser({ provider, oauthId, email, name, picture }) {
+    let user = await this.userRepository.findByProvider(provider, oauthId);
+
+    if (!user) {
+      user = await this.userRepository.create({
+        provider,
+        oauthId,
+        email,
+        name,
+        picture,
+        role: 'GUEST',
+      });
+    }
+    return user;
+  }
 
   async handleGoogleOAuth(token) {
     return await this.oauthService.handleGoogleOAuth(token);

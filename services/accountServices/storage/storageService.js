@@ -5,34 +5,62 @@ export default class StorageService {
   constructor({ logger }) {
     this.logger = logger || console;
 
-    if (!process.env.GCP_PROJECT_ID || !process.env.GCP_CLIENT_EMAIL || !process.env.GCP_PRIVATE_KEY) {
-      this.logger.warn("GCP credentials are not fully configured. StorageService may not work.");
+    const {
+      GCP_PROJECT_ID,
+      GCP_CLIENT_EMAIL,
+      GCP_PRIVATE_KEY,
+      GCP_BUCKET_NAME,
+    } = process.env;
+
+    if (!GCP_PROJECT_ID || !GCP_CLIENT_EMAIL || !GCP_PRIVATE_KEY) {
+      this.logger.warn("⚠️ GCP credentials are not fully configured.");
+    }
+
+    if (!GCP_BUCKET_NAME) {
+      this.logger.warn("⚠️ GCP_BUCKET_NAME is not set.");
     }
 
     this.storage = new Storage({
-      projectId: process.env.GCP_PROJECT_ID,
+      projectId: GCP_PROJECT_ID,
       credentials: {
-        client_email: process.env.GCP_CLIENT_EMAIL,
-        private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        client_email: GCP_CLIENT_EMAIL,
+        private_key: GCP_PRIVATE_KEY?.replace(/\\n/g, "\n"),
       },
     });
 
-    this.bucketName = process.env.GCP_BUCKET_NAME;
-    this.encryptedPrefix = process.env.S3_ENCRYPTED_PREFIX || "encrypted/";
+    this.bucketName = GCP_BUCKET_NAME;
+    this.uploadPrefix = "uploads/"; // ✅ GCS friendly
   }
 
   /**
-   * Generate a short-lived URL for secure upload from frontend
+   * Generate a short-lived signed URL for direct upload
    */
   async generatePresignedUrl({ fileKey, contentType, expiresIn = 300 }) {
-    if (!this.bucketName) throw new Error("GCP_BUCKET_NAME is not set.");
+    if (!this.bucketName) {
+      throw new Error("GCP_BUCKET_NAME is not set");
+    }
+
+    if (!fileKey) {
+      throw new Error("fileKey is required");
+    }
+
+    if (!contentType) {
+      throw new Error("contentType is required");
+    }
 
     const options = {
       version: "v4",
       action: "write",
-      expires: Date.now() + expiresIn * 1000, // expiresIn is in seconds
-      ContentType: contentType,
+      expires: Date.now() + expiresIn * 1000,
+      contentType, // ✅ 正确字段名
     };
+
+    this.logger.info("📦 Generating GCS presigned URL", {
+      bucket: this.bucketName,
+      fileKey,
+      contentType,
+      expiresIn,
+    });
 
     const bucket = this.storage.bucket(this.bucketName);
     const file = bucket.file(fileKey);
@@ -41,12 +69,8 @@ export default class StorageService {
     return uploadUrl;
   }
 
-  /**
-   * Read GCS file into Buffer (for OCR, crypto, etc.)
-   */
   async getObjectBuffer(fileKey) {
-    if (!this.bucketName) throw new Error("GCP_BUCKET_NAME is not set.");
-
+    if (!this.bucketName) throw new Error("GCP_BUCKET_NAME is not set");
     const [buffer] = await this.storage
       .bucket(this.bucketName)
       .file(fileKey)
@@ -54,28 +78,19 @@ export default class StorageService {
     return buffer;
   }
 
-  /**
-   * Upload processed / encrypted buffer
-   */
-  async putObjectBuffer(
-    fileKey,
-    buffer,
-    contentType = "application/octet-stream"
-  ) {
-    if (!this.bucketName) throw new Error("GCP_BUCKET_NAME is not set.");
+  async putObjectBuffer(fileKey, buffer, contentType = "application/octet-stream") {
+    if (!this.bucketName) throw new Error("GCP_BUCKET_NAME is not set");
     const bucket = this.storage.bucket(this.bucketName);
     const file = bucket.file(fileKey);
+
     await file.save(buffer, {
       contentType,
-      resumable: false, // Use simple upload for buffers
+      resumable: false,
     });
   }
 
-  /**
-   * Safe file deletion
-   */
   async deleteObject(fileKey) {
-    if (!this.bucketName) throw new Error("GCP_BUCKET_NAME is not set.");
+    if (!this.bucketName) throw new Error("GCP_BUCKET_NAME is not set");
     await this.storage.bucket(this.bucketName).file(fileKey).delete();
   }
 }

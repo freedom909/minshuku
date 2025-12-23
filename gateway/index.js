@@ -10,6 +10,9 @@ import { expressMiddleware } from '@as-integrations/express5';
 import fileRouter from "./routes/fileRouter.js";
 import accountRouterFactory from "./routes/accountRouter.js";
 import initializeAccountContainer from "../services/DB/initAccountContainer.js";
+import { buildAuthContext } from './auth/authContext.js';
+
+
 
 const gateway = new ApolloGateway({
 
@@ -18,7 +21,7 @@ const gateway = new ApolloGateway({
       { name: 'accounts', url: process.env.ACCOUNTS_SUBGRAPH_URL || 'http://localhost:4020/graphql' },
       { name: 'admin', url: process.env.ADMIN_SUBGRAPH_URL || 'http://localhost:4150/graphql' },
       // { name: 'profiles', url: process.env.PROFILES_SUBGRAPH_URL || 'http://localhost:4030/graphql' },
-      { name: 'users', url: process.env.USERS_SUBGRAPH_URL || 'http://localhost:4010/graphql' },
+      { name: 'auths', url: process.env.AUTH_SUBGRAPH_URL || 'http://localhost:4010/graphql' },
       // { name: 'listings', url: 'http://localhost:4040/graphql' },
       // { name: 'carts', url: process.env.CARTS_SUBGRAPH_URL || 'http://localhost:4060/graphql' },
       // { name: 'bookings', url: 'http://localhost:4050/graphql' },
@@ -41,7 +44,21 @@ const gateway = new ApolloGateway({
 async function startGateway() {
   const app = express();
   const httpServer = http.createServer(app);
-  const server = new ApolloServer({ gateway, subscriptions: false, introspection: true, context: async ({ req }) => ({ req }) });
+  const server = new ApolloServer({
+    gateway,
+     subscriptions: false, 
+     introspection: true,
+    context: async ({ req }) => {
+      const auth =await buildAuthContext(req);
+      if (!auth) return {};
+
+     
+
+      return { user: auth.user };
+    }
+  });
+
+
 
   await server.start();
 
@@ -52,14 +69,14 @@ async function startGateway() {
   ];
 
   // CORS first
-app.use(cors({
-  origin: whitelist,
-  credentials: true,
-  exposedHeaders: ["Set-Cookie"]
-}));
+  app.use(cors({
+    origin: whitelist,
+    credentials: true,
+    exposedHeaders: ["Set-Cookie"]
+  }));
 
 
-  app.use(cookieParser()); 
+  app.use(cookieParser());
   app.use(express.json());
 
   // Initialize DI container for REST routes
@@ -69,12 +86,12 @@ app.use(cors({
   const accountRouter = accountRouterFactory(container);
   app.use("/admin", accountRouter);
   app.use("/file", fileRouter);
-console.log("fileRouter loaded from:", import.meta.url);
+  console.log("fileRouter loaded from:", import.meta.url);
   // GraphQL middleware for Gateway
   app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }) => ({ req }),
   }));
-    httpServer.listen(4000, () => {
+  httpServer.listen(4000, () => {
     console.log(`🚀 Gateway running at http://localhost:4000/graphql`);
     console.log(`📄 Presign API at http://localhost:4000/file/presign-url`);// Cannot GET /file/presign-url
   });

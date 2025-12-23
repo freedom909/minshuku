@@ -1,36 +1,31 @@
-import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+import axios from "axios";
 
 export async function POST(req) {
-  try {
-    const body = await req.json();
-    const { fileName, fileType } = body;
-
-    const cookieStore = cookies();
-    const token = cookieStore.get("token")?.value;
-
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-      });
-    }
-
-    const fileServiceUrl = process.env.FILE_SERVICE_URL;
-
-    const res = await fetch(`${fileServiceUrl}/file/presign-url`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Cookie": `token=${token}`,
-      },
-      body: JSON.stringify({ fileName, fileType }),
-    });
-
-    const data = await res.json();
-    return new Response(JSON.stringify(data), { status: res.status });
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ error: "Server Error" }), {
-      status: 500,
-    });
+  const session = await getServerSession(authOptions);
+ 
+      if (!session?.accessToken) {
+    console.error("❌ No accessToken in session");
+    return new Response("Unauthorized", { status: 401 });
   }
-}
+console.log("✅ Sending token to backend:", session.accessToken.slice(0, 30));
+   const response = await axios.post(
+    process.env.INTERNAL_API_URI,
+    {
+      query: `
+        mutation PresignUrl {
+          presignUploadUrl
+        }
+      `,
+    },
+  {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`, // 🔥 核心
+      },
+    }
+  );
+  return Response.json(response.data);
+  }
+  
+

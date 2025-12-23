@@ -10,7 +10,7 @@ This document provides reproducible curl examples to interact with `subgraph-loc
 ```mermaid
 flowchart LR
     A[Frontend (Next.js)] -->|GraphQL| B[Gateway :4000]
-    B --> C[subgraph-users]
+    B --> C[subgraph-auth]
     B --> D[subgraph-locations :4140]
     C --> E[(MySQL/Neo4j)]
     D --> E

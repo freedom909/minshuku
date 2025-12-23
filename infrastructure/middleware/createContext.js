@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 
 export const createContext = async ({ req }) => {
   const token = req.headers.authorization?.split(" ")[1] || '';
+  console.log("AUTH HEADER:", req.headers.authorization);
+
   let user = null;
 
   if (token) {

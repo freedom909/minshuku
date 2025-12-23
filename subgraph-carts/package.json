@@ -1,5 +1,5 @@
 {
-  "name": "subgraph-users",
+  "name": "subgraph-auth",
   "version": "1.0.0",
   "main": "resolvers.js",
   "type": "module",

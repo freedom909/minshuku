@@ -3,7 +3,7 @@ import connectToMongoDB from './connectMongoDB.js';
 
 (async () => {
   try {
-    const dotenvResult = await dotenv.config({ path: 'C:\\Users\\omae9\\Desktop\\minshuku\\subgraph-users\\.env' });
+    const dotenvResult = await dotenv.config({ path: 'C:\\Users\\omae9\\Desktop\\minshuku\\subgraph-auth\\.env' });
     console.log("Dotenv result:", dotenvResult);
     console.log("Node version:", process.version);
     console.log("CWD:", process.cwd());

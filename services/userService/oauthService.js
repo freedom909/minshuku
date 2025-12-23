@@ -23,15 +23,24 @@ function getAppleKey(header, callback) {
   });
 }
 
-class OAuthService extends RESTDataSource {
+class OAuthService  {
   constructor({ tokenService, userRepository }) {
-    super();
     if (!tokenService || !userRepository) {
       throw new Error("OAuthService requires tokenService and userRepository");
     }
     this.tokenService = tokenService;
     this.userRepository = userRepository;
     this.googleClient = googleClient;
+  }
+
+async verify(provider, accessToken) {
+    const impl = this.providers[provider];
+
+    if (!impl) {
+      throw new Error(`Unsupported OAuth provider: ${provider}`);
+    }
+
+    return impl.verify(accessToken);
   }
 
   async authenticate(provider, token) {
@@ -98,7 +107,7 @@ class OAuthService extends RESTDataSource {
 
       user.refreshToken = refreshToken;
       if (user._id) {
-        await this.userRepository.upsertUser(user._id, { refreshToken });
+        await this.userRepository.findByIdAndUpdate(user._id, { refreshToken }, { new: true });
       }
 
       return {

@@ -147,6 +147,11 @@ input SignUpInput {
   inviteCode: String
 }
 
+input OAuthLoginInput {
+  provider: OAuthProvider!
+  providerAccountId: String!
+}
+
 input UpdatePasswordInput {
   userId: ID!
   newPassword: String!
@@ -157,6 +162,11 @@ type AuthPayload {
   token: String!
   userId: ID!
   role: Role!
+}
+
+type OAuthLoginPayload {
+  accessToken: String!
+  user: User!
 }
 
 type SignInResponse implements Response {
@@ -204,6 +214,7 @@ type Query {
 }
 
 type Mutation {
+  oauthLogin(input: OAuthLoginInput!): OAuthLoginPayload!
   verifyAndUpgradeHost(input: VerifyHostInput!): AuthPayload!
   signUp(input: SignUpInput!): SignInResponse!
   signIn(input: SignInInput!): SignInResponse!

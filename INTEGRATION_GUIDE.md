@@ -36,7 +36,8 @@ NEXT_PUBLIC_API_URL=http://localhost:4010/graphql
 ```env
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
-JWT_SECRET=your-secure-jwt-secret
+JWT_SECRET=minshuku_jwt_secret_key_2024_secure_random_string
+
 ```
 
 ### 2. Installation

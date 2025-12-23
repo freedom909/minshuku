@@ -1,119 +1,127 @@
-//frontend/src/pages/api/auth/[...nextauth].js
+//frontend/src/app/api/auth/[...nextauth]/route.js
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import FacebookProvider from "next-auth/providers/facebook";
-import GithubProvider from "next-auth/providers/github";
-import CredentialsProvider from "next-auth/providers/credentials";
-import localAuthService from "@/userService/localAuthService";
-import oauthService from "@/userService/oauthService";
+import GitHubProvider from "next-auth/providers/github";
+
+const SUBGRAPH_AUTH_URL =
+  process.env.SUBGRAPH_AUTH_URL || "http://localhost:4010/graphql";
+
+async function oauthLoginToBackend({
+  provider,
+  providerAccountId,
+  accessToken,
+}) {
+  const res = await fetch(SUBGRAPH_AUTH_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // ✅ OAuth token 只在 Header
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      query: `
+        mutation OAuthLogin($input: OAuthLoginInput!) {
+          oauthLogin(input: $input) {
+            
+            user {
+              id
+              role
+            }
+          }
+        }
+      `,
+      variables: {
+        input: {
+          provider: provider.toUpperCase(),
+          providerAccountId, // ✅ 必须
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Backend OAuth failed: ${res.status}`);
+  }
+
+  const json = await res.json();
+  if (json.errors) {
+    throw new Error(json.errors[0].message);
+  }
+
+  return json.data.oauthLogin;
+}
+
 
 const handler = NextAuth({
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
     }),
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
     }),
-    GithubProvider({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET
-    }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        try {
-          const user = await localAuthService.authenticate(
-            credentials.email,
-            credentials.password
-          );
-
-          if (!user) {
-            throw new Error("Invalid credentials");
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name
-          };
-        } catch (error) {
-          throw new Error(error.message || "Authentication failed");
-        }
-      }
-    })
   ],
+
   session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60 // 30 days
+    strategy: "jwt", // ⚠️ 注意：这是 NextAuth 自己的 session JWT
   },
+
   callbacks: {
-    async signIn({ user, account, profile }) {
-      console.log("👤 Sign-in callback:", user, account, profile);
+    /**
+     * OAuth 成功后触发
+     */
+    async signIn({ account, profile, user }) {
+      if (!account?.access_token ||!profile?.sub) return false;
 
-      if (!user) throw new Error("No user found");
+      try {
+        const backendAuth = await oauthLoginToBackend({
+          provider: account.provider,
+          providerAccountId: profile.sub,
+          accessToken: account.access_token
+        });
 
-      // 简化认证流程：直接允许 OAuth 登录，不进行 GraphQL 验证
-      if (["google", "facebook", "github"].includes(account.provider)) {
-        console.log(`✅ Allowing ${account.provider} login without GraphQL validation`);
-        
-        // Ensure Google profile picture is properly mapped
-        if (account.provider === "google" && profile?.picture) {
-          user.picture = profile.picture;
-          console.log("📸 Google profile picture set:", profile.picture);
-        }
-        
+        // 把 backend JWT 临时挂到 user 上
+    user.backendUserId = backendAuth.user.id;
+    user.role = backendAuth.user.role;
+
         return true;
+      } catch (err) {
+        console.error("OAuth backend login failed:", err);
+        return false;
       }
-
-      return true;
     },
 
-    jwt: async ({ token, user, account, profile }) => {
+    /**
+     * 控制 NextAuth 自己的 JWT
+     */
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-        token.picture = user.picture || profile?.picture;
-        token.accessToken = user.token; // Optional
+    token.userId = user.backendUserId;
+    token.role = user.role;
       }
-      
-      // Handle Google profile picture specifically
-      if (account?.provider === "google" && profile?.picture) {
-        token.picture = profile.picture;
-        console.log("📸 Google picture set in JWT:", profile.picture);
-      }
-      
       return token;
-
     },
-    session: async ({ session, token }) => {
-      session.user.id = token.id;
-      session.user.name = token.name;
-      session.user.email = token.email;
-      session.user.image = token.picture;
-      console.log("📸 Session user image set:", token.picture);
+
+    /**
+     * 控制前端 session 能看到什么
+     */
+    async session({ session, token }) {
+      // ❗ 前端不直接使用 backend JWT
+      session.user.id = token.userId;
+      session.user.role = token.role;
+
+      // ❌ 不暴露 backend JWT
+      // session.backendAccessToken ❌ 不给
+
       return session;
-    }
+    },
   },
+
   pages: {
     signIn: "/login",
-    error: "/login"
   },
-  secret: process.env.NEXTAUTH_SECRET
 });
 
 export { handler as GET, handler as POST };

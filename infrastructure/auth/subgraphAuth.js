@@ -8,7 +8,8 @@ import { authenticate } from './authenticateAndAuthorize.js';
  */
 class SubgraphAuthService {
   constructor(config = {}) {
-    this.JWT_SECRET = process.env.JWT_SECRET || config.jwtSecret;
+    this.JWT_SECRET = process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string';
+
     this.TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '24h';
     this.ALLOWED_SERVICES = new Set(config.allowedServices || []);
   }
@@ -61,7 +62,8 @@ class SubgraphAuthService {
   subgraphAuthMiddleware = async (req, res, next) => {
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
-      
+      console.log("AUTH HEADER:", req.headers.authorization);
+
       // Check for service-to-service communication
       if (req.headers['x-service-token']) {
         const serviceToken = this.validateToken(req.headers['x-service-token']);

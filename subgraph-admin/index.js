@@ -68,6 +68,7 @@ const startApolloServer = async () => {
         context: async ({ req }) => {
           const token = req.headers.authorization || "";
           let userId = null;
+console.log("AUTH HEADER:", req.headers.authorization);
 
           if (token.startsWith('Bearer ')) { //  'ReferenceError: auth is not defined',
             try {

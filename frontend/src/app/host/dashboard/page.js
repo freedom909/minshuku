@@ -56,7 +56,7 @@ async function getHostMetrics(hostId, token) {
         id
         name
         # The following fields are likely resolved from other subgraphs 
-        # like subgraph-users or subgraph-accounts by the gateway.
+        # like subgraph-auth or subgraph-accounts by the gateway.
         totalRevenue
         totalBookings
         averageRating

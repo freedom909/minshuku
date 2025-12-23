@@ -1,159 +1,50 @@
-//frontend/ src/userService/oauthService.js
-import config from '@/config/config.js'
+// frontend/src/userService/oauthService.js
 
-// Define the GraphQL endpoint URL
-const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_SUBGRAPH_USER_URL || 'http://localhost:4010/graphql';
+const SUBGRAPH_AUTH_URL =
+  process.env.NEXT_PUBLIC_SUBGRAPH_AUTH_URL || 'http://localhost:4010/graphql';
 
 class OAuthService {
-    constructor() {
-        this.token = null;
-        if (typeof window !== 'undefined') {
-            this.token = localStorage.getItem('jwt_token');
+  async oauthLogin({ provider, accessToken }) {
+await fetch(SUBGRAPH_AUTH_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${account.access_token}`, // 👈 OAuth token
+  },
+  body: JSON.stringify({
+    query: `
+      mutation OAuthLogin($input: OAuthLoginInput!) {
+        oauthLogin(input: $input) {
+          success
+          user {
+            id
+            role
+          }
         }
-    }
-    async sendOAuthRequestToSubgraph(provider, token) {
-        console.log("🔄 Sending request to subgraph...");
+      }
+    `,
+    variables: {
+      input: {
+        provider: "GOOGLE",
+        providerAccountId: profile.sub, // 👈 必须传
+      },
+    },
+  }),
+});
 
-        try {
-            const response = await fetch(SUBGRAPH_USER_URL, { //it did not use post
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    query: `
-                mutation SignIn($input: SignInInput!) {
-                  signIn(input: $input) {
-                    success
-                    userId
-                    role
-                    code
-                  }
-                }
-              `,
-                    variables: {
-                        input: {
-                            provider: provider.toUpperCase(),
-                            token,// pass empty input object if your backend extracts info from token
-                        }
-                    }
-                })
-            });
 
-            if (!response.ok) throw new Error('Request failed');
-
-            const data = await response.json();
-            console.log('OAuth response:', data);
-
-            if (!data.data?.signIn?.success) {
-                throw new Error(data.errors?.[0]?.message || 'OAuth login failed');
-            }
-
-            return { success: true, data: data.data.signIn };
-        } catch (err) {
-            console.error('OAuth request failed:', err);
-            return { success: false };
-        }
+    if (!res.ok) {
+      throw new Error(`OAuth login failed: ${res.status}`);
     }
 
+    const json = await res.json();
 
-    logout() {
-        if (typeof window === 'undefined') return;
-
-        // 清除本地存储的令牌
-        localStorage.removeItem('jwt_token');
-        this.token = null;
-
-        // 可以在这里添加其他清理操作，如清除用户状态等
-        console.log('User logged out');
+    if (json.errors) {
+      throw new Error(json.errors[0].message);
     }
 
-    /**
-     * 注册新用户
-     * @param {Object} userData - 用户注册数据
-     * @returns {Promise<Object>} - 注册结果
-     */
-    async registerUser(userData) {
-        try {
-            // 如果没有提供头像，使用默认头像
-            if (!userData.picture) {
-                userData.picture = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`;
-            }
-
-            const query = `
-               mutation Mutation($input: SignUpInput!) {
-  signUp(input: $input) {
-    role
-    userId
-    code
-    message
-    refreshToken
-    success
-    auth {
-      token
-    }
+    return json.data.oauthLogin;
   }
 }
-            `;
 
-            const response = await fetch(SUBGRAPH_USER_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    query,
-                    variables: {
-                        input: userData
-                    }
-                }),
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.errors) {
-                console.error('GraphQL errors:', result.errors);
-                throw new Error(result.errors[0].message);
-            }
-
-            const registerResult = result.data.register;
-
-            if (!registerResult.success) {
-                throw new Error(registerResult.message || 'Registration failed');
-            }
-
-            // 存储JWT令牌
-            if (registerResult.token) {
-                localStorage.setItem('jwt_token', registerResult.token);
-                this.token = registerResult.token;
-            }
-
-            return {
-                success: true,
-                user: registerResult.user,
-                token: registerResult.token,
-                message: registerResult.message
-            };
-        } catch (error) {
-            console.error('Registration failed:', error);
-            return {
-                success: false,
-                error: error.message || 'An error occurred during registration'
-            };
-        }
-    }
-
-    getToken() {
-        return this.token;
-    }
-}
-
-// ✅ create and export a singleton instance
-const oauthService = new OAuthService();
-export default oauthService;
+export default new OAuthService();

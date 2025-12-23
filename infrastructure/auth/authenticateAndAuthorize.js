@@ -4,7 +4,8 @@ export const authenticate = (req, res, next) => {
     if (!token) {
       return res.status(401).json({ error: 'You must be logged in' });
     }
-  
+  console.log("AUTH HEADER:", req.headers.authorization);
+
     try {
       const decodedToken = jwt.verify(token, JWT_SECRET); // Replace 'your-secret-key' with your actual secret
       req.user = decodedToken;

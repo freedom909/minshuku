@@ -1,3 +1,20 @@
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import path, { join } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, ".env") });
+
+// Set default key paths if they are not defined in the .env file
+if (!process.env.JWT_PRIVATE_KEY_PATH) {
+  process.env.JWT_PRIVATE_KEY_PATH = path.join(__dirname, "../keys/jwt-private.pem");
+}
+if (!process.env.JWT_PUBLIC_KEY_PATH) {
+  process.env.JWT_PUBLIC_KEY_PATH = path.join(__dirname, "../keys/jwt-public.pem");
+}
+
+import applyAuthDirective from "./auth/applyAuthDirective.js";
+applyAuthDirective(resolvers);
 import express from "express";
 import http from "http";
 import { ApolloServer } from "@apollo/server";
@@ -9,18 +26,20 @@ import resolvers from "./resolvers.js";
 import cors from "cors";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
-import dotenv from "dotenv";
-import mongoose from "mongoose";
 
+import mongoose from "mongoose";
+// import jwksRoute from "../services/http/jwksRoute.js";
+import { getJWKS } from "../services/auth/jwks.js";
 import morgan from "morgan";
 import UserService from "../services/userService/index.js";
 import checkApiKey from "./utils/checkApiKey.js";
 import authLimiter from "../infrastructure/middleware/authLimiter.js"; // Adjust path as needed
 import TokenService from "../services/userService/tokenService.js";
 
-dotenv.config({ path: 'C:\\Users\\omae9\\Desktop\\minshuku\\subgraph-users\\.env' });
-
-const typeDefs = gql(readFileSync("./schema.graphql", { encoding: "utf-8" }));
+const schemaFiles = ["schema.graphql","directives.graphql"]; 
+const typeDefs = schemaFiles.map((file) => {
+  return gql(readFileSync(join(__dirname, file), { encoding: "utf-8" }));
+});
 
 const createApolloServer = (container) => {
   return new ApolloServer({
@@ -51,28 +70,30 @@ const createApolloServer = (container) => {
 
 const createContext =
   (container) =>
-  async ({ req }) => {
-    if (!req) {
-      console.error("Request object is missing in context creation.");
-      return {};
-    }
+    async ({ req }) => {
+      if (!req) {
+        console.error("Request object is missing in context creation.");
+        return {};
+      }
 
-    const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-    console.log("Client IP:", ip);
-    return {
-      token: req.headers.authorization || "",
-      container,
-      ip,
-      req,
-      userService: new UserService({
-        accountLockService: container.resolve("accountLockService"),
-        localAuthService: container.resolve("localAuthService"),
-        oauthService: container.resolve("oauthService"),
-        tokenService: container.resolve("tokenService"),
-      }),
+      const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
+      console.log("Client IP:", ip);
+      return {
+        token: req.headers.authorization || "",
+
+        container,
+        ip,
+        req,
+        userService: new UserService({
+          accountLockService: container.resolve("accountLockService"),
+          localAuthService: container.resolve("localAuthService"),
+          oauthService: container.resolve("oauthService"),
+          tokenService: container.resolve("tokenService"),
+        }),
+
+      };
     };
-    
-  };
+
 
 const startApolloServer = async () => {
   try {
@@ -104,7 +125,15 @@ const startApolloServer = async () => {
       }
       next();
     });
-
+    // 🔐 JWKS endpoint（必须在 GraphQL 之前）
+    app.get("/.well-known/jwks.json",async (req, res, next) => {
+      try {
+    const jwks = await getJWKS();
+    res.json(jwks);
+  } catch (err) {
+    next(err);
+  }
+    });
     // 🔹 Health check endpoint — MUST be placed outside Apollo middleware
     app.get("/health", async (req, res) => {
       console.log("Health check received");
@@ -120,12 +149,12 @@ const startApolloServer = async () => {
         res.status(503).json({ status: "unhealthy", error: error.message });
       }
     });
-   
+
     // 🔹 CORS + Apollo Middleware
     app.use(
       "/graphql",
       //checkApiKey,
-      
+
       authLimiter,
       cors({
         origin: ["http://localhost:3000", "http://localhost:4010"],
@@ -135,12 +164,21 @@ const startApolloServer = async () => {
       }),
 
       expressMiddleware(server, {
-        context: createContext(container),
+        context: async ({ req }) => {
+          const auth = req.headers.authorization;
+          const accessToken =
+            auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+
+          return {
+            accessToken,
+            container,
+          };
+        },
       })
     );
 
     // Start HTTP server (port configurable)
-    const port = Number(process.env.USERS_PORT) || 4010;
+    const port = Number(process.env.AUTH_PORT) || 4010;
     httpServer.listen({ port }, () =>
       console.log(`✅ Server ready at http://localhost:${port}/graphql`)
     );

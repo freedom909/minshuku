@@ -24,12 +24,12 @@ services:
       # - subgraph-profiles
       - subgraph-reviews
       # - subgraph-temple
-      - subgraph-users
+      - subgraph-auth
       - machine
       - ai_service
     environment:
       # 👇 Gateway will use service names, not localhost
-      USERS_SERVICE_URL: http://subgraph-users:4010/graphql
+      USERS_SERVICE_URL: http://subgraph-auth:4010/graphql
       MACHINE_SERVICE_URL: http://machine:9000/graphql
       AI_SERVICE_URL: http://ai_service:4100/graphql
     networks:
@@ -148,10 +148,10 @@ services:
     # networks:
     #   - minshuku-net
 
-  subgraph-users:
+  subgraph-auth:
     container_name: minshuku-users
     build:
-      context: ./subgraph-users
+      context: ./subgraph-auth
       dockerfile: Dockerfile
     ports:
       - "4010:4010"

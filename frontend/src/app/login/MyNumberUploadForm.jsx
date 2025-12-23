@@ -43,8 +43,8 @@ async function uploadToPresignedUrl(file, type) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      fileType: file.type,
-      key: `${type}-${Date.now()}.${file.type.split('/')[1]}` // optional
+    fileName: file.name,
+    fileType: file.type,
     }),
   });
 
