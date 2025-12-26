@@ -1,0 +1,15 @@
+src/
+├── infrastructure/
+│   ├── auth/
+│   │   ├── authorization/
+│   │   │   ├── rbac.js
+│   │   │   ├── abac.js
+│   │   │   ├── errors.js
+│   │   │   └── index.js
+│   │   ├── jwt/
+│   │   │   ├── verifyJwt.js
+│   │   │   └── jwksClient.js
+│   │   └── graphql/
+│   │       └── applyAuthDirective.js
+│   └── logger/
+│       └── index.js

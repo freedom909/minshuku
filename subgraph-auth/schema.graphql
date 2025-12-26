@@ -1,211 +1,44 @@
-# users schema.graphql
+
+
 schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable"]) {
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable","@external"]) {
   query: Query
   mutation: Mutation
 }
+scalar JSON
 
-# Enums (authoritative; MUST match other subgraphs)
+enum CacheControlScope {
+  PUBLIC
+  PRIVATE
+}
+# Enums
 enum Role {
-  USER
-  GUEST
-  HOST
-  PENDING_HOST
   ADMIN
+  HOST
+  GUEST
+  USER
+  PENDING_HOST
 }
-
-# Scalars
-scalar DateTime
-
-# Common Response interface
-interface Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-}
-
-# Canonical User interface (authoritative)
-interface User @key(fields: "id") {
-  id: ID!
-  email: String!
-  fullName: String
-  firstName: String!
-  lastName: String!
-  picture: String!
-  nickname: String!
-  role: Role!
-  provider: OAuthProvider
-  oauthId: String!
-  createdAt: String!   # ✅ add
-  updatedAt: String!   # ✅ add
-}
-
-
-# Concrete types implementing User — USERS subgraph OWNS the concrete fields
-type Guest implements User @key(fields: "id") {
-  id: ID!
-  email: String!
-  name: String
-  role: Role!
-  isVerified: Boolean!
-  isLocked: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  # extra fields specific to users facing auth/profile
-  fullName: String
-  firstName: String!
-  lastName: String!
-  picture: String!
-  nickname: String!
-  provider: OAuthProvider
-  oauthId: String!
-  # tokens stored/returned by auth flows (if needed)
-  idToken: String
-  accessToken: String
-  refreshToken: String
-}
-
-type Host implements User @key(fields: "id") {
-  id: ID!
-  email: String!
-  name: String
-  role: Role!
-  isVerified: Boolean!
-  isLocked: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  # host-specific fields
-  fullName: String!
-  firstName: String!
-  lastName: String!
-  picture: String!
-  nickname: String!
-  provider: OAuthProvider
-  oauthId: String!
-  idToken: String
-  accessToken: String
-  refreshToken: String
-  description: String
-}
-
-# Admin type must exist in users subgraph and implement User (authoritative owner)
-type Admin implements User @key(fields: "id") {
-  id: ID!
-  email: String!
-  name: String
-  role: Role!
-  isVerified: Boolean!
-  isLocked: Boolean!
-  createdAt: String!
-  updatedAt: String!
-
-  # admin-specific fields
-  fullName: String
-  firstName: String!
-  lastName: String!
-  picture: String!
-  nickname: String!
-  provider: OAuthProvider
-  oauthId: String!
-}
-
-# Inputs, Responses, Auth payloads etc. (kept from your original)
-enum OAuthProvider {
-  GOOGLE
-  FACEBOOK
-  APPLE
-  GITHUB
-  LOCAL
-}
-
-input VerifyHostInput {
-  id: ID!
-  idNumber: String!
-  faceImageUrl: String!
-}
-
-input SignInInput {
-  email: String
-  password: String
-  provider: OAuthProvider
-  token: String
-  refreshToken: String
-  oauthId: String
-  idToken: String
-  accessToken: String
-}
-
-input SignUpInput {
-  email: String!
-  password: String!
-  name: String!
-  nickname: String!
-  role: Role = GUEST
-  picture: String!
-  inviteCode: String
-}
-
-input OAuthLoginInput {
-  provider: OAuthProvider!
-  providerAccountId: String!
-}
-
-input UpdatePasswordInput {
-  userId: ID!
-  newPassword: String!
-  password: String!
-}
-
 type AuthPayload {
-  token: String!
-  userId: ID!
-  role: Role!
-}
-
-type OAuthLoginPayload {
-  accessToken: String!
   user: User!
+  accessToken: String!
 }
 
-type SignInResponse implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-  auth: AuthPayload
-  refreshToken: String
-  role: Role
-  userId: ID
+type Mutation {
+  debugCreateUser(email: String!): User
+  oauthLogin(input: OAuthLoginInput!): AuthPayload
+  refreshToken: AuthPayload
+}
+ 
+ input OAuthLoginInput {
+  provider: String!
+  payload: JSON!
 }
 
-type ReqResetPwdResponse implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-  link: String!
-}
+# schema.graphql (auth subgraph)
 
-type ForgotPasswordResponse implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-  email: String!
-}
 
-type InviteCodeResponse implements Response {
-  code: Int!
-  success: Boolean!
-  message: String!
-}
 
-input UpdateUserInput {
-  name: String
-  picture: String
-  role: Role
-}
-
-# Queries and Mutations — USERS subgraph owns these resolvers
 type Query {
   getUser(id: ID!): User @shareable
   me: User @shareable 
@@ -213,32 +46,8 @@ type Query {
   users: [User]!@shareable
 }
 
-type Mutation {
-  oauthLogin(input: OAuthLoginInput!): OAuthLoginPayload!
-  verifyAndUpgradeHost(input: VerifyHostInput!): AuthPayload!
-  signUp(input: SignUpInput!): SignInResponse!
-  signIn(input: SignInInput!): SignInResponse!
-  oauthSaveUser(input: OAuthInput!): AuthPayload!
-  updatePassword(input: UpdatePasswordInput!): AuthPayload!
-  requestResetPassword(email: String!): ReqResetPwdResponse!
-  forgotPassword(email: String!): ForgotPasswordResponse!
-  sendInviteCode(email: String!): InviteCodeResponse!
-  logout(provider: OAuthProvider): Boolean!
-  createUser(name: String!, email: String!): User
-  updateUser(id: ID!, input: UpdateUserInput!): User
-  verifyGoogleToken(token: String): AuthPayload
-  verifyFacebookToken(token: String): AuthPayload
-  verifyAppleToken(token: String): AuthPayload
-  verifyTwitterToken(token: String): AuthPayload
+type User {
+  id: ID!
+  email: String!
+  role: Role!
 }
-
-input OAuthInput {
-  provider: OAuthProvider!
-  token: String!
-  refreshToken: String
-  email: String
-  name: String
-}
-
-# If you use federation _Entity union, include all types you want to resolve across subgraphs
-union _Entity = Guest | Host | Admin

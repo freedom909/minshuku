@@ -1,29 +1,6 @@
 directive @auth(
-  requires: AuthRule
+  roles: [Role!]
+  where: String
 ) on FIELD_DEFINITION
-
-input AuthRule {
-  # RBAC
-  role: RoleRule
-
-  # ABAC
-  condition: ConditionRule
-}
-
-input RoleRule {
-  any: [Role!]
-  all: [Role!]
-  not: [Role!]
-}
-
-input ConditionRule {
-  owner: Boolean
-  match: [MatchRule!]
-}
-
-input MatchRule {
-  field: String!      # resource field
-  equals: String      # context path
-}
 
 

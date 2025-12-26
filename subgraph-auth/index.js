@@ -13,13 +13,13 @@ if (!process.env.JWT_PUBLIC_KEY_PATH) {
   process.env.JWT_PUBLIC_KEY_PATH = path.join(__dirname, "../keys/jwt-public.pem");
 }
 
-import applyAuthDirective from "./auth/applyAuthDirective.js";
+import applyAuthDirective from "../infrastructure/authz/applyAuthDirective.js";
 applyAuthDirective(resolvers);
 import express from "express";
 import http from "http";
 import { ApolloServer } from "@apollo/server";
 import { buildSubgraphSchema } from "@apollo/subgraph";
-import initUserContainer from "../services/DB/initUserContainer.js";
+import initAuthContainer from "../services/DB/initAuthContainer.js";
 import { readFileSync } from "fs";
 import { gql } from "graphql-tag";
 import resolvers from "./resolvers.js";
@@ -36,14 +36,14 @@ import checkApiKey from "./utils/checkApiKey.js";
 import authLimiter from "../infrastructure/middleware/authLimiter.js"; // Adjust path as needed
 import TokenService from "../services/userService/tokenService.js";
 
-const schemaFiles = ["schema.graphql","directives.graphql"]; 
+const schemaFiles = ["schema.graphql", "directives.graphql"];
 const typeDefs = schemaFiles.map((file) => {
   return gql(readFileSync(join(__dirname, file), { encoding: "utf-8" }));
 });
 
 const createApolloServer = (container) => {
   return new ApolloServer({
-    schema: buildSubgraphSchema({ typeDefs, resolvers }),
+    schema: buildSubgraphSchema({ typeDefs, resolvers }),// ❌ Error starting Apollo Server: GraphQLError: Unknown type User
     csrfPrevention: false,
     formatError: (error) => {
       console.error("GraphQL Error:", error);
@@ -99,7 +99,7 @@ const startApolloServer = async () => {
   try {
     console.log("MONGO_URI:", process.env.MONGO_URI);
     console.log("All env variables:", process.env);
-    const container = await initUserContainer();
+    const container = await initAuthContainer();
     const app = express();
 
     const httpServer = http.createServer(app);
@@ -126,13 +126,13 @@ const startApolloServer = async () => {
       next();
     });
     // 🔐 JWKS endpoint（必须在 GraphQL 之前）
-    app.get("/.well-known/jwks.json",async (req, res, next) => {
+    app.get("/.well-known/jwks.json", async (req, res, next) => {
       try {
-    const jwks = await getJWKS();
-    res.json(jwks);
-  } catch (err) {
-    next(err);
-  }
+        const jwks = await getJWKS();
+        res.json(jwks);
+      } catch (err) {
+        next(err);
+      }
     });
     // 🔹 Health check endpoint — MUST be placed outside Apollo middleware
     app.get("/health", async (req, res) => {
@@ -165,16 +165,22 @@ const startApolloServer = async () => {
 
       expressMiddleware(server, {
         context: async ({ req }) => {
-          const auth = req.headers.authorization;
-          const accessToken =
-            auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+          const token = req.cookies?.accessToken;
+          const tokenService = container.resolve("tokenService");
+
+          const user = token
+            ? tokenService.verifyAccessToken(token)
+            : null;
 
           return {
-            accessToken,
-            container,
+            user,
+            req,
+            container, // ✅ 必须注入
           };
         },
       })
+
+
     );
 
     // Start HTTP server (port configurable)

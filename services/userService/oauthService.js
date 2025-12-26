@@ -157,7 +157,6 @@ async verify(provider, accessToken) {
     }
   }
 
-
   async verifyFacebookToken(token) {
     try {
       const response = await fetch(

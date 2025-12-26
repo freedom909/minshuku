@@ -1,18 +1,22 @@
-// File: infrastructure/middleware/auth.js
+// File: infrastructure/auth/auth.js
 import jwt from 'jsonwebtoken';
 import User from '../../services/models/user.js'
 
-export function decodeToken(token) {
-  if (!token) return null;
+
+// Middleware to check if the user is authenticated and set the user in the request context
+export const authenticateJWT = (req, res, next) => {
+  const token = req.header('Authorization');
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded token:", decoded);
-    return decoded.userId;
+    req.user = decoded;
+    next();
   } catch (err) {
-    return null;
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-}
-
+};
 
 // Middleware to check if the user has permission to view listings
 export const checkPermissions = async (req, res, next) => {
